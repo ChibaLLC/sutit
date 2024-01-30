@@ -4,13 +4,24 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev:linux": "concurrently \"redis-server\" \"bun sass\" \"nuxt dev\"",
+    "dev:windows": "concurrently \"npm run sass\" \"nuxt dev\"",
+    "dev:bun": "bun ./run-dev.js",
+    "dev:node": "node ./run-dev.js",
+    "dev": "bun dev:bun || npm run dev:node",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "start:bun": "bun .output/server/index.mjs",
+    "start:node": "node .output/server/index.mjs",
+    "start": "bun start:bun || npm run start:node",
+    "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
+    "prepare": "bun ./setup.js || node ./setup.js"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "nuxt": "^3.9.3",
+    "sass": "^1.70.0",
     "vue": "^3.4.14",
     "vue-router": "^4.2.5"
   }
