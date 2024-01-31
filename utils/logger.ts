@@ -1,4 +1,4 @@
-import {type LogObject, type LogType, createConsola} from "consola";
+import {type LogObject, type LogType, createConsola, consola} from "consola";
 
 export function useFileLogger(message: any, options?: {
     type?: LogType,
@@ -13,27 +13,25 @@ export function useFileLogger(message: any, options?: {
         reporters: [
             {
                 log: (logObj: LogObject) => {
-                    try{
-                        // @ts-expect-error
+                    try {
                         $FileLogger.log(logObj)
-                        console.log("Log written to file")
                     } catch (e) {
-                        console.error(e)
+                        consola.error(e)
                     }
                 }
             },
             {
                 log: (logObj: LogObject) => {
-                    if(options && options.type && options.type in Object.keys(console)){
-                        // @ts-expect-error
-                        console[options.type](logObj)
+                    if (options && options.type && options.type in Object.keys(consola)) {
+                        consola[options.type](logObj.args.join(' '))
                     } else {
-                        console.log(logObj)
+                        consola.log(options?.type, "is not a valid consola log type")
+                        consola.log(logObj)
                     }
                 }
             }
         ]
     })
 
-    logger[options.type](message)
+    logger[options.type]?.(message)
 }

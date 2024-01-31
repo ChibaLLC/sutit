@@ -16,12 +16,14 @@
     "start:node": "node .output/server/index.mjs",
     "start": "bun start:bun || npm run start:node",
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
-    "prepare": "bun ./setup.js || node ./setup.js"
+    "prepare": "bun ./setup.js || node ./setup.js",
+    "test": "vitest"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "nuxt": "^3.9.3",
     "sass": "^1.70.0",
+    "vitest": "^1.2.2",
     "vue": "^3.4.14",
     "vue-router": "^4.2.5"
   }

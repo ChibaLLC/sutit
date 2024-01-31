@@ -1,9 +1,6 @@
 import {spawnSync, execSync} from "node:child_process";
 import fs from "node:fs";
 
-// TODO: Optimise, pipe consoles
-// TODO: Use consola
-
 const OS = process.platform;
 
 const colors = {
@@ -73,9 +70,8 @@ const order = {
         'rm -rf ./redis'
     ]
 }
-const keys = Object.keys(order);
-for (let index in keys) {
-    const item = keys[index];
+
+for (let item of Object.keys(order)) {
     console.log(colors.info, `Running ${item}`);
     if (typeof order[item] === "function") {
         order[item]();

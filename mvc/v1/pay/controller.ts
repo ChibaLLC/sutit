@@ -6,7 +6,7 @@ router.get('/pay', defineEventHandler((event: H3Event) => {
     return {
         statusCode: 200,
         body: {
-            message: 'Login success'
+            message: 'Pay success'
         }
     }
 }))
