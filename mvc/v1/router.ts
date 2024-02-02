@@ -13,10 +13,4 @@ router.use("/status", defineEventHandler((event: H3Event) => {
 
 router.use("/auth/*", authController)
 
-router.use("/*", defineEventHandler((event: H3Event) => {
-    // Make sure this is the last route defined in the file
-    useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
-    return useHttpEnd(event, null, 404)
-}))
-
 export default baseRouter("/api/v1", router)
