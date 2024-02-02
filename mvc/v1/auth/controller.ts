@@ -1,14 +1,21 @@
-import {H3Event, defineEventHandler} from 'h3'
+import { H3Event, defineEventHandler } from 'h3'
+import type {APIResponse} from "~/types";
+import {useFileLogger} from "~/utils/logger";
+import {useHttpEnd} from "~/utils/http";
 
 const router = createRouter()
 
-router.get('/login', defineEventHandler((event: H3Event) => {
+router.post('/login', defineEventHandler((event: H3Event) => {
     return {
         statusCode: 200,
-        body: {
-            message: 'Login success'
-        }
-    }
+        body: "key"
+    } as APIResponse
 }))
 
-export default router.handler
+router.use('/*', defineEventHandler((event: H3Event) => {
+    // Make sure this is the last route defined in the file
+    useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
+    return useHttpEnd(event, null, 404)
+}))
+
+export default useBase("/auth", router.handler)

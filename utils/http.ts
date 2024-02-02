@@ -3,15 +3,15 @@ import {type APIResponse, Status} from "~/types";
 
 export async function useHttpResponse(event: H3Event, data?: Object, status: number = 200): Promise<void> {
     const response = {} as APIResponse
-    response.status = status
+    response.statusCode = status
     response.body = data
 
     await event.respondWith(new Response(JSON.stringify(response), {status: status}))
 }
 
-export function useHttpEnd(event: H3Event, data?: Object, status?: number): void {
+export function useHttpEnd(event: H3Event, data: Object | null, status?: number): void {
     const end = () => {
-        event.node.res.statusCode = 204
+        event.node.res.statusCode = status ?? 204
         event.node.res.end()
     }
 
@@ -42,7 +42,7 @@ class Stream {
 
         this._event.node.res.writeHead(Status.success); // will this error due to flushHeaders?
         this._event.node.res.write(JSON.stringify({
-            status: Status.noContent
+            statusCode: Status.noContent
         } as APIResponse))
     }
 

@@ -1,5 +1,5 @@
 export type APIResponse = {
-    status: number;
+    statusCode: number;
     body?: any;
 }
 
@@ -20,4 +20,3 @@ export enum Status {
     serviceUnavailable = 503,
     gatewayTimeout = 504
 }
-

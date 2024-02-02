@@ -18,6 +18,7 @@ export class LogFileWriter {
         'info',
         'success',
         'warn',
+        'debug',
         'error',
         'fatal',
         'master'
@@ -56,62 +57,70 @@ export class LogFileWriter {
         return streams
     }
 
-    public async logString(logString: string): Promise<void> {
+    public async logString(logString: string, log?: LogType): Promise<void> {
         const logObject = {} as LogObject
         logObject.date = new Date()
         logObject.tag = 'Default'
-        logObject.type = 'log'
+        logObject.type = log || 'log'
         logObject.args = [logString]
         logObject.message = undefined
         return this.log(logObject)
     }
 
     public async log(logObj: LogObject): Promise<void> {
-        if(typeof logObj !== 'object') throw new Error('argument logObj must be a Log Object')
+        if (typeof logObj === 'string') return this.logString(logObj)
         try {
             this.streams.master.write(this.stringifyLogObject(logObj))
-            if ((logObj.type in this.streams)) {
-                return new Promise((resolve, reject) => {
-                    this.streams[logObj.type].write(this.stringifyLogObject(logObj), (err) => {
-                        if (err) {
-                            reject(err)
-                        } else {
-                            resolve()
-                        }
-                    })
+            return new Promise((resolve, reject) => {
+                this.streams[logObj.type].write(this.stringifyLogObject(logObj), (err) => {
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
                 })
-            } else {
-                throw new Error(`Log ${logObj.type} does not exist`)
-            }
+            })
         } catch (e) {
-            consola.error(e)
+            console.error(e)
             consola.box(this.stringifyLogObject(logObj))
             throw e
         }
     }
 
     public stringifyLogObject(logObj: LogObject): string {
-        return `[${logObj.date.toISOString()}]\t(${logObj.tag.toLocaleLowerCase()} ${logObj.type})\t${logObj.args.map(arg => {
-            if (typeof arg === 'object') {
-                return JSON.stringify(arg)
-            } else {
-                arg.replace('\t', ' ')
-                return arg
-            }
-        }).join(' ')
-        }\t${logObj?.message ? logObj.message : ""}\n`
+        return `[${logObj.date.toISOString()}]\t` +
+            `(${`${logObj.tag.toLocaleLowerCase()} ${logObj.type}`.trim()})\t` +
+            `${logObj.args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg)
+                } else {
+                    arg.replace('\t', '\\t')
+                    return arg
+                }
+            }).join(' ')}\t` +
+            `${logObj?.message ? logObj.message : ""}\n`
     }
 
     private parseLogString(logString: string): LogObject {
-        const logArray = logString.split('\t')
-        const logObject = {} as LogObject
-        const tag_type = logArray[1].replace('(', '').replace(')', '').split(' ')
-        logObject.date = new Date(logArray[0].replace('[', '').replace(']', ''))
-        logObject.tag = tag_type[0]
-        logObject.type = tag_type[1] as LogType
-        logObject.args = logArray[2].split(' ')
-        logObject.message = logArray[3]
-        return logObject
+        try{
+            if(logString.trim().length === 0) return {} as LogObject
+            const logArray = logString.split('\t')
+            const logObject = {} as LogObject
+            const tag_type = logArray[1]?.replace('(', '').replace(')', '').split(' ')
+            logObject.date = new Date(logArray[0]?.replace('[', '').replace(']', ''))
+            logObject.tag = tag_type[0]
+            logObject.type = tag_type[1] as LogType
+            try {
+                logObject.args = JSON.parse(logArray[2])
+            } catch (e) {
+                logObject.args = logArray[2].replace('\\t', '\t').split(' ')
+            }
+            logObject.message = logArray[3]
+            return logObject
+        } catch (e) {
+            consola.error(e)
+            return {} as LogObject
+        }
     }
 
     public dispose() {
@@ -153,6 +162,24 @@ export class LogFileWriter {
         }
     }
 
+    public grep(pattern: string, log: string): LogObject[] {
+        if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
+        const logs: LogObject[] = []
+        try {
+            const logString = execSync(`grep ${pattern} ./logs/${log}.log`).toString()
+            const logArray = logString.split('\n')
+            for (const log of logArray) {
+                if (log.trim().length > 0) {
+                    logs.push(this.parseLogString(log))
+                }
+            }
+            return logs
+        } catch (e) {
+            consola.error(e)
+            return logs
+        }
+    }
+
     public readSync(log: LogType): LogObject[] {
         if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
         const logs: LogObject[] = []
@@ -164,5 +191,64 @@ export class LogFileWriter {
             }
         }
         return logs
+    }
+
+    public getLogsByDate(date: Date, log: string = 'master'): LogObject[] | undefined {
+        try {
+            const dateString = date.toISOString().split('T')[0]
+            return this.grep(dateString, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
+    }
+
+    public getLogsByDateRange(start: Date, end: Date, log: string = 'master'): LogObject[] | undefined {
+        try {
+            const startString = start.toISOString().split('T')[0]
+            const endString = end.toISOString().split('T')[0]
+            return this.grep(`${startString}.*${endString}`, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
+    }
+
+    public getLogsByDateAndTime(date: Date, log: string = 'master'): LogObject[] | undefined {
+        try {
+            const dateString = date.toISOString().split('T')[0]
+            const timeString = date.toISOString().split('T')[1].split('.')[0]
+            return this.grep(`${dateString}.*${timeString}`, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
+    }
+
+    public getLogByTimestamp(timestamp: string, log: string = 'master'): LogObject[] | undefined {
+        try {
+            return this.grep(timestamp, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
+    }
+
+    public getLogsByMessage(message: string, log: string = 'master'): LogObject[] | undefined {
+        try {
+            return this.grep(message, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
+    }
+
+    public getLogsByTag(tag: string, log: string = 'master'): LogObject[] | undefined {
+        try {
+            return this.grep(tag, log)
+        } catch (e) {
+            consola.error(e)
+            return undefined
+        }
     }
 }

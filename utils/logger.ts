@@ -22,12 +22,8 @@ export function useFileLogger(message: any, options?: {
             },
             {
                 log: (logObj: LogObject) => {
-                    if (options && options.type && options.type in Object.keys(consola)) {
-                        consola[options.type](logObj.args.join(' '))
-                    } else {
-                        consola.log(options?.type, "is not a valid consola log type")
-                        consola.log(logObj)
-                    }
+                    // @ts-ignore
+                    consola[options.type](logObj.args.join(' '))
                 }
             }
         ]
