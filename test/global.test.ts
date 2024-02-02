@@ -1,5 +1,5 @@
-import {test, expect, beforeEach, afterEach} from "vitest";
-import {LogFileWriter} from "../utils/classes";
+import {test, expect, beforeEach} from "vitest";
+import {LogFileWriter} from "../server/utils/classes";
 
 beforeEach(() => {
     global.$FileLogger = new LogFileWriter()

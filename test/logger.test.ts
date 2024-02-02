@@ -1,6 +1,6 @@
 import {beforeEach, expect, test} from "vitest";
 import {execSync} from "node:child_process";
-import {LogFileWriter} from "../utils/classes";
+import {LogFileWriter} from "../server/utils/classes";
 
 beforeEach(() => {
     global.$FileLogger = new LogFileWriter()

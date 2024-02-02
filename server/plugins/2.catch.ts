@@ -1,5 +1,4 @@
 import {type NitroApp} from "nitropack";
-import { useFileLogger } from "~/utils/logger";
 
 export default defineNitroPlugin((app: NitroApp) => {
     app.hooks.hook("error", (error, context) => {

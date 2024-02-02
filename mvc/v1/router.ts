@@ -1,8 +1,6 @@
 import authController from "./auth/controller"
 import type {H3Event} from "h3";
 import type {APIResponse} from "~/types";
-import {useHttpEnd} from "~/utils/http";
-import {useFileLogger} from "~/utils/logger";
 
 const router = createRouter()
 
@@ -21,4 +19,4 @@ router.use("/*", defineEventHandler((event: H3Event) => {
     return useHttpEnd(event, null, 404)
 }))
 
-export default useBase("/api/v1", router.handler)
+export default baseRouter("/api/v1", router)

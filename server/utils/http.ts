@@ -1,5 +1,6 @@
-import {H3Event} from "h3";
+import {defineEventHandler, H3Event, type Router} from "h3";
 import {type APIResponse, Status} from "~/types";
+import {useBase} from "h3";
 
 export async function useHttpResponse(event: H3Event, data?: Object, status: number = 200): Promise<void> {
     const response = {} as APIResponse
@@ -59,4 +60,22 @@ class Stream {
 
 export function useSSE(event: H3Event): Stream {
     return new Stream(event)
+}
+
+export function useController(name: string, router: Router) {
+    router.use('/*', defineEventHandler((event: H3Event) => {
+        useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
+        return useHttpEnd(event, null, 404)
+    }))
+
+    return useBase(`/${name}`, router.handler)
+}
+
+export function baseRouter(base: string, router: Router) {
+    router.use("/*", defineEventHandler((event: H3Event) => {
+        useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
+        return useHttpEnd(event, null, 404)
+    }))
+
+    return useBase(base, router.handler)
 }
