@@ -16,7 +16,7 @@
     "start:node": "node .output/server/index.mjs",
     "start": "bun start:bun || npm run start:node",
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
-    "prepare": "bun ./setup.js || node ./setup.js",
+    "prepare": "node ./setup.js",
     "test": "vitest"
   },
   "devDependencies": {

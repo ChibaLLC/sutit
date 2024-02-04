@@ -1,5 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import {isBun} from "std-env";
+import {isBun, isDevelopment} from "std-env";
 
 export default defineNuxtConfig({
     devtools: {enabled: true},
@@ -18,8 +18,7 @@ export default defineNuxtConfig({
                 driver: 'fs',
                 base: "./filestore"
             }
-        },
-        preset: isBun ? 'bun' : 'node-server'
+        }
     },
 
     css: [

@@ -1,7 +1,13 @@
-import {spawnSync, execSync} from "node:child_process";
+import { spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
+import { isDevelopment } from "std-env";
 
 const OS = process.platform;
+
+if (!isDevelopment) {
+    console.log("This script is only for development purposes");
+    process.exit(0);
+}
 
 const colors = {
     green: "\x1b[32msuccess:\x1b[0m",
@@ -23,7 +29,7 @@ for (let arg of process.argv.slice(2)) {
 }
 
 function spawner(commandsArray) {
-    return spawnSync(commandsArray.join(' && '), {shell: true});
+    return spawnSync(commandsArray.join(' && '), { shell: true });
 }
 
 const order = {
@@ -41,7 +47,7 @@ const order = {
         }
 
         if (!fs.existsSync('redis')) {
-            fs.mkdirSync('redis', {recursive: true});
+            fs.mkdirSync('redis', { recursive: true });
         }
     },
     log_prerequisites: () => {
