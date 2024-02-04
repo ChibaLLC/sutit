@@ -34,6 +34,10 @@ export class LogFileWriter {
     }
 
     constructor() {
+        if (!isDevelopment) {
+            this.streams = {} as typeof this.streams
+            return
+        }
         if (process.server !== undefined && !process.server) throw new Error('LogFileWriter can only be used on the server')
         if (!existsSync(path.join('./logs'))) {
             mkdirSync(path.join('./logs'))
