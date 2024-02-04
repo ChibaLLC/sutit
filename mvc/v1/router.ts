@@ -1,4 +1,5 @@
 import authController from "./auth/controller"
+import faceBookController from "./facebook/controller"
 import type {H3Event} from "h3";
 import type {APIResponse} from "~/types";
 
@@ -12,5 +13,6 @@ router.use("/status", defineEventHandler((event: H3Event) => {
 }))
 
 router.use("/auth/*", authController)
+router.use("/facebook/*", faceBookController)
 
 export default baseRouter("/api/v1", router)

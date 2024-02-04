@@ -10,7 +10,7 @@ export async function useHttpResponse(event: H3Event, data?: Object, status: num
     await event.respondWith(new Response(JSON.stringify(response), {status: status}))
 }
 
-export function useHttpEnd(event: H3Event, data: Object | null, status?: number): void {
+export function useHttpEnd(event: H3Event, data: any | null, status?: number): void {
     const end = () => {
         event.node.res.statusCode = status ?? 204
         event.node.res.end()

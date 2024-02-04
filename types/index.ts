@@ -20,3 +20,54 @@ export enum Status {
     serviceUnavailable = 503,
     gatewayTimeout = 504
 }
+
+export type CloudAPI = {
+    object: "whatsapp_business_account";
+    entry: Array<{
+        id: string;
+        changes: Array<{
+            value: {
+                messaging_product: "whatsapp";
+                metadata: {
+                    display_phone_number: string;
+                    phone_number_id: string;
+                };
+                contacts: Array<{
+                    profile: {
+                        name: string;
+                    };
+                    wa_id: string;
+                }>;
+                messages: Array<{
+                    from: string;
+                    id: string;
+                    timestamp: string;
+                    text: {
+                        body: string;
+                    };
+                    type: "text";
+                }>;
+            };
+            field: "messages";
+        }>;
+    }>;
+};
+
+export type OnPremisesAPI = {
+    contacts: Array<{
+        profile: {
+            name: string;
+        };
+        wa_id: string;
+    }>;
+    messages: Array<{
+        from: string;
+        id: string;
+        timestamp: string;
+        text: {
+            body: string;
+        };
+        type: "text";
+    }>;
+};
+

@@ -3,6 +3,7 @@ import {isBun} from "std-env";
 
 export default defineNuxtConfig({
     devtools: {enabled: true},
+
     nitro: {
         storage: {
             'redis': {
@@ -20,7 +21,10 @@ export default defineNuxtConfig({
         },
         preset: isBun ? 'bun' : 'node-server'
     },
+
     css: [
         '~/assets/css/main.css'
-    ]
+    ],
+
+    modules: ["@nuxtjs/tailwindcss"]
 })
