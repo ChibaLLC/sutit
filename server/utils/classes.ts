@@ -8,9 +8,10 @@ import {
     type WriteStream
 } from "node:fs";
 import path from "node:path";
-import {createInterface} from "node:readline";
-import {consola, type LogObject, type LogType} from "consola";
-import {execSync} from "node:child_process";
+import { createInterface } from "node:readline";
+import { consola, type LogObject, type LogType } from "consola";
+import { execSync } from "node:child_process";
+import { isDevelopment } from "std-env";
 
 export class LogFileWriter {
     private logs = new Set<string>([
@@ -52,7 +53,7 @@ export class LogFileWriter {
     private makeStreams() {
         const streams = {} as typeof this.streams
         for (const log of this.logs) {
-            streams[log] = createWriteStream(path.join(`./logs/${log}.log`), {flags: 'a'})
+            streams[log] = createWriteStream(path.join(`./logs/${log}.log`), { flags: 'a' })
         }
         return streams
     }
@@ -68,6 +69,7 @@ export class LogFileWriter {
     }
 
     public async log(logObj: LogObject): Promise<void> {
+        if (!isDevelopment) return
         if (typeof logObj === 'string') return this.logString(logObj)
         try {
             this.streams.master.write(this.stringifyLogObject(logObj))
@@ -102,8 +104,8 @@ export class LogFileWriter {
     }
 
     private parseLogString(logString: string): LogObject {
-        try{
-            if(logString.trim().length === 0) return {} as LogObject
+        try {
+            if (logString.trim().length === 0) return {} as LogObject
             const logArray = logString.split('\t')
             const logObject = {} as LogObject
             const tag_type = logArray[1]?.replace('(', '').replace(')', '').split(' ')
