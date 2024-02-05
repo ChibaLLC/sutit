@@ -1,8 +1,8 @@
 import {credentials} from '../drizzle.config'
 import mysql2 from 'mysql2/promise'
-import {drizzle, MySql2Database} from "drizzle-orm/mysql2"
+import {drizzle} from "drizzle-orm/mysql2"
 
-const pool = mysql2.createPool({
+const connection = mysql2.createPool({
     ...credentials,
     waitForConnections: true,
     connectionLimit: 10,
@@ -11,4 +11,4 @@ const pool = mysql2.createPool({
     }
 })
 
-export default drizzle(pool)
+export default drizzle(connection)

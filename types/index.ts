@@ -71,3 +71,41 @@ export type OnPremisesAPI = {
     }>;
 };
 
+
+export type MpesaStkRequest = {
+    BusinessShortCode: number,
+    Password: string,
+    Timestamp: string,
+    TransactionType: string,
+    Amount: number,
+    PartyA: number,
+    PartyB: number,
+    PhoneNumber: number,
+    CallBackURL: string,
+    AccountReference: string,
+    TransactionDesc: string
+}
+
+export enum MpesaTransactionType {
+    CustomerPayBillOnline = "CustomerPayBillOnline"
+}
+
+export enum DarajaLinks {
+    OAuth_Access_Token = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=",
+    STK_Push = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+}
+
+export const callBackIpWhitelist = [
+    '196.201.214.200',
+    '196.201.214.206',
+    '196.201.213.114',
+    '196.201.214.207',
+    '196.201.214.208',
+    '196.201.213.44',
+    '196.201.212.127',
+    '196.201.212.138',
+    '196.201.212.129',
+    '196.201.212.136',
+    '196.201.212.74',
+    '196.201.212.69'
+]

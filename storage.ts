@@ -1,5 +1,7 @@
 import {isLinux} from "std-env";
 
-const storage = isLinux ? useStorage("redis"): useStorage("file");
+const forceRedis = process.env.FORCE_REDIS?.toLowerCase() === "true";
+
+const storage = (isLinux || forceRedis) ? useStorage("redis"): useStorage("file");
 
 export default storage;

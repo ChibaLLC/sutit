@@ -1,3 +1,9 @@
 const router = createRouter()
 
-export default useController("/api/v1", router)
+router.use("/callback", defineEventHandler((event) => {
+    console.log(event)
+
+    return "OK"
+}))
+
+export default useController("mpesa", router)
