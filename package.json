@@ -29,7 +29,6 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
-    "@nuxt/ui": "^2.13.0",
     "drizzle-orm": "^0.29.3",
     "mysql2": "^3.9.1",
     "ulid": "^2.3.0",
