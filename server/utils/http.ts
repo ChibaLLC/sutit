@@ -2,28 +2,18 @@ import {defineEventHandler, H3Event, type Router} from "h3";
 import {type APIResponse, Status} from "~/types";
 import {useBase} from "h3";
 
-export async function useHttpResponse(event: H3Event, data?: Object, status: number = 200): Promise<void> {
-    const response = {} as APIResponse
-    response.statusCode = status
-    response.body = data
-
-    await event.respondWith(new Response(JSON.stringify(response), {status: status}))
+export async function useHttpResponse(event: H3Event, data: APIResponse, status: number = 200): Promise<void> {
+    event.node.res.statusCode = status
+    event.node.res.write(JSON.stringify(data))
 }
 
-export function useHttpEnd(event: H3Event, data: any | null, status?: number): void {
+export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: number) {
     const end = () => {
-        event.node.res.statusCode = status ?? 204
+        event.node.res.statusCode = status ?? 200
         event.node.res.end()
     }
-
-    if (!data) return end()
-
-    useHttpResponse(event, data, status ?? 200)
-        .then(end)
-        .catch((err) => {
-            console.error(err || 'Unable to end request; useHttpEnd')
-            end()
-        })
+    if (data) return useHttpResponse(event, data as APIResponse, status).then(end)
+    return end()
 }
 
 class Stream {
@@ -62,13 +52,13 @@ export function useSSE(event: H3Event): Stream {
     return new Stream(event)
 }
 
-export function useController(name: string, router: Router) {
+export function useController(folderName: string, router: Router) {
     router.use('/*', defineEventHandler((event: H3Event) => {
         useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
         return useHttpEnd(event, null, 404)
     }))
 
-    return useBase(`/${name}`, router.handler)
+    return useBase(`/${folderName}`, router.handler)
 }
 
 export function baseRouter(base: string, router: Router) {

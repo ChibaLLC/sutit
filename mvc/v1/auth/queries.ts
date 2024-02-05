@@ -1,62 +1,46 @@
 import {eq, and} from "drizzle-orm";
 import db from '~/db/';
-import {sessions, users} from "../../db/drizzle/schema";
+import {sessions} from "~/db/drizzle/schema";
 import {v4} from "uuid";
+import type {Drizzle} from "~/db/types";
+import {type MySqlRawQueryResult} from "drizzle-orm/mysql2";
+import {getUserByEmail} from "~/mvc/v1/users/queries";
 
-export async function createUser(data: { name: string, email: string, password: string }) {
-    const auth = useHashPassword(data.password)
-    return db.insert(users).values({
-        name: data.name,
-        email: data.email,
-        password: auth.hash,
-        salt: auth.salt,
-    }).catch((err) => {
-        console.error(err)
-        throw new Error('Unable to create user')
-    })
-}
 
-export function getUserByEmail(email: string) {
-    const rows = db.select()
-        .from(users)
-        .where(and(eq(users.email, email)))
-        .catch((err) => {
-            console.error(err)
-            throw new Error('Unable to get user')
-        })
-    return rows[0]
-}
-
-export async function createToken(user: { userId: number, email: string }):Promise<string> {
+export async function createToken(user: { userId: number, email: string }): Promise<string> {
     const uuid = v4()
-    return await db.insert(sessions).values({
+    const values = {
         userId: user.userId,
         token: uuid,
-    }).then(() => uuid).catch((err) => {
-        console.error(err)
-        throw new Error('Unable to create token')
-    })
+    } satisfies Drizzle.Session.insert
+    return await db.insert(sessions).values(values).then(() => uuid)
+        .catch((err) => {
+            console.error(err)
+            throw new Error('Unable to create token')
+        })
 }
 
-export async function revokeToken(token: string) {
+export async function revokeToken(token: string): Promise<MySqlRawQueryResult> {
     return await db.update(sessions).set({
         isValid: 1,
-    }).where(and(eq(sessions.token, token))).catch((err) => {
-        console.error(err)
-        throw new Error('Unable to revoke token')
-    })
+    }).where(and(eq(sessions.token, token)))
+        .catch((err) => {
+            console.error(err)
+            throw new Error('Unable to revoke token')
+        })
 }
 
-export async function revokeAllTokens(userId: number) {
+export async function revokeAllTokens(userId: number): Promise<MySqlRawQueryResult> {
     return await db.update(sessions).set({
         isValid: 1,
-    }).where(eq(sessions.userId, userId)).catch((err) => {
-        console.error(err)
-        throw new Error('Unable to revoke token')
-    })
+    }).where(eq(sessions.userId, userId))
+        .catch((err) => {
+            console.error(err)
+            throw new Error('Unable to revoke token')
+        })
 }
 
-export async function verifyToken(token: string) {
+export async function verifyToken(token: string): Promise<boolean> {
     const rows = await db.select()
         .from(sessions)
         .where(and(eq(sessions.token, token), eq(sessions.isValid, 1)))
@@ -64,19 +48,9 @@ export async function verifyToken(token: string) {
             console.error(err)
             throw new Error('Unable to verify token')
         })
-    return rows[0].isValid
+    return Boolean(rows.at(0)?.isValid) || false
 }
 
-export async function getUserByToken(token: string) {
-    const rows = await db.select()
-        .from(sessions)
-        .where(and(eq(sessions.token, token), eq(sessions.isValid, 1)))
-        .catch((err) => {
-            console.error(err)
-            throw new Error('Unable to verify token')
-        })
-    return rows[0]
-}
 
 export async function authenticate(data: { email: string, password: string }): Promise<string> {
     const user = await getUserByEmail(data.email)
@@ -85,5 +59,5 @@ export async function authenticate(data: { email: string, password: string }): P
     const valid = useVerifyPassword(data.password, user.salt, user.password)
     if (!valid) throw new Error('Invalid password')
 
-    return await createToken(user)
+    return await createToken({userId: user.id, email: user.email})
 }

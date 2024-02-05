@@ -1,1 +1,13 @@
-{"version":"5","dialect":"mysql","entries":[]}
+{
+  "version": "5",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1707129156877,
+      "tag": "0000_equal_vertigo",
+      "breakpoints": true
+    }
+  ]
+}
