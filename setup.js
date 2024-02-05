@@ -1,10 +1,9 @@
 import { spawnSync, execSync } from "node:child_process";
 import fs from "node:fs";
-import { isDevelopment } from "std-env";
 
 const OS = process.platform;
 
-if (!isDevelopment) {
+if (process.env.NODE_ENV== 'dev' && process.env.NODE_ENV !== 'development') {
     console.log("This script is only for development purposes");
     process.exit(0);
 }
@@ -29,8 +28,16 @@ for (let arg of process.argv.slice(2)) {
 }
 
 function spawner(commandsArray) {
-    return spawnSync(commandsArray.join(' && '), { shell: true });
+    for (const command of commandsArray) {
+        const result = spawnSync(command, { shell: true, stdio: 'inherit' });
+        if (result.error) {
+            console.error(colors.red, `Error executing command: ${command}`);
+            console.error(result.error);
+            process.exit(1);
+        }
+    }
 }
+
 
 const order = {
     pre_check: () => {
@@ -54,8 +61,8 @@ const order = {
         console.log(colors.info, `Installing prerequisites`);
     },
     prerequisites: [
-        'sudo apt install libsystemd-dev -y',
         'sudo apt-get update',
+        'sudo apt install libsystemd-dev -y',
         'sudo apt-get install build-essential tcl -y'
     ],
     log_download: () => {
@@ -68,8 +75,8 @@ const order = {
     log_install: () => {
         console.log(colors.info, `Installing Redis`);
     },
-    install: [
-        'cd ./redis/redis-7.2.3 && make MALLOC=libc USE_SYSTEMD=yes',
+    install: [ // incase the make below fails, use `make MALLOC=libc USE_SYSTEMD=yes`
+        'cd ./redis/redis-7.2.3 && make',
         'cd ./redis/redis-7.2.3 && sudo make install'
     ],
     clean: [

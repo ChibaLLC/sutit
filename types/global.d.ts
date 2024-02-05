@@ -1,4 +1,4 @@
-import type {LogFileWriter} from "~/utils/classes";
+import { LogFileWriter } from "~/utils/classes";
 
 declare global {
     namespace NodeJS {

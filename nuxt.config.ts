@@ -1,9 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import {isBun, isDevelopment} from "std-env";
+import { isBun, isDevelopment } from "std-env";
 
 export default defineNuxtConfig({
-    devtools: {enabled: true},
-
+    devtools: { enabled: true },
     nitro: {
         storage: {
             'redis': {
@@ -20,10 +19,8 @@ export default defineNuxtConfig({
             }
         }
     },
-
     css: [
         '~/assets/css/main.css'
     ],
-
-    modules: ["@nuxtjs/tailwindcss"]
+    modules: ["@nuxtjs/tailwindcss", "nuxt/ui"]
 })
