@@ -1,3 +1,4 @@
 <template>
-    <slot />
+  <Nav/>
+  <slot/>
 </template>

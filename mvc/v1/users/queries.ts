@@ -33,6 +33,7 @@ export async function getUserByEmail(email: string): Promise<Drizzle.User.select
             console.error(err)
             throw new Error('Unable to get users')
         })
+
     return rows.at(0) || null
 }
 
@@ -50,7 +51,7 @@ export async function createUser(data: {
     } satisfies Drizzle.User.insert
 
     return db.insert(users).values(values).catch((err) => {
-        console.error(err)
-        throw new Error('Unable to create users')
+        useFileLogger(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal', tag: 'Drizzle: Create User'})
+        throw err
     })
 }

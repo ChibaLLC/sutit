@@ -11,7 +11,7 @@ export async function call_stk(phone_number: number, amount: number, description
     }>("mpesa_api_access_token")
 
     if (!accessToken || (new Date().getTime() - new Date(accessToken.time).getTime()) / 1000 > accessToken.expires_in) {
-        const authorisation = Buffer.from(`${process.env.MPESA_CONSUMER_KEY!}:${process.env.MPESA_CONSUMER_SECRET!}`).toString("base64")
+        const authorisation = Buffer.from(`${process.env.MPESA_APP_CONSUMER_KEY!}:${process.env.MPESA_APP_CONSUMER_SECRET!}`).toString("base64")
         const res = await $fetch<{
             access_token: string
             expires_in: number

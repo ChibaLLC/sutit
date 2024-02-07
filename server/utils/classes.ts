@@ -13,7 +13,7 @@ import { consola, type LogObject, type LogType } from "consola";
 import { execSync } from "node:child_process";
 import { isDevelopment } from "std-env";
 
-export class LogFileWriter {
+export class Logger {
     private logs = new Set<string>([
         'log',
         'info',
@@ -72,9 +72,12 @@ export class LogFileWriter {
         return this.log(logObject)
     }
 
-    public async log(logObj: LogObject): Promise<void> {
-        if (!isDevelopment) return
-        if (typeof logObj === 'string') return this.logString(logObj)
+    private logProduction(logObj: LogObject): void {
+        consola[logObj.type](logObj.args.join(' '))
+    }
+
+    public async log(logObj: LogObject, toConsole: boolean = false): Promise<void> {
+        if (!isDevelopment || toConsole) return this.logProduction(logObj)
         try {
             this.streams.master.write(this.stringifyLogObject(logObj))
             return new Promise((resolve, reject) => {

@@ -4,7 +4,7 @@ import type {Drizzle} from "~/db/types";
 
 const router = createRouter()
 
-router.post("/new", defineEventHandler(async event => {
+router.post("/create", defineEventHandler(async event => {
     const details = await useAuth(event)
     if (!details) return
 

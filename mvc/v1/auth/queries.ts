@@ -59,5 +59,6 @@ export async function authenticate(data: { email: string, password: string }): P
     const valid = useVerifyPassword(data.password, user.salt, user.password)
     if (!valid) throw new Error('Invalid password')
 
+
     return await createToken({userId: user.id, email: user.email})
 }

@@ -8,5 +8,6 @@ export function useHashPassword(password: string): { salt: string, hash: string 
 
 export function useVerifyPassword(password: string, salt: string, hash: string): boolean {
     const verify = pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
+    console.log(verify, '\n', hash)
     return verify === hash
 }

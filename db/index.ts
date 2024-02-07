@@ -6,9 +6,7 @@ const connection = mysql2.createPool({
     ...credentials,
     waitForConnections: true,
     connectionLimit: 10,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: undefined
 })
 
 export default drizzle(connection)

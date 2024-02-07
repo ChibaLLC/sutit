@@ -1,0 +1,10 @@
+import type {H3Event} from "h3";
+import {revokeToken} from "~/mvc/v1/auth/queries";
+
+export async function revokeAuthToken(event: H3Event){
+    const token = readAuthToken(event)
+    if(!token) return true
+
+    await revokeToken(token)
+    return true
+}

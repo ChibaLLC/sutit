@@ -2,6 +2,7 @@ import authController from "./auth/controller"
 import faceBookController from "./facebook/controller"
 import formsController from "./forms/controller"
 import mpesaController from "./mpesa/controller"
+import usersController from "./users/controller"
 import type {H3Event} from "h3";
 import type {APIResponse} from "~/types";
 
@@ -18,5 +19,6 @@ router.use("/auth/*", authController)
 router.use("/facebook/*", faceBookController)
 router.use("/forms/*", formsController)
 router.use("/mpesa/*", mpesaController)
+router.use("/users/*", usersController)
 
 export default baseRouter("/api/v1", router)

@@ -1,11 +1,12 @@
-import { LogFileWriter } from "~/utils/classes";
+import {Logger} from "~/server/utils/classes";
+
 
 declare global {
     namespace NodeJS {
         interface Global {
-            $FileLogger: LogFileWriter
+            $Logger: Logger
         }
     }
 
-    var $FileLogger: LogFileWriter
+    var $Logger: Logger
 }

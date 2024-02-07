@@ -1,12 +1,13 @@
-import { H3Event } from "h3"
-import type { CloudAPI, OnPremisesAPI } from "~/types";
+import {H3Event} from "h3"
+import type {CloudAPI, OnPremisesAPI} from "~/types";
+
 const router = createRouter()
 
 function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "on_premises_api", data: OnPremisesAPI } {
     if ("object" in data && data.object === "whatsapp_business_account") {
-        return { type: "cloud_api", data };
+        return {type: "cloud_api", data};
     } else if ("contacts" in data && "messages" in data) {
-        return { type: "on_premises_api", data };
+        return {type: "on_premises_api", data};
     } else {
         throw new Error("Invalid data type");
     }
@@ -15,7 +16,7 @@ function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "o
 router.post("/webhook", defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
 
-    useFileLogger(body, { type: "info", tag: "facebook/webhook" })
+    useFileLogger(body, {type: "info", tag: "facebook/webhook"})
 
     const data = typeData(body)
 
@@ -36,10 +37,13 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
             }
         })
     }).catch((e) => {
-        useFileLogger(e, { type: "error", tag: "facebook/webhook" })
+        useFileLogger(e, {type: "error", tag: "facebook/webhook"})
     })
 
-    return useHttpResponse(event, "Ok")
+    return useHttpResponse(event, {
+        statusCode: 200,
+        body: "OK"
+    }, 200)
 }))
 
 router.get("/webhook", defineEventHandler((event) => {
@@ -52,8 +56,8 @@ router.get("/webhook", defineEventHandler((event) => {
 
     if (mode !== "subscribe" || token !== process.env.WHATSAPP_TOKEN) return useHttpEnd(event, null, 403)
 
-    useFileLogger("Webhook verified", { type: "info", tag: "facebook/webhook" })
-    return useHttpResponse(event, challenge, 200)
+    useFileLogger("Webhook verified", {type: "info", tag: "facebook/webhook"})
+    return event.respondWith(new Response(challenge as string, {status: 200, headers: {"Content-Type": "text/plain"}}))
 }))
 
 

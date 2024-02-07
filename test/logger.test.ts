@@ -1,19 +1,19 @@
 import {beforeEach, expect, test} from "vitest";
 import {execSync} from "node:child_process";
-import {LogFileWriter} from "../server/utils/classes";
+import {Logger} from "../server/utils/classes";
 
 beforeEach(() => {
-    global.$FileLogger = new LogFileWriter()
+    global.$FileLogger = new Logger()
 })
 
 test("Testing for $FileLogger", async () => {
-    expect($FileLogger).toBeDefined()
-    expect($FileLogger).toBeInstanceOf(LogFileWriter)
+    expect($Logger).toBeDefined()
+    expect($Logger).toBeInstanceOf(Logger)
 })
 
 test("Testing for $FileLogger.log", async () => {
     const timestamp = new Date().toISOString()
-    await $FileLogger.logString("Test " + timestamp)
+    await $Logger.logString("Test " + timestamp)
     const content = execSync("tail ./logs/log.log").toString().split('\n').map(line => line.trim()).join('\n')
     expect(content).toContain("Test " + timestamp)
     execSync("sed -i '/Test " + timestamp + "/d' ./logs/log.log")
@@ -30,10 +30,10 @@ test("Testing for $FileLogger.tail", async () => {
     ]
 
     for await (const item of items) {
-        await $FileLogger.logString(item.message + " " + item.timestamp)
+        await $Logger.logString(item.message + " " + item.timestamp)
     }
 
-    const logs = $FileLogger.tail("log", 5)
+    const logs = $Logger.tail("log", 5)
     expect(logs.length).toBe(5)
 
     logs.forEach((log, index) => {
