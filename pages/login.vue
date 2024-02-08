@@ -5,7 +5,8 @@ const details = reactive({
 })
 const remember = ref(false)
 const errors = ref(new Set<string>())
-async function submit(){
+
+async function submit() {
   const response = await useAuthFetch('/api/v1/auth/login', {
     method: 'POST',
     headers: {
@@ -17,8 +18,8 @@ async function submit(){
     })
   })
 
-  if(response.statusCode === 200){
-    if(remember.value) setAuthCookie(response.body)
+  if (response.statusCode === 200) {
+    if (remember.value) setAuthCookie(response.body)
     useUser().value!.token = response.body
     await navigateTo('/')
   } else {
@@ -26,8 +27,8 @@ async function submit(){
   }
 }
 
-function clearErrors(){
-  if(errors.value.size === 0) return
+function clearErrors() {
+  if (errors.value.size === 0) return
   errors.value = new Set()
 }
 </script>
@@ -78,7 +79,7 @@ function clearErrors(){
               <div class="text-gray-500 text-center mb-3 font-bold">
                 <small>Or sign in with credentials</small>
               </div>
-              <form @submit.prevent="submit">
+              <form>
                 <div class="text-red-500" v-if="errors.size > 0">
                   <ul>
                     <li v-for="error in errors" :key="error"><small>{{ error }}</small></li>
@@ -128,7 +129,8 @@ function clearErrors(){
                 <div class="text-center mt-6">
                   <button
                       class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full"
-                      type="submit"
+                      type="button"
+                      @click="submit"
                       style="transition: all 0.15s ease 0s;"
                   >
                     Sign In

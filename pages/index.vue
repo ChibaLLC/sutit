@@ -23,7 +23,7 @@
                 See how you can automate payments and increase your revenue
               </p>
               <button
-                  @click="navigateTo('/signup')"
+                  @click="navigateTo(userIsAuthenticated ? '/dashboard' : '/signup')"
                   class="bg-white text-gray-800 active:bg-gray-100 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 mt-3 hover:bg-slate-300 transition-all duration-500 ease-in-out"
               >Get Started
               </button>

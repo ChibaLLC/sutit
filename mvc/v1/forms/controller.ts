@@ -35,7 +35,7 @@ router.post("/create", defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = "Form created"
 
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 router.get("/get/:formId", defineEventHandler(async event => {
@@ -64,7 +64,7 @@ router.get("/get/:formId", defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = form
 
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 router.post("/submit/:formId", defineEventHandler(async event => {
@@ -92,7 +92,7 @@ router.post("/submit/:formId", defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = "Form submitted"
 
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 export default useController("forms", router)

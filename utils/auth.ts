@@ -1,4 +1,5 @@
-import type { APIResponse } from "~/types";
+import type {APIResponse, UserState} from "~/types";
+import {responses} from "~/db/drizzle/schema";
 
 /**
  * This function appends the auth token to the headers of the fetch request
@@ -10,14 +11,13 @@ import type { APIResponse } from "~/types";
  *    method: "GET"
  * })
  */
-export async function useAuthFetch(url: string, options?: RequestInit): Promise<APIResponse> {
-    const authCookie = useCookie<string>("auth")
-    const { headers, ...rest } = options || {}
-    return await fetch(url, {
+export async function useAuthFetch(url: string | URL | Request, options?: RequestInit): Promise<APIResponse> {
+    const {headers, ...rest} = options || {}
+    return fetch(url, {
         ...rest,
         headers: {
             ...headers,
-            'Authorization': `Bearer ${authCookie.value}`,
+            'Authorization': `Bearer ${getAuthToken()}`,
             'Content-Type': 'application/json'
         } as HeadersInit
     } satisfies RequestInit)
@@ -27,10 +27,10 @@ export async function useAuthFetch(url: string, options?: RequestInit): Promise<
                     .catch(() => response.blob()
                         .catch(() => response.arrayBuffer()
                             .catch(() => response))))
-            if (typeof data === "string") return { statusCode: response.status, body: data } as APIResponse
+            if (typeof data === "string") return {statusCode: response.status, body: data} as APIResponse
             return data as APIResponse
         }).catch(err => {
-            return { statusCode: err.statusCode ?? 500, body: err.message } as APIResponse
+            return {statusCode: err.statusCode ?? 500, body: err.message} as APIResponse
         })
 }
 
@@ -53,7 +53,7 @@ export function setAuthCookie(token: string, expiry?: number) {
 
 export function getAuthCookie(): string | null {
     const cookie = useCookie<string>("auth").value?.trim()
-    if(
+    if (
         !cookie ||
         cookie === "undefined" ||
         cookie === "null" ||
@@ -62,4 +62,33 @@ export function getAuthCookie(): string | null {
     ) return null
 
     return useCookie<string>("auth").value
+}
+
+export function getAuthToken() {
+    const state = useUser().value?.token?.trim()
+    const cookie = getAuthCookie()
+
+    if (
+        !state ||
+        state === "undefined" ||
+        state === "null" ||
+        state === "false" ||
+        state === ""
+    ) return cookie
+    return state
+}
+
+export function userIsAuthenticated() {
+    return !!getAuthToken()
+}
+
+export async function logout() {
+    return useAuthFetch("/api/v1/auth/logout")
+        .then(async (res) => {
+            if (res.statusCode !== 200) return alert("Failed to logout")
+            const state = useUser()
+            state.value = {} as UserState
+            setAuthCookie("", 0)
+            await navigateTo("/login")
+        }).catch(console.error)
 }

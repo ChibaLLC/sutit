@@ -132,7 +132,7 @@ export type Base = {
     id?: string,
     value?: string,
     type: FieldEnum,
-    description: string,
+    description?: string,
     required?: boolean,
 }
 
@@ -146,7 +146,6 @@ export type Textarea = Base & {
 
 export type CheckboxInput = Base & {
     type: FieldEnum.CHECKBOX,
-    value: string,
     checked?: boolean,
 }
 

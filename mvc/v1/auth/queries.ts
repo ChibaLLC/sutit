@@ -22,7 +22,7 @@ export async function createToken(user: { userId: number, email: string }): Prom
 
 export async function revokeToken(token: string): Promise<MySqlRawQueryResult> {
     return await db.update(sessions).set({
-        isValid: 1,
+        isValid: 0,
     }).where(and(eq(sessions.token, token)))
         .catch((err) => {
             console.error(err)
@@ -32,7 +32,7 @@ export async function revokeToken(token: string): Promise<MySqlRawQueryResult> {
 
 export async function revokeAllTokens(userId: number): Promise<MySqlRawQueryResult> {
     return await db.update(sessions).set({
-        isValid: 1,
+        isValid: 0,
     }).where(eq(sessions.userId, userId))
         .catch((err) => {
             console.error(err)

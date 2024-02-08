@@ -76,8 +76,7 @@ export class Logger {
         consola[logObj.type](logObj.args.join(' '))
     }
 
-    public async log(logObj: LogObject, toConsole: boolean = false): Promise<void> {
-        if (!isDevelopment || toConsole) return this.logProduction(logObj)
+    public async log(logObj: LogObject): Promise<void> {
         try {
             this.streams.master.write(this.stringifyLogObject(logObj))
             return new Promise((resolve, reject) => {

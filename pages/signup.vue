@@ -50,7 +50,7 @@ async function submit(){
 </script>
 
 <template>
-  <Title>Login</Title>
+  <Title>Sign Up</Title>
   <section class="relative w-full" style="margin-top: 100px">
     <div class="container mx-auto px-4 h-full">
       <div class="flex content-center items-center justify-center h-full">

@@ -39,7 +39,13 @@ export function readAuthToken(event: H3Event){
     if (bearer !== "Bearer") return null
 
     token = token.trim()
-    if (!token || token === '') return null
+    if (
+        !token ||
+        token === "undefined" ||
+        token === "null" ||
+        token === "false" ||
+        token === ""
+    ) return null
 
     return token
 }

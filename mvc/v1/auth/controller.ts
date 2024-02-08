@@ -57,7 +57,7 @@ router.post("/signup", defineEventHandler(async event => {
 
     response.statusCode = Status.success
     response.body = token
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 router.post("/login", defineEventHandler(async event => {
@@ -85,14 +85,14 @@ router.post("/login", defineEventHandler(async event => {
 
     response.statusCode = Status.success
     response.body = token
-    return await useHttpResponse(event, response)
+    return response
 }))
 
-router.post("/logout", defineEventHandler(async event => {
+router.get("/logout", defineEventHandler(async event => {
     const response = {} as APIResponse
     const revoke = await revokeAuthToken(event).catch(err => {
         useHttpEnd(event, {
-            body: err.message,
+            body: err.message || err,
             statusCode: Status.internalServerError
         }, Status.internalServerError)
         return false
@@ -101,7 +101,7 @@ router.post("/logout", defineEventHandler(async event => {
 
     response.statusCode = Status.success
     response.body = "Logged out"
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 export default useController("auth", router)

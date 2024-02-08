@@ -26,7 +26,7 @@ router.get("/email/:email", defineEventHandler(async event => {
         email: user.email,
         name: user.name
     }
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 router.get("/token/:token", defineEventHandler(async event => {
@@ -52,7 +52,7 @@ router.get("/token/:token", defineEventHandler(async event => {
         email: user.email,
         name: user.name
     }
-    return await useHttpResponse(event, response)
+    return response
 }))
 
 export default useController("users", router)

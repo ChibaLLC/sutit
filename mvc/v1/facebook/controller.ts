@@ -1,5 +1,5 @@
 import {H3Event} from "h3"
-import type {CloudAPI, OnPremisesAPI} from "~/types";
+import type {APIResponse, CloudAPI, OnPremisesAPI} from "~/types";
 
 const router = createRouter()
 
@@ -40,10 +40,10 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
         useFileLogger(e, {type: "error", tag: "facebook/webhook"})
     })
 
-    return useHttpResponse(event, {
+    return {
         statusCode: 200,
         body: "OK"
-    }, 200)
+    } as APIResponse
 }))
 
 router.get("/webhook", defineEventHandler((event) => {

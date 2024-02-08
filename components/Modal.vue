@@ -12,7 +12,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex justify-center items-center h-screen">
+  <div class="flex justify-center items-center h-screen absolute">
     <div v-if="open">
       <!-- Modal Overlay -->
       <transition name="fade">
@@ -33,9 +33,9 @@ defineProps({
               <!-- Modal Footer -->
               <div class="border-t px-4 py-2 flex justify-end">
                 <button class="px-3 py-1 bg-indigo-500 text-white  rounded-md w-full sm:w-auto" @click="$emit('close')">
-                  Close
+                  Done
                 </button>
-                <button class="px-3 py-1 bg-indigo-500 text-white  rounded-md w-full sm:w-auto" @click="$emit('cancel')">
+                <button class="px-3 py-1 bg-indigo-500 text-white ml-2 rounded-md w-full sm:w-auto" @click="$emit('cancel')">
                   Cancel
                 </button>
               </div>

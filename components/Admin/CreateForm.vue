@@ -21,7 +21,7 @@ function add() {
 function submit() {
   const response = useAuthFetch('/api/v1/forms/create', {
     method: 'POST',
-    body: fields.value
+    body: JSON.stringify(fields.value)
   })
 }
 </script>

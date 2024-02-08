@@ -2,18 +2,9 @@ import {defineEventHandler, H3Event, type Router} from "h3";
 import {type APIResponse, Status} from "~/types";
 import {useBase} from "h3";
 
-export async function useHttpResponse(event: H3Event, data: APIResponse, status: number = 200): Promise<void> {
-    event.node.res.statusCode = status
-    event.node.res.write(JSON.stringify(data))
-}
-
 export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: number) {
-    const end = () => {
-        event.node.res.statusCode = status ?? 200
-        event.node.res.end()
-    }
-    if (data) return useHttpResponse(event, data as APIResponse, status).then(end)
-    return end()
+    if (data) return event.respondWith(new Response(JSON.stringify(data), {status: status ?? 200, headers: {'Content-Type': 'application/json'}}))
+    return event.respondWith(new Response(null, {status: status ?? 200}))
 }
 
 class Stream {

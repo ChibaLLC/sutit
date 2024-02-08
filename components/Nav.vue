@@ -17,19 +17,26 @@
       </div>
       <div v-bind:class="{'hidden': !showMenu, 'flex': showMenu}" class="lg:flex lg:flex-grow items-center">
         <ul class="flex flex-col lg:flex-row list-none ml-auto gap-2">
-          <li class="nav-item">
+          <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
                 class="btn sign-up px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
                 to="/signup">
               Sign Up
             </NuxtLink>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
                 class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
                 to="/login">
               Log In
             </NuxtLink>
+          </li>
+          <li class="nav-item" v-if="userIsAuthenticated()">
+            <button
+                class="btn log-out px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
+                @click="logout">
+              Log Out
+            </button>
           </li>
         </ul>
       </div>
@@ -38,10 +45,15 @@
 </template>
 
 <script setup lang="ts">
+
 const showMenu = ref(false);
 const toggleNavbar = () => {
   showMenu.value = !showMenu.value;
 };
+
+onMounted(() => {
+  document.body.classList.remove('dark')
+})
 </script>
 
 <style scoped>
