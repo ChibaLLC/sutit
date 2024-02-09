@@ -117,3 +117,14 @@ create table if not exists sys_logs
     created_at timestamp        not null default current_timestamp,
     primary key (id)
 );
+
+create table if not exists `orders`
+(
+    id         int(11) unsigned not null auto_increment primary key,
+    order_id   varchar(255)     not null,
+    phone      varchar(255)     not null,
+    amount     int(11) unsigned not null,
+    paid       boolean          not null default false,
+    created_at timestamp        not null default current_timestamp,
+    updated_at timestamp        not null default current_timestamp on update current_timestamp
+);

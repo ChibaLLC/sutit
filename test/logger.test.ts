@@ -3,6 +3,7 @@ import {execSync} from "node:child_process";
 import {Logger} from "../server/utils/classes";
 
 beforeEach(() => {
+    // @ts-ignore
     global.$FileLogger = new Logger()
 })
 

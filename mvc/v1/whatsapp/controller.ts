@@ -1,13 +1,15 @@
-import {H3Event} from "h3"
-import type {APIResponse, CloudAPI, OnPremisesAPI} from "~/types";
+import { H3Event } from "h3"
+import { WhatsAppWeb } from "~/server/utils/classes";
+import storage from "~/storage";
+import { Status, type APIResponse, type CloudAPI, type OnPremisesAPI } from "~/types";
 
 const router = createRouter()
 
 function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "on_premises_api", data: OnPremisesAPI } {
     if ("object" in data && data.object === "whatsapp_business_account") {
-        return {type: "cloud_api", data};
+        return { type: "cloud_api", data };
     } else if ("contacts" in data && "messages" in data) {
-        return {type: "on_premises_api", data};
+        return { type: "on_premises_api", data };
     } else {
         throw new Error("Invalid data type");
     }
@@ -16,7 +18,7 @@ function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "o
 router.post("/webhook", defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
 
-    useFileLogger(body, {type: "info", tag: "whatsapp/webhook"})
+    useFileLogger(body, { type: "info", tag: "whatsapp/webhook" })
 
     const data = typeData(body)
 
@@ -37,7 +39,7 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
             }
         })
     }).catch((e) => {
-        useFileLogger(e, {type: "error", tag: "whatsapp/webhook"})
+        useFileLogger(e, { type: "error", tag: "whatsapp/webhook" })
     })
 
     return {
@@ -56,9 +58,30 @@ router.get("/webhook", defineEventHandler((event) => {
 
     if (mode !== "subscribe" || token !== process.env.WHATSAPP_TOKEN) return useHttpEnd(event, null, 403)
 
-    useFileLogger("Webhook verified", {type: "info", tag: "whatsapp/webhook"})
-    return event.respondWith(new Response(challenge as string, {status: 200, headers: {"Content-Type": "text/plain"}}))
+    useFileLogger("Webhook verified", { type: "info", tag: "whatsapp/webhook" })
+    return event.respondWith(new Response(challenge as string, { status: 200, headers: { "Content-Type": "text/plain" } }))
 }))
 
+router.get("/create-instance", defineEventHandler(async (event) => {
+    const details = await useAuth(event).catch((e) => {
+        useHttpEnd(event, {
+            statusCode: Status.unauthorized,
+            body: "You need to log in to access this page"
+        }, 401)
+    })
+    if (!details) return {
+        statusCode: Status.notFound,
+        body: "User not found"
+    }
+
+    const instance = await storage.getItem<WhatsAppWeb>(`whatsapp_instance_${details.user.id}`)
+    if (instance) {
+        instance.start(useSSE(event))
+    } else {
+        const whatsApp = new WhatsAppWeb(details.user.id)
+        storage.setItem<WhatsAppWeb>(`whatsapp_instance_${details.user.id}`, whatsApp)
+        whatsApp.start(useSSE(event))
+    }
+}))
 
 export default useController("whatsapp", router)

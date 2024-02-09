@@ -50,6 +50,7 @@ const order = {
 
         if (fs.existsSync('/usr/local/bin/redis-server')) {
             console.log(colors.info, `Redis is already installed`);
+            spawner(order.add_on)
             process.exit(0);
         }
 

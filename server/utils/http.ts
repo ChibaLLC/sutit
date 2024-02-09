@@ -7,7 +7,7 @@ export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: nu
     return event.respondWith(new Response(null, {status: status ?? 200}))
 }
 
-class Stream {
+export class Stream {
     private readonly _event: H3Event | undefined;
 
     constructor(event: H3Event) {

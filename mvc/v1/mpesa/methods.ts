@@ -53,12 +53,23 @@ export async function call_stk(phone_number: number, amount: number, description
         TransactionDesc: description
     } satisfies MpesaStkRequest
 
-    const response = await $fetch(process.env.MPESA_STK_URL!, {
+    const response = await $fetch(DarajaLinks.STK_Push, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${accessToken}`,
+            "Authorization": `Bearer ${accessToken.access_token}`,
             "Content-Type": "application/json"
         },
         body: request
+    }).then(res => res as {
+        ResponsCode: string
+        ResponseDescription: string
+        MerchantRequestID: string
+        CheckoutRequestID: string
+    }).catch(err => {
+        console.error(err)
+        throw new Error("Failed to initiate STK push")
     })
+
+    if (response?.ResponsCode !== "0") throw new Error(response?.ResponseDescription || "Failed to initiate STK push")
+    return response
 }

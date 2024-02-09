@@ -1,6 +1,5 @@
-import type {APIResponse, UserState} from "~/types";
-import {responses} from "~/db/drizzle/schema";
-
+import { Status, type APIResponse, type UserState } from "~/types";
+import { readStream } from "./http";
 /**
  * This function appends the auth token to the headers of the fetch request
  * @param url destination url
@@ -11,27 +10,42 @@ import {responses} from "~/db/drizzle/schema";
  *    method: "GET"
  * })
  */
-export async function useAuthFetch(url: string | URL | Request, options?: RequestInit): Promise<APIResponse> {
-    const {headers, ...rest} = options || {}
-    return fetch(url, {
+type AuthRequestInit = RequestInit & { stream?: boolean }
+export async function useAuthFetch(url: string | URL | Request, options?: AuthRequestInit): Promise<APIResponse> {
+    const { headers, ...rest } = options || {}
+    const response = await fetch(url, {
         ...rest,
         headers: {
             ...headers,
             'Authorization': `Bearer ${getAuthToken()}`,
             'Content-Type': 'application/json'
         } as HeadersInit
-    } satisfies RequestInit)
-        .then(async response => {
-            const data = await response.json()
-                .catch(() => response.text()
-                    .catch(() => response.blob()
-                        .catch(() => response.arrayBuffer()
-                            .catch(() => response))))
-            if (typeof data === "string") return {statusCode: response.status, body: data} as APIResponse
-            return data as APIResponse
-        }).catch(err => {
-            return {statusCode: err.statusCode ?? 500, body: err.message} as APIResponse
-        })
+    } satisfies RequestInit).catch(console.error)
+
+    if (!response) return {
+        statusCode: Status.internalServerError,
+        body: "Failed to fetch"
+    }
+
+    if (!options?.stream) {
+        const data = await response.json()
+            .catch(async () => await response.text()
+                .catch(async () => await response.blob()
+                    .catch(async () => await response.arrayBuffer()
+                        .catch(() => response))))
+        if (typeof data === "string") return { statusCode: response.status, body: data } as APIResponse
+        return data as APIResponse
+    }
+
+    if (response?.status !== Status.SSEStart || !response.body) {
+        return { statusCode: response.status, body: response.statusText || "Failed to start SSE" } as APIResponse
+    }
+
+    const reader = response.body?.getReader()
+    return {
+        statusCode: response.status,
+        body: readStream.bind(null, reader)
+    }
 }
 
 /**

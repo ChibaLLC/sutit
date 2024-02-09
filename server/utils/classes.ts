@@ -12,6 +12,11 @@ import { createInterface } from "node:readline";
 import { consola, type LogObject, type LogType } from "consola";
 import { execSync } from "node:child_process";
 import { isDevelopment } from "std-env";
+import ww from "whatsapp-web.js";
+import { Stream } from "../utils/http";
+import { Status } from "../../types";
+import { call_stk } from "~/mvc/v1/mpesa/methods";
+
 
 export class Logger {
     private logs = new Set<string>([
@@ -258,5 +263,48 @@ export class Logger {
             consola.error(e)
             return undefined
         }
+    }
+}
+
+export class WhatsAppWeb {
+    private client: ww.Client;
+    constructor(userId: number) {
+        this.client = new ww.Client({
+            authStrategy: new ww.LocalAuth({
+                dataPath: "./whatsapp-web/" + userId
+            })
+        });
+    }
+    public async start(stream: Stream) {
+        this.client.on("qr", async (qr) => {
+            stream.send({
+                statusCode: Status.whatsappWebQR,
+                body: qr
+            });
+        });
+        this.client.on("ready", () => {
+            stream.send({
+                statusCode: Status.whatsappWebReady,
+                body: "Ready"
+            })
+        });
+        this.client.on("message", async (message) => {
+            if (message.type === 'order') {
+                message.reply("A payment request has been sent to your phone. Please check your phone to complete the payment. If it's not a MPESA number, please input your MPESA number as the next message")
+                const phone = (await message.getContact()).number
+                const order = await message.getOrder()
+                const products = order.products.map(product => product.name).join(", ")
+                await call_stk(+phone, 1, "Payment request from " + (message?._data?.notifyName || message.from) + " for " + products).catch(err => {
+                    consola.error(err)
+                })
+                consola.info("Payment request sent to " + phone)
+            }
+            stream.send({
+                statusCode: Status.whatsappWebMessage,
+                body: message
+            })
+        });
+
+        await this.client.initialize();
     }
 }
