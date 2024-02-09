@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.11.2",
+    "@types/qrcode": "^1.5.5",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
     "dotenv": "^16.4.1",
@@ -31,6 +32,7 @@
   "dependencies": {
     "drizzle-orm": "^0.29.3",
     "mysql2": "^3.9.1",
+    "qrcode": "^1.5.3",
     "ulid": "^2.3.0",
     "uuid": "^9.0.1",
     "whatsapp-web.js": "^1.23.0"
