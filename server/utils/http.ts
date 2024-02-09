@@ -9,14 +9,17 @@ export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: nu
 
 export class Stream {
     private readonly _event: H3Event | undefined;
+    private headersSent: boolean = false;
 
     constructor(event: H3Event) {
         this._event = event;
         this.flushHeaders()
+        this.headersSent = true;
     }
 
     private flushHeaders() {
         if (!this._event) throw new Error('Event is not defined')
+        if(this.headersSent) return;
         this._event.node.res.setHeader('Content-Type', 'text/event-stream');
         this._event.node.res.setHeader('Cache-Control', 'no-cache');
         this._event.node.res.setHeader('Connection', 'keep-alive');

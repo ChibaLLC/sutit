@@ -268,12 +268,14 @@ export class Logger {
 
 export class WhatsAppWeb {
     private client: ww.Client;
+    private userId: number;
     constructor(userId: number) {
         this.client = new ww.Client({
             authStrategy: new ww.LocalAuth({
                 dataPath: "./whatsapp-web/" + userId
             })
         });
+        this.userId = userId
     }
     public async start(stream: Stream) {
         this.client.on("qr", async (qr) => {
@@ -306,5 +308,9 @@ export class WhatsAppWeb {
         });
 
         await this.client.initialize();
+    }
+
+    get user_id() {
+        return this.userId
     }
 }

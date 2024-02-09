@@ -1,7 +1,9 @@
 import { H3Event } from "h3"
 import { WhatsAppWeb } from "~/server/utils/classes";
 import storage from "~/storage";
-import { Status, type APIResponse, type CloudAPI, type OnPremisesAPI } from "~/types";
+import { type APIResponse, type CloudAPI, type OnPremisesAPI } from "~/types";
+import ESSerializer from 'esserializer';
+import ww from "whatsapp-web.js";
 
 const router = createRouter()
 
@@ -63,23 +65,20 @@ router.get("/webhook", defineEventHandler((event) => {
 }))
 
 router.get("/create-instance", defineEventHandler(async (event) => {
+    
     const details = await useAuth(event).catch((e) => {
-        useHttpEnd(event, {
-            statusCode: Status.unauthorized,
-            body: "You need to log in to access this page"
-        }, 401)
+        console.error(e)
+        return null;
     })
-    if (!details) return {
-        statusCode: Status.notFound,
-        body: "User not found"
-    }
+    if (!details) return
 
-    const instance = await storage.getItem<WhatsAppWeb>(`whatsapp_instance_${details.user.id}`)
-    if (instance) {
+    const string = await storage.getItem<string>(`whatsapp_${details.user.id}`)
+    if (string) {
+        const instance = ESSerializer.deserialize(string, [WhatsAppWeb, Stream, ww.LocalAuth, ww.Client])
         instance.start(useSSE(event))
     } else {
         const whatsApp = new WhatsAppWeb(details.user.id)
-        storage.setItem<WhatsAppWeb>(`whatsapp_instance_${details.user.id}`, whatsApp)
+        await storage.setItem(`whatsapp_${details.user.id}`, ESSerializer.serialize(whatsApp))
         whatsApp.start(useSSE(event))
     }
 }))
