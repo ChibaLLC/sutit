@@ -1,17 +1,24 @@
 import { getAuthCookie } from "~/utils/auth"
 
 export default defineNuxtPlugin(async (nuxtApp) => {
-    const user = useUser()
-    if(user.value) return
-
     const token = getAuthCookie()
     if(!token) return
 
-    const response = await useAuthFetch("/api/v1/users/token/" + token).then(async response => {
+    const user = useUser()
+    if(
+        user.value &&
+        user.value.token === token
+    ) return
+
+    const response = await useAuthFetch("/api/v1/users/token/" + token)
+        .then(async response => {
         if(response.statusCode === 200) return response.body
+        console.error(response)
         return null
     }).catch(() => null)
-    if(!response) return console.error("Failed to fetch user")
+    if(!response) return
 
     user.value = response
+
+    console.log("User fetched")
 })

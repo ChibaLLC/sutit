@@ -1,9 +1,9 @@
 <script setup lang="ts">
-const forms = await useAuthFetch('/api/v1/forms/me')
+
 </script>
 
 <template>
-  <Title>Submissions</Title>
+  <Title>WhatsApp</Title>
   <div class="flex min-h-screen w-full container -mt-3">
     <Aside/>
   </div>

@@ -3,16 +3,10 @@ import {getUserByToken} from "~/mvc/v1/users/queries";
 import {type APIResponse, Status} from "~/types";
 
 export async function useAuth(event: H3Event) {
-    const auth = readAuthToken(event)
-    if (!auth) return useHttpEnd(event, {
+    const token = readAuthToken(event)
+    if (!token) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: "No bearer token provided"
-    }, Status.unauthorized)
-
-    const [bearer, token] = auth.split(" ")
-    if (bearer !== "Bearer") return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Invalid bearer token"
     }, Status.unauthorized)
 
     const user = await getUserByToken(token).catch(err => {
@@ -27,10 +21,10 @@ export async function useAuth(event: H3Event) {
         body: "No user found"
     }, Status.unauthorized)
 
-    return {bearer, token, user}
+    return {token, user}
 }
 
-export function readAuthToken(event: H3Event){
+export function readAuthToken(event: H3Event) {
     let auth = event.headers.get("Authorization") || null
     if (!auth) auth = getCookie(event, "Authorization") || null
     if (!auth) return null

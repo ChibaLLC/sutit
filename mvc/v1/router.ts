@@ -1,5 +1,5 @@
 import authController from "./auth/controller"
-import faceBookController from "./facebook/controller"
+import faceBookController from "~/mvc/v1/whatsapp/controller"
 import formsController from "./forms/controller"
 import mpesaController from "./mpesa/controller"
 import usersController from "./users/controller"
@@ -16,7 +16,7 @@ router.use("/status", defineEventHandler((event: H3Event) => {
 }))
 
 router.use("/auth/*", authController)
-router.use("/facebook/*", faceBookController)
+router.use("/whatsapp/*", faceBookController)
 router.use("/forms/*", formsController)
 router.use("/mpesa/*", mpesaController)
 router.use("/users/*", usersController)

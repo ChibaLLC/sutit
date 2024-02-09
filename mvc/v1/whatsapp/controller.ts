@@ -16,7 +16,7 @@ function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "o
 router.post("/webhook", defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
 
-    useFileLogger(body, {type: "info", tag: "facebook/webhook"})
+    useFileLogger(body, {type: "info", tag: "whatsapp/webhook"})
 
     const data = typeData(body)
 
@@ -37,7 +37,7 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
             }
         })
     }).catch((e) => {
-        useFileLogger(e, {type: "error", tag: "facebook/webhook"})
+        useFileLogger(e, {type: "error", tag: "whatsapp/webhook"})
     })
 
     return {
@@ -56,9 +56,9 @@ router.get("/webhook", defineEventHandler((event) => {
 
     if (mode !== "subscribe" || token !== process.env.WHATSAPP_TOKEN) return useHttpEnd(event, null, 403)
 
-    useFileLogger("Webhook verified", {type: "info", tag: "facebook/webhook"})
+    useFileLogger("Webhook verified", {type: "info", tag: "whatsapp/webhook"})
     return event.respondWith(new Response(challenge as string, {status: 200, headers: {"Content-Type": "text/plain"}}))
 }))
 
 
-export default useController("facebook", router)
+export default useController("whatsapp", router)

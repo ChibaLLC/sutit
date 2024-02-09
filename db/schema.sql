@@ -22,17 +22,47 @@ create table if not exists `sessions`
 );
 alter table `sessions`
     add index `token_index` (`token`);
-create table if not exists `forms`
+
+create table if not exists `payment_details`
 (
     `id`         int(11) unsigned not null auto_increment,
-    `form_uuid`  varchar(255)     not null unique,
     `user_id`    int(11) unsigned not null,
-    `form_name`  varchar(255)     not null,
+    `paybill`    varchar(30)      not null,
+    `amount`     int(11) unsigned not null,
     `created_at` timestamp        not null default current_timestamp,
     `updated_at` timestamp        not null default current_timestamp on update current_timestamp,
     primary key (`id`),
     foreign key (`user_id`) references `users` (`id`)
 );
+
+create table if not exists `forms`
+(
+    `id`               int(11) unsigned not null auto_increment,
+    `form_uuid`        varchar(255)     not null unique,
+    `user_id`          int(11) unsigned not null,
+    `form_name`        varchar(255)     not null,
+    `form_description` text,
+    `payment_details`  int(11) unsigned,
+    `created_at`       timestamp        not null default current_timestamp,
+    `updated_at`       timestamp        not null default current_timestamp on update current_timestamp,
+    primary key (`id`),
+    foreign key (`user_id`) references `users` (`id`) on delete cascade,
+    foreign key (`payment_details`) references `payment_details` (`id`) on delete set null
+);
+
+create table if not exists `form_payments`
+(
+    `id`         int(11) unsigned not null auto_increment,
+    `form_id`    int(11) unsigned not null,
+    `amount`     int(11) unsigned not null,
+    `paybill`    varchar(30)      not null,
+    `created_at` timestamp        not null default current_timestamp,
+    `updated_at` timestamp        not null default current_timestamp on update current_timestamp,
+    primary key (`id`),
+    foreign key (`form_id`) references `forms` (`id`) on delete cascade
+);
+
+
 create table if not exists `form_fields`
 (
     `id`                int(11) unsigned not null auto_increment,
@@ -40,6 +70,10 @@ create table if not exists `form_fields`
     `field_name`        varchar(255)     not null unique,
     `field_description` text,
     `field_type`        varchar(255)     not null,
+    `field_options`     json,
+    `form_position`     int(11) unsigned not null,
+    `created_at`        timestamp        not null default current_timestamp,
+    `updated_at`        timestamp        not null default current_timestamp on update current_timestamp,
     `required`          boolean          not null default false,
     primary key (`id`),
     foreign key (`form_id`) references `forms` (`id`) on delete cascade

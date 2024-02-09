@@ -85,7 +85,10 @@ export function userIsAuthenticated() {
 export async function logout() {
     return useAuthFetch("/api/v1/auth/logout")
         .then(async (res) => {
-            if (res.statusCode !== 200) return alert("Failed to logout")
+            if (res.statusCode !== 200) {
+                console.error(res)
+                return alert("Failed to logout")
+            }
             const state = useUser()
             state.value = {} as UserState
             setAuthCookie("", 0)

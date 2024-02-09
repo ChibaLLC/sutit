@@ -9,7 +9,7 @@ router.get("/email/:email", defineEventHandler(async event => {
     if (!email) {
         response.statusCode = Status.badRequest
         response.body = "Email is required"
-        return await useHttpResponse(event, response)
+        return await useHttpEnd(event, response)
     }
 
     const user = await getUserByEmail(email).catch(err => {
@@ -19,7 +19,10 @@ router.get("/email/:email", defineEventHandler(async event => {
         }, Status.internalServerError)
         return null
     })
-    if (!user) return
+    if (!user) return {
+        statusCode: Status.notFound,
+        body: "User not found"
+    }
 
     response.statusCode = Status.success
     response.body = {
@@ -35,7 +38,7 @@ router.get("/token/:token", defineEventHandler(async event => {
     if (!token) {
         response.statusCode = Status.badRequest
         response.body = "Token is required"
-        return await useHttpResponse(event, response)
+        return await useHttpEnd(event, response)
     }
 
     const user = await getUserByToken(token).catch(err => {
@@ -45,7 +48,10 @@ router.get("/token/:token", defineEventHandler(async event => {
         }, Status.internalServerError)
         return null
     })
-    if (!user) return
+    if (!user) return {
+        statusCode: Status.notFound,
+        body: "User not found"
+    }
 
     response.statusCode = Status.success
     response.body = {

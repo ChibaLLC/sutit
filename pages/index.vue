@@ -201,7 +201,7 @@
               </div>
               <h3 class="text-3xl font-semibold">A growing company</h3>
               <p class="mt-4 text-lg leading-relaxed text-gray-600">
-                We are currently working on a lor of capabilities and functionalities stay tuned!
+                We are currently working on a lot of capabilities and functionalities stay tuned!
               </p>
               <ul class="list-none mt-6">
                 <li class="py-2">

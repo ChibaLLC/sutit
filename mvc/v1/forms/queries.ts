@@ -1,8 +1,25 @@
-import {forms, formFields, responses, responseData} from "~/db/drizzle/schema";
+import {forms, formFields, responses, responseData, formPayments, paymentDetails} from "~/db/drizzle/schema";
 import db from "~/db";
 import {type Drizzle} from "~/db/types";
 import {eq} from "drizzle-orm";
 import ulid from "ulid";
+
+
+export async function createFormPayment(userId: number, payment: {
+    paybill: string,
+    amount: number
+}) {
+    await db.insert(paymentDetails).values({
+        paybill: payment.paybill,
+        amount: payment.amount,
+        userId: userId
+    } satisfies Drizzle.PaymentDetails.insert)
+
+    return (await db.select({
+        id: paymentDetails.id
+    }).from(paymentDetails)
+        .where(eq(paymentDetails.userId, userId))).at(0)?.id
+}
 
 export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fields: Array<Omit<Drizzle.FormFields.insert, 'formId'>>): Promise<void> {
     const formUUID = ulid.ulid()
@@ -11,7 +28,6 @@ export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fi
     const formId = (await db.select({
         id: forms.id
     }).from(forms)
-        .innerJoin(formFields, eq(forms.userId, form.userId))
         .where(eq(forms.formUuid, formUUID))).at(0)
 
     if (!formId) throw new Error("Form not found after creation")
@@ -21,13 +37,13 @@ export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fi
     } satisfies Drizzle.FormFields.insert)))
 }
 
-export async function getForm(formId: number) {
+export async function getForm(formUuid: string) {
     return db.select({
         form: forms,
         fields: formFields
     }).from(forms)
         .innerJoin(formFields, eq(forms.id, formFields.formId))
-        .where(eq(forms.id, formId))
+        .where(eq(forms.formUuid, formUuid))
 }
 
 export async function insertData(userId: number, formId: number, data: {
@@ -89,20 +105,12 @@ export async function getFormResponse(responseId: number) {
         .where(eq(responses.id, responseId))
 }
 
-export async function getFormByUUID(formUUID: string) {
+export async function getFormsByUser(userId: number) {
     return db.select({
-        form: forms,
-        fields: formFields
+        formUuid: forms.formUuid,
+        formName: forms.formName,
+        paymentDetails: formPayments.id
     }).from(forms)
-        .innerJoin(formFields, eq(forms.id, formFields.formId))
-        .where(eq(forms.formUuid, formUUID))
-}
-
-export async function getFormByUser(userId: number) {
-    return db.select({
-        form: forms,
-        fields: formFields
-    }).from(forms)
-        .innerJoin(formFields, eq(forms.id, formFields.formId))
+        .leftJoin(formPayments, eq(forms.paymentDetails, formPayments.id))
         .where(eq(forms.userId, userId))
 }

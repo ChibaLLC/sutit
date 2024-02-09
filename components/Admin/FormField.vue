@@ -14,11 +14,12 @@ const props = defineProps({
   }
 })
 
-const form_field = props.field
+const form_field = ref(props.field)
 
 const emits = defineEmits([
   'input',
   'change',
+  'form',
   'blur',
   'focus',
   'click',
@@ -35,7 +36,11 @@ const emits = defineEmits([
 ])
 
 const tag = props.field?.type || FieldEnum.TEXT
-const view = props.preview
+const view = props.preview || false
+
+watch(form_field.value, (value) => {
+  emits('form', value)
+})
 </script>
 
 <template>
