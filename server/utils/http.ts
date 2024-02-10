@@ -3,7 +3,10 @@ import {type APIResponse, Status} from "~/types";
 import {useBase} from "h3";
 
 export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: number) {
-    if (data) return event.respondWith(new Response(JSON.stringify(data), {status: status ?? 200, headers: {'Content-Type': 'application/json'}}))
+    if (data) return event.respondWith(new Response(JSON.stringify(data), {
+        status: status ?? 200,
+        headers: {'Content-Type': 'application/json'}
+    }))
     return event.respondWith(new Response(null, {status: status ?? 200}))
 }
 
@@ -19,16 +22,14 @@ export class Stream {
 
     private flushHeaders() {
         if (!this._event) throw new Error('Event is not defined')
-        if(this.headersSent) return;
+        if (this.headersSent) return;
         this._event.node.res.setHeader('Content-Type', 'text/event-stream');
         this._event.node.res.setHeader('Cache-Control', 'no-cache');
         this._event.node.res.setHeader('Connection', 'keep-alive');
         this._event.node.res.flushHeaders();
-
-        this._event.node.res.writeHead(Status.success); // will this error due to flushHeaders?
-        this._event.node.res.write(JSON.stringify({
+        this.send({
             statusCode: Status.noContent
-        } as APIResponse))
+        } as APIResponse)
     }
 
     send(chunk: any) {
@@ -42,24 +43,15 @@ export class Stream {
     }
 }
 
-export function useSSE(event: H3Event): Stream {
+export function useSSE(event: H3Event) {
     return new Stream(event)
 }
 
-export function useController(folderName: string, router: Router) {
+export function useController(version: string, folderName: string, router: Router) {
     router.use('/*', defineEventHandler((event: H3Event) => {
         useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
         return useHttpEnd(event, null, 404)
     }))
 
-    return useBase(`/${folderName}`, router.handler)
-}
-
-export function baseRouter(base: string, router: Router) {
-    router.use("/*", defineEventHandler((event: H3Event) => {
-        useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
-        return useHttpEnd(event, null, 404)
-    }))
-
-    return useBase(base, router.handler)
+    return useBase(`/api/${version}/${folderName}`, router.handler)
 }

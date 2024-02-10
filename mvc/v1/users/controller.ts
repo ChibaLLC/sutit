@@ -1,18 +1,27 @@
-import { Status, type APIResponse } from "~/types"
-import { getUserByEmail, getUserByToken } from "./queries"
+import {Status, type APIResponse} from "~/types"
+import {getUserByEmail, getUserByToken, deleteUser} from "./queries"
 
 const router = createRouter()
 
-router.get("/email/:email", defineEventHandler(async event => {
+router.get("/get", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const email = event.context.params?.email as string
-    if (!email) {
+    const token = getQuery(event).token
+    const email = getQuery(event).email
+    if ((!token || !email) || (token && email)) {
         response.statusCode = Status.badRequest
-        response.body = "Email is required"
+        response.body = "Bad request make sure you pass at one of the following in the query: token or email"
         return await useHttpEnd(event, response)
     }
 
-    const user = await getUserByEmail(email).catch(err => {
+    let user = null
+    if (token) user = await getUserByToken(token as string).catch(err => {
+        useHttpEnd(event, {
+            body: err.message,
+            statusCode: Status.internalServerError
+        }, Status.internalServerError)
+        return null
+    })
+    if (email) user = await getUserByEmail(email as string).catch(err => {
         useHttpEnd(event, {
             body: err.message,
             statusCode: Status.internalServerError
@@ -32,33 +41,25 @@ router.get("/email/:email", defineEventHandler(async event => {
     return response
 }))
 
-router.get("/token/:token", defineEventHandler(async event => {
+router.delete("/", defineEventHandler(async (event) => {
     const response = {} as APIResponse
-    const token = event.context.params?.token as string
-    if (!token) {
-        response.statusCode = Status.badRequest
-        response.body = "Token is required"
-        return await useHttpEnd(event, response)
+    const details = await useAuth(event).catch(e => e as Error)
+    if (details instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = details.message || "Error Occurred When Accessing DB"
+        return useHttpEnd(event, response, Status.internalServerError)
+    }
+    if (!details) return useHttpEnd(event, {statusCode: 404, body: "Not Found"}, 404)
+
+    const result = await deleteUser(details.user.id).catch(e => e as Error)
+    if (result instanceof Error) {
+        return useHttpEnd(event, {statusCode: 500, body: result.message || "Error On User Delete"})
     }
 
-    const user = await getUserByToken(token).catch(err => {
-        useHttpEnd(event, {
-            body: err.message,
-            statusCode: Status.internalServerError
-        }, Status.internalServerError)
-        return null
-    })
-    if (!user) return {
-        statusCode: Status.notFound,
-        body: "User not found"
-    }
+    response.statusCode = 200
+    response.body = "success"
 
-    response.statusCode = Status.success
-    response.body = {
-        email: user.email,
-        name: user.name
-    }
     return response
 }))
 
-export default useController("users", router)
+export default useController("v1", "users", router)

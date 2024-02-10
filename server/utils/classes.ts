@@ -8,14 +8,14 @@ import {
     type WriteStream
 } from "node:fs";
 import path from "node:path";
-import { createInterface } from "node:readline";
-import { consola, type LogObject, type LogType } from "consola";
-import { execSync } from "node:child_process";
-import { isDevelopment } from "std-env";
+import {createInterface} from "node:readline";
+import {consola, type LogObject, type LogType} from "consola";
+import {execSync} from "node:child_process";
+import {isDevelopment} from "std-env";
 import ww from "whatsapp-web.js";
-import { Stream } from "../utils/http";
-import { Status } from "../../types";
-import { call_stk } from "~/mvc/v1/mpesa/methods";
+import {Stream} from "../utils/http";
+import {Status} from "~/types";
+import {call_stk} from "~/mvc/v1/mpesa/methods";
 
 
 export class Logger {
@@ -62,7 +62,7 @@ export class Logger {
     private makeStreams() {
         const streams = {} as typeof this.streams
         for (const log of this.logs) {
-            streams[log] = createWriteStream(path.join(`./logs/${log}.log`), { flags: 'a' })
+            streams[log] = createWriteStream(path.join(`./logs/${log}.log`), {flags: 'a'})
         }
         return streams
     }
@@ -83,15 +83,23 @@ export class Logger {
 
     public async log(logObj: LogObject): Promise<void> {
         try {
-            this.streams.master.write(this.stringifyLogObject(logObj))
+            if (this.streams.master) {
+                this.streams.master.write(this.stringifyLogObject(logObj))
+            } else {
+                console.warn("Unable to find master log writer")
+            }
             return new Promise((resolve, reject) => {
-                this.streams[logObj.type].write(this.stringifyLogObject(logObj), (err) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve()
-                    }
-                })
+                if(this.streams[logObj.type]){
+                    this.streams[logObj.type].write(this.stringifyLogObject(logObj), (err) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            resolve()
+                        }
+                    })
+                } else {
+                    console.warn(`Unable to find ${logObj.type} log writer`)
+                }
             })
         } catch (e) {
             console.error(e)
@@ -269,6 +277,7 @@ export class Logger {
 export class WhatsAppWeb {
     private client: ww.Client;
     private userId: number;
+
     constructor(userId: number) {
         this.client = new ww.Client({
             authStrategy: new ww.LocalAuth({
@@ -277,25 +286,35 @@ export class WhatsAppWeb {
         });
         this.userId = userId
     }
-    public async start(stream: Stream) {
+
+    public async start(stream?: Stream) {
+        if (stream) this.updateStream(stream)
+        await this.client.initialize();
+    }
+
+    public updateStream(stream: Stream) {
         this.client.on("qr", async (qr) => {
+            console.log("QR RECEIVED")
             stream.send({
                 statusCode: Status.whatsappWebQR,
                 body: qr
             });
         });
         this.client.on("ready", () => {
+            console.log("READY")
             stream.send({
                 statusCode: Status.whatsappWebReady,
                 body: "Ready"
             })
         });
         this.client.on("message", async (message) => {
+            console.log("MESSAGE RECEIVED")
             if (message.type === 'order') {
                 message.reply("A payment request has been sent to your phone. Please check your phone to complete the payment. If it's not a MPESA number, please input your MPESA number as the next message")
                 const phone = (await message.getContact()).number
                 const order = await message.getOrder()
                 const products = order.products.map(product => product.name).join(", ")
+                // @ts-ignore
                 await call_stk(+phone, 1, "Payment request from " + (message?._data?.notifyName || message.from) + " for " + products).catch(err => {
                     consola.error(err)
                 })
@@ -306,8 +325,10 @@ export class WhatsAppWeb {
                 body: message
             })
         });
+    }
 
-        await this.client.initialize();
+    public async stop() {
+        await this.client.destroy()
     }
 
     get user_id() {

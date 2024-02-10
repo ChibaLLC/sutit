@@ -6,7 +6,7 @@ import {
     getFormResponses,
     getFormsByUser,
     insertData
-} from "~/mvc/v1/forms/queries";
+} from "./queries";
 import type {Drizzle} from "~/db/types";
 
 const router = createRouter()
@@ -172,4 +172,4 @@ router.get("/me", defineEventHandler(async event => {
     return response
 }))
 
-export default useController("forms", router)
+export default useController("v1", "forms", router)

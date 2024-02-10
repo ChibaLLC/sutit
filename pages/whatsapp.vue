@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { type APIResponse, Status } from '~/types';
 import QRCode from 'qrcode';
+import {readStream} from "~/utils/http";
 
 const payment = ref(false)
 const done = ref(false)
@@ -14,23 +15,24 @@ async function createInstance() {
   const hint = document.getElementById('hint')
   if (hint) hint.innerText = 'Scan the QR code with your phone'
 
-  const response = await useAuthFetch('/api/v1/whatsapp/create-instance', {
-    stream: true,
-  })
+  const reader = await useAuthStream('/api/v1/whatsapp/create-instance')
 
-  function callback(data: APIResponse) {
-    if (data.statusCode === Status.whatsappWebQR) {
-      QRCode.toCanvas(data.body, { errorCorrectionLevel: 'H' }, (err, canvas) => {
-        if (err) throw err
-        const qrCode = document.getElementById('qr-code')
-        qrCode?.appendChild(canvas)
-      })
-    } else if (data.statusCode === Status.SSEStart) {
-      if (hint) hint.innerText = "Loading..."
-    } else if (Status.whatsappWebReady) {
-      if (hint) hint.innerText = "WhatsApp Web is ready"
-      document.getElementById('qr-code')?.remove()
-      done.value = true
+  function callback(data: APIResponse[]) {
+    for(const datum of data) {
+      console.log(datum)
+      if (datum.statusCode === Status.whatsappWebQR) {
+        QRCode.toCanvas(datum.body, { errorCorrectionLevel: 'H' }, (err, canvas) => {
+          if (err) throw err
+          const qrCode = document.getElementById('qr-code')
+          qrCode?.appendChild(canvas)
+        })
+      } else if (datum.statusCode === Status.SSEStart) {
+        if (hint) hint.innerText = "Loading..."
+      } else if (Status.whatsappWebReady) {
+        if (hint) hint.innerText = "WhatsApp Web is ready"
+        document.getElementById('qr-code')?.remove()
+        done.value = true
+      }
     }
   }
 
@@ -38,11 +40,7 @@ async function createInstance() {
     console.warn(text)
   }
 
-  if(response.statusCode === Status.success){
-    response.body(callback, fallback)
-  } else {
-    console.error(response)
-  }
+  await readStream(reader, callback, fallback).catch(console.error)
 }
 </script>
 
@@ -56,8 +54,10 @@ async function createInstance() {
         <canvas id="qr-code" class="w-72 h-72"></canvas>
       </div>
 
-      <button @click="createInstance" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded-md">Create Instance</button>
-      <button @click="payment = true" class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md" v-if="done">Add Payment</button>
+      <div class="button-group">
+        <button @click="createInstance" class="mt-4 bg-slate-500 text-white px-4 py-2 rounded-md">Create Instance</button>
+        <button @click="payment = true" class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md" v-if="done">Add Payment</button>
+      </div>
     </div>
     <Modal :open="payment" @close="payment = false;" @cancel="payment = false" :title="`Add Payment`">
       <div class="p-4">
@@ -75,4 +75,9 @@ async function createInstance() {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.button-group{
+  @apply mt-4;
+  @apply flex;
+}
+</style>

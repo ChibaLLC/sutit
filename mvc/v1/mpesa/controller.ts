@@ -9,4 +9,4 @@ router.use("/callback", defineEventHandler((event) => {
     return useHttpEnd(event, {statusCode: 200, body: "OK"}, 200)
 }))
 
-export default useController("mpesa", router)
+export default useController("v1", "mpesa", router)

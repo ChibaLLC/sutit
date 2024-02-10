@@ -9,7 +9,7 @@ export enum Status {
     accepted = 202,
     noContent = 204,
     whatsappWebQR = 203,
-    whatsappWebReady = 205,
+    whatsappWebReady = 220,
     whatsappWebMessage = 206,
     SSEStart = 207,
     badRequest = 400,

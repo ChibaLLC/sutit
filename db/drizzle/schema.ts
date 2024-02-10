@@ -53,6 +53,16 @@ export const formPayments = mysqlTable("form_payments", {
 	}
 });
 
+export const orders = mysqlTable("orders", {
+	id: int("id").autoincrement().notNull(),
+	orderId: varchar("order_id", { length: 255 }).notNull(),
+	phone: varchar("phone", { length: 255 }).notNull(),
+	amount: int("amount").notNull(),
+	paid: tinyint("paid").default(0).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default('current_timestamp()').notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default('current_timestamp()').notNull(),
+});
+
 export const payments = mysqlTable("payments", {
 	id: int("id").autoincrement().notNull(),
 	userId: int("user_id").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" } ),
@@ -136,6 +146,7 @@ export const users = mysqlTable("users", {
 	email: varchar("email", { length: 255 }).notNull(),
 	password: varchar("password", { length: 255 }).notNull(),
 	salt: varchar("salt", { length: 255 }).notNull(),
+	isDeleted: tinyint("is_deleted").default('NULL'),
 	createdAt: timestamp("created_at", { mode: 'string' }).default('current_timestamp()').notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default('current_timestamp()').notNull(),
 },

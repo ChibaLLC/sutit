@@ -1,8 +1,8 @@
 import {type APIResponse, Status} from "~/types";
-import {authenticate, revokeToken} from "./queries";
-import {createUser} from "~/mvc/v1/users/queries";
-import {revokeAuthToken} from "~/mvc/v1/auth/methods";
-import { useCapitalize } from "~/utils/string";
+import {authenticate} from "./queries";
+import {revokeAuthToken} from "./methods";
+import {useCapitalize} from "~/utils/string";
+import {createUser} from "../users/queries";
 
 const router = createRouter()
 
@@ -10,20 +10,20 @@ router.post("/signup", defineEventHandler(async event => {
     const response = {} as APIResponse
     const data = await readBody(event) as { name: string, password: string, email: string }
 
-    for(const key of Object.keys(data)){
-        if(typeof data[key as keyof typeof data] === 'string'){
+    for (const key of Object.keys(data)) {
+        if (typeof data[key as keyof typeof data] === 'string') {
             data[key as keyof typeof data] = data[key as keyof typeof data].trim()
         }
     }
 
-    if(!data.password || !data.email) {
+    if (!data.password || !data.email) {
         return useHttpEnd(event, {
             body: "Password and email are required",
             statusCode: Status.badRequest
         }, Status.badRequest)
     }
 
-    if(data?.name === ''){
+    if (data?.name === '') {
         data.name = useCapitalize(data.email.split('@')[0])
     }
 
@@ -104,4 +104,4 @@ router.get("/logout", defineEventHandler(async event => {
     return response
 }))
 
-export default useController("auth", router)
+export default useController("v1", "auth", router)

@@ -55,3 +55,9 @@ export async function createUser(data: {
         throw err
     })
 }
+
+export async function deleteUser(id: number){
+    await db.update(users).set({
+        isDeleted: 1
+    }).where(eq(users.id, id))
+}
