@@ -1,10 +1,16 @@
-import { spawnSync, execSync } from "node:child_process";
+import {spawnSync, execSync} from "node:child_process";
 import fs from "node:fs";
+import {provider, runtime} from "std-env";
 
 const OS = process.platform;
 
-if (process.env.NODE_ENV== 'dev' && process.env.NODE_ENV !== 'development') {
+if (process.env.NODE_ENV === 'dev' && process.env.NODE_ENV !== 'development') {
     console.log("This script is only for development purposes");
+    process.exit(0);
+}
+
+if (provider === 'vercel' || runtime === 'edge-light') {
+    console.log("This script is not supported on Vercel");
     process.exit(0);
 }
 
@@ -29,7 +35,7 @@ for (let arg of process.argv.slice(2)) {
 
 function spawner(commandsArray) {
     for (const command of commandsArray) {
-        const result = spawnSync(command, { shell: true, stdio: 'inherit' });
+        const result = spawnSync(command, {shell: true, stdio: 'inherit'});
         if (result.error) {
             console.error(colors.red, `Error executing command: ${command}`);
             console.error(result.error);
@@ -55,7 +61,7 @@ const order = {
         }
 
         if (!fs.existsSync('redis')) {
-            fs.mkdirSync('redis', { recursive: true });
+            fs.mkdirSync('redis', {recursive: true});
         }
     },
     log_prerequisites: () => {
