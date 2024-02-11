@@ -1,11 +1,5 @@
 import { H3Event } from "h3"
-import storage from "~/storage";
 import { type APIResponse, type CloudAPI, type OnPremisesAPI } from "~/types";
-import {WhatsAppWeb} from "~/server/utils/classes";
-
-declare global {
-    var WWInstances: Map<number, WhatsAppWeb>
-}
 
 const router = createRouter()
 
@@ -67,22 +61,7 @@ router.get("/webhook", defineEventHandler((event) => {
 }))
 
 router.get("/create-instance", defineEventHandler(async (event) => {
-    if(!global.WWInstances) global.WWInstances = new Map()
-
-    const details = await useAuth(event).catch((e) => {
-        console.error(e)
-        return null;
-    })
-    if (!details) return
-
-    const stream = useSSE(event)
-    const instance = global.WWInstances.get(details.user.id)
-    if (instance) {
-        return instance.updateStream(stream)
-    } else {
-        const whatsApp = new WhatsAppWeb(details.user.id)
-        return await whatsApp.start()
-    }
+    
 }))
 
 export default useController("v1", "whatsapp", router)

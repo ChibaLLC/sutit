@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { type APIResponse, Status } from '~/types';
-import QRCode from 'qrcode';
 import {readStream} from "~/utils/http";
 
 const payment = ref(false)
@@ -20,19 +19,6 @@ async function createInstance() {
   function callback(data: APIResponse[]) {
     for(const datum of data) {
       console.log(datum)
-      if (datum.statusCode === Status.whatsappWebQR) {
-        QRCode.toCanvas(datum.body, { errorCorrectionLevel: 'H' }, (err, canvas) => {
-          if (err) throw err
-          const qrCode = document.getElementById('qr-code')
-          qrCode?.appendChild(canvas)
-        })
-      } else if (datum.statusCode === Status.SSEStart) {
-        if (hint) hint.innerText = "Loading..."
-      } else if (Status.whatsappWebReady) {
-        if (hint) hint.innerText = "WhatsApp Web is ready"
-        document.getElementById('qr-code')?.remove()
-        done.value = true
-      }
     }
   }
 
