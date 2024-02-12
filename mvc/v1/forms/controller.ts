@@ -2,7 +2,7 @@ import {type APIResponse, type FormField, Status} from "~/types";
 import {
     createForm,
     createFormPayment,
-    getForm,
+    getFormByUlid,
     getFormResponses,
     getFormsByUser,
     insertData
@@ -65,8 +65,8 @@ router.post("/create", defineEventHandler(async event => {
     return response
 }))
 
-router.get("/get/:formUuid", defineEventHandler(async event => {
-    const formUuid = event.context.params?.formUuid
+router.get("/:formUuid", defineEventHandler(async event => {
+    const formUuid = getRouterParam(event, "formUuid")
     if (!formUuid) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No form ID provided"
@@ -75,7 +75,7 @@ router.get("/get/:formUuid", defineEventHandler(async event => {
     const details = await useAuth(event)
     if (!details) return
 
-    const form = await getForm(formUuid).catch(err => {
+    const form = await getFormByUlid(formUuid).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while getting form"
@@ -172,4 +172,4 @@ router.get("/me", defineEventHandler(async event => {
     return response
 }))
 
-export default useController("v1", "forms", router)
+export default useController("forms", router)

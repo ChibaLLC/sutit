@@ -23,7 +23,7 @@ router.post("/signup", defineEventHandler(async event => {
         }, Status.badRequest)
     }
 
-    if (data?.name === '') {
+    if (data?.name === '' || !data.name) {
         data.name = useCapitalize(data.email.split('@')[0])
     }
 
@@ -104,4 +104,4 @@ router.get("/logout", defineEventHandler(async event => {
     return response
 }))
 
-export default useController("v1", "auth", router)
+export default useController("auth", router)

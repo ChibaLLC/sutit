@@ -64,4 +64,4 @@ router.get("/create-instance", defineEventHandler(async (event) => {
     
 }))
 
-export default useController("v1", "whatsapp", router)
+export default useController("whatsapp", router)

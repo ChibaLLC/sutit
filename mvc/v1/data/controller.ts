@@ -18,3 +18,5 @@ router.delete("/user", defineEventHandler(async event => {
         statusCode: Status.success
     } as APIResponse
 }))
+
+export default useBase("data", router.handler)

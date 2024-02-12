@@ -1,9 +1,9 @@
 <template>
-  <nav class="relative flex flex-wrap items-center justify-between px-2 py-3 mb-3" style="background-color: #04151f;">
+  <nav class="relative flex flex-wrap items-center justify-between px-2 py-3 mb-3 bg-gray-100 dark:bg-slate-900">
     <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
       <div class="w-full relative flex justify-between lg:w-auto  px-4 lg:static lg:block lg:justify-start">
         <NuxtLink
-            class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white"
+            class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase dark:text-white"
             to="/">
           Sutit
         </NuxtLink>
@@ -20,20 +20,20 @@
           <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
                 class="btn sign-up px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
-                to="/signup">
+                to="/signup?redirect=/forms">
               Sign Up
             </NuxtLink>
           </li>
           <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
-                class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
-                to="/login">
+                class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug dark:text-white hover:opacity-75"
+                to="/login?redirect=/forms">
               Log In
             </NuxtLink>
           </li>
           <li class="nav-item" v-if="userIsAuthenticated()">
             <button
-                class="btn log-out px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
+                class="btn log-out px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug dark:text-white hover:opacity-75"
                 @click="logout">
               Log Out
             </button>
@@ -57,7 +57,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.router-link-exact-active {
+.router-link-active {
   @apply text-amber-400;
 }
 

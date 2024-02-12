@@ -4,6 +4,26 @@ import {type Drizzle} from "~/db/types";
 import {eq} from "drizzle-orm";
 import ulid from "ulid";
 
+function aggregate(data: Array<any>, Parent: string, Aggregate: string) {
+    const aggregatedData = {}
+
+    // @ts-ignore
+    if(!data[0][Parent]) throw new Error("Parent field not found in data")
+    // @ts-ignore
+    if(!data[0][Aggregate]) throw new Error("Aggregate field not found in data")
+
+    for(const  item of data){
+        // @ts-ignore
+        aggregatedData[Parent] = item[Parent];
+        // @ts-ignore
+        aggregatedData[Aggregate] = aggregatedData[Aggregate] || [];
+        // @ts-ignore
+        aggregatedData[Aggregate].push(item[Aggregate]);
+    }
+
+    return aggregatedData;
+}
+
 
 export async function createFormPayment(userId: number, payment: {
     paybill: string,
@@ -37,13 +57,21 @@ export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fi
     } satisfies Drizzle.FormFields.insert)))
 }
 
-export async function getForm(formUuid: string) {
-    return db.select({
+export async function getFormByUlid(formUuid: string): Promise<{
+    form: Drizzle.Form.select,
+    fields: Drizzle.FormFields.select[]
+}> {
+    const results = await db.select({
         form: forms,
         fields: formFields
     }).from(forms)
         .innerJoin(formFields, eq(forms.id, formFields.formId))
         .where(eq(forms.formUuid, formUuid))
+
+    return aggregate(results, "form", "fields") as {
+        form: Drizzle.Form.select,
+        fields: Drizzle.FormFields.select[]
+    };
 }
 
 export async function insertData(userId: number, formId: number, data: {
@@ -109,7 +137,8 @@ export async function getFormsByUser(userId: number) {
     return db.select({
         formUuid: forms.formUuid,
         formName: forms.formName,
-        paymentDetails: formPayments.id
+        paymentDetails: formPayments.id,
+        createdAt: forms.createdAt
     }).from(forms)
         .leftJoin(formPayments, eq(forms.paymentDetails, formPayments.id))
         .where(eq(forms.userId, userId))

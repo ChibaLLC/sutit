@@ -31,7 +31,7 @@ export const formFields = mysqlTable("form_fields", {
 	createdAt: timestamp("created_at", { mode: 'string' }).default('current_timestamp()').notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default('current_timestamp()').notNull(),
 	required: tinyint("required").default(0).notNull(),
-},
+}
 (table) => {
 	return {
 		formId: index("form_id").on(table.formId),

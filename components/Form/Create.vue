@@ -26,7 +26,7 @@ const svgs = {
           <line x1="3" x2="21" y1="10" y2="10"></line>
         </svg>`
 }
-const FormFieldComponent = resolveComponent('AdminFormField')
+const FormFieldComponent = resolveComponent('FormField')
 const preview = ref(false)
 const formFields = ref<Set<FormField>>(new Set())
 const payment = ref(false)
@@ -150,7 +150,8 @@ onMounted(() => {
 <template>
   <Title>Forms</Title>
 
-  <div class="flex-1 flex flex-col min-h-screen">
+  <div class="flex-1 flex min-h-screen">
+    <Aside/>
     <main class="flex-1 flex flex-col p-4 gap-4 md:p-6 md:gap-6">
       <section class="flex flex-col gap-4">
         <div class="grid gap-4">
@@ -163,10 +164,10 @@ onMounted(() => {
               </p></div>
             <div class="p-0">
               <div class="grid gap-4 p-4 boxes">
-                <AdminFieldChoice :display-name="`Text`" :demo="true" :svg="svgs.text" :data-name="FieldEnum.TEXT"/>
-                <AdminFieldChoice :display-name="`Checkbox`" :demo="true" :svg="svgs.checkbox"
+                <FormFieldChoice :display-name="`Text`" :demo="true" :svg="svgs.text" :data-name="FieldEnum.TEXT"/>
+                <FormFieldChoice :display-name="`Checkbox`" :demo="true" :svg="svgs.checkbox"
                                   :data-name="FieldEnum.CHECKBOX"/>
-                <AdminFieldChoice :display-name="`Date`" :demo="true" :svg="svgs.date"
+                <FormFieldChoice :display-name="`Date`" :demo="true" :svg="svgs.date"
                                   :data-name="FieldEnum.DATE"/>
               </div>
             </div>
@@ -220,11 +221,6 @@ onMounted(() => {
             <div class="form-group">
               <label for="amount" class="text-white dark:text-slate-900 font-semibold mb-2">Amount in KES</label>
               <input type="number" id="amount" class="input" v-model="payment_details.amount"/>
-            </div>
-            <div class="form-group mt-2">
-              <label for="description" class="text-white dark:text-slate-900 font-semibold mb-2">Paybill
-                Number</label>
-              <input type="text" id="description" class="input" v-model="payment_details.paybill"/>
             </div>
           </div>
         </Modal>

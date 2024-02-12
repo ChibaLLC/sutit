@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const url = useRoute()
+const redirect = url.query?.redirect
 const details = reactive({
   email: '',
   password1: '',
@@ -43,7 +45,12 @@ async function submit(){
   if(response.statusCode === 200){
     setAuthCookie(response.body)
     useUser().value!.token = response.body
-    await navigateTo('/')
+    if(redirect){
+      if(typeof redirect !== 'string') throw new Error("Redirect Error")
+      await navigateTo(redirect)
+    } else {
+      await navigateTo('/')
+    }
   }
 }
 

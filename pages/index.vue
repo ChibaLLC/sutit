@@ -4,26 +4,30 @@
     <div
         class="relative pt-16 pb-32 flex content-center items-center justify-center overflow-hidden"
         style="min-height: 75vh;">
-      <div class="absolute top-0 w-full h-full"
-           style="background-image: linear-gradient(to bottom left, rgba(30,23,42,0.99) 90%, #eed80a);">
-        <img src="/images/langing.png" alt="landing" class="absolute object-contain h-full -bottom-48 -right-20"/>
-        <span
-            id="blackOverlay"
-            class="w-full h-full absolute opacity-0 bg-black"
-        ></span>
+      <div class="absolute top-0 w-full h-full">
+        <img src="/images/langing.png" alt="landing" class="absolute object-contain h-full"/>
+        <div
+            id="doodle"
+            class="w-full h-full absolute"
+        >
+          <div
+              v-for="i in 100"
+              :key="i"
+          ></div>
+        </div>
       </div>
-      <div class="container relative mx-auto">
+      <div>
         <div class="items-center flex flex-wrap">
-          <div class="w-full lg:w-6/12 px-4 ml-auto mr-auto text-center">
-            <div class="pr-12">
-              <h1 class="text-white font-semibold text-5xl">
+          <div class="w-full lg:w-8/12 px-4 ml-auto mr-auto text-center">
+            <div class="p-8 rounded-md faze">
+              <h1 class="font-semibold text-5xl text-slate-900">
                 Your success story starts with us.
               </h1>
-              <p class="mt-4 text-lg text-gray-300">
+              <p class="mt-4 text-lg">
                 See how you can automate payments and increase your revenue
               </p>
               <button
-                  @click="navigateTo(userIsAuthenticated ? '/dashboard' : '/signup')"
+                  @click="navigateTo(userIsAuthenticated() ? '/forms' : '/login?redirect=/forms')"
                   class="bg-white text-gray-800 active:bg-gray-100 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 mt-3 hover:bg-slate-300 transition-all duration-500 ease-in-out"
               >Get Started
               </button>
@@ -152,7 +156,8 @@
                   Top Notch Services
                 </h4>
                 <p class="text-md font-light mt-2 text-white">
-                  The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that process will continue whatever happens.
+                  The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that
+                  process will continue whatever happens.
                 </p>
                 <p class="text-md font-light mt-0 text-white">
                   We are inevitable, just like the seasons.
@@ -492,12 +497,12 @@
                   <label
                       class="block uppercase text-gray-700 text-xs font-bold mb-2"
                       for="message"
-                  >Message</label
+                  >About you</label
                   ><textarea
                     rows="4"
                     cols="80"
                     class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                    placeholder="Type a message..."
+                    placeholder="..."
                 ></textarea>
                 </div>
                 <div class="text-center mt-6">
@@ -517,5 +522,29 @@
     </section>
   </main>
 </template>
-<script setup lang="ts">
-</script>
+<style scoped>
+.faze {
+  @apply bg-slate-100/60;
+  @apply backdrop-blur-2xl;
+}
+
+#doodle{;
+  @apply grid;
+  @apply grid-cols-10;
+  @apply grid-rows-10;
+  cursor: none;
+}
+
+#doodle div{
+  @apply bg-slate-500/50;
+  @apply opacity-70;
+  @apply w-full;
+  @apply h-full;
+}
+
+#doodle div:hover{
+  @apply bg-slate-500/100;
+  @apply animate-pulse;
+}
+
+</style>

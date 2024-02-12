@@ -3,45 +3,26 @@ import {getUserByEmail, getUserByToken, deleteUser} from "./queries"
 
 const router = createRouter()
 
-router.get("/get", defineEventHandler(async event => {
+router.get("/me", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const token = getQuery(event).token
-    const email = getQuery(event).email
-    if ((!token || !email) || (token && email)) {
-        response.statusCode = Status.badRequest
-        response.body = "Bad request make sure you pass at one of the following in the query: token or email"
-        return await useHttpEnd(event, response)
+    const details = await useAuth(event).catch(e => e as Error)
+    if (details instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = details.message || "Error Occurred When Accessing DB"
+        return useHttpEnd(event, response, Status.internalServerError)
     }
+    if (!details) return useHttpEnd(event, {statusCode: 404, body: "Not Found"}, 404)
 
-    let user = null
-    if (token) user = await getUserByToken(token as string).catch(err => {
-        useHttpEnd(event, {
-            body: err.message,
-            statusCode: Status.internalServerError
-        }, Status.internalServerError)
-        return null
-    })
-    if (email) user = await getUserByEmail(email as string).catch(err => {
-        useHttpEnd(event, {
-            body: err.message,
-            statusCode: Status.internalServerError
-        }, Status.internalServerError)
-        return null
-    })
-    if (!user) return {
-        statusCode: Status.notFound,
-        body: "User not found"
-    }
-
-    response.statusCode = Status.success
+    response.statusCode = 200
     response.body = {
-        email: user.email,
-        name: user.name
+        email: details.user.email,
+        name: details.user.name
     }
+
     return response
 }))
 
-router.delete("/", defineEventHandler(async (event) => {
+router.delete("/me", defineEventHandler(async (event) => {
     const response = {} as APIResponse
     const details = await useAuth(event).catch(e => e as Error)
     if (details instanceof Error) {
@@ -62,4 +43,4 @@ router.delete("/", defineEventHandler(async (event) => {
     return response
 }))
 
-export default useController("v1", "users", router)
+export default useController("users", router)

@@ -47,11 +47,11 @@ export function useSSE(event: H3Event) {
     return new Stream(event)
 }
 
-export function useController(version: string, folderName: string, router: Router) {
-    router.use('/*', defineEventHandler((event: H3Event) => {
+export function useController(folderName: string, router: Router) {
+    router.use('/**', defineEventHandler((event: H3Event) => {
         useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
         return useHttpEnd(event, null, 404)
     }))
 
-    return useBase(`/api/${version}/${folderName}`, router.handler)
+    return useBase(`/${folderName}`, router.handler)
 }

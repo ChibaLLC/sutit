@@ -36,7 +36,7 @@ const emits = defineEmits([
 ])
 
 const tag = props.field?.type || FieldEnum.TEXT
-const view = props.preview || false
+const view = props.preview ?? false
 
 watch(form_field.value, (value) => {
   emits('form', value)
