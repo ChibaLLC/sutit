@@ -10,7 +10,7 @@ if (process.env.NODE_ENV === 'dev' && process.env.NODE_ENV !== 'development') {
 }
 
 if (provider === 'vercel' || runtime === 'edge-light') {
-    console.log("This script is not supported on Vercel");
+    console.log("This script is not supported on edge builds");
     process.exit(0);
 }
 

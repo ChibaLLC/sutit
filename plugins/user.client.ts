@@ -1,3 +1,4 @@
+import type { UserState } from "~/types"
 import { getAuthCookie } from "~/utils/auth"
 
 export default defineNuxtPlugin(async (nuxtApp) => {
@@ -13,6 +14,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     const response = await useAuthFetch(`/api/v1/users/me`)
         .then(async response => {
         if(response.statusCode === 200) return response.body
+        if(response.statusCode === 404) {
+            setAuthCookie("", 0)
+            useUser().value = {} as UserState
+        }
         console.error(response)
         return null
     }).catch(() => null)

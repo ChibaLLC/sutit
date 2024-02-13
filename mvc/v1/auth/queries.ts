@@ -12,6 +12,7 @@ export async function createToken(user: { userId: number, email: string }): Prom
     const values = {
         userId: user.userId,
         token: uuid,
+        id: undefined
     } satisfies Drizzle.Session.insert
     return await db.insert(sessions).values(values).then(() => uuid)
         .catch((err) => {
