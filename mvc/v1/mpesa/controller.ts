@@ -31,8 +31,15 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
         insertFormPayment({
             form_id: stream.form.form.id,
             amount: +amount,
-            referenceCode: transactionCode as string,
+            referenceCode: transactionCode.toString(),
             phone: phoneNumber.toString()
+        }).then(() => {
+            stream.stream.send({
+                statusCode: 200,
+                body: "OK"
+            })
+            stream.stream.end()
+            globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
         }).catch(err => {
             useFileLogger(`Failed to process payment: ${err.message}`, {type: 'error'})
             return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
