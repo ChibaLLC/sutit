@@ -14,7 +14,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     const response = await useAuthFetch(`/api/v1/users/me`)
         .then(async response => {
         if(response.statusCode === 200) return response.body
-        if(response.statusCode === 404) {
+        if(response.statusCode === 401 || response.statusCode === 403 || response.statusCode === 404) {
             setAuthCookie("", 0)
             useUser().value = {} as UserState
         }

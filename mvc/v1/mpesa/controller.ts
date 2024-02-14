@@ -1,11 +1,46 @@
-import {callBackIpWhitelist as whitelist} from "~/types"
+import {callBackIpWhitelist as whitelist, type StkCallback} from "~/types"
+import {insertFormPayment} from "~/mvc/v1/forms/queries";
 
 const router = createRouter()
 
-router.use("/callback", defineEventHandler((event) => {
+router.use("/forms/callback", defineEventHandler(async (event) => {
     const ip = getRequestIP(event)
     if (!ip) return useHttpEnd(event, {statusCode: 400, body: "No IP found"}, 400)
     if (!whitelist.includes(ip)) return useHttpEnd(event, {statusCode: 403, body: "Forbidden"}, 403)
+
+    const callback = await readBody(event) as StkCallback
+    if (!callback) return useHttpEnd(event, {statusCode: 400, body: "No body found"}, 400)
+
+    const queue = globalThis.paymentProcessingQueue
+    if (!queue) throw new Error("Queue not found")
+
+    const stream = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
+    if (!stream) return useHttpEnd(event, {statusCode: 404, body: "Stream not found"}, 404)
+
+    if(callback.ResultCode === 0) {
+        const transactionCode = callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value
+        const amount = callback.CallbackMetadata.Item.find(item => item.Name === "Amount")?.Value
+        const date = callback.CallbackMetadata.Item.find(item => item.Name === "TransactionDate")?.Value
+        const phoneNumber = callback.CallbackMetadata.Item.find(item => item.Name === "PhoneNumber")?.Value
+
+        if (!transactionCode || !amount || !date || !phoneNumber) {
+            useFileLogger(`Failed to process payment: ${callback.ResultDesc}`, {type: 'error'})
+            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+        }
+
+        insertFormPayment({
+            form_id: stream.form.form.id,
+            amount: +amount,
+            referenceCode: transactionCode as string,
+            phone: phoneNumber.toString()
+        }).catch(err => {
+            useFileLogger(`Failed to process payment: ${err.message}`, {type: 'error'})
+            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+        })
+    } else {
+        useFileLogger(`Failed to process payment: ${callback.ResultDesc}`, {type: 'error'})
+        return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+    }
     return useHttpEnd(event, {statusCode: 200, body: "OK"}, 200)
 }))
 

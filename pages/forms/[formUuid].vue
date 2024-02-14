@@ -1,20 +1,75 @@
 <script setup lang="ts">
 import {type Drizzle} from "~/db/types";
+import type {APIResponse} from "~/types";
 
 const uuid = useRoute().params?.formUuid
-const form = ref({} as { form: Drizzle.Form.select, fields: Drizzle.FormFields.select[] })
+const form = ref({} as {
+  form: Drizzle.Form.select,
+  fields: Drizzle.FormFields.select[],
+  paymentDetails: Drizzle.PaymentDetails.select
+})
 const response = await useAuthFetch(`/api/v1/forms/${uuid}`)
 if (response.statusCode === 200) form.value = response.body
-// @ts-ignore
-form.value.fields = form.value?.fields?.map((field) => {
+form.value.fields = response.body.fields?.map((field: any) => {
   return {
     name: field.fieldName,
     type: field.fieldType,
     required: field.required,
     description: field.fieldDescription,
-    options: JSON.parse(field.fieldOptions || '[]'),
   }
 })
+const paymentModal = ref(false)
+const payment_success = ref(false)
+const payment_details = ref({
+  phone: ''
+})
+
+async function submitPayment(): Promise<boolean> {
+  const response = await useAuthStream(`/api/v1/forms/pay/${uuid}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      phone: payment_details.value.phone
+    })
+  })
+
+  const data = await getValuesOnStreamEnd<APIResponse>(response).catch(console.error)
+  if (!data) return false
+  if (typeof data === 'string') return false
+
+  for (const item of data) {
+    console.log(item)
+    if (item.statusCode === 200) {
+      return true
+    }
+  }
+
+  return false
+}
+
+async function processForm() {
+  if (
+      form.value.paymentDetails &&
+      form.value.paymentDetails.amount > 0 &&
+      payment_success.value === false &&
+      (!payment_details.value.phone ||
+          payment_details.value.phone === '') &&
+      payment_details.value.phone.length <= 10
+  ) {
+    paymentModal.value = true
+  } else {
+    paymentModal.value = false
+    payment_success.value = await submitPayment()
+    await submit()
+  }
+}
+
+async function submit() {
+  if (payment_success.value) {
+    console.log('Payment successful')
+  } else {
+    alert('Payment failed')
+  }
+}
 </script>
 
 <template>
@@ -34,20 +89,30 @@ form.value.fields = form.value?.fields?.map((field) => {
           <span class="ml-2">Form {{ form?.form?.formName }}</span>
         </h1>
       </div>
-      <form class="form">
+      <form class="form" @submit.prevent="processForm">
         <div v-for="field in form.fields" :key="field.id" class="form-group">
           <FormField :field="field" :preview="true"/>
         </div>
         <div class="buttons">
+          <small v-if="form.paymentDetails" class="justify-self-start mt-5 text-gray-500">
+            This form requires payment for submission <br>
+            <span class="text-red-400 ">Amount Due: {{ form.paymentDetails.amount }}</span> KES
+          </small>
           <button class="submit" type="submit">Submit</button>
         </div>
       </form>
+      <Modal :open="paymentModal" title="Please provide your MPESA phone number" @close="processForm"
+             @cancel="payment_details = {phone: ''}; paymentModal = false">
+        <div class="flex flex-col">
+          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone"/>
+        </div>
+      </Modal>
     </div>
   </div>
 </template>
 
 <style scoped>
-.header{
+.header {
   @apply bg-slate-600;
   @apply p-4;
   @apply rounded-md;
@@ -55,19 +120,33 @@ form.value.fields = form.value?.fields?.map((field) => {
   @apply text-white;
 }
 
-.buttons{
+.buttons {
   @apply flex;
-  @apply justify-end;
   @apply mt-4;
+  @apply items-center;
 }
 
-.submit{
+.submit {
   @apply bg-emerald-700;
   @apply text-white;
   @apply pl-4 pr-4;
   @apply pt-2 pb-2;
   @apply rounded-md;
   @apply cursor-pointer;
+  @apply transition-colors;
   @apply mt-4;
+  @apply hover:bg-emerald-600;
+  @apply ml-auto;
+}
+
+.input {
+  @apply w-full;
+  @apply h-10;
+  @apply px-3;
+  @apply py-2;
+  @apply text-sm;
+  @apply rounded-md;
+  @apply border;
+  @apply mb-4;
 }
 </style>

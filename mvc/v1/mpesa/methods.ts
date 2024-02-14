@@ -25,7 +25,7 @@ export async function call_stk(phone_number: number, amount: number, description
             throw new Error("Failed to get access token")
         })
 
-        if (!res || res.access_token) throw new Error("Failed to get access token")
+        if (!res || !res.access_token) throw new Error("Failed to get access token")
         await storage.setItem("mpesa_api_access_token", {
             access_token: res.access_token,
             expires_in: res.expires_in,
@@ -61,7 +61,7 @@ export async function call_stk(phone_number: number, amount: number, description
         },
         body: request
     }).then(res => res as {
-        ResponsCode: string
+        ResponseCode: string
         ResponseDescription: string
         MerchantRequestID: string
         CheckoutRequestID: string
@@ -70,6 +70,6 @@ export async function call_stk(phone_number: number, amount: number, description
         throw new Error("Failed to initiate STK push")
     })
 
-    if (response?.ResponsCode !== "0") throw new Error(response?.ResponseDescription || "Failed to initiate STK push")
+    if (response?.ResponseCode !== "0") throw new Error(response?.ResponseDescription || "Failed to initiate STK push")
     return response
 }

@@ -13,11 +13,13 @@ export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: nu
 export class Stream {
     private readonly _event: H3Event | undefined;
     private headersSent: boolean = false;
+    public identifier: string | null = null;
 
-    constructor(event: H3Event) {
-        this._event = event;
+    constructor(event: H3Event, identifier: string) {
+        this._event = event;  
         this.flushHeaders()
         this.headersSent = true;
+        this.identifier = identifier;
     }
 
     private flushHeaders() {
@@ -32,9 +34,8 @@ export class Stream {
         } as APIResponse)
     }
 
-    send(chunk: any) {
-        if (typeof chunk !== 'string') chunk = JSON.stringify(chunk);
-        this._event!.node.res.write(chunk);
+    send(chunk: APIResponse) {
+        this._event!.node.res.write(JSON.stringify(chunk));
     }
 
     end() {
@@ -43,8 +44,8 @@ export class Stream {
     }
 }
 
-export function useSSE(event: H3Event) {
-    return new Stream(event)
+export async function useSSE(event: H3Event, identifier: string) {
+    return new Stream(event, identifier)
 }
 
 export function useController(folderName: string, router: Router) {

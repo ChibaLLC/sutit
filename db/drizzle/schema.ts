@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, type AnyMySqlColumn, index, foreignKey, primaryKey, varchar, text, json, timestamp, tinyint, unique, int } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, int, type AnyMySqlColumn, index, foreignKey, primaryKey, varchar, text, json, timestamp, tinyint, unique } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 
@@ -24,8 +24,9 @@ export const formFields = mysqlTable("form_fields", {
 export const formPayments = mysqlTable("form_payments", {
 	id: int("id", { unsigned: true }).autoincrement().notNull(),
 	formId: int("form_id", { unsigned: true }).notNull().references(() => forms.id, { onDelete: "cascade" } ),
+	phoneNumber: varchar("phone_number", { length: 15 }).notNull(),
+	referenceCode: varchar("reference_code", { length: 255 }).notNull(),
 	amount: int("amount", { unsigned: true }).notNull(),
-	paybill: varchar("paybill", { length: 30 }).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
 },
@@ -42,7 +43,7 @@ export const forms = mysqlTable("forms", {
 	userId: int("user_id", { unsigned: true }).notNull().references(() => users.id, { onDelete: "cascade" } ),
 	formName: varchar("form_name", { length: 255 }).notNull(),
 	formDescription: text("form_description"),
-	paymentDetails: int("payment_details", { unsigned: true }).references(() => paymentDetails.id, { onDelete: "set null" } ),
+	paymentDetails: int("payment_details", { unsigned: true }).references((): AnyMySqlColumn => paymentDetails.id, { onDelete: "set null" } ),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
 },
@@ -55,32 +56,16 @@ export const forms = mysqlTable("forms", {
 	}
 });
 
-export const orders = mysqlTable("orders", {
-	id: int("id", { unsigned: true }).autoincrement().notNull(),
-	orderId: varchar("order_id", { length: 255 }).notNull(),
-	phone: varchar("phone", { length: 255 }).notNull(),
-	amount: int("amount", { unsigned: true }).notNull(),
-	paid: tinyint("paid").default(0).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
-},
-(table) => {
-	return {
-		ordersId: primaryKey({ columns: [table.id], name: "orders_id"}),
-	}
-});
-
 export const paymentDetails = mysqlTable("payment_details", {
 	id: int("id", { unsigned: true }).autoincrement().notNull(),
-	userId: int("user_id", { unsigned: true }).notNull().references(() => users.id),
-	paybill: varchar("paybill", { length: 30 }).notNull(),
+	formId: int("form_id", { unsigned: true }).notNull().references((): AnyMySqlColumn => forms.id, { onDelete: "cascade" } ),
 	amount: int("amount", { unsigned: true }).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
 },
 (table) => {
 	return {
-		userId: index("user_id").on(table.userId),
+		formId: index("form_id").on(table.formId),
 		paymentDetailsId: primaryKey({ columns: [table.id], name: "payment_details_id"}),
 	}
 });

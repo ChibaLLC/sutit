@@ -33,6 +33,8 @@ onMounted(() => {
       })
     }
   }
+
+  console.log(forms.value)
 })
 </script>
 <template>
@@ -48,7 +50,7 @@ onMounted(() => {
           </NuxtLink>
         </div>
         <div class="shadow-lg overflow-hidden my-8 border-slate-900">
-          <table class="border-collapse table-auto w-full text-sm">
+          <table class="border-collapse table-auto w-full text-sm" v-if="forms.length > 0">
             <thead>
             <tr>
               <th class="border-b font-medium p-4 pl-8 pt-0 pb-3 text-slate-700 text-left">
@@ -107,6 +109,9 @@ onMounted(() => {
             </tr>
             </tbody>
           </table>
+          <div class="flex justify-center items-center p-4" v-else>
+            <p class="text-slate-700">No forms found</p>
+          </div>
         </div>
       </div>
     </main>

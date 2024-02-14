@@ -1,5 +1,6 @@
 import {Status, type APIResponse, type UserState} from "~/types";
 import type {NitroFetchRequest} from "nitropack";
+import {ulid} from "ulid";
 
 /**
  * This function appends the auth token to the headers of the fetch request
@@ -32,17 +33,25 @@ export async function useAuthFetch(url: string | URL | Request, options?: Reques
             .catch(async () => await response.blob()
                 .catch(async () => await response.arrayBuffer()
                     .catch(() => response))))
-    if (typeof data === "string") return { statusCode: response.status, body: data } as APIResponse
+    if (typeof data === "string") return {statusCode: response.status, body: data} as APIResponse
     return data as APIResponse
 }
 
-export async function useAuthStream(url: NitroFetchRequest, options?: RequestInit) {
-    const {headers, ...rest} = options || {} as any
+export async function useAuthStream(url: NitroFetchRequest, options?: RequestInit): Promise<ReadableStreamDefaultReader<Uint8Array> | null> {
+    const {headers, ...withoutHeaders} = options || {} as any
+    let {body, ...withoutHeadersAndBody} = withoutHeaders
+
+    body = body ? JSON.parse(body) : undefined
+    const {identity, ...restBody} = body || {}
     const response = await $fetch(url, {
-        ...rest,
+        ...withoutHeadersAndBody,
         headers: {
             ...headers,
             "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: {
+            ...restBody,
+            identity: identity || getAuthToken() || ulid()
         },
         responseType: "stream"
     })

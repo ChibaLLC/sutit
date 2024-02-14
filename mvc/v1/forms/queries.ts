@@ -4,44 +4,22 @@ import {type Drizzle} from "~/db/types";
 import {eq} from "drizzle-orm";
 import ulid from "ulid";
 
-function aggregate(data: Array<any>, Parent: string, Aggregate: string) {
-    const aggregatedData = {}
 
-    // @ts-ignore
-    if(!data[0][Parent]) throw new Error("Parent field not found in data")
-    // @ts-ignore
-    if(!data[0][Aggregate]) throw new Error("Aggregate field not found in data")
-
-    for(const  item of data){
-        // @ts-ignore
-        aggregatedData[Parent] = item[Parent];
-        // @ts-ignore
-        aggregatedData[Aggregate] = aggregatedData[Aggregate] || [];
-        // @ts-ignore
-        aggregatedData[Aggregate].push(item[Aggregate]);
-    }
-
-    return aggregatedData;
-}
-
-
-export async function createFormPayment(userId: number, payment: {
-    paybill: string,
+export async function createFormPayment(formId: number, payment: {
     amount: number
 }) {
     await db.insert(paymentDetails).values({
-        paybill: payment.paybill,
         amount: payment.amount,
-        userId: userId
+        formId: formId
     } satisfies Drizzle.PaymentDetails.insert)
 
     return (await db.select({
         id: paymentDetails.id
     }).from(paymentDetails)
-        .where(eq(paymentDetails.userId, userId))).at(0)?.id
+        .where(eq(paymentDetails.formId, formId))).at(0)?.id
 }
 
-export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fields: Array<Omit<Drizzle.FormFields.insert, 'formId'>>): Promise<void> {
+export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fields: Array<Omit<Drizzle.FormFields.insert, 'formId'>>): Promise<number> {
     const formUUID = ulid.ulid()
     await db.insert(forms).values({...form, formUuid: formUUID} satisfies Drizzle.Form.insert)
 
@@ -55,23 +33,56 @@ export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fi
         ...field,
         formId: formId.id
     } satisfies Drizzle.FormFields.insert)))
+
+    return formId.id
 }
 
-export async function getFormByUlid(formUuid: string): Promise<{
+export function updateFormPaymentDetails(formId: number, payment_details_id: number) {
+    return db.update(forms).set({
+        paymentDetails: payment_details_id
+    }).where(eq(forms.id, formId))
+}
+
+export async function getFormByUlid(formUlid: string): Promise<{
     form: Drizzle.Form.select,
-    fields: Drizzle.FormFields.select[]
+    fields: Drizzle.FormFields.select[],
+    paymentDetails: Drizzle.PaymentDetails.select
 }> {
     const results = await db.select({
         form: forms,
-        fields: formFields
+        fields: formFields,
+        paymentDetails: paymentDetails
     }).from(forms)
         .innerJoin(formFields, eq(forms.id, formFields.formId))
-        .where(eq(forms.formUuid, formUuid))
+        .leftJoin(paymentDetails, eq(forms.paymentDetails, paymentDetails.id))
+        .where(eq(forms.formUuid, formUlid))
 
-    return aggregate(results, "form", "fields") as {
-        form: Drizzle.Form.select,
-        fields: Drizzle.FormFields.select[]
-    };
+    return {
+        form: results[0]?.form || {} as Drizzle.Form.select,
+        fields: results.map(result => result.fields),
+        paymentDetails: results[0]?.paymentDetails || {} as Drizzle.PaymentDetails.select
+    }
+}
+
+export async function getFormById(formId: number): Promise<{
+    form: Drizzle.Form.select,
+    fields: Drizzle.FormFields.select[],
+    paymentDetails: Drizzle.PaymentDetails.select
+}> {
+    const results = await db.select({
+        form: forms,
+        fields: formFields,
+        paymentDetails: paymentDetails
+    }).from(forms)
+        .innerJoin(formFields, eq(forms.id, formFields.formId))
+        .leftJoin(paymentDetails, eq(forms.paymentDetails, paymentDetails.id))
+        .where(eq(forms.id, formId))
+
+    return {
+        form: results[0]?.form || {} as Drizzle.Form.select,
+        fields: results.map(result => result.fields),
+        paymentDetails: results[0]?.paymentDetails || {} as Drizzle.PaymentDetails.select
+    }
 }
 
 export async function insertData(userId: number, formId: number, data: {
@@ -137,9 +148,18 @@ export async function getFormsByUser(userId: number) {
     return db.select({
         formUuid: forms.formUuid,
         formName: forms.formName,
-        paymentDetails: formPayments.id,
+        paymentDetails: paymentDetails.id,
         createdAt: forms.createdAt
     }).from(forms)
-        .leftJoin(formPayments, eq(forms.paymentDetails, formPayments.id))
+        .leftJoin(paymentDetails, eq(forms.paymentDetails, paymentDetails.id))
         .where(eq(forms.userId, userId))
+}
+
+export async function insertFormPayment(details: {form_id: number, amount: number, phone: string, referenceCode: string}) {
+    await db.insert(formPayments).values({
+        formId: details.form_id,
+        amount: details.amount,
+        phoneNumber: details.phone,
+        referenceCode: details.referenceCode
+    } satisfies Drizzle.FormPayment.insert)
 }

@@ -94,6 +94,19 @@ export enum MpesaTransactionType {
     CustomerPayBillOnline = "CustomerPayBillOnline"
 }
 
+export type StkCallback = {
+    MerchantRequestID: string,
+    CheckoutRequestID: string,
+    ResultCode: number,
+    ResultDesc: string,
+    CallbackMetadata: {
+        Item: Array<{
+            Name: string,
+            Value: string | number
+        }>
+    }
+}
+
 export enum DarajaLinks {
     OAuth_Access_Token = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=",
     STK_Push = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"

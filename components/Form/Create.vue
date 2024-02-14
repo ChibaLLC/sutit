@@ -32,8 +32,7 @@ const formFields = ref<Set<FormField>>(new Set())
 const payment = ref(false)
 
 const payment_details = ref({
-  amount: 0,
-  paybill: ''
+  amount: 0
 })
 
 function submit() {
@@ -41,14 +40,12 @@ function submit() {
     name: string,
     payment: {
       amount: number,
-      paybill: string
     },
     fields: FormField[]
   } = {
     name: v4(),
     payment: {
-      amount: 0,
-      paybill: ''
+      amount: payment_details.value.amount,
     },
     fields: Array.from(formFields.value)
   }
@@ -73,7 +70,7 @@ function createFormField(name: string | null) {
   switch (name as FieldEnum) {
     case FieldEnum.TEXTAREA:
       return {
-        name: 'Add a label',
+        name: '',
         type: name as FieldEnum,
         required: false,
         placeholder: 'Add a label',
@@ -81,7 +78,7 @@ function createFormField(name: string | null) {
       } satisfies Textarea
     case FieldEnum.SELECT:
       return {
-        name: 'Add a label',
+        name: '',
         type: name as FieldEnum,
         required: false,
         placeholder: 'Add a label',
@@ -89,7 +86,7 @@ function createFormField(name: string | null) {
       } satisfies Select
     default:
       return {
-        name: 'Add a label',
+        name: '',
         type: name as FieldEnum,
         required: false,
         placeholder: 'Add a label',
