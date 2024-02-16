@@ -108,7 +108,7 @@ export type StkCallback = {
 }
 
 export enum DarajaLinks {
-    OAuth_Access_Token = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=",
+    OAuth_Access_Token = "https://sandbox.safaricom.co.ke/oauth/v1/generate",
     STK_Push = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
 }
 

@@ -5,17 +5,19 @@ import type {APIResponse} from "~/types";
 const uuid = useRoute().params?.formUuid
 const form = ref({} as {
   form: Drizzle.Form.select,
-  fields: Drizzle.FormFields.select[],
+  fields: Array<Drizzle.FormFields.select[] & { ref: Ref<string> }>,
   paymentDetails: Drizzle.PaymentDetails.select
 })
 const response = await useAuthFetch(`/api/v1/forms/${uuid}`)
 if (response.statusCode === 200) form.value = response.body
 form.value.fields = response.body.fields?.map((field: any) => {
   return {
+    id: field.id,
     name: field.fieldName,
     type: field.fieldType,
     required: field.required,
     description: field.fieldDescription,
+    ref: ref(''),
   }
 })
 const paymentModal = ref(false)
@@ -70,6 +72,7 @@ async function submit() {
     alert('Payment failed')
   }
 }
+
 </script>
 
 <template>
@@ -91,7 +94,7 @@ async function submit() {
       </div>
       <form class="form" @submit.prevent="processForm">
         <div v-for="field in form.fields" :key="field.id" class="form-group">
-          <FormField :field="field" :preview="true"/>
+          <FormField :field="field" :preview="true" v-bind="field.ref" />
         </div>
         <div class="buttons">
           <small v-if="form.paymentDetails" class="justify-self-start mt-5 text-gray-500">

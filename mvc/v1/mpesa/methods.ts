@@ -1,75 +1,24 @@
-import { DarajaLinks, type MpesaStkRequest, MpesaTransactionType } from "~/types";
-import storage from "~/storage";
+import {Mpesa} from "daraja.js";
+
+const app = new Mpesa({
+    consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,
+    consumerSecret: process.env.MPESA_APP_CONSUMER_SECRET!,
+    initiatorPassword: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+})
 
 export async function call_stk(phone_number: number, amount: number, description: string) {
-    const time = new Date().toISOString()
-    const timestamp = time.replace(/[^0-9]/g, "")
-    let accessToken = await storage.getItem<{
-        access_token: string
-        expires_in: number
-        time: string
-    }>("mpesa_api_access_token")
+    const response = await app
+        .stkPush()
+        .amount(amount)
+        .phoneNumber(phone_number)
+        .description(description)
+        .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
+        .callbackURL(process.env.MPESA_CALLBACK_URL!)
+        .send()
 
-    if (!accessToken || (new Date().getTime() - new Date(accessToken.time).getTime()) / 1000 > accessToken.expires_in) {
-        const authorisation = Buffer.from(`${process.env.MPESA_APP_CONSUMER_KEY!}:${process.env.MPESA_APP_CONSUMER_SECRET!}`).toString("base64")
-        const res = await $fetch<{
-            access_token: string
-            expires_in: number
-        }>(DarajaLinks.OAuth_Access_Token + "client_credentials", {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${authorisation}`
-            }
-        }).catch(err => {
-            console.error(err)
-            throw new Error("Failed to get access token")
-        })
-
-        if (!res || !res.access_token) throw new Error("Failed to get access token")
-        await storage.setItem("mpesa_api_access_token", {
-            access_token: res.access_token,
-            expires_in: res.expires_in,
-            timestamp: timestamp
-        })
-
-        accessToken = {
-            access_token: res.access_token,
-            expires_in: res.expires_in,
-            time: time
-        }
+    if(!response.isOkay()) {
+        console.error(response)
+        return null
     }
-
-    const request = {
-        BusinessShortCode: parseInt(process.env.MPESA_BUSINESS_SHORTCODE!),
-        Password: Buffer.from(`${process.env.MPESA_BUSINESS_SHORTCODE!}${process.env.MPESA_PASSKEY!}${timestamp}`).toString("base64"),
-        Timestamp: timestamp,
-        TransactionType: MpesaTransactionType.CustomerPayBillOnline,
-        Amount: amount,
-        PartyA: parseInt(process.env.MPESA_B2C_PARTY_A!),
-        PartyB: parseInt(process.env.MPESA_B2C_PARTY_B!),
-        PhoneNumber: phone_number,
-        CallBackURL: process.env.MPESA_CALLBACK_URL!,
-        AccountReference: process.env.MPESA_B2C_ACCOUNT_REF!,
-        TransactionDesc: description
-    } satisfies MpesaStkRequest
-
-    const response = await $fetch(DarajaLinks.STK_Push, {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${accessToken.access_token}`,
-            "Content-Type": "application/json"
-        },
-        body: request
-    }).then(res => res as {
-        ResponseCode: string
-        ResponseDescription: string
-        MerchantRequestID: string
-        CheckoutRequestID: string
-    }).catch(err => {
-        console.error(err)
-        throw new Error("Failed to initiate STK push")
-    })
-
-    if (response?.ResponseCode !== "0") throw new Error(response?.ResponseDescription || "Failed to initiate STK push")
-    return response
+    return response.data
 }

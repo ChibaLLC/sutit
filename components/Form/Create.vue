@@ -56,7 +56,7 @@ function submit() {
   }).then((res) => {
     if (res.statusCode === 200) {
       alert('Form created successfully')
-      navigateTo('/submissions')
+      navigateTo('/forms')
     } else {
       alert('Form creation failed')
       console.error(res)

@@ -29,6 +29,7 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
+    "daraja.js": "github:kgarchie/daraja.js",
     "drizzle-orm": "^0.29.3",
     "mysql2": "^3.9.1",
     "object.groupby": "^1.0.2",

@@ -11,14 +11,16 @@ const props = defineProps({
   preview: {
     type: Object as PropType<Ref>,
     required: false,
+  },
+  vBind: {
+    type: Object as PropType<Ref>,
+    required: false,
   }
 })
 
 const form_field = ref(props.field)
 
 const emits = defineEmits([
-  'input',
-  'change',
   'form',
   'blur',
   'focus',
@@ -78,17 +80,17 @@ watch(form_field.value, (value) => {
 
     <template
         v-if="view && (tag === FieldEnum.TEXT || tag === FieldEnum.TEL || tag === FieldEnum.EMAIL || tag === FieldEnum.NUMBER || tag === FieldEnum.PASSWORD || tag === FieldEnum.FILE || tag === FieldEnum.DATE || tag === FieldEnum.TIME || tag === FieldEnum.CHECKBOX)">
-      <input v-bind="field" :type="tag" v-on="emits" class="input"/>
+      <input :type="tag" v-bind="vBind" class="input"/>
     </template>
 
     <template v-else-if="tag === FieldEnum.SELECT">
-      <select v-bind="field" v-on="emits" class="select">
+      <select v-bind="vBind" class="select" >
         <option v-for="option in field['options']" :value="option" :key="option">{{ option }}</option>
       </select>
     </template>
 
     <template v-else-if="tag === FieldEnum.TEXTAREA" class="textarea">
-      <textarea v-bind="field" v-on="emits"/>
+      <textarea v-bind="vBind" />
     </template>
   </div>
 </template>
