@@ -14,9 +14,14 @@ export async function call_stk(phone_number: number, amount: number, description
         .description(description)
         .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
         .callbackURL(process.env.MPESA_CALLBACK_URL!)
+        .lipaNaMpesaPassKey(process.env.MPESA_LNM_PASSKEY!)
         .send()
+        .catch(err => {
+            console.error(err)
+            return null
+        })
 
-    if(!response.isOkay()) {
+    if(!response || !response.isOkay()) {
         console.error(response)
         return null
     }
