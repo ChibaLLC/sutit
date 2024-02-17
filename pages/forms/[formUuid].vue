@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {type Drizzle} from "~/db/types";
 import type {APIResponse} from "~/types";
-
+const loading = ref(false)
 const uuid = useRoute().params?.formUuid
 const form = ref({} as {
   form: Drizzle.Form.select,
@@ -58,19 +58,38 @@ async function processForm() {
       payment_details.value.phone.length <= 10
   ) {
     paymentModal.value = true
-  } else {
+  } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
     paymentModal.value = false
     payment_success.value = await submitPayment()
+  } else {
+    payment_success.value = true
     await submit()
   }
 }
 
 async function submit() {
+  loading.value = true
   if (payment_success.value) {
-    console.log('Payment successful')
+    const response = await useAuthFetch(`/api/v1/forms/submit/${uuid}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        fields: form.value.fields.map((field) => {
+          return {
+            id: field.id,
+            value: field.ref.value
+          }
+        })
+      })
+    })
+    if (response.statusCode === 200) {
+      alert('Form submitted successfully')
+    } else {
+      alert('Form submission failed, please try again later')
+    }
   } else {
-    alert('Payment failed')
+    alert('Payment failed, please try again later')
   }
+  loading.value = false
 }
 
 </script>
@@ -94,14 +113,24 @@ async function submit() {
       </div>
       <form class="form" @submit.prevent="processForm">
         <div v-for="field in form.fields" :key="field.id" class="form-group">
-          <FormField :field="field" :preview="true" v-bind="field.ref" />
+          <FormField :field="field" :preview="true" v-bind="field.ref"/>
         </div>
         <div class="buttons">
           <small v-if="form.paymentDetails" class="justify-self-start mt-5 text-gray-500">
             This form requires payment for submission <br>
             <span class="text-red-400 ">Amount Due: {{ form.paymentDetails.amount }}</span> KES
           </small>
-          <button class="submit" type="submit">Submit</button>
+          <button
+              class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none submit"
+              type="submit"
+              style="transition: all 0.15s ease 0s;"
+          >
+            <span v-if="!loading">Send</span>
+            <span :class="{'loading': loading}" class="w-full grid place-items-center" v-else>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path
+                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z"></path></svg>
+                    </span>
+          </button>
         </div>
       </form>
       <Modal :open="paymentModal" title="Please provide your MPESA phone number" @close="processForm"

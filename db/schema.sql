@@ -83,12 +83,14 @@ create table if not exists `responses`
 (
     `id`         integer unsigned not null auto_increment,
     `form_id`    integer unsigned not null,
-    `user_id`    integer unsigned not null unique,
+    `user_id`    integer unsigned unique,
+    `user_ulid`  varchar(255)     unique,
     `created_at` timestamp        not null default current_timestamp,
     `updated_at` timestamp        not null default current_timestamp on update current_timestamp,
     primary key (`id`),
     foreign key (`form_id`) references `forms` (`id`) on delete cascade,
-    foreign key (`user_id`) references `users` (`id`) on delete cascade
+    foreign key (`user_id`) references `users` (`id`) on delete cascade,
+    check ((`user_id` is not null and `user_ulid` is null) or (`user_id` is null and `user_ulid` is not null))
 );
 create table if not exists `response_data`
 (

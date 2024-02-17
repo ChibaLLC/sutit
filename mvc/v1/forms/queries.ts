@@ -85,20 +85,29 @@ export async function getFormById(formId: number): Promise<{
     }
 }
 
-export async function insertData(userId: number, formId: number, data: {
-    [key: string]: string | number | boolean | null
+export async function insertData(userId: number | undefined, formId: number, data: {
+    fields: Array<{ id: number, value: string }>
 }) {
+
     await db.insert(responses).values({
         formId: formId,
         userId: userId
     } satisfies Drizzle.Responses.insert)
 
-    const responseId = (await db.select({
-        id: responses.id
-    }).from(responses)
-        .where(eq(responses.userId, userId))).at(0)
+    let response: { id: number } | undefined;
+    if (userId) {
+        response = (await db.select({
+            id: responses.id
+        }).from(responses)
+            .where(eq(responses.userId, userId))).at(0) || undefined
+    } else {
+        response = (await db.select({
+            id: responses.id
+        }).from(responses)
+            .where(eq(responses.userUlid, ulid.ulid()))).at(0) || undefined
+    }
 
-    if (!responseId) throw new Error("Response not found after creation")
+    if (!response) throw new Error("Response not found after creation")
 
     const fields = await db.select({
         id: formFields.id,
@@ -116,12 +125,14 @@ export async function insertData(userId: number, formId: number, data: {
     }
 
     if (missing.length > 0) throw new Error(`Missing required fields: ${missing.join(",\n")}`)
-
-    const dataToInsert = fields.map(field => ({
-        responseId: responseId.id,
-        formFieldId: field.id,
-        value: data[field.name]?.toString() || ''
-    } satisfies Drizzle.ResponseData.insert))
+    const dataToInsert = fields.map(field => {
+        const value = data.fields.find(f => f.id === field.id)?.value
+        return {
+            responseId: response!.id,
+            formFieldId: field.id,
+            value: value || ""
+        } satisfies Drizzle.ResponseData.insert
+    })
 
     await db.insert(responseData).values(dataToInsert)
 }
@@ -155,7 +166,12 @@ export async function getFormsByUser(userId: number) {
         .where(eq(forms.userId, userId))
 }
 
-export async function insertFormPayment(details: {form_id: number, amount: number, phone: string, referenceCode: string}) {
+export async function insertFormPayment(details: {
+    form_id: number,
+    amount: number,
+    phone: string,
+    referenceCode: string
+}) {
     await db.insert(formPayments).values({
         formId: details.form_id,
         amount: details.amount,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const url = useRoute()
 const redirect = url.query?.redirect
+const loading = ref(false)
 const details = reactive({
   email: '',
   password1: '',
@@ -31,6 +32,7 @@ watch(details, () => {
 
 async function submit(){
   if(errors.value.size > 0) return console.log('Errors in form')
+  loading.value = true
   const response = await useAuthFetch('/api/v1/auth/signup', {
     method: 'POST',
     headers: {
@@ -41,7 +43,7 @@ async function submit(){
       password: details.password1
     })
   })
-
+  loading.value = false
   if(response.statusCode === 200){
     setAuthCookie(response.body)
     useUser().value!.token = response.body
@@ -153,10 +155,15 @@ async function submit(){
                 <div class="text-center mt-6">
                   <button
                       class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full"
-                      type="submit"
+                      type="button"
+                      @click="submit"
                       style="transition: all 0.15s ease 0s;"
                   >
-                    Sign Up
+                    <span v-if="!loading">Sign In</span>
+                    <span :class="{'loading': loading}" class="w-full grid place-items-center" v-else>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path
+                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z"></path></svg>
+                    </span>
                   </button>
                 </div>
               </form>
@@ -175,5 +182,7 @@ async function submit(){
 </template>
 
 <style scoped>
-
+.loading {
+  @apply animate-spin;
+}
 </style>

@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, int, type AnyMySqlColumn, index, foreignKey, primaryKey, varchar, text, json, timestamp, tinyint, unique } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, type AnyMySqlColumn, int, index, foreignKey, primaryKey, varchar, text, json, timestamp, tinyint, unique } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 
@@ -101,7 +101,8 @@ export const responseData = mysqlTable("response_data", {
 export const responses = mysqlTable("responses", {
 	id: int("id", { unsigned: true }).autoincrement().notNull(),
 	formId: int("form_id", { unsigned: true }).notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	userId: int("user_id", { unsigned: true }).notNull().references(() => users.id, { onDelete: "cascade" } ),
+	userId: int("user_id", { unsigned: true }).references(() => users.id, { onDelete: "cascade" } ),
+	userUlid: varchar("user_ulid", { length: 255 }),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).onUpdateNow().notNull(),
 },
@@ -110,6 +111,7 @@ export const responses = mysqlTable("responses", {
 		formId: index("form_id").on(table.formId),
 		responsesId: primaryKey({ columns: [table.id], name: "responses_id"}),
 		userId: unique("user_id").on(table.userId),
+		userUlid: unique("user_ulid").on(table.userUlid),
 	}
 });
 

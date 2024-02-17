@@ -24,6 +24,13 @@ export async function useAuth(event: H3Event) {
     return {token, user}
 }
 
+export async function useDbUser(event: H3Event) {
+    const token = readAuthToken(event)
+    if (!token) return null
+    const user = await getUserByToken(token).catch(() => null)
+    return {token, user}
+}
+
 export function readAuthToken(event: H3Event) {
     let auth = event.headers.get("Authorization") || null
     if (!auth) auth = getCookie(event, "Authorization") || null

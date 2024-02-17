@@ -142,14 +142,13 @@ router.post("/submit/:formId", defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const details = await useAuth(event)
-    if (!details) return
+    const details = await useDbUser(event)
 
     const data = await readBody(event) as {
-        [key: string]: string | number | boolean | null
+        fields: Array<{ id: number, value: string }>
     }
 
-    await insertData(details.user.id, +formId, data).catch(err => {
+    await insertData(details?.user?.id, +formId, data).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while submitting form"
