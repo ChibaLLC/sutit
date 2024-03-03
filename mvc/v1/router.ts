@@ -3,6 +3,7 @@ import dataController from './data/controller'
 import formsController from './forms/controller'
 import usersController from './users/controller'
 import whatsappController from './whatsapp/controller'
+import experimentsController from './experiments/controller'
 
 const router = createRouter()
 
@@ -12,11 +13,13 @@ router.use("/data/**", dataController)
 router.use("/forms/**", formsController)
 router.use("/users/**", usersController)
 router.use("/whatsapp/**", whatsappController)
+router.use("/experiments/**", experimentsController)
 
 /** This has to be the last route */
 router.use("/**", defineEventHandler(event => {
     useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
     return useHttpEnd(event, null, 404)
 }))
+
 
 export default useBase("/api/v1", router.handler)

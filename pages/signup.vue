@@ -53,6 +53,8 @@ async function submit(){
     } else {
       await navigateTo('/')
     }
+  } else if(response.statusCode === 409){
+    errors.value.add("A user with that very email, already exists.")
   }
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {type Drizzle} from "~/db/types";
 import type {APIResponse} from "~/types";
+
 const loading = ref(false)
 const uuid = useRoute().params?.formUuid
 const form = ref({} as {
@@ -34,18 +35,24 @@ async function submitPayment(): Promise<boolean> {
     })
   })
 
-  const data = await getValuesOnStreamEnd<APIResponse>(response).catch(console.error)
-  if (!data) return false
-  if (typeof data === 'string') return false
-
-  for (const item of data) {
-    console.log(item)
-    if (item.statusCode === 200) {
-      return true
-    }
-  }
-
-  return false
+  return new Promise((resolve) => {
+    if(!response) return resolve(false)
+    response.on('data', (data) => {
+      console.log(data)
+      switch (data.statusCode) {
+        case 200:
+          resolve(true)
+          break
+        case 400:
+          resolve(false)
+          break
+        case 500:
+          alert('Payment failed, please try again later')
+          resolve(false)
+          break
+      }
+    })
+  })
 }
 
 async function processForm() {

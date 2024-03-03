@@ -1,6 +1,7 @@
 import {defineEventHandler, H3Event, type Router} from "h3";
 import {type APIResponse, Status} from "~/types";
 import {useBase} from "h3";
+import {ulid} from "ulid";
 
 export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: number) {
     if (data) return event.respondWith(new Response(JSON.stringify(data), {
@@ -12,14 +13,14 @@ export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: nu
 
 export class Stream {
     private readonly _event: H3Event | undefined;
-    private headersSent: boolean = false;
-    public identifier: string | null = null;
+    private readonly headersSent: boolean = false;
+    private readonly identity: string | null = null;
 
-    constructor(event: H3Event, identifier: string) {
-        this._event = event;  
+    constructor(event: H3Event, identity: string) {
+        this._event = event;
         this.flushHeaders()
         this.headersSent = true;
-        this.identifier = identifier;
+        this.identity = identity;
     }
 
     private flushHeaders() {
@@ -40,12 +41,17 @@ export class Stream {
 
     end() {
         this._event!.node.res.end();
-        this._event!.node.res.destroy();
+    }
+
+    get identifier() {
+        return this.identity
     }
 }
 
-export async function useSSE(event: H3Event, identifier: string) {
-    return new Stream(event, identifier)
+export async function useSSE(event: H3Event) {
+    const id = ulid()
+    const stream = new Stream(event, id)
+    return {stream, id}
 }
 
 export function useController(folderName: string, router: Router) {
