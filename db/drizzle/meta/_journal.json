@@ -1,12 +1,12 @@
 {
   "version": "5",
-  "dialect": "mysql",
+  "dialect": "pg",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1707129156877,
-      "tag": "0000_equal_vertigo",
+      "when": 1711707001744,
+      "tag": "0000_wooden_northstar",
       "breakpoints": true
     }
   ]

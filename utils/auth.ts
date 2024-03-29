@@ -59,7 +59,7 @@ export async function useData(url: string | URL | Ref<string | URL>, key?: strin
 }
 
 class Emitter {
-    private readonly _events: Record<"data" | "text" | "end", Array<(data: APIResponse) => void>>;
+    private readonly _events: Record<"data" | "text" | "end", Array<(data: APIResponse | string) => void>>;
 
     constructor() {
         this._events = {
@@ -69,7 +69,7 @@ class Emitter {
         }
     }
 
-    on(event: "data" | "text" | "end", callback: (data: APIResponse) => void) {
+    on(event: "data" | "text" | "end", callback: (data: APIResponse | string) => void) {
         if (!this._events) return
         this._events[event].push(callback)
     }
@@ -168,15 +168,15 @@ export async function useAuthStream(url: NitroFetchRequest, options?: RequestIni
  *
  * console.log(data)
  */
-export async function getAuthStreamData<T>(authStream: Emitter): Promise<Array<T>> {
-    const data: Array<T> = []
+export async function getAuthStreamData(authStream: Emitter): Promise<Array<APIResponse>> {
+    const data: Array<APIResponse> = []
     if (!authStream) return Promise.resolve(data)
     return new Promise((resolve, reject) => {
-        authStream.on("data", (d: T) => {
-            data.push(d)
+        authStream.on("data", (d) => {
+            data.push(d as APIResponse)
         })
-        authStream.on("text", (text: string) => {
-            data.push(text as unknown as T)
+        authStream.on("text", (text) => {
+            data.push(text as any)
         })
         authStream.on("end", () => {
             resolve(data)

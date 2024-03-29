@@ -13,7 +13,7 @@
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
     "prepare": "node ./setup.js",
     "test": "vitest",
-    "introspect": "drizzle-kit introspect:mysql"
+    "introspect": "drizzle-kit introspect:pg"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.11.2",
@@ -31,8 +31,9 @@
   "dependencies": {
     "daraja.js": "github:kgarchie/daraja.js",
     "drizzle-orm": "^0.29.3",
-    "mysql2": "^3.9.1",
     "object.groupby": "^1.0.2",
+    "postgres": "^3.4.4",
+    "std-env": "^3.7.0",
     "ulid": "^2.3.0",
     "uuid": "^9.0.1"
   }

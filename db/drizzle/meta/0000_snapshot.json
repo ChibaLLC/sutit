@@ -2,453 +2,701 @@
   "id": "00000000-0000-0000-0000-000000000000",
   "prevId": "",
   "version": "5",
-  "dialect": "mysql",
+  "dialect": "pg",
   "tables": {
-    "forms": {
-      "name": "forms",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "autoincrement": false,
-          "name": "user_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_name": {
-          "autoincrement": false,
-          "name": "form_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {
-        "user_id": {
-          "name": "user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "forms_ibfk_1": {
-          "name": "forms_ibfk_1",
-          "tableFrom": "forms",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "form_fields": {
-      "name": "form_fields",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_id": {
-          "autoincrement": false,
-          "name": "form_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "field_name": {
-          "autoincrement": false,
-          "name": "field_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "field_type": {
-          "autoincrement": false,
-          "name": "field_type",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {
-        "form_id": {
-          "name": "form_id",
-          "columns": [
-            "form_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "form_fields_ibfk_1": {
-          "name": "form_fields_ibfk_1",
-          "tableFrom": "form_fields",
-          "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "responses": {
-      "name": "responses",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_id": {
-          "autoincrement": false,
-          "name": "form_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "autoincrement": false,
-          "name": "user_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {
-        "form_id": {
-          "name": "form_id",
-          "columns": [
-            "form_id"
-          ],
-          "isUnique": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "responses_ibfk_1": {
-          "name": "responses_ibfk_1",
-          "tableFrom": "responses",
-          "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        },
-        "responses_ibfk_2": {
-          "name": "responses_ibfk_2",
-          "tableFrom": "responses",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "response_data": {
-      "name": "response_data",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "response_id": {
-          "autoincrement": false,
-          "name": "response_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_field_id": {
-          "autoincrement": false,
-          "name": "form_field_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "autoincrement": false,
-          "name": "value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {
-        "response_id": {
-          "name": "response_id",
-          "columns": [
-            "response_id"
-          ],
-          "isUnique": false
-        },
-        "form_field_id": {
-          "name": "form_field_id",
-          "columns": [
-            "form_field_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "response_data_ibfk_1": {
-          "name": "response_data_ibfk_1",
-          "tableFrom": "response_data",
-          "tableTo": "responses",
-          "columnsFrom": [
-            "response_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        },
-        "response_data_ibfk_2": {
-          "name": "response_data_ibfk_2",
-          "tableFrom": "response_data",
-          "tableTo": "form_fields",
-          "columnsFrom": [
-            "form_field_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        }
-      },
-      "uniqueConstraints": {}
-    },
-    "sessions": {
-      "name": "sessions",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "autoincrement": false,
-          "name": "user_id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token": {
-          "autoincrement": false,
-          "name": "token",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_valid": {
-          "default": 1,
-          "autoincrement": false,
-          "name": "is_valid",
-          "type": "tinyint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {
-        "user_id": {
-          "name": "user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "sessions_ibfk_1": {
-          "name": "sessions_ibfk_1",
-          "tableFrom": "sessions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "restrict"
-        }
-      },
-      "uniqueConstraints": {
-        "token": {
-          "name": "token",
-          "columns": [
-            "token"
-          ]
-        }
-      }
-    },
     "users": {
       "name": "users",
+      "schema": "",
       "columns": {
         "id": {
-          "autoincrement": true,
           "name": "id",
-          "type": "int(11) unsigned",
-          "primaryKey": false,
+          "type": "serial",
+          "primaryKey": true,
           "notNull": true
         },
         "name": {
-          "autoincrement": false,
           "name": "name",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "email": {
-          "autoincrement": false,
           "name": "email",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "password": {
-          "autoincrement": false,
           "name": "password",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "salt": {
-          "autoincrement": false,
           "name": "salt",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
-          "default": "'current_timestamp()'",
-          "autoincrement": false,
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "users_email_key"
+        }
+      }
+    },
+    "sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
           "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_valid": {
+          "name": "is_valid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "token_index": {
+          "name": "token_index",
+          "columns": [
+            "token"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "sessions_user_id_fkey": {
+          "name": "sessions_user_id_fkey",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "indexes": {},
-      "foreignKeys": {},
       "uniqueConstraints": {
-        "email": {
-          "name": "email",
+        "sessions_token_key": {
           "columns": [
-            "email"
-          ]
+            "token"
+          ],
+          "nullsNotDistinct": false,
+          "name": "sessions_token_key"
         }
       }
+    },
+    "payment_details": {
+      "name": "payment_details",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "form_id": {
+          "name": "form_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "forms": {
+      "name": "forms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "form_uuid": {
+          "name": "form_uuid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "form_name": {
+          "name": "form_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "form_description": {
+          "name": "form_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_details": {
+          "name": "payment_details",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "forms_user_id_fkey": {
+          "name": "forms_user_id_fkey",
+          "tableFrom": "forms",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "forms_payment_details_fkey": {
+          "name": "forms_payment_details_fkey",
+          "tableFrom": "forms",
+          "tableTo": "payment_details",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "payment_details"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "forms_form_uuid_key": {
+          "columns": [
+            "form_uuid"
+          ],
+          "nullsNotDistinct": false,
+          "name": "forms_form_uuid_key"
+        }
+      }
+    },
+    "form_payments": {
+      "name": "form_payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "form_id": {
+          "name": "form_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reference_code": {
+          "name": "reference_code",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "form_payments_form_id_fkey": {
+          "name": "form_payments_form_id_fkey",
+          "tableFrom": "form_payments",
+          "tableTo": "forms",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "form_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "form_fields": {
+      "name": "form_fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "form_id": {
+          "name": "form_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_description": {
+          "name": "field_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field_type": {
+          "name": "field_type",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_options": {
+          "name": "field_options",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "form_position": {
+          "name": "form_position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "required": {
+          "name": "required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "form_fields_form_id_fkey": {
+          "name": "form_fields_form_id_fkey",
+          "tableFrom": "form_fields",
+          "tableTo": "forms",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "form_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "responses": {
+      "name": "responses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "form_id": {
+          "name": "form_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_ulid": {
+          "name": "user_ulid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "responses_form_id_fkey": {
+          "name": "responses_form_id_fkey",
+          "tableFrom": "responses",
+          "tableTo": "forms",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "form_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "responses_user_id_fkey": {
+          "name": "responses_user_id_fkey",
+          "tableFrom": "responses",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "responses_user_id_key": {
+          "columns": [
+            "user_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "responses_user_id_key"
+        },
+        "responses_user_ulid_key": {
+          "columns": [
+            "user_ulid"
+          ],
+          "nullsNotDistinct": false,
+          "name": "responses_user_ulid_key"
+        }
+      }
+    },
+    "response_data": {
+      "name": "response_data",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "response_id": {
+          "name": "response_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "form_field_id": {
+          "name": "form_field_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "response_data_response_id_fkey": {
+          "name": "response_data_response_id_fkey",
+          "tableFrom": "response_data",
+          "tableTo": "responses",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "response_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "response_data_form_field_id_fkey": {
+          "name": "response_data_form_field_id_fkey",
+          "tableFrom": "response_data",
+          "tableTo": "form_fields",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "form_field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "payments": {
+      "name": "payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "payments_user_id_fkey": {
+          "name": "payments_user_id_fkey",
+          "tableFrom": "payments",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "sys_logs": {
+      "name": "sys_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     }
   },
+  "enums": {},
   "schemas": {},
   "_meta": {
     "schemas": {},
