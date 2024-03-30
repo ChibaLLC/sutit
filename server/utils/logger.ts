@@ -14,7 +14,7 @@ export function useFileLogger(message: any, options?: {
             {
                 log: (logObj: LogObject) => {
                     try {
-                        $Logger.log(logObj)
+                        $Logger.log(logObj).then()
                     } catch (e) {
                         consola.error(e)
                     }

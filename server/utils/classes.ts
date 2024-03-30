@@ -12,9 +12,6 @@ import {createInterface} from "node:readline";
 import {consola, type LogObject, type LogType} from "consola";
 import {execSync} from "node:child_process";
 import {isDevelopment} from "std-env";
-import {Stream} from "../utils/http";
-import {Status} from "~/types";
-import {call_stk} from "~/mvc/v1/mpesa/methods";
 
 
 export class Logger {
@@ -76,29 +73,17 @@ export class Logger {
         return this.log(logObject)
     }
 
-    private logProduction(logObj: LogObject): void {
-        consola[logObj.type](logObj.args.join(' '))
-    }
-
     public async log(logObj: LogObject): Promise<void> {
         try {
-            if (this.streams.master) {
-                this.streams.master.write(this.stringifyLogObject(logObj))
-            } else {
-                console.warn("Unable to find master log writer")
-            }
+            this.streams.master?.write(this.stringifyLogObject(logObj))
             return new Promise((resolve, reject) => {
-                if(this.streams[logObj.type]){
-                    this.streams[logObj.type].write(this.stringifyLogObject(logObj), (err) => {
-                        if (err) {
-                            reject(err)
-                        } else {
-                            resolve()
-                        }
-                    })
-                } else {
-                    console.warn(`Unable to find ${logObj.type} log writer`)
-                }
+                this.streams[logObj.type]?.write(this.stringifyLogObject(logObj), (err) => {
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
+                })
             })
         } catch (e) {
             console.error(e)
