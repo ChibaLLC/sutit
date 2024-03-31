@@ -11,11 +11,7 @@ import path from "node:path";
 import {createInterface} from "node:readline";
 import {consola, createConsola, type LogObject, type LogType} from "consola";
 import {execSync} from "node:child_process";
-import {isEdgeLight} from "std-env";
 import type {NitroApp} from "nitropack";
-import {ulid} from "ulid";
-import type {H3Event} from "h3";
-import type {APIResponse} from "~/types";
 
 
 export class Logger {
@@ -42,6 +38,11 @@ export class Logger {
         app?.hooks.hookOnce('close', () => {
             this.dispose()
         })
+
+        if(isVercel) {
+            this.streams = {} as typeof this.streams
+            return
+        }
 
         this.loadLogFiles()
         this.streams = this.makeStreams()
