@@ -12,7 +12,7 @@ fi
 
 if [ -n "$VERCEL" ] || [ -n "$NOW_REGION" ]; then
     echo "This script will not work on a serverless environment"
-    exit 1
+    exit 0
 fi
 
 if [[ $* == *--uninstall* ]]; then
