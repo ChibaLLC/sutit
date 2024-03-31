@@ -6,7 +6,7 @@
     "build": "nuxt build",
     "dev:linux": "concurrently \"redis-server\" \"bun sass\" \"nuxt dev\"",
     "dev:windows": "concurrently \"npm run sass\" \"nuxt dev\"",
-    "dev": "run",
+    "dev": "run || ./run.sh",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
