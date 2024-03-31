@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import {Status} from "~/types";
+
 const url = useRoute()
 const redirect = url.query?.redirect
 const loading = ref(false)
@@ -11,29 +13,18 @@ const details = reactive({
 const errors = ref(new Set())
 
 watch(details, () => {
-  if(details.password2 !== '' && details.password1 !== details.password2) {
+  if (details.password2 !== '' && details.password1 !== details.password2) {
     errors.value.add('Passwords do not match')
   } else {
-    errors.value.delete('Passwords do not match')
-  }
-
-  if(details.password1.length < 8) {
-    errors.value.add('Password must be at least 8 characters')
-  } else {
-    errors.value.delete('Password must be at least 8 characters')
-  }
-
-  if((details.email === '' && details.password1 !== '') || !details.email.includes('@')) {
-    errors.value.add('Valid email is required')
-  } else {
-    errors.value.delete('Valid email is required')
+    errors.value.clear()
   }
 })
 
-async function submit(){
-  if(errors.value.size > 0) return console.log('Errors in form')
+async function submit() {
+  if (errors.value.size > 0) return alert('Please fix the errors in the form.')
   loading.value = true
-  const response = await useAuthFetch('/api/v1/auth/signup', {
+
+  await unFetch('/api/v1/auth/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -41,21 +32,30 @@ async function submit(){
     body: JSON.stringify({
       email: details.email,
       password: details.password1
-    })
-  })
-  loading.value = false
-  if(response.statusCode === 200){
-    setAuthCookie(response.body)
-    useUser().value!.token = response.body
-    if(redirect){
-      if(typeof redirect !== 'string') throw new Error("Redirect Error")
-      await navigateTo(redirect)
-    } else {
-      await navigateTo('/')
+    }),
+    async onResponse({response}) {
+      const res = response._data
+      loading.value = false
+
+      switch (res.statusCode) {
+        case Status.success:
+          setAuthCookie(res.body)
+          useUser().value!.token = res.body
+          if (redirect) {
+            if (typeof redirect !== 'string') throw new Error("Redirect Error")
+            await navigateTo(redirect)
+          } else {
+            await navigateTo('/')
+          }
+          break
+        case Status.conflict:
+          errors.value.add("A user with that very email, already exists.")
+          break
+        default:
+          errors.value.add(res.body.error || res.body.message || res.body || "An unknown error occurred. Please try again. Later.")
+      }
     }
-  } else if(response.statusCode === 409){
-    errors.value.add("A user with that very email, already exists.")
-  }
+  })
 }
 
 </script>

@@ -35,7 +35,7 @@ const payment_details = ref({
   amount: 0
 })
 
-function submit() {
+async function submit() {
   const payload: {
     name: string,
     payment: {
@@ -50,18 +50,20 @@ function submit() {
     fields: Array.from(formFields.value)
   }
 
-  return useAuthFetch('/api/v1/forms/create', {
+  const res = await unFetch('/api/v1/forms/create', {
     method: 'POST',
-    body: JSON.stringify(payload)
-  }).then((res) => {
-    if (res.statusCode === 200) {
-      alert('Form created successfully')
-      navigateTo('/forms')
-    } else {
-      alert('Form creation failed')
-      console.error(res)
+    body: JSON.stringify(payload),
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`
     }
-  })
+  });
+  if (res.statusCode === 200) {
+    alert('Form created successfully');
+    navigateTo('/forms');
+  } else {
+    alert('Form creation failed');
+    console.error(res);
+  }
 }
 
 
@@ -163,9 +165,9 @@ onMounted(() => {
               <div class="grid gap-4 p-4 boxes">
                 <FormFieldChoice :display-name="`Text`" :demo="true" :svg="svgs.text" :data-name="FieldEnum.TEXT"/>
                 <FormFieldChoice :display-name="`Checkbox`" :demo="true" :svg="svgs.checkbox"
-                                  :data-name="FieldEnum.CHECKBOX"/>
+                                 :data-name="FieldEnum.CHECKBOX"/>
                 <FormFieldChoice :display-name="`Date`" :demo="true" :svg="svgs.date"
-                                  :data-name="FieldEnum.DATE"/>
+                                 :data-name="FieldEnum.DATE"/>
               </div>
             </div>
           </div>

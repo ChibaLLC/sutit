@@ -1,6 +1,6 @@
 import {beforeEach, expect, test} from "vitest";
 import {execSync} from "node:child_process";
-import {Logger} from "../server/utils/classes";
+import {Logger} from "../server/utils/logger";
 
 beforeEach(() => {
     // @ts-ignore

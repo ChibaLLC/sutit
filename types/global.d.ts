@@ -1,12 +1,11 @@
-import {Logger} from "~/server/utils/classes";
-
+import type {ConsolaInstance} from "consola";
 
 declare global {
     namespace NodeJS {
         interface Global {
-            $Logger: Logger
+            log: ConsolaInstance
         }
     }
 
-    var $Logger: Logger
+    var log: ConsolaInstance
 }

@@ -43,20 +43,19 @@ export class Stream {
         this._event!.node.res.end();
     }
 
-    get identifier() {
+    get id() {
         return this.identity
     }
 }
 
-export async function useSSE(event: H3Event) {
-    const id = ulid()
-    const stream = new Stream(event, id)
-    return {stream, id}
+export async function useSSE(event: H3Event, id: string | null = null) {
+    id = id || ulid()
+    return new Stream(event, id)
 }
 
 export function useController(folderName: string, router: Router) {
     router.use('/**', defineEventHandler((event: H3Event) => {
-        useFileLogger(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`, {type: 'debug'})
+        log.debug(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`)
         return useHttpEnd(event, null, 404)
     }))
 

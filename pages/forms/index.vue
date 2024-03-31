@@ -1,9 +1,24 @@
 <script setup lang="ts">
-if (!userIsAuthenticated()) await navigateTo("/login?redirect=forms")
-const response = await useAuthFetch("/api/v1/forms/me")
+import {type APIResponse, Status} from "~/types";
+
 const forms = ref([])
 
-if (response.statusCode === 200) forms.value = response.body
+if (!userIsAuthenticated()) {
+  await navigateTo("/login?redirect=forms")
+}
+
+await unFetch("/api/v1/forms/me", {
+  headers: {
+    Authorization: `Bearer ${getAuthToken()}`,
+  },
+  onResponse({response}): Promise<void> | void {
+    const res = response._data as APIResponse
+    if (res.statusCode === Status.success) {
+      forms.value = res.body
+    }
+  }
+}).catch(console.error)
+
 
 function getShareableLink(formUuid: string) {
   const link = `${window.location.origin}/forms/${formUuid}`
@@ -33,8 +48,6 @@ onMounted(() => {
       })
     }
   }
-
-  console.log(forms.value)
 })
 </script>
 <template>
@@ -71,18 +84,19 @@ onMounted(() => {
             </tr>
             </thead>
             <tbody class="bg-white">
-            <tr v-for="form in forms" :key="form.id" class="hover:bg-gray-100 hover:cursor-pointer" :data-location="form.formUuid" title="tr">
+            <tr v-for="form in forms" :key="form.id" class="hover:bg-gray-100 hover:cursor-pointer"
+                :data-location="form.formUuid" title="tr">
               <td class="border-b border-slate-100 p-4 pl-8 text-slate-700">
-                {{ form.formUuid }}
+                {{ form['formUuid'] }}
               </td>
               <td class="border-b border-slate-100 p-4 pl-8 text-slate-700">
-                {{ form.formName }}
+                {{ form['formName'] }}
               </td>
               <td class="border-b border-slate-100 p-4 pl-8 text-slate-700">
-                {{ form.createdAt }}
+                {{ form['createdAt'] }}
               </td>
               <td class="border-b border-slate-100 p-4 pl-8 text-slate-700">
-                {{ form.paymentDetails ? 'Yes' : 'No' }}
+                {{ form['paymentDetails'] ? 'Yes' : 'No' }}
               </td>
               <td class="border-b border-slate-100 p-4 pl-8 text-slate-700 flex items-center">
                 <NuxtLink :to="`/forms/${form.formUuid}`">

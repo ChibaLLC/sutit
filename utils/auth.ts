@@ -1,42 +1,6 @@
-import {Status, type APIResponse, type UserState} from "~/types";
-import type {NitroFetchRequest} from "nitropack";
+import {type APIResponse, type UserState} from "~/types";
+import type {NitroFetchOptions, NitroFetchRequest} from "nitropack";
 import {ulid} from "ulid";
-
-/**
- * This function appends the auth token to the headers of the fetch request
- * @param url destination url
- * @param options RequestInit object
- * @returns the response object
- * @example
- * const response = await useAuthFetch("https://example.com/api", {
- *    method: "GET"
- * })
- */
-export async function useAuthFetch(url: string | URL | Request, options?: RequestInit): Promise<APIResponse> {
-    const {headers, ...rest} = options || {}
-    const response = await fetch(url, {
-        ...rest,
-        headers: {
-            ...headers,
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json'
-        } as HeadersInit
-    } satisfies RequestInit).catch(console.error)
-
-    if (!response) return {
-        statusCode: Status.internalServerError,
-        body: "Failed to fetch"
-    }
-
-    const data = await response.json()
-        .catch(async () => await response.text()
-            .catch(async () => await response.blob()
-                .catch(async () => await response.arrayBuffer()
-                    .catch(() => response))))
-    if (typeof data === "string") return {statusCode: response.status, body: data} as APIResponse
-    if (isAPIResponse(data)) return data as APIResponse
-    return {statusCode: response.status, body: data} as APIResponse
-}
 
 /**
  * This is a useAsyncData wrapper, that uses useAuthStream to retrieve data.
@@ -46,20 +10,20 @@ export async function useAuthFetch(url: string | URL | Request, options?: Reques
  *
  * @see useAuthStream
  */
-export async function useData(url: string | URL | Ref<string | URL>, key?: string) {
+export async function useData(url: string | Ref<string>, key?: string) {
     if (!key) {
-        return useAsyncData(() => useAuthFetch((typeof url === "string" || url instanceof URL) ? url : url.value), {
+        return useAsyncData(() => $fetch((typeof url === "string") ? url : url.value), {
             watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
         })
     } else {
-        return useAsyncData(key, () => useAuthFetch((typeof url === "string" || url instanceof URL) ? url : url.value), {
+        return useAsyncData(key, () => $fetch((typeof url === "string") ? url : url.value), {
             watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
         })
     }
 }
 
 class Emitter {
-    private readonly _events: Record<"data" | "text" | "end", Array<(data: APIResponse | string) => void>>;
+    private readonly _events: Record<"data" | "text" | "end", Array<(data: APIResponse) => void>>;
 
     constructor() {
         this._events = {
@@ -69,7 +33,7 @@ class Emitter {
         }
     }
 
-    on(event: "data" | "text" | "end", callback: (data: APIResponse | string) => void) {
+    on(event: "data" | "text" | "end", callback: (data: APIResponse) => void) {
         if (!this._events) return
         this._events[event].push(callback)
     }
@@ -105,83 +69,28 @@ class Emitter {
  *      // do something when the stream ends
  * })
  */
-export async function useAuthStream(url: NitroFetchRequest, options?: RequestInit) {
-    if(!process.client) return null
-    let response: any;
-    const {headers, ...withoutHeaders} = options || {} as any
-    let {body, ...withoutHeadersAndBody} = withoutHeaders
-
-    body = body ? JSON.parse(body) : undefined
-    if (body) {
-        const {identity, ...restBody} = body
-        const {method, ...restHeaders} = headers || {}
-        response = await $fetch(url, {
-            ...withoutHeadersAndBody,
-            headers: {
-                "Authorization": `Bearer ${getAuthToken()}`,
-                "Content-Type": "application/json",
-                method: method || "POST",
-                ...restHeaders
-            },
-            body: {
-                ...restBody,
-                identity: identity || getAuthToken() || ulid()
-            },
-            responseType: "stream"
-        });
-    } else {
-        response = await $fetch(url, {
-            ...withoutHeadersAndBody,
-            headers: {
-                "Authorization": `Bearer ${getAuthToken()}`,
-                "Content-Type": "application/json",
-                ...headers
-            },
-            responseType: "stream"
-        })
-    }
+export async function useStream(url: NitroFetchRequest, options?: NitroFetchOptions<NitroFetchRequest>) {
+    if (!process.client) return null
+    const response = await $fetch(url, {
+        ...options,
+        headers: {
+            ...options?.headers,
+            "X-Request-ID": ulid()
+        }
+    }).catch(console.error)
 
     if (!response || !response?.getReader) return null
 
     const e = new Emitter()
-    readTextStream(response.getReader(), (data: APIResponse) => {
+    await readStream(response.getReader(), (data: APIResponse) => {
         e.emit("data", data)
     }, (text: string) => {
         e.emit("text", text)
     }, () => {
         e.emit("end", null)
-    }).then()
+    })
 
     return e
-}
-
-/**
- * This function reads data from a stream and calls the callback function returned from the useAuthStream function
- * to get and store the data, this data is then resolved when the stream ends as an array of all the data from the stream
- *
- * @param authStream the function returned from the useAuthStream function
- * @returns an array of all the data from the stream
- *
- * @example
- * const authStream = await useAuthStream("https://example.com/api")
- * const data = await getAuthStreamData(authStream)
- *
- * console.log(data)
- */
-export async function getAuthStreamData(authStream: Emitter): Promise<Array<APIResponse>> {
-    const data: Array<APIResponse> = []
-    if (!authStream) return Promise.resolve(data)
-    return new Promise((resolve, reject) => {
-        authStream.on("data", (d) => {
-            data.push(d as APIResponse)
-        })
-        authStream.on("text", (text) => {
-            data.push(text as any)
-        })
-        authStream.on("end", () => {
-            resolve(data)
-        })
-    })
 }
 
 /**
@@ -238,8 +147,9 @@ export function userIsAuthenticated() {
 }
 
 export async function logout() {
-    return useAuthFetch("/api/v1/auth/logout")
-        .then(async (res) => {
+    await unFetch("/api/v1/auth/logout", {
+        async onResponse({response}) {
+            const res = response._data as APIResponse
             if (res.statusCode !== 200) {
                 console.error(res)
                 return alert("Failed to logout")
@@ -248,5 +158,6 @@ export async function logout() {
             state.value = {} as UserState
             setAuthCookie("", 0)
             await navigateTo("/login")
-        }).catch(console.error)
+        }
+    }).catch(console.error)
 }

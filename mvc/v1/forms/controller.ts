@@ -13,8 +13,11 @@ import type {Drizzle} from "~/db/types";
 const router = createRouter()
 
 router.post("/create", defineEventHandler(async event => {
-    const details = await useAuth(event)
-    if (!details) return
+    const [details, error] = await useAuth(event)
+    if (error) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: error
+    }, Status.unauthorized)
 
     const form = await readBody(event) as {
         name: string,
@@ -26,7 +29,7 @@ router.post("/create", defineEventHandler(async event => {
 
     const insertForm = {
         formName: form.name,
-        userId: details.user.id,
+        userId: details!.user.id,
         id: undefined,
         paymentDetails: undefined
     } satisfies Omit<Drizzle.Form.insert, 'formUuid'>
@@ -34,7 +37,7 @@ router.post("/create", defineEventHandler(async event => {
     const insertFields = form.fields.map((field: any, index) => ({
         fieldName: field.name,
         fieldType: field.type,
-        required: field?.required ? 1 : 0,
+        required: !!field?.required,
         formPosition: index,
         id: undefined,
         fieldOptions: field?.options ? JSON.stringify(field.options) : undefined
@@ -113,7 +116,8 @@ router.post("/pay/:formUlid", defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const details = await readBody(event) as { phone: string, identity: string }
+    const details = await readBody(event) as { phone: string, identity: string | undefined }
+    details.identity = details.identity || getHeader(event, "X-Request-ID")
 
     if (!details.phone || !details.identity) return useHttpEnd(event, {
         statusCode: Status.badRequest,
@@ -132,7 +136,7 @@ router.post("/pay/:formUlid", defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    await processFormPayments(event, form, details)
+    await processFormPayments(event, form, {identity: details.identity, phone: details.phone})
 }))
 
 router.post("/submit/:formId", defineEventHandler(async event => {
@@ -142,8 +146,7 @@ router.post("/submit/:formId", defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const details = await useDbUser(event)
-
+    const [details, error] = await useAuth(event)
     const data = await readBody(event) as {
         fields: Array<{ id: number, value: string }>
     }
@@ -194,7 +197,7 @@ router.get("/submissions/:formId", defineEventHandler(async event => {
 
 router.get("/me", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const details = await useAuth(event)
+    const [details, error] = await useAuth(event)
     if (!details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: "Unauthorized"

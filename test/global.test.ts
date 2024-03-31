@@ -1,5 +1,5 @@
 import {test, expect, beforeEach} from "vitest";
-import {Logger} from "../server/utils/classes";
+import {Logger} from "../server/utils/logger";
 
 beforeEach(() => {
     // @ts-ignore

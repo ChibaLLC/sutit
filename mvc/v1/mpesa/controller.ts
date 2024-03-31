@@ -24,7 +24,7 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
         const phoneNumber = callback.CallbackMetadata.Item.find(item => item.Name === "PhoneNumber")?.Value
 
         if (!transactionCode || !amount || !date || !phoneNumber) {
-            useFileLogger(`Failed to process payment: ${callback.ResultDesc}`, {type: 'error'})
+            log.error(`Failed to process payment: ${callback.ResultDesc}`)
             return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
         }
 
@@ -41,11 +41,11 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
             stream.stream.end()
             globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
         }).catch(err => {
-            useFileLogger(`Failed to process payment: ${err.message}`, {type: 'error'})
+            log.error(`Failed to process payment: ${err.message}`)
             return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
         })
     } else {
-        useFileLogger(`Failed to process payment: ${callback.ResultDesc}`, {type: 'error'})
+        log.error(`Failed to process payment: ${callback.ResultDesc}`)
         return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
     }
     return useHttpEnd(event, {statusCode: 200, body: "OK"}, 200)

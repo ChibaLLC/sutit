@@ -528,21 +528,21 @@
   @apply backdrop-blur-2xl;
 }
 
-#doodle{;
+#doodle {
   @apply grid;
   @apply grid-cols-10;
   @apply grid-rows-10;
   cursor: none;
 }
 
-#doodle div{
+#doodle div {
   @apply bg-slate-500/50;
   @apply opacity-70;
   @apply w-full;
   @apply h-full;
 }
 
-#doodle div:hover{
+#doodle div:hover {
   @apply bg-slate-500/100;
   @apply animate-pulse;
 }

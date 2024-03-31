@@ -21,9 +21,9 @@ export async function createToken(user: { userId: number, email: string }): Prom
         })
 }
 
-export async function revokeToken(token: string): Promise<MySqlRawQueryResult> {
+export async function revokeToken(token: string) {
     return await db.update(sessions).set({
-        isValid: 0,
+        isValid: false,
     }).where(and(eq(sessions.token, token)))
         .catch((err) => {
             console.error(err)
@@ -31,9 +31,9 @@ export async function revokeToken(token: string): Promise<MySqlRawQueryResult> {
         })
 }
 
-export async function revokeAllTokens(userId: number): Promise<MySqlRawQueryResult> {
+export async function revokeAllTokens(userId: number) {
     return await db.update(sessions).set({
-        isValid: 0,
+        isValid: false,
     }).where(eq(sessions.userId, userId))
         .catch((err) => {
             console.error(err)
@@ -44,7 +44,7 @@ export async function revokeAllTokens(userId: number): Promise<MySqlRawQueryResu
 export async function verifyToken(token: string): Promise<boolean> {
     const rows = await db.select()
         .from(sessions)
-        .where(and(eq(sessions.token, token), eq(sessions.isValid, 1)))
+        .where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to verify token')

@@ -25,7 +25,7 @@ logs
 whatsapp-web
 .wwebjs_cache
 
-.dump.rdb
+dump.rdb
 puppet.*
 
 false

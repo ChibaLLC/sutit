@@ -1,8 +1,9 @@
 import type {APIResponse} from "~/types";
+import {type NitroFetchOptions, type NitroFetchRequest} from "nitropack";
 
 const textDecoder = new TextDecoder()
 
-export async function readTextStream<T>(
+export async function readStream<T>(
     reader: ReadableStreamDefaultReader | null,
     callback: (data: T) => void,
     fallback?: (text: string) => void,
@@ -29,9 +30,16 @@ export async function readTextStream<T>(
         if (fallback && text && text?.trim() !== "") fallback(text)
     }
 
-    return readTextStream(reader, callback, fallback, done)
+    return readStream(reader, callback, fallback, done)
 }
 
 export function isAPIResponse(data: any): data is APIResponse {
+    for (const key in data) {
+        if (!["statusCode", "body"].includes(key)) log.warn(`Unexpected key ${key} in APIResponse object`)
+    }
     return data?.statusCode || (data?.statusCode && data?.body)
+}
+
+export async function unFetch<T>(url: string | URL, options?: NitroFetchOptions<NitroFetchRequest>) {
+    return await $fetch<T>(url.toString(), options)
 }

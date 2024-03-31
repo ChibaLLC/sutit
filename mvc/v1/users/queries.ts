@@ -8,7 +8,7 @@ export async function getUserByToken(token: string): Promise<Drizzle.User.select
     if(!token) return null
     const tokenUser = await db.select()
         .from(sessions)
-        .where(and(eq(sessions.token, token), eq(sessions.isValid, 1)))
+        .where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to verify token')
@@ -41,7 +41,7 @@ export async function createUser(data: {
     name: string,
     email: string,
     password: string
-}): Promise<MySqlRawQueryResult> {
+}) {
     const auth = useHashPassword(data.password)
     const values = {
         name: data.name,
@@ -51,13 +51,13 @@ export async function createUser(data: {
     } satisfies Drizzle.User.insert
 
     return db.insert(users).values(values).catch((err) => {
-        useFileLogger(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal', tag: 'Drizzle: Create User'})
+        log.error(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal'})
         throw err
     })
 }
 
 export async function deleteUser(id: number){
     await db.update(users).set({
-        isDeleted: 1
+        isDeleted: true
     }).where(eq(users.id, id))
 }

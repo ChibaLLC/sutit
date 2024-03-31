@@ -1,7 +1,7 @@
 const router = createRouter()
 
 router.use("/stream", defineEventHandler(async event => {
-    const {stream, id} = await useSSE(event)
+    const stream = await useSSE(event)
     let count = 0;
     const interval = setInterval(() => {
         stream.send({statusCode: 200, body: count})

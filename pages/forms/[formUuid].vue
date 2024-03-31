@@ -1,26 +1,33 @@
 <script setup lang="ts">
 import {type Drizzle} from "~/db/types";
-import type {APIResponse} from "~/types";
+import {type APIResponse, Status} from "~/types";
 
-const loading = ref(false)
-const uuid = useRoute().params?.formUuid
 const form = ref({} as {
   form: Drizzle.Form.select,
   fields: Array<Drizzle.FormFields.select[] & { ref: Ref<string> }>,
   paymentDetails: Drizzle.PaymentDetails.select
 })
-const response = await useAuthFetch(`/api/v1/forms/${uuid}`)
-if (response.statusCode === 200) form.value = response.body
-form.value.fields = response.body.fields?.map((field: any) => {
-  return {
-    id: field.id,
-    name: field.fieldName,
-    type: field.fieldType,
-    required: field.required,
-    description: field.fieldDescription,
-    ref: ref(''),
+
+const loading = ref(false)
+const uuid = useRoute().params?.formUuid
+
+await unFetch(`/api/v1/forms/${uuid}`, {
+  onResponse({response}) {
+    const res = response._data
+    if (res.statusCode === 200) form.value = res.body
+    form.value.fields = res.body.fields?.map((field: any) => {
+      return {
+        id: field.id,
+        name: field.fieldName,
+        type: field.fieldType,
+        required: field.required,
+        description: field.fieldDescription,
+        ref: ref(''),
+      }
+    })
   }
 })
+
 const paymentModal = ref(false)
 const payment_success = ref(false)
 const payment_details = ref({
@@ -28,25 +35,35 @@ const payment_details = ref({
 })
 
 async function submitPayment(): Promise<boolean> {
-  const response = await useAuthStream(`/api/v1/forms/pay/${uuid}`, {
+  if(!payment_details.value.phone || payment_details.value.phone === '') {
+    alert('Please provide your MPESA phone number')
+    return false
+  }
+  const response = await useStream(`/api/v1/forms/pay/${uuid}`, {
     method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`
+    },
     body: JSON.stringify({
       phone: payment_details.value.phone
-    })
+    }),
+    onResponseError({ response }): Promise<void> | void {
+      console.log(response._data.body)
+    }
   })
 
   return new Promise((resolve) => {
-    if(!response) return resolve(false)
+    if (!response) return resolve(false)
     response.on('data', (data) => {
       console.log(data)
       switch (data.statusCode) {
-        case 200:
+        case Status.success:
           resolve(true)
           break
-        case 400:
+        case Status.badRequest:
           resolve(false)
           break
-        case 500:
+        case Status.internalServerError:
           alert('Payment failed, please try again later')
           resolve(false)
           break
@@ -77,7 +94,7 @@ async function processForm() {
 async function submit() {
   loading.value = true
   if (payment_success.value) {
-    const response = await useAuthFetch(`/api/v1/forms/submit/${uuid}`, {
+    await unFetch(`/api/v1/forms/submit/${uuid}`, {
       method: 'POST',
       body: JSON.stringify({
         fields: form.value.fields.map((field) => {
@@ -86,13 +103,15 @@ async function submit() {
             value: field.ref.value
           }
         })
-      })
+      }),
+      onResponse({ response }): Promise<void> | void {
+        if (response._data.statusCode === 200) {
+          alert('Form submitted successfully')
+        } else {
+          alert('Form submission failed, please try again later')
+        }
+      }
     })
-    if (response.statusCode === 200) {
-      alert('Form submitted successfully')
-    } else {
-      alert('Form submission failed, please try again later')
-    }
   } else {
     alert('Payment failed, please try again later')
   }

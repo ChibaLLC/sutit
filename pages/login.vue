@@ -12,7 +12,8 @@ const details = reactive({
 async function submit() {
   if (loading.value) return
   loading.value = true
-  const response = await useAuthFetch('/api/v1/auth/login', {
+
+  await unFetch('/api/v1/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -20,23 +21,27 @@ async function submit() {
     body: JSON.stringify({
       email: details.email,
       password: details.password
-    })
-  })
-  loading.value = false
-  if (response.statusCode === 200) {
-    if (remember.value) setAuthCookie(response.body)
-    useUser().value!.token = response.body
-    await navigateTo('/')
-  } else {
-    errors.value.add(response.body || 'An unknown error occurred')
-  }
+    }),
+    async onResponse({response}) {
+      const res = response._data
+      loading.value = false
 
-  if (redirect) {
-    if (typeof redirect !== 'string') throw new Error("Redirect Error")
-    await navigateTo(redirect)
-  } else {
-    await navigateTo('/')
-  }
+      if (res.statusCode === 200) {
+        if (remember.value) setAuthCookie(res.body)
+        useUser().value!.token = res.body
+        await navigateTo('/')
+      } else {
+        errors.value.add(res.body || 'An unknown error occurred')
+      }
+
+      if (redirect) {
+        if (typeof redirect !== 'string') throw new Error("Redirect Error")
+        await navigateTo(redirect)
+      } else {
+        await navigateTo('/')
+      }
+    }
+  })
 }
 
 function clearErrors() {
@@ -101,29 +106,29 @@ function clearErrors() {
                   <label
                       class="block uppercase text-gray-700 text-xs font-bold mb-2"
                       for="grid-password"
-                  >Email</label
-                  ><input
-                    type="email"
-                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                    placeholder="Email"
-                    v-model="details.email"
-                    v-on:focus="clearErrors"
-                    style="transition: all 0.15s ease 0s;"
-                />
+                  >Email</label>
+                  <input
+                      type="email"
+                      class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                      placeholder="Email"
+                      v-model="details.email"
+                      v-on:focus="clearErrors"
+                      style="transition: all 0.15s ease 0s;"
+                  />
                 </div>
                 <div class="relative w-full mb-3">
                   <label
                       class="block uppercase text-gray-700 text-xs font-bold mb-2"
                       for="grid-password"
-                  >Password</label
-                  ><input
-                    type="password"
-                    v-model="details.password"
-                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                    placeholder="Password"
-                    v-on:focus="clearErrors"
-                    style="transition: all 0.15s ease 0s;"
-                />
+                  >Password</label>
+                  <input
+                      type="password"
+                      v-model="details.password"
+                      class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                      placeholder="Password"
+                      v-on:focus="clearErrors"
+                      style="transition: all 0.15s ease 0s;"
+                  />
                 </div>
                 <div>
                   <label class="inline-flex items-center cursor-pointer"
@@ -131,12 +136,12 @@ function clearErrors() {
                       id="customCheckLogin"
                       type="checkbox"
                       v-model="remember"
-                      class="form-checkbox border-0 rounded text-gray-800 ml-1 w-5 h-5"
+                      class="form-checkbox border-0 rounded text-gray-800 ml-1 w-5 h-5 checked:bg-gray-900 checked:border-transparent bg-white"
                       style="transition: all 0.15s ease 0s;"
-                  /><span class="ml-2 text-sm font-semibold text-gray-700"
-                  >Remember me</span
-                  ></label
-                  >
+                  />
+                    <span class="ml-2 text-sm font-semibold text-gray-700"
+                    >Remember me</span
+                    ></label>
                 </div>
                 <div class="text-center mt-6">
                   <button

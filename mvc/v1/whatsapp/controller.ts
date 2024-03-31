@@ -16,7 +16,7 @@ function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "o
 router.post("/webhook", defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
 
-    useFileLogger(body, { type: "info", tag: "whatsapp/webhook" })
+    log.info(body, {tag: "whatsapp/webhook" })
 
     const data = typeData(body)
 
@@ -37,7 +37,7 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
             }
         })
     }).catch((e) => {
-        useFileLogger(e, { type: "error", tag: "whatsapp/webhook" })
+        log.info(e, { tag: "whatsapp/webhook" })
     })
 
     return {
@@ -56,7 +56,7 @@ router.get("/webhook", defineEventHandler((event) => {
 
     if (mode !== "subscribe" || token !== process.env.WHATSAPP_TOKEN) return useHttpEnd(event, null, 403)
 
-    useFileLogger("Webhook verified", { type: "info", tag: "whatsapp/webhook" })
+    log.info("Webhook verified", { tag: "whatsapp/webhook" })
     return event.respondWith(new Response(challenge as string, { status: 200, headers: { "Content-Type": "text/plain" } }))
 }))
 

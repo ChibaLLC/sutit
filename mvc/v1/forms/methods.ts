@@ -44,6 +44,7 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
                     form: form
                 })
             }
+            console.log(result)
         })
 }
 
