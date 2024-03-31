@@ -36,5 +36,6 @@
             "username": "root",
             "password": ""
         }
-    ]
+    ],
+    "dotenv.enableAutocloaking": false
 }
