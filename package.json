@@ -12,7 +12,7 @@
     "postinstall": "nuxt prepare",
     "start": "node .output/server/index.mjs",
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
-    "prepare": "setup",
+    "prepare": "setup || chmod +x ./setup.sh && ./setup.sh && chmod +x ./run.sh",
     "test": "vitest",
     "introspect": "drizzle-kit introspect:pg"
   },

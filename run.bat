@@ -14,7 +14,7 @@ if errorlevel 1 (
     npm install -g pnpm
 )
 
-:: Check for node_modules directory or if force flag is set
+
 if not exist "node_modules\" (
     echo Installing dependencies...
     pnpm install
@@ -25,7 +25,7 @@ if not exist "node_modules\" (
     )
 )
 
-:: Run the development script for Windows
+
 pnpm run dev:windows
 
 endlocal

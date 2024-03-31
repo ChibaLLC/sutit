@@ -9,7 +9,7 @@ do
 done
 
 if ! command -v node &> /dev/null; then
-    echo "Node.js is not installed. Please install Node.js to run the application."
+    echo "Node.js is not installed. Please install Node.js and try again."
     exit
 fi
 

@@ -48,6 +48,9 @@ export class Logger {
     }
 
     private loadLogFiles() {
+        if (!existsSync(path.join('./logs'))) {
+            mkdirSync(path.join('./logs'))
+        }
         const files = readdirSync(path.join('./logs'))
         for (const file of files) {
             const log = file.split('.')[0]
@@ -56,10 +59,6 @@ export class Logger {
     }
 
     private makeStreams() {
-        if (!existsSync(path.join('./logs'))) {
-            mkdirSync(path.join('./logs'))
-        }
-
         const streams = {} as typeof this.streams
         for (const log of this.logs) {
             streams[log] = createWriteStream(path.join(`./logs/${log}.log`), {flags: 'a'})
