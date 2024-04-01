@@ -137,13 +137,14 @@ export async function insertData(userId: number | undefined, formId: number, dat
     await db.insert(responseData).values(dataToInsert)
 }
 
-export async function getFormResponses(formId: number) {
+export async function getFormResponses(formUlId: string) {
     return db.select({
         responses: responses,
         data: responseData
-    }).from(responses)
+    }).from(forms)
+        .innerJoin(responses, eq(responses.formId, forms.id))
         .innerJoin(responseData, eq(responses.id, responseData.responseId))
-        .where(eq(responses.formId, formId))
+        .where(eq(forms.formUuid, formUlId))
 }
 
 export async function getFormResponse(responseId: number) {

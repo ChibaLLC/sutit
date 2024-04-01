@@ -1,20 +1,18 @@
-import { callBackIpWhitelist as whitelist, type StkCallback } from "~/types"
-import { insertFormPayment } from "~/mvc/v1/forms/queries";
+import {callBackIpWhitelist as whitelist, type StkCallback} from "~/types";
+import {insertFormPayment} from "~/mvc/v1/forms/queries";
 
-const router = createRouter()
-
-router.use("/forms/callback", defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
     const body = await readBody(event)
     log.info("Mpesa callback received", JSON.stringify(body, null, 2))
     const ip = getRequestIP(event)
-    if (!ip) return useHttpEnd(event, { statusCode: 400, body: "No IP found" }, 400)
+    if (!ip) return useHttpEnd(event, {statusCode: 400, body: "No IP found"}, 400)
     if (!whitelist.includes(ip)) {
         log.warn(`IP ${ip} is not whitelisted`)
-        return useHttpEnd(event, { statusCode: 403, body: "Forbidden" }, 403)
+        return useHttpEnd(event, {statusCode: 403, body: "Forbidden"}, 403)
     }
 
     const callback = await readBody(event) as StkCallback
-    if (!callback) return useHttpEnd(event, { statusCode: 400, body: "No body found" }, 400)
+    if (!callback) return useHttpEnd(event, {statusCode: 400, body: "No body found"}, 400)
 
     const queue = globalThis.paymentProcessingQueue
     if (!queue) throw new Error("Queue not found")
@@ -22,7 +20,7 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
     const stream = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
     if (!stream) {
         log.error(`Stream not found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
-        return useHttpEnd(event, { statusCode: 404, body: "Stream not found" }, 404)
+        return useHttpEnd(event, {statusCode: 404, body: "Stream not found"}, 404)
     }
 
     if (callback.ResultCode === 0) {
@@ -33,7 +31,7 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
 
         if (!transactionCode || !amount || !date || !phoneNumber) {
             log.error(`Failed to process payment: ${callback.ResultDesc}`)
-            return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
         }
 
         insertFormPayment({
@@ -50,15 +48,13 @@ router.use("/forms/callback", defineEventHandler(async (event) => {
             globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
         }).catch(err => {
             log.error(`Failed to process payment: ${err.message}`)
-            return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
         })
     } else {
         log.error(`Failed to process payment: ${callback.ResultDesc}`)
-        return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+        return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
     }
 
     log.info(`Payment processed successfully: ${callback.ResultDesc}`)
-    return useHttpEnd(event, { statusCode: 200, body: "OK" }, 200)
-}))
-
-export default useController("mpesa", router)
+    return useHttpEnd(event, {statusCode: 200, body: "OK"}, 200)
+})

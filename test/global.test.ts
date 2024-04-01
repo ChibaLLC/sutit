@@ -2,11 +2,10 @@ import {test, expect, beforeEach} from "vitest";
 import {Logger} from "../server/utils/logger";
 
 beforeEach(() => {
-    // @ts-ignore
-    global.$FileLogger = new Logger()
+    global.log = new Logger()
 })
 
 test("Testing for $FileLogger", async () => {
-    expect($Logger).toBeDefined()
-    expect($Logger).toBeInstanceOf(Logger)
+    expect(log).toBeDefined()
+    expect(log).toBeInstanceOf(Logger)
 })

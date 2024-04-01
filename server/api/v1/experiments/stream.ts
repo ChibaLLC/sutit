@@ -1,6 +1,4 @@
-const router = createRouter()
-
-router.use("/stream", defineEventHandler(async event => {
+export default defineEventHandler(async event => {
     const stream = await useSSE(event)
     let count = 0;
     const interval = setInterval(() => {
@@ -12,6 +10,4 @@ router.use("/stream", defineEventHandler(async event => {
         stream.end()
         clearInterval(interval)
     }, 5000)
-}))
-
-export default useController('experiments', router)
+})

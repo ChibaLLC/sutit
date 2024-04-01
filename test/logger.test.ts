@@ -3,18 +3,17 @@ import {execSync} from "node:child_process";
 import {Logger} from "../server/utils/logger";
 
 beforeEach(() => {
-    // @ts-ignore
-    global.$FileLogger = new Logger()
+    global.log = new Logger()
 })
 
 test("Testing for $FileLogger", async () => {
-    expect($Logger).toBeDefined()
-    expect($Logger).toBeInstanceOf(Logger)
+    expect(log).toBeDefined()
+    expect(log).toBeInstanceOf(Logger)
 })
 
 test("Testing for $FileLogger.log", async () => {
     const timestamp = new Date().toISOString()
-    await $Logger.logString("Test " + timestamp)
+    await log.logString("Test " + timestamp)
     const content = execSync("tail ./logs/log.log").toString().split('\n').map(line => line.trim()).join('\n')
     expect(content).toContain("Test " + timestamp)
     execSync("sed -i '/Test " + timestamp + "/d' ./logs/log.log")
@@ -31,10 +30,10 @@ test("Testing for $FileLogger.tail", async () => {
     ]
 
     for await (const item of items) {
-        await $Logger.logString(item.message + " " + item.timestamp)
+        await log.logString(item.message + " " + item.timestamp)
     }
 
-    const logs = $Logger.tail("log", 5)
+    const logs = log.tail("log", 5)
     expect(logs.length).toBe(5)
 
     logs.forEach((log, index) => {

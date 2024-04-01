@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {type APIResponse, Status} from "~/types";
 
-const uuid = useRoute().params.formUuid
-if (!uuid) navigateTo('/forms')
+const ulid = useRoute().params.formUuid
+if (!ulid) navigateTo('/forms')
 
-const form = await useFetch('/api/v1/forms/submissions' + uuid, {
+const form = await useFetch(`/api/v1/forms/submissions/${ulid}`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
@@ -13,12 +13,15 @@ const form = await useFetch('/api/v1/forms/submissions' + uuid, {
     if (res.statusCode === Status.success) {
       console.log(res.body)
     }
+  },
+  onResponseError({response}) {
+    console.log(response)
   }
 })
 </script>
 
 <template>
-  <Title>Submissions | {{ uuid }}</Title>
+  <Title>Submissions | {{ ulid }}</Title>
   <div class="flex min-h-screen w-full -mt-3">
     <Aside/>
     <main class="w-full flex flex-col items-center">

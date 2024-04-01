@@ -1,7 +1,4 @@
-import { H3Event } from "h3"
-import { type APIResponse, type CloudAPI, type OnPremisesAPI } from "~/types";
-
-const router = createRouter()
+import type {APIResponse, CloudAPI, OnPremisesAPI} from "~/types";
 
 function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "on_premises_api", data: OnPremisesAPI } {
     if ("object" in data && data.object === "whatsapp_business_account") {
@@ -13,7 +10,7 @@ function typeData(data: any): { type: "cloud_api", data: CloudAPI } | { type: "o
     }
 }
 
-router.post("/webhook", defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async event => {
     const body = await readBody(event)
 
     log.info(body, {tag: "whatsapp/webhook" })
@@ -44,24 +41,4 @@ router.post("/webhook", defineEventHandler(async (event: H3Event) => {
         statusCode: 200,
         body: "OK"
     } as APIResponse
-}))
-
-router.get("/webhook", defineEventHandler((event) => {
-    let query = getQuery(event)
-    let mode = query["hub.mode"]
-    let token = query["hub.verify_token"]
-    let challenge = query["hub.challenge"]
-
-    if (!mode || !token || !challenge) return useHttpEnd(event, null, 403)
-
-    if (mode !== "subscribe" || token !== process.env.WHATSAPP_TOKEN) return useHttpEnd(event, null, 403)
-
-    log.info("Webhook verified", { tag: "whatsapp/webhook" })
-    return event.respondWith(new Response(challenge as string, { status: 200, headers: { "Content-Type": "text/plain" } }))
-}))
-
-router.get("/create-instance", defineEventHandler(async (event) => {
-    
-}))
-
-export default useController("whatsapp", router)
+})
