@@ -1,26 +1,25 @@
-import {callBackIpWhitelist as whitelist, type StkCallback} from "~/types";
-import {insertFormPayment} from "~/mvc/v1/forms/queries";
+import { callBackIpWhitelist as whitelist, type StkCallback, type StkCallbackHook, Status } from "~/types";
+import { insertFormPayment } from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
-    const body = await readBody(event)
-    log.info("Mpesa callback received", JSON.stringify(body, null, 2))
     const ip = getRequestIP(event)
-    if (!ip) return useHttpEnd(event, {statusCode: 400, body: "No IP found"}, 400)
+    if (!ip) return useHttpEnd(event, { statusCode: 400, body: "No IP found" }, 400)
     if (!whitelist.includes(ip)) {
         log.warn(`IP ${ip} is not whitelisted`)
-        return useHttpEnd(event, {statusCode: 403, body: "Forbidden"}, 403)
+        return useHttpEnd(event, { statusCode: 403, body: "Forbidden" }, 403)
     }
 
-    const callback = await readBody(event) as StkCallback
-    if (!callback) return useHttpEnd(event, {statusCode: 400, body: "No body found"}, 400)
+    const hook = await readBody(event) as StkCallbackHook
+    const callback = hook.Body.stkCallback
+    if (!callback) return useHttpEnd(event, { statusCode: 400, body: "No callback found" }, 400)
 
     const queue = globalThis.paymentProcessingQueue
     if (!queue) throw new Error("Queue not found")
 
-    const stream = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
-    if (!stream) {
+    const client = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
+    if (!client) {
         log.error(`Stream not found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
-        return useHttpEnd(event, {statusCode: 404, body: "Stream not found"}, 404)
+        return useHttpEnd(event, null, 204)
     }
 
     if (callback.ResultCode === 0) {
@@ -31,30 +30,22 @@ export default defineEventHandler(async event => {
 
         if (!transactionCode || !amount || !date || !phoneNumber) {
             log.error(`Failed to process payment: ${callback.ResultDesc}`)
-            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+            return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
-        insertFormPayment({
-            form_id: stream.form.form.id,
-            amount: +amount,
-            referenceCode: transactionCode.toString(),
-            phone: phoneNumber.toString()
-        }).then(() => {
-            stream.stream.send({
-                statusCode: 200,
-                body: "OK"
-            })
-            stream.stream.end()
-            globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
-        }).catch(err => {
-            log.error(`Failed to process payment: ${err.message}`)
-            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+        await insertFormPayment({ form_id: client.form.form.id, amount: +amount, referenceCode: transactionCode.toString(), phone: phoneNumber.toString() }).catch(e => {
+            log.error(`Failed to insert form payment: ${e.message}`)
+            return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         })
+
+        globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
     } else {
         log.error(`Failed to process payment: ${callback.ResultDesc}`)
-        return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+        client.stream.send({statusCode: Status.unprocessableEntity, body: "Unable to process M-Pesa request"})
+        return useHttpEnd(event, null, 204)
     }
-
+    
+    client.stream.end()
     log.info(`Payment processed successfully: ${callback.ResultDesc}`)
-    return useHttpEnd(event, {statusCode: 200, body: "OK"}, 200)
+    return useHttpEnd(event, { statusCode: 200, body: "OK" }, 200)
 })

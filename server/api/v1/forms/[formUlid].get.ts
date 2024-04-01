@@ -1,8 +1,8 @@
 import {type APIResponse, Status} from "~/types";
-import {getFormByUlid} from "~/mvc/v1/forms/queries";
+import {getFormByUlid} from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
-    const formUuid = getRouterParam(event, "formUuid")
+    const formUuid = getRouterParam(event, "formUlid")
     if (!formUuid) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No form ID provided"

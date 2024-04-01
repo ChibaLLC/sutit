@@ -1,7 +1,7 @@
 import {type APIResponse, Status} from "~/types";
-import {revokeAuthToken} from "~/mvc/v1/auth/methods";
-import {createUser} from "~/mvc/v1/users/queries";
-import {authenticate} from "~/mvc/v1/auth/queries";
+import {revokeAuthToken} from "~/server/mvc/v1/auth/methods";
+import {createUser} from "~/server/mvc/v1/users/queries";
+import {authenticate} from "~/server/mvc/v1/auth/queries";
 
 export default defineEventHandler(async event => {
     const response = {} as APIResponse

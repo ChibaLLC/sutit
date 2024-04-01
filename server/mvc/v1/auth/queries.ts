@@ -3,8 +3,7 @@ import db from '~/db/';
 import {sessions} from "~/db/drizzle/schema";
 import {v4} from "uuid";
 import type {Drizzle} from "~/db/types";
-import {type MySqlRawQueryResult} from "drizzle-orm/mysql2";
-import {getUserByEmail} from "~/mvc/v1/users/queries";
+import {getUserByEmail} from "~/server/mvc/v1/users/queries";
 
 
 export async function createToken(user: { userId: number, email: string }): Promise<string> {

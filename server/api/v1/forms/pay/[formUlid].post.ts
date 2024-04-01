@@ -1,6 +1,6 @@
 import {type APIResponse, Status} from "~/types";
-import {getFormByUlid} from "~/mvc/v1/forms/queries";
-import {processFormPayments} from "~/mvc/v1/forms/methods";
+import {getFormByUlid} from "~/server/mvc/v1/forms/queries";
+import {processFormPayments} from "~/server/mvc/v1/forms/methods";
 
 export default defineEventHandler(async event => {
     const formUlid = getRouterParam(event, "formUlid")

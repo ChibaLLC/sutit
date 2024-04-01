@@ -1,7 +1,7 @@
 import type {H3Event} from "h3";
 import type {Drizzle} from "~/db/types";
 import {Stream} from "~/server/utils/http";
-import {call_stk} from "~/mvc/v1/mpesa/methods";
+import {call_stk} from "~/server/mvc/v1/mpesa/methods";
 
 
 declare global {
@@ -44,7 +44,6 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
                     form: form
                 })
             }
-            console.log(result)
         })
 }
 

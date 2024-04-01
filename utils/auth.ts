@@ -1,6 +1,4 @@
-import {type APIResponse, type UserState} from "~/types";
-import type {NitroFetchOptions, NitroFetchRequest} from "nitropack";
-import {ulid} from "ulid";
+import { type APIResponse, type UserState } from "~/types";
 
 /**
  * This is a useAsyncData wrapper, that uses useAuthStream to retrieve data.
@@ -20,77 +18,6 @@ export async function useData(url: string | Ref<string>, key?: string) {
             watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
         })
     }
-}
-
-class Emitter {
-    private readonly _events: Record<"data" | "text" | "end", Array<(data: APIResponse) => void>>;
-
-    constructor() {
-        this._events = {
-            data: [],
-            text: [],
-            end: []
-        }
-    }
-
-    on(event: "data" | "text" | "end", callback: (data: APIResponse) => void) {
-        if (!this._events) return
-        this._events[event].push(callback)
-    }
-
-    emit(event: "data" | "text" | "end", data: any) {
-        this._events[event].forEach(callback => callback(data))
-    }
-}
-
-/**
- * Function that returns an instance of the Emitter class that can be used to add event listeners to the stream
- *
- * @param url the destination url
- * @param options RequestInit object
- *
- * @returns a class instance that can be used to add event listeners to the stream
- *
- * @example
- * const stream = await useAuthStream("https://example.com/api")
- * stream.on("data", (data) => {
- *      console.log(data)
- *      // do something with the data
- *      // data will be normalised to an APIResponse object
- * })
- *
- * stream.on("text", (text) => {
- *      console.log(text)
- *      // do something with the text
- *      // text will be a string, which can not be normalised to an APIResponse object
- * })
- * stream.on("end", () => {
- *      console.log("Stream ended")
- *      // do something when the stream ends
- * })
- */
-export async function useStream(url: NitroFetchRequest, options?: NitroFetchOptions<NitroFetchRequest>) {
-    if (!process.client) return null
-    const response = await $fetch(url, {
-        ...options,
-        headers: {
-            ...options?.headers,
-            "X-Request-ID": ulid()
-        }
-    }).catch(console.error)
-
-    if (!response || !response?.getReader) return null
-
-    const e = new Emitter()
-    await readStream(response.getReader(), (data: APIResponse) => {
-        e.emit("data", data)
-    }, (text: string) => {
-        e.emit("text", text)
-    }, () => {
-        e.emit("end", null)
-    })
-
-    return e
 }
 
 /**
@@ -148,7 +75,7 @@ export function userIsAuthenticated() {
 
 export async function logout() {
     await unFetch("/api/v1/auth/logout", {
-        async onResponse({response}) {
+        async onResponse({ response }) {
             const res = response._data as APIResponse
             if (res.statusCode !== 200) {
                 console.error(res)

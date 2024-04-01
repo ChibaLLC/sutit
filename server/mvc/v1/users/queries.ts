@@ -2,7 +2,6 @@ import type {Drizzle} from "~/db/types";
 import db from "~/db";
 import {sessions, users} from "~/db/drizzle/schema";
 import {and, eq} from "drizzle-orm";
-import type {MySqlRawQueryResult} from "drizzle-orm/mysql2";
 
 export async function getUserByToken(token: string): Promise<Drizzle.User.select | null> {
     if(!token) return null

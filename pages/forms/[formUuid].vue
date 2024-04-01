@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {type Drizzle} from "~/db/types";
-import {type APIResponse, Status} from "~/types";
+import { type Drizzle } from "~/db/types";
+import { Status } from "~/types";
 
 const form = ref({} as {
   form: Drizzle.Form.select,
@@ -8,11 +8,12 @@ const form = ref({} as {
   paymentDetails: Drizzle.PaymentDetails.select
 })
 
+
 const loading = ref(false)
 const uuid = useRoute().params?.formUuid
 
 await unFetch(`/api/v1/forms/${uuid}`, {
-  onResponse({response}) {
+  onResponse({ response }) {
     const res = response._data
     if (res.statusCode === 200) form.value = res.body
     form.value.fields = res.body.fields?.map((field: any) => {
@@ -25,6 +26,9 @@ await unFetch(`/api/v1/forms/${uuid}`, {
         ref: ref(''),
       }
     })
+  },
+  onResponseError({ response }) {
+    console.log(response)
   }
 })
 
@@ -35,7 +39,7 @@ const payment_details = ref({
 })
 
 async function submitPayment(): Promise<boolean> {
-  if(!payment_details.value.phone || payment_details.value.phone === '') {
+  if (!payment_details.value.phone || payment_details.value.phone === '') {
     alert('Please provide your MPESA phone number')
     return false
   }
@@ -74,12 +78,12 @@ async function submitPayment(): Promise<boolean> {
 
 async function processForm() {
   if (
-      form.value.paymentDetails &&
-      form.value.paymentDetails.amount > 0 &&
-      payment_success.value === false &&
-      (!payment_details.value.phone ||
-          payment_details.value.phone === '') &&
-      payment_details.value.phone.length <= 10
+    form.value.paymentDetails &&
+    form.value.paymentDetails.amount > 0 &&
+    payment_success.value === false &&
+    (!payment_details.value.phone ||
+      payment_details.value.phone === '') &&
+    payment_details.value.phone.length <= 10
   ) {
     paymentModal.value = true
   } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
@@ -117,19 +121,18 @@ async function submit() {
   }
   loading.value = false
 }
-
 </script>
 
 <template>
   <Title>Form | {{ uuid }}</Title>
   <div class="flex min-h-screen -mt-3">
-    <Aside/>
+    <Aside />
+    <button @click="test">Test</button>
     <div class="flex flex-col p-8 lg:w-1/2 ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
         <h1 class="text-2xl font-bold flex items-center content-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-               stroke-linejoin="round" class="h-8 w-8">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
             <path d="M17 6.1H3"></path>
             <path d="M21 12.1H3"></path>
             <path d="M15.1 18H3"></path>
@@ -139,7 +142,7 @@ async function submit() {
       </div>
       <form class="form" @submit.prevent="processForm">
         <div v-for="field in form.fields" :key="field.id" class="form-group">
-          <FormField :field="field" :preview="true" v-bind="field.ref"/>
+          <FormField :field="field" :preview="true" v-bind="field.ref" />
         </div>
         <div class="buttons">
           <small v-if="form.paymentDetails" class="justify-self-start mt-5 text-gray-500">
@@ -147,22 +150,23 @@ async function submit() {
             <span class="text-red-400 ">Amount Due: {{ form.paymentDetails.amount }}</span> KES
           </small>
           <button
-              class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none submit"
-              type="submit"
-              style="transition: all 0.15s ease 0s;"
-          >
+            class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none submit"
+            type="submit" style="transition: all 0.15s ease 0s;">
             <span v-if="!loading">Send</span>
-            <span :class="{'loading': loading}" class="w-full grid place-items-center" v-else>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path
-                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z"></path></svg>
-                    </span>
+            <span :class="{ 'loading': loading }" class="w-full grid place-items-center" v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path
+                  d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                </path>
+              </svg>
+            </span>
           </button>
         </div>
       </form>
       <Modal :open="paymentModal" title="Please provide your MPESA phone number" @close="processForm"
-             @cancel="payment_details = {phone: ''}; paymentModal = false">
+        @cancel="payment_details = { phone: '' }; paymentModal = false">
         <div class="flex flex-col">
-          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone"/>
+          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
         </div>
       </Modal>
     </div>

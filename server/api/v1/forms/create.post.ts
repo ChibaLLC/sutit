@@ -1,6 +1,6 @@
 import {type APIResponse, type FormField, Status} from "~/types";
 import type {Drizzle} from "~/db/types";
-import {createForm, createFormPayment, updateFormPaymentDetails} from "~/mvc/v1/forms/queries";
+import {createForm, createFormPayment, updateFormPaymentDetails} from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
     const [details, error] = await useAuth(event)

@@ -1,5 +1,5 @@
 import {type APIResponse, Status} from "~/types";
-import {getFormsByUser} from "~/mvc/v1/forms/queries";
+import {getFormsByUser} from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
     const response = {} as APIResponse

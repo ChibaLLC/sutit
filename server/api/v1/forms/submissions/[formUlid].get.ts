@@ -1,5 +1,5 @@
 import {type APIResponse, Status} from "~/types";
-import {getFormResponses} from "~/mvc/v1/forms/queries";
+import {getFormResponses} from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid
@@ -8,8 +8,11 @@ export default defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const details = await useAuth(event)
-    if (!details) return
+    const [details, error] = await useAuth(event)
+    if (error) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: "Unauthorized"
+    })
 
     const submissions = await getFormResponses(formUlid).catch(err => {
         useHttpEnd(event, {
@@ -19,11 +22,6 @@ export default defineEventHandler(async event => {
 
         return null
     })
-
-    if (!submissions) return useHttpEnd(event, {
-        statusCode: Status.notFound,
-        body: "Submissions not found"
-    }, Status.notFound)
 
     const response = {} as APIResponse
     response.statusCode = Status.success
