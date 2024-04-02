@@ -6,7 +6,7 @@ export default defineEventHandler(async event => {
     if (error) {
         response.statusCode = Status.internalServerError
         response.body = error
-        return useHttpEnd(event, response, Status.internalServerError)
+        return useHttpEnd(event, response, Status.unauthorized)
     }
 
     response.statusCode = 200

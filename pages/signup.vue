@@ -52,7 +52,7 @@ async function submit() {
           errors.value.add("A user with that very email, already exists.")
           break
         default:
-          errors.value.add(res.body.error || res.body.message || res.body || "An unknown error occurred. Please try again. Later.")
+          errors.value.add(res?.body?.error || res?.body?.message || res?.body || "An unknown error occurred. Please try again. Later.")
       }
     }
   })

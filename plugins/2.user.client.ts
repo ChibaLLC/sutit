@@ -18,10 +18,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         onResponse({response}): Promise<void> | void {
             const res = response._data
             if (res.statusCode === Status.success) return user.value = res.body
-            if (res.statusCode === Status.unauthorized || res.statusCode === Status.forbidden || res.statusCode === Status.notFound) {
-                setAuthCookie("", 0)
-                useUser().value = {} as UserState
-            }
+            setAuthCookie("", 0)
+            useUser().value = {} as UserState
+        },
+        onResponseError({response}): Promise<void> | void {
+            const res = response._data
+            if (res.statusCode === Status.success) return user.value = res.body
+            setAuthCookie("", 0)
+            useUser().value = {} as UserState
         }
-    })
+    }).catch(log.error)
 })

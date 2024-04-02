@@ -11,37 +11,23 @@ const props = defineProps({
   preview: {
     type: Object as PropType<Ref>,
     required: false,
-  },
-  vBind: {
-    type: Object as PropType<Ref>,
-    required: false,
   }
 })
 
 const form_field = ref(props.field)
+const value = ref()
 
-const emits = defineEmits([
-  'form',
-  'blur',
-  'focus',
-  'click',
-  'keyup',
-  'keydown',
-  'keypress',
-  'submit',
-  'reset',
-  'select',
-  'change',
-  'input',
-  'update:modelValue',
-  'update:value'
-])
+const emit = defineEmits(['form', 'value'])
 
 const tag = props.field?.type || FieldEnum.TEXT
 const view = props.preview ?? false
 
 watch(form_field.value, (value) => {
-  emits('form', value)
+  emit('form', value)
+})
+
+watch(value, () => {
+  emit('value', value.value)
 })
 </script>
 
@@ -80,17 +66,17 @@ watch(form_field.value, (value) => {
 
     <template
         v-if="view && (tag === FieldEnum.TEXT || tag === FieldEnum.TEL || tag === FieldEnum.EMAIL || tag === FieldEnum.NUMBER || tag === FieldEnum.PASSWORD || tag === FieldEnum.FILE || tag === FieldEnum.DATE || tag === FieldEnum.TIME || tag === FieldEnum.CHECKBOX)">
-      <input :type="tag" v-bind="vBind" class="input"/>
+      <input :type="tag" v-model="value" class="input"/>
     </template>
 
     <template v-else-if="tag === FieldEnum.SELECT">
-      <select v-bind="vBind" class="select" >
+      <select v-model="value" class="select">
         <option v-for="option in field['options']" :value="option" :key="option">{{ option }}</option>
       </select>
     </template>
 
     <template v-else-if="tag === FieldEnum.TEXTAREA" class="textarea">
-      <textarea v-bind="vBind" />
+      <textarea v-model="value"/>
     </template>
   </div>
 </template>

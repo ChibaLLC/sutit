@@ -2,8 +2,8 @@ import {type APIResponse, Status} from "~/types";
 import {insertData} from "~/server/mvc/v1/forms/queries";
 
 export default defineEventHandler(async event => {
-    const formId = event.context.params?.formId
-    if (!formId) return useHttpEnd(event, {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No form ID provided"
     }, Status.badRequest)
@@ -17,7 +17,7 @@ export default defineEventHandler(async event => {
         fields: Array<{ id: number, value: string }>
     }
 
-    await insertData(details?.user?.id, +formId, data).catch(err => {
+    await insertData(details!.user.id, formUlid, data).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while submitting form"

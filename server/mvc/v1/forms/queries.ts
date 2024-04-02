@@ -85,27 +85,22 @@ export async function getFormById(formId: number): Promise<{
     }
 }
 
-export async function insertData(userId: number | undefined, formId: number, data: {
+export async function insertData(userId: number, formUlid: string, data: {
     fields: Array<{ id: number, value: string }>
 }) {
 
+    const form = await getFormByUlid(formUlid)
+
     await db.insert(responses).values({
-        formId: formId,
+        formId: form.form.id,
         userId: userId
     } satisfies Drizzle.Responses.insert)
 
     let response: { id: number } | undefined;
-    if (userId) {
-        response = (await db.select({
-            id: responses.id
-        }).from(responses)
-            .where(eq(responses.userId, userId))).at(0) || undefined
-    } else {
-        response = (await db.select({
-            id: responses.id
-        }).from(responses)
-            .where(eq(responses.userUlid, ulid.ulid()))).at(0) || undefined
-    }
+    response = (await db.select({
+        id: responses.id
+    }).from(responses)
+        .where(eq(responses.userId, userId))).at(0) || undefined
 
     if (!response) throw new Error("Response not found after creation")
 
@@ -113,7 +108,7 @@ export async function insertData(userId: number | undefined, formId: number, dat
         id: formFields.id,
         name: formFields.fieldName,
         required: formFields.required
-    }).from(formFields).where(eq(formFields.formId, formId))
+    }).from(formFields).where(eq(formFields.formId, form.form.id))
 
 
     const keys = Object.keys(data)

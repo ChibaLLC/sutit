@@ -117,12 +117,13 @@ create table if not exists responses
 (
     id         serial primary key,
     form_id    integer   not null references forms (id) on delete cascade,
-    user_id    integer unique references users (id) on delete cascade,
-    user_ulid  varchar(255) unique,
+    user_id    integer references users (id) on delete cascade,
     created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp,
-    check ((user_id is not null and user_ulid is null) or (user_id is null and user_ulid is not null))
+    updated_at timestamp not null default current_timestamp
 );
+
+alter table responses
+add constraint single_response_per_form unique (form_id, user_id);
 
 create trigger responses_updated_at_trigger
     before update

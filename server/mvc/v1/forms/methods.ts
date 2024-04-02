@@ -1,7 +1,7 @@
-import type {H3Event} from "h3";
-import type {Drizzle} from "~/db/types";
-import {Stream} from "~/server/utils/http";
-import {call_stk} from "~/server/mvc/v1/mpesa/methods";
+import type { H3Event } from "h3";
+import type { Drizzle } from "~/db/types";
+import { Stream } from "~/server/utils/http";
+import { call_stk } from "~/server/mvc/v1/mpesa/methods";
 
 
 declare global {
@@ -25,6 +25,8 @@ type Form = {
 export async function processFormPayments(event: H3Event, form: Form, details: { phone: string; identity: string; }) {
     const stream = await useSSE(event, details.identity)
     if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
+    
+    details.phone = `254${details.phone.slice(-10)}`
 
     await makeSTKPush(details.phone, form)
         .then(async (result) => {
