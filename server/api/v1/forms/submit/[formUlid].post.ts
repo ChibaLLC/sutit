@@ -14,10 +14,15 @@ export default defineEventHandler(async event => {
         body: "Unauthorized"
     })
     const data = await readBody(event) as {
-        fields: Array<{ id: number, value: string }>
+        fields: Record<number, any>
     }
 
-    await insertData(details!.user.id, formUlid, data).catch(err => {
+    const fieldsMap = new Map<number, any>()
+    for (const [id, value] of Object.entries(data.fields)) {
+        fieldsMap.set(Number(id), value)
+    }
+
+    await insertData(details!.user.id, formUlid, fieldsMap).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while submitting form"

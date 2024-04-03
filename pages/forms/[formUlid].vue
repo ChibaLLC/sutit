@@ -101,21 +101,21 @@ function assignValue(field: { value: any; }, value: any){
   field.value = value
 }
 
+
 async function submit() {
   loading.value = true
   if (payment_success.value) {
+    const fieldsMap = form.value.fields.reduce((acc, field) => {
+      acc[field.id] = field.value
+      return acc
+    }, {} as Record<string, any>)
     await unFetch(`/api/v1/forms/submit/${ulid}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${getAuthToken()}`
       },
       body: {
-        fields: form.value.fields.map((field) => {
-          return {
-            id: field.id,
-            value: field.value
-          }
-        })
+        fields: fieldsMap
       },
       onResponse({response}): Promise<void> | void {
         if (response._data.statusCode === Status.success) {

@@ -1,7 +1,7 @@
 import {forms, formFields, responses, responseData, formPayments, paymentDetails} from "~/db/drizzle/schema";
 import db from "~/db";
 import {type Drizzle} from "~/db/types";
-import {eq} from "drizzle-orm";
+import {and, eq} from "drizzle-orm";
 import ulid from "ulid";
 
 
@@ -85,22 +85,22 @@ export async function getFormById(formId: number): Promise<{
     }
 }
 
-export async function insertData(userId: number, formUlid: string, data: {
-    fields: Array<{ id: number, value: string }>
-}) {
-
+export async function insertData(userId: number, formUlid: string, data: Map<number, any>) {
     const form = await getFormByUlid(formUlid)
 
     await db.insert(responses).values({
         formId: form.form.id,
         userId: userId
-    } satisfies Drizzle.Responses.insert)
+    } satisfies Drizzle.Responses.insert).catch(e => {
+        log.error(e)
+        throw e
+    })
 
     let response: { id: number } | undefined;
     response = (await db.select({
         id: responses.id
     }).from(responses)
-        .where(eq(responses.userId, userId))).at(0) || undefined
+        .where(and(eq(responses.userId, userId), eq(responses.formId, form.form.id)))).at(0) || undefined
 
     if (!response) throw new Error("Response not found after creation")
 
@@ -110,22 +110,19 @@ export async function insertData(userId: number, formUlid: string, data: {
         required: formFields.required
     }).from(formFields).where(eq(formFields.formId, form.form.id))
 
-
-    const keys = Object.keys(data)
     const missing = []
     for (const field of fields) {
-        if (field.required && !keys.includes(field.name)) {
+        if (field.required && !data.get(field.id)) {
             missing.push(field.name)
         }
     }
 
     if (missing.length > 0) throw new Error(`Missing required fields: ${missing.join(",\n")}`)
     const dataToInsert = fields.map(field => {
-        const value = data.fields.find(f => f.id === field.id)?.value
         return {
             responseId: response!.id,
             formFieldId: field.id,
-            value: value || ""
+            value: data.get(field.id)
         } satisfies Drizzle.ResponseData.insert
     })
 

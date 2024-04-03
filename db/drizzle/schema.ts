@@ -1,4 +1,7 @@
 import { pgTable, unique, serial, varchar, boolean, timestamp, index, foreignKey, integer, text, json } from "drizzle-orm/pg-core"
+  import { sql } from "drizzle-orm"
+
+
 
 export const users = pgTable("users", {
 	id: serial("id").primaryKey().notNull(),
@@ -39,6 +42,19 @@ export const paymentDetails = pgTable("payment_details", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
+export const responses = pgTable("responses", {
+	id: serial("id").primaryKey().notNull(),
+	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		singleResponsePerForm: unique("single_response_per_form").on(table.formId, table.userId),
+	}
+});
+
 export const forms = pgTable("forms", {
 	id: serial("id").primaryKey().notNull(),
 	formUuid: varchar("form_uuid", { length: 255 }).notNull(),
@@ -76,21 +92,6 @@ export const formFields = pgTable("form_fields", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 	required: boolean("required").default(false).notNull(),
-});
-
-export const responses = pgTable("responses", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
-	userUlid: varchar("user_ulid", { length: 255 }),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-},
-(table) => {
-	return {
-		responsesUserIdKey: unique("responses_user_id_key").on(table.userId),
-		responsesUserUlidKey: unique("responses_user_ulid_key").on(table.userUlid),
-	}
 });
 
 export const responseData = pgTable("response_data", {
