@@ -12,6 +12,10 @@ const form = ref({} as {
 const loading = ref(false)
 const ulid = useRoute().params?.formUlid
 
+if(!userIsAuthenticated()){
+  await navigateTo(`/login?redirect=/forms/${ulid}`)
+}
+
 await unFetch(`/api/v1/forms/${ulid}`, {
   onResponse({ response }) {
     const res = response._data
@@ -65,6 +69,7 @@ async function submitPayment(): Promise<boolean> {
         case Status.success:
           resolve(true)
           payment_success.value = true
+          loading.value = true
           submit()
           break
         case Status.badRequest:
@@ -75,6 +80,10 @@ async function submitPayment(): Promise<boolean> {
           alert('Payment failed, please try again later')
           resolve(false)
           break
+        case Status.unprocessableEntity:
+          alert(data.body)
+          resolve(false)
+          break
         default:
           resolve(false)
       }
@@ -82,6 +91,7 @@ async function submitPayment(): Promise<boolean> {
 
     response.on('end', () => {
       resolve(false)
+      loading.value = false
     })
   })
 }

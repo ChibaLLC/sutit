@@ -167,7 +167,7 @@ function clearErrors() {
               >
             </div>
             <div class="w-1/2 text-right">
-              <NuxtLink class="text-slate-900" to="/signup"
+              <NuxtLink class="text-slate-900" :to="`signup?redirect=${redirect}`"
               ><small>Create new account</small></NuxtLink>
             </div>
           </div>

@@ -11,8 +11,8 @@ export default defineEventHandler(async event => {
     // }
 
     const hook = await readBody(event) as StkCallbackHook
+    log.info(hook)
     const callback = hook.Body.stkCallback
-    log.info(callback)
 
     const queue = globalThis.paymentProcessingQueue
     const client = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
@@ -49,7 +49,7 @@ export default defineEventHandler(async event => {
         globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
     } else {
         log.error(`Failed to process payment: ${callback.ResultDesc}`)
-        client.stream.send({ statusCode: Status.unprocessableEntity, body: "Unable to process M-Pesa request" })
+        client.stream.send({ statusCode: Status.unprocessableEntity, body: `Failed to process payment: ${callback.ResultDesc}` })
         return useHttpEnd(event, null, 204)
     }
 
