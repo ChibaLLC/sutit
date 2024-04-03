@@ -26,7 +26,7 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
     const stream = await useSSE(event, details.identity)
     if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
     
-    details.phone = `254${details.phone.slice(-10)}`
+    details.phone = `254${details.phone.slice(-9)}`
 
     await makeSTKPush(details.phone, form)
         .then(async (result) => {

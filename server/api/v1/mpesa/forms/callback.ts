@@ -11,13 +11,13 @@ export default defineEventHandler(async event => {
     // }
 
     const hook = await readBody(event) as StkCallbackHook
-    log.info(hook)
+    const callback = hook.Body.stkCallback
+    log.info(callback)
 
     const queue = globalThis.paymentProcessingQueue
     const client = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
     if (!queue) throw new Error("Queue not found")
 
-    const callback = hook.Body.stkCallback
     if (!client) {
         log.error(`Stream not found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
         // TODO: Handle payment even if client is offline, not end
