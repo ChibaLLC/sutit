@@ -56,5 +56,5 @@ export default defineEventHandler(async event => {
     client.stream.send({ statusCode: Status.success, body: "OK" })
     client.stream.end()
     log.info(`Payment processed successfully: ${callback.ResultDesc}`)
-    return useHttpEnd(event, { statusCode: 200, body: "OK" }, 200)
+    return useHttpEnd(event, { statusCode: Status.success, body: "OK" }, 200)
 })

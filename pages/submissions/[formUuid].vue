@@ -4,7 +4,7 @@ import {type APIResponse, Status} from "~/types";
 const ulid = useRoute().params.formUuid
 if (!ulid) navigateTo('/forms')
 
-const form = await useFetch(`/api/v1/forms/submissions/${ulid}`, {
+const {data: form} = await useFetch(`/api/v1/forms/submissions/${ulid}`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
@@ -18,6 +18,9 @@ const form = await useFetch(`/api/v1/forms/submissions/${ulid}`, {
     console.log(response)
   }
 })
+
+
+log.log(form.value)
 </script>
 
 <template>
