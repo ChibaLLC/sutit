@@ -63,14 +63,15 @@ async function submitPayment(): Promise<boolean> {
 
   return new Promise((resolve, reject) => {
     if (!response) return reject(false)
-    response.on('data', (data) => {
+    response.on('data', async (data) => {
       console.log(data)
       switch (data.statusCode) {
         case Status.success:
           resolve(true)
           payment_success.value = true
           loading.value = true
-          submit()
+          await submit()
+          alert("Payment Complete")
           break
         case Status.badRequest:
           log.error(data.body)
