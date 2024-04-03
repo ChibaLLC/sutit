@@ -34,6 +34,14 @@ const responses = data.value?.body as Array<{
     value: string
   }
 }>
+
+const grouped = responses.reduce((acc, curr) => {
+  if (!acc[curr.responses.userId]) {
+    acc[curr.responses.userId] = []
+  }
+  acc[curr.responses.userId].push(curr)
+  return acc
+}, {} as Record<number, Array<typeof responses[0]>>) as Record<number, Array<typeof responses[0]>>
 </script>
 
 <template>
@@ -50,16 +58,18 @@ const responses = data.value?.body as Array<{
               <th class="border border-gray-300">ID</th>
               <th class="border border-gray-300">Date</th>
               <th class="border border-gray-300">Response</th>
-              <th class="border border-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(submission, index) in responses" :key="submission.responses.id">
-              <td class="border border-gray-300">{{ index + 1 }}</td>
-              <td class="border border-gray-300">{{ new Date(submission.responses.createdAt).toLocaleDateString() }} | {{ new Date(submission.responses.createdAt).toLocaleTimeString() }}</td>
-              <td class="border border-gray-300">{{ submission.data.value }}</td>
+            <tr v-for="(submission, index) in grouped">
+              <td class="border border-gray-300">{{ index }}</td>
+              <td class="border border-gray-300">{{ submission[0].responses.createdAt }}</td>
               <td class="border border-gray-300">
-                <button class="bg-blue-500 text-white p-2 rounded-md">View</button>
+                <ul>
+                  <li v-for="response in submission">
+                    {{ response.data.value }}
+                  </li>
+                </ul>
               </td>
             </tr>
           </tbody>
