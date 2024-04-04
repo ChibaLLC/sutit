@@ -11,6 +11,7 @@ export default defineEventHandler(async event => {
     // }
 
     const hook = await readBody(event) as StkCallbackHook
+    log.info(hook)
     const callback = hook.Body.stkCallback
 
     const queue = globalThis.paymentProcessingQueue
