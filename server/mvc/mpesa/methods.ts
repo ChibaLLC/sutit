@@ -1,5 +1,4 @@
 import { Mpesa } from "daraja.js";
-import { isDevelopment } from "std-env";
 
 const app = new Mpesa({
     consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,

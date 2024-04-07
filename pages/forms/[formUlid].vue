@@ -98,6 +98,7 @@ async function submitPayment(): Promise<boolean> {
 }
 
 async function processForm() {
+  loading.value = true
   if (
     form.value.paymentDetails &&
     form.value.paymentDetails.amount > 0 &&
@@ -178,7 +179,7 @@ async function submit() {
           <FormField :field="field" :preview="true" @value="assignValue(field, $event)" />
         </div>
         <div class="buttons">
-          <small v-if="form.paymentDetails" class="justify-self-start mt-5 text-gray-500">
+          <small v-if="form.paymentDetails.amount > 0" class="justify-self-start mt-5 text-gray-500">
             This form requires payment for submission <br>
             <span class="text-red-400 ">Amount Due: {{ form.paymentDetails.amount }}</span> KES
           </small>
