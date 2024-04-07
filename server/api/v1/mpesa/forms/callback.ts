@@ -1,5 +1,5 @@
 import { callBackIpWhitelist as whitelist, type StkCallback, type StkCallbackHook, Status } from "~/types";
-import { insertFormPayment } from "~/server/mvc/v1/forms/queries";
+import { insertFormPayment } from "~/server/mvc/forms/queries";
 
 export default defineEventHandler(async event => {
     // TODO: Uncomment for production, also getRequestIp not working

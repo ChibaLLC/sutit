@@ -1,9 +1,9 @@
 import {eq, and} from "drizzle-orm";
-import db from '~/db/';
+import db from '~/db';
 import {sessions} from "~/db/drizzle/schema";
 import {v4} from "uuid";
 import type {Drizzle} from "~/db/types";
-import {getUserByEmail} from "~/server/mvc/v1/users/queries";
+import {getUserByEmail} from "~/server/mvc/users/queries";
 
 
 export async function createToken(user: { userId: number, email: string }): Promise<string> {

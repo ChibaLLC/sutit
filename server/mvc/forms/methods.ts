@@ -1,7 +1,7 @@
 import type { H3Event } from "h3";
 import type { Drizzle } from "~/db/types";
 import { Stream } from "~/server/utils/http";
-import { call_stk } from "~/server/mvc/v1/mpesa/methods";
+import { call_stk } from "~/server/mvc/mpesa/methods";
 
 
 declare global {

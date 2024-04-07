@@ -1,6 +1,6 @@
 import {type APIResponse, Status} from "~/types";
-import {revokeAuthToken} from "~/server/mvc/v1/auth/methods";
-import {authenticate} from "~/server/mvc/v1/auth/queries";
+import {revokeAuthToken} from "~/server/mvc/auth/methods";
+import {authenticate} from "~/server/mvc/auth/queries";
 
 export default defineEventHandler(async event => {
     const response = {} as APIResponse

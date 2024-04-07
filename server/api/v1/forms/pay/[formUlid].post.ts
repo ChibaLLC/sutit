@@ -1,6 +1,6 @@
 import {type APIResponse, Status} from "~/types";
-import {getFormByUlid} from "~/server/mvc/v1/forms/queries";
-import {processFormPayments} from "~/server/mvc/v1/forms/methods";
+import {getFormByUlid, hasPaid} from "~/server/mvc/forms/queries";
+import {processFormPayments} from "~/server/mvc/forms/methods";
 
 export default defineEventHandler(async event => {
     const formUlid = getRouterParam(event, "formUlid")
@@ -23,11 +23,17 @@ export default defineEventHandler(async event => {
             body: err.message || "Unknown error while getting form"
         } as APIResponse, Status.internalServerError)
     })
-
+    
     if (!form) return useHttpEnd(event, {
         statusCode: Status.notFound,
         body: "Form not found"
     }, Status.notFound)
-
+    
+    if(await hasPaid(form.form.id, details.phone)){
+        return useHttpEnd(event, {
+            statusCode: Status.success,
+            body: "Payment already made"
+        }, Status.success)
+    }
     await processFormPayments(event, form, {identity: details.identity, phone: details.phone})
 })

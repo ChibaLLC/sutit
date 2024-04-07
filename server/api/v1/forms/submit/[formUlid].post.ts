@@ -1,5 +1,5 @@
 import {type APIResponse, Status} from "~/types";
-import {insertData} from "~/server/mvc/v1/forms/queries";
+import {insertData} from "~/server/mvc/forms/queries";
 
 export default defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid

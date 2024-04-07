@@ -168,7 +168,15 @@ export async function insertFormPayment(details: {
     await db.insert(formPayments).values({
         formId: details.form_id,
         amount: details.amount,
-        phoneNumber: details.phone,
+        phoneNumber: details.phone.slice(-9),
         referenceCode: details.referenceCode
     } satisfies Drizzle.FormPayment.insert)
+}
+
+
+export async function hasPaid(id: number, phone: string) {
+    return (await db.select({
+        id: formPayments.id
+    }).from(formPayments)
+        .where(and(eq(formPayments.formId, id), eq(formPayments.phoneNumber, phone.slice(-9))))).length > 0
 }
