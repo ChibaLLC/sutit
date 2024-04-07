@@ -1,10 +1,10 @@
-import type {Drizzle} from "~/db/types";
+import type { Drizzle } from "~/db/types";
 import db from "~/db";
-import {sessions, users} from "~/db/drizzle/schema";
-import {and, eq} from "drizzle-orm";
+import { sessions, users } from "~/db/drizzle/schema";
+import { and, eq } from "drizzle-orm";
 
 export async function getUserByToken(token: string): Promise<Drizzle.User.select | null> {
-    if(!token) return null
+    if (!token) return null
     const tokenUser = await db.select()
         .from(sessions)
         .where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
@@ -50,13 +50,21 @@ export async function createUser(data: {
     } satisfies Drizzle.User.insert
 
     return db.insert(users).values(values).catch((err) => {
-        log.error(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal'})
+        log.error(err.message || err, { type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal' })
         throw err
     })
 }
 
-export async function deleteUser(id: number){
+export async function deleteUser(id: number) {
     await db.update(users).set({
         isDeleted: true
     }).where(eq(users.id, id))
+}
+
+
+export async function getUserById(id: number) {
+    return (await db.select().from(users).where(eq(users.id, id)).catch(e => {
+        log.error(e)
+        return []
+    })).at(0) || null
 }

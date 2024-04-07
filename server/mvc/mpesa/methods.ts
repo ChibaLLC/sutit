@@ -9,13 +9,14 @@ const app = new Mpesa({
     isDevelopment ? "sandbox" : "production"
 )
 
-export async function call_stk(phone_number: number, amount: number, description: string) {
+export async function call_stk(phone_number: number, amount: number, description: string, accountNumber: string) {
     const response = await app
         .stkPush()
         .amount(amount)
         .phoneNumber(phone_number)
         .description(description)
         .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
+        .accountNumber(accountNumber)
         .callbackURL(process.env.MPESA_CALLBACK_URL!)
         .lipaNaMpesaPassKey(process.env.MPESA_LNM_PASSKEY!)
         .send()

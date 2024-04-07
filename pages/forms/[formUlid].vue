@@ -59,6 +59,9 @@ async function submitPayment(): Promise<boolean> {
       console.log(response._data.body)
       alert('Payment failed, please try again later')
     }
+  }).catch(e => {
+    alert('Payment failed, please try again later')
+    console.error(e)
   })
 
   return new Promise((resolve, reject) => {
@@ -72,6 +75,7 @@ async function submitPayment(): Promise<boolean> {
           loading.value = true
           await submit()
           alert("Payment Complete")
+          await navigateTo(`/`)
           break
         case Status.badRequest:
           log.error(data.body)

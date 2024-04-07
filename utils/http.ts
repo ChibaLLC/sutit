@@ -111,10 +111,7 @@ export async function useStream(url: NitroFetchRequest, options?: NitroFetchOpti
             ...options?.headers,
             "X-Request-ID": ulid()
         },
-        responseType: 'stream',
-        onResponseError({response}){
-            log.error(response)
-        }
+        responseType: 'stream'
     }).catch(e => {
         log.error(e)
         return null

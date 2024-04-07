@@ -22,13 +22,13 @@ type Form = {
     paymentDetails: Drizzle.PaymentDetails.select
 }
 
-export async function processFormPayments(event: H3Event, form: Form, details: { phone: string; identity: string; }) {
+export async function processFormPayments(event: H3Event, form: Form, details: { phone: string; identity: string; }, accountNumber: string) {
     const stream = await useSSE(event, details.identity)
     if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
     
     details.phone = `254${details.phone.slice(-9)}`
 
-    await makeSTKPush(details.phone, form)
+    await makeSTKPush(details.phone, form, accountNumber)
         .then(async (result) => {
             if (!result) {
                 stream.send({
@@ -49,8 +49,8 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
         })
 }
 
-async function makeSTKPush(phone: string, form: Form) {
-    const response = await call_stk(parseInt(phone), form.paymentDetails.amount, `Payment for ${form.form.formName} form`)
+async function makeSTKPush(phone: string, form: Form, accountNumber: string) {
+    const response = await call_stk(parseInt(phone), form.paymentDetails.amount, `Payment for ${form.form.formName} form`, accountNumber)
         .catch(err => {
             console.error(err)
             return null

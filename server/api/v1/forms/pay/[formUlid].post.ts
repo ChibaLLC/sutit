@@ -1,6 +1,7 @@
 import {type APIResponse, Status} from "~/types";
 import {getFormByUlid, hasPaid} from "~/server/mvc/forms/queries";
 import {processFormPayments} from "~/server/mvc/forms/methods";
+import { getUserById } from "~/server/mvc/users/queries";
 
 export default defineEventHandler(async event => {
     const formUlid = getRouterParam(event, "formUlid")
@@ -35,5 +36,14 @@ export default defineEventHandler(async event => {
             body: "Payment already made"
         }, Status.success)
     }
-    await processFormPayments(event, form, {identity: details.identity, phone: details.phone})
+
+    const user = await getUserById(form.form.userId)
+
+    if (!user) return useHttpEnd(event, {
+        statusCode: Status.notFound,
+        body: "User not found"
+    }, Status.notFound)
+
+
+    await processFormPayments(event, form, {identity: details.identity, phone: details.phone}, user.email)
 })
