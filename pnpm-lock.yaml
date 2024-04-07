@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   daraja.js:
-    specifier: github:kgarchie/daraja.js#5b316c66127dce2d209099cd2be7cb9bc031d0b1
-    version: github.com/kgarchie/daraja.js/5b316c66127dce2d209099cd2be7cb9bc031d0b1
+    specifier: github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c
+    version: github.com/kgarchie/daraja.js/c8035ef849eb7d0de358f41fc14acc960a1c9a1c
   drizzle-orm:
     specifier: ^0.29.3
     version: 0.29.5(postgres@3.4.4)
@@ -9037,8 +9037,8 @@ packages:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     dev: true
 
-  github.com/kgarchie/daraja.js/5b316c66127dce2d209099cd2be7cb9bc031d0b1:
-    resolution: {tarball: https://codeload.github.com/kgarchie/daraja.js/tar.gz/5b316c66127dce2d209099cd2be7cb9bc031d0b1}
+  github.com/kgarchie/daraja.js/c8035ef849eb7d0de358f41fc14acc960a1c9a1c:
+    resolution: {tarball: https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c}
     name: daraja.js
     version: 0.1.0
     dependencies:

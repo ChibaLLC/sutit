@@ -1,20 +1,20 @@
 <script setup lang="ts">
-const forms = await unFetch('/api/v1/forms/me', {
+import type { APIResponse } from '~/types';
+
+const { data } = await useFetch<APIResponse>('/api/v1/forms/me', {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   }
 })
 
-console.log(forms)
+const forms = data.value?.body
 </script>
 
 <template>
   <Title>Submissions</Title>
   <div class="flex min-h-screen w-full -mt-3">
-    <Aside/>
+    <Aside />
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

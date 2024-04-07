@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {h, render} from 'vue'
-import {FieldEnum, type FormField, type Select, type Textarea} from "~/types";
+import {FieldEnum, type APIResponse, type FormField, type Select, type Textarea} from "~/types";
 import {v4} from "uuid";
 
 const svgs = {
@@ -50,7 +50,7 @@ async function submit() {
     fields: Array.from(formFields.value)
   }
 
-  const res = await unFetch('/api/v1/forms/create', {
+  const res = await unFetch<APIResponse>('/api/v1/forms/create', {
     method: 'POST',
     body: JSON.stringify(payload),
     headers: {

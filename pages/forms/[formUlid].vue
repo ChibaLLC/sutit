@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type Drizzle } from "~/db/types";
-import { Status } from "~/types";
+import { Status, type APIResponse } from "~/types";
 
 const form = ref({} as {
   form: Drizzle.Form.select,
@@ -12,29 +12,29 @@ const form = ref({} as {
 const loading = ref(false)
 const ulid = useRoute().params?.formUlid
 
-if(!userIsAuthenticated()){
+if (!userIsAuthenticated()) {
   await navigateTo(`/login?redirect=/forms/${ulid}`)
 }
 
-await unFetch(`/api/v1/forms/${ulid}`, {
-  onResponse({ response }) {
-    const res = response._data
-    if (res.statusCode === 200) form.value = res.body
-    form.value.fields = res.body.fields?.map((field: any) => {
-      return {
-        id: field.id,
-        name: field.fieldName,
-        type: field.fieldType,
-        required: field.required,
-        description: field.fieldDescription,
-        value: null,
-      }
-    })
-  },
+const { data } = await useFetch<APIResponse>(`/api/v1/forms/${ulid}`, {
   onResponseError({ response }) {
     console.log(response)
   }
+}).catch(console.error)
+
+const res = data.value
+if (res.statusCode === 200) form.value = res.body
+form.value.fields = res.body.fields?.map((field: any) => {
+  return {
+    id: field.id,
+    name: field.fieldName,
+    type: field.fieldType,
+    required: field.required,
+    description: field.fieldDescription,
+    value: null,
+  }
 })
+
 
 const paymentModal = ref(false)
 const payment_success = ref(false)

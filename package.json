@@ -30,7 +30,7 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
-    "daraja.js": "github:kgarchie/daraja.js#5b316c66127dce2d209099cd2be7cb9bc031d0b1",
+    "daraja.js": "github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c",
     "drizzle-orm": "^0.29.3",
     "object.groupby": "^1.0.2",
     "postgres": "^3.4.4",
