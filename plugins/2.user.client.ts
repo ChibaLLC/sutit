@@ -21,10 +21,13 @@ export default defineNuxtPlugin(async () => {
             setAuthCookie("", 0)
             useUser().value = {} as UserState
         }
-    }).catch(log.error)
+    }).catch((e) => {
+        log.error
+        return { data: null }
+    })
 
-    const res = data.value
-    if (res.statusCode === Status.success) return user.value = res.body
+    const res = data?.value
+    if (res?.statusCode === Status.success) return user.value = res.body
     setAuthCookie("", 0)
     useUser().value = {} as UserState
 })

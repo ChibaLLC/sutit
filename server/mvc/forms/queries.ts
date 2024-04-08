@@ -1,7 +1,7 @@
-import {forms, formFields, responses, responseData, formPayments, paymentDetails} from "~/db/drizzle/schema";
+import { forms, formFields, responses, responseData, formPayments, paymentDetails, payments } from "~/db/drizzle/schema";
 import db from "~/db";
-import {type Drizzle} from "~/db/types";
-import {and, eq} from "drizzle-orm";
+import { type Drizzle } from "~/db/types";
+import { and, eq } from "drizzle-orm";
 import ulid from "ulid";
 
 
@@ -21,7 +21,7 @@ export async function createFormPayment(formId: number, payment: {
 
 export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fields: Array<Omit<Drizzle.FormFields.insert, 'formId'>>): Promise<number> {
     const formUUID = ulid.ulid()
-    await db.insert(forms).values({...form, formUuid: formUUID} satisfies Drizzle.Form.insert)
+    await db.insert(forms).values({ ...form, formUuid: formUUID } satisfies Drizzle.Form.insert)
 
     const formId = (await db.select({
         id: forms.id
@@ -130,7 +130,7 @@ export async function insertData(userId: number, formUlid: string, data: Map<num
 }
 
 export async function getFormResponses(formUlId: string) {
-    return db.select({
+    return await db.select({
         responses: responses,
         data: responseData
     }).from(forms)
@@ -140,7 +140,7 @@ export async function getFormResponses(formUlId: string) {
 }
 
 export async function getFormResponse(responseId: number) {
-    return db.select({
+    return await db.select({
         responses: responses,
         data: responseData
     }).from(responses)
@@ -149,7 +149,7 @@ export async function getFormResponse(responseId: number) {
 }
 
 export async function getFormsByUser(userId: number) {
-    return db.select({
+    return await db.select({
         formUuid: forms.formUuid,
         formName: forms.formName,
         paymentDetails: paymentDetails.id,
@@ -165,18 +165,41 @@ export async function insertFormPayment(details: {
     phone: string,
     referenceCode: string
 }) {
+    await insertPayment(details.amount, details.referenceCode, details.phone)
+    
+    const payment = await getPayment(details.referenceCode)
+    if(!payment) throw new Error("Payment not found after creation")
+
     await db.insert(formPayments).values({
         formId: details.form_id,
-        amount: details.amount,
-        phoneNumber: details.phone.slice(-9),
-        referenceCode: details.referenceCode
+        paymentId: payment.id,
     } satisfies Drizzle.FormPayment.insert)
 }
 
 
-export async function hasPaid(id: number, phone: string) {
+export async function insertPayment(amount: number, reference_code: string, phone_number: string){
+    await db.insert(payments).values({
+        amount: amount,
+        referenceCode: reference_code,
+        phoneNumber: phone_number.slice(-9)
+    } satisfies Drizzle.Payment.insert)
+}
+
+
+export async function getPayment(referenceCode: string) {
     return (await db.select({
-        id: formPayments.id
-    }).from(formPayments)
-        .where(and(eq(formPayments.formId, id), eq(formPayments.phoneNumber, phone.slice(-9))))).length > 0
+        id: payments.id,
+        amount: payments.amount,
+        phoneNumber: payments.phoneNumber
+    }).from(payments)
+        .where(eq(payments.referenceCode, referenceCode))).at(0)
+}
+
+
+export async function hasPaid(formId: number, phone: string) {
+    return (await db.select({
+        id: payments.id
+    }).from(payments)
+        .innerJoin(formPayments, eq(formPayments.paymentId, payments.id))
+        .where(and(eq(formPayments.formId, formId), eq(payments.phoneNumber, phone.slice(-9))))).length > 0
 }

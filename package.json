@@ -14,7 +14,8 @@
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
     "prepare": "setup || chmod +x ./setup.sh && ./setup.sh && chmod +x ./run.sh",
     "test": "vitest",
-    "introspect": "drizzle-kit introspect:pg"
+    "introspect": "drizzle-kit introspect:pg",
+    "migrate": "drizzle-kit push:pg"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.11.2",

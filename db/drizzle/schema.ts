@@ -71,16 +71,6 @@ export const forms = pgTable("forms", {
 	}
 });
 
-export const formPayments = pgTable("form_payments", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	phoneNumber: varchar("phone_number", { length: 15 }).notNull(),
-	referenceCode: varchar("reference_code", { length: 255 }).notNull(),
-	amount: integer("amount").notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-});
-
 export const formFields = pgTable("form_fields", {
 	id: serial("id").primaryKey().notNull(),
 	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
@@ -103,8 +93,17 @@ export const responseData = pgTable("response_data", {
 
 export const payments = pgTable("payments", {
 	id: serial("id").primaryKey().notNull(),
-	userId: integer("user_id").notNull().references(() => users.id),
+	referenceCode: varchar("reference_code", { length: 255 }).notNull().unique(),
+	phoneNumber: varchar("phone_number", { length: 15 }).notNull(),
 	amount: integer("amount").notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+});
+
+export const formPayments = pgTable("form_payments", {
+	id: serial("id").primaryKey().notNull(),
+	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "set null" } ),
+	paymentId: integer("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });

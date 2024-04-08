@@ -1,5 +1,6 @@
 import { callBackIpWhitelist as whitelist, type StkCallback, type StkCallbackHook, Status } from "~/types";
 import { insertFormPayment } from "~/server/mvc/forms/queries";
+import { insertAnonymousPayment } from "~/server/mvc/mpesa/queries";
 
 export default defineEventHandler(async event => {
     if (isProduction) {
@@ -16,7 +17,7 @@ export default defineEventHandler(async event => {
 
     const queue = globalThis.paymentProcessingQueue
     const client = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
-    if (!queue) throw new Error("Queue not found")
+    if (!queue) throw new Error("Global Processing Queue not found")
 
     if (!client) {
         log.error(`Stream not found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
@@ -38,11 +39,19 @@ export default defineEventHandler(async event => {
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
-        await insertFormPayment({ form_id: client!.form.form.id, amount: +amount, referenceCode: transactionCode.toString(), phone: phoneNumber.toString() }).catch(e => {
-            log.error(`Failed to insert form payment: ${e.message}`)
-            client?.stream.send({ statusCode: Status.internalServerError, body: "Failed to process payment" })
-            return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
-        })
+        if(client?.form){
+            await insertFormPayment({ form_id: client.form.form.id, amount: +amount, referenceCode: transactionCode.toString(), phone: phoneNumber.toString() }).catch(e => {
+                log.error(`Failed to insert form payment: ${e.message}`)
+                client?.stream.send({ statusCode: Status.internalServerError, body: "Failed to process payment" })
+                return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+            })
+        } else {
+            insertAnonymousPayment({ amount: +amount, referenceCode: transactionCode.toString(), phone: phoneNumber.toString() }).catch(e => {
+                log.error(`Failed to insert anonymous payment: ${e.message}`)
+                client?.stream.send({ statusCode: Status.internalServerError, body: "Failed to process payment" })
+                return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+            })
+        }
 
         globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
     } else {
@@ -53,5 +62,6 @@ export default defineEventHandler(async event => {
 
     client?.stream.send({ statusCode: Status.success, body: "OK" })
     client?.stream.end()
+    log.success("Payment processed successfully Ref: " + callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value)
     return useHttpEnd(event, { statusCode: Status.success, body: "OK" }, 200)
 })

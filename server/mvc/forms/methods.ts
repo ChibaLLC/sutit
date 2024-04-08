@@ -55,6 +55,5 @@ async function makeSTKPush(phone: string, form: Form, accountNumber: string) {
             console.error(err)
             return null
         })
-    if (!response) return null
     return response
 }
