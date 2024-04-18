@@ -41,7 +41,7 @@ export async function createUser(data: {
     email: string,
     password: string
 }) {
-    const auth = useHashPassword(data.password)
+    const auth = hashPassword(data.password)
     const values = {
         name: data.name,
         email: data.email,

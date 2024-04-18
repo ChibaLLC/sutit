@@ -3,7 +3,7 @@ import db from '~/db';
 import {sessions} from "~/db/drizzle/schema";
 import {v4} from "uuid";
 import type {Drizzle} from "~/db/types";
-import {getUserByEmail} from "~/server/mvc/users/queries";
+import {getUserByEmail} from "~/mvc/v1/users/queries";
 
 
 export async function createToken(user: { userId: number, email: string }): Promise<string> {
@@ -56,7 +56,7 @@ export async function authenticate(data: { email: string, password: string }): P
     const user = await getUserByEmail(data.email)
     if (!user) throw new Error('User not found')
 
-    const valid = useVerifyPassword(data.password, user.salt, user.password)
+    const valid = verifyPassword(data.password, user.salt, user.password)
     if (!valid) throw new Error('Invalid password')
 
 

@@ -1,7 +1,7 @@
-import type { H3Event } from "h3";
-import type { Drizzle } from "~/db/types";
-import { Stream } from "~/server/utils/http";
-import { call_stk } from "~/server/mvc/mpesa/methods";
+import type {H3Event} from "h3";
+import type {Drizzle} from "~/db/types";
+import {Stream} from "~/server/utils/http";
+import {call_stk} from "~/mvc/mpesa/methods";
 
 
 declare global {
@@ -50,10 +50,9 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
 }
 
 async function makeSTKPush(phone: string, form: Form, accountNumber: string) {
-    const response = await call_stk(parseInt(phone), form.paymentDetails.amount, `Payment for ${form.form.formName} form`, accountNumber)
+    return await call_stk(+phone, form.paymentDetails.amount, `Payment for ${form.form.formName} form`, accountNumber)
         .catch(err => {
             console.error(err)
             return null
         })
-    return response
 }

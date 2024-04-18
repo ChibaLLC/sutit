@@ -34,7 +34,7 @@ export class Logger {
         this.streams = this.makeStreams()
     }
 
-    constructor(app: NitroApp) {
+    constructor(app?: NitroApp) {
         app?.hooks.hookOnce('close', () => {
             this.dispose()
         })
@@ -269,7 +269,7 @@ export class Logger {
             reporters: [
                 {
                     log: (logObj: LogObject) => {
-                        this.log(logObj).catch(console.error)
+                        this.log(logObj).catch(consola.error)
                     }
                 },
                 {

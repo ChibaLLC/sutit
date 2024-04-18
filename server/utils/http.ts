@@ -55,7 +55,7 @@ export async function useSSE(event: H3Event, id: string | null = null) {
 
 export function useController(folderName: string, router: Router) {
     router.use('/**', defineEventHandler((event: H3Event) => {
-        log.debug(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`)
+        log.warn(`Unknown route: [${event.method}] ${event.path} was attempted to be accessed`)
         return useHttpEnd(event, null, 404)
     }))
 

@@ -10,7 +10,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex items-center gap-4 p-4 rounded-lg bg-gray-100/40 dark:bg-gray-800/40"
+  <div class="flex items-center gap-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800/40"
        draggable="true">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"

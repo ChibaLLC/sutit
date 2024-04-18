@@ -211,11 +211,11 @@ onMounted(() => {
         <button
             type="button"
             @click="payment = true"
-            class="justify-self-end bg-blue-400 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-primary/90 transition-colors ml-4"
+            class="justify-self-end bg-red-400 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-primary/90 transition-colors ml-4"
         >Require Payment
         </button>
         <Modal :open="payment" @close="payment = false;" @cancel="payment = false"
-               :title="`Add Payment`">
+               title="Add Payment">
           <div class="p-4">
             <div class="form-group">
               <label for="amount" class="text-white dark:text-slate-900 font-semibold mb-2">Amount in KES</label>

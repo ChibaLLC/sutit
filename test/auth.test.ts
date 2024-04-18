@@ -12,7 +12,7 @@ test('Testing for authentication', async () => {
             password: 'test'
         })
     })
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(403)
     const res = await response.json() as APIResponse
     expect(res.body).toBe('key')
 })

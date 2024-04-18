@@ -35,12 +35,12 @@ watch(value, () => {
   <div class="form-group">
     <div class="flex flex-col" v-if="!view">
       <label
-          class="text-white label dark:text-slate-900 font-semibold mb-0.5 text-md ml-1"
+          class="label text-slate-900 font-semibold mb-0.5 text-md ml-1"
           style="width: fit-content">
         Name
       </label>
       <input
-          class="text-white input label dark:text-slate-900 font-semibold mb-1.5"
+          class="input label text-slate-900 font-semibold mb-1.5"
           style="width: fit-content"
           required
           type="text"
@@ -49,20 +49,20 @@ watch(value, () => {
     </div>
     <div class="flex flex-col mt-1" v-if="!view">
       <label
-          class="text-white label dark:text-slate-900 font-semibold mb-0.5 text-md ml-1"
+          class="label text-slate-900 font-semibold mb-0.5 text-md ml-1"
           style="width: fit-content"
       >Description</label>
       <textarea
-          class="text-gray-700 dark:text-slate-800 text-sm mb-2 input"
+          class="text-gray-700 text-slate-800 text-sm mb-2 input"
           placeholder="(Optional) add a description"
           v-model="form_field['description']"
       ></textarea>
     </div>
 
-    <label v-if="view" class="ml-1 text-white dark:text-slate-900 font-semibold mb-1.5 text-lg capitalize">
+    <label v-if="view" class="ml-1 text-slate-900 font-semibold mb-1.5 text-lg capitalize">
       {{ form_field['name'] }}
     </label>
-    <p v-if="view" class="ml-2 text-gray-400 dark:text-gray-500 text-sm mb-2">{{ form_field['description'] }}</p>
+    <p v-if="view" class="ml-2 text-gray-400 text-gray-500 text-sm mb-2">{{ form_field['description'] }}</p>
 
     <template
         v-if="view && (tag === FieldEnum.TEXT || tag === FieldEnum.TEL || tag === FieldEnum.EMAIL || tag === FieldEnum.NUMBER || tag === FieldEnum.PASSWORD || tag === FieldEnum.FILE || tag === FieldEnum.DATE || tag === FieldEnum.TIME || tag === FieldEnum.CHECKBOX)">
