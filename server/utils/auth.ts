@@ -1,5 +1,5 @@
 import type {H3Event} from "h3";
-import {getUserByToken} from "~/mvc/v1/users/queries";
+import {getUserByToken} from "~/mvc/users/queries";
 import {type Drizzle} from "~/db/types";
 
 export async function useAuth(event: H3Event): Promise<[{
