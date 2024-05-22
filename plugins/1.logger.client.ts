@@ -1,4 +1,3 @@
-import {Logger} from "~/server/utils/logger";
 import {createConsola} from "consola";
 
 export default defineNuxtPlugin((app) => {

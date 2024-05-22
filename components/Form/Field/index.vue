@@ -4,7 +4,7 @@ import type {Ref} from "vue";
 
 const props = defineProps({
   field: {
-    type: Object as PropType<FormField>,
+    type: Object as PropType<FormField & { fieldCharge?: number }>,
     required: false,
     default: null,
   },
@@ -16,8 +16,9 @@ const props = defineProps({
 
 const form_field = ref(props.field)
 const value = ref()
+const charge = ref(props.field.fieldCharge || 0)
 
-const emit = defineEmits(['form', 'value'])
+const emit = defineEmits(['form', 'value', 'charge'])
 
 const tag = props.field?.type || FieldEnum.TEXT
 const view = props.preview ?? false
@@ -26,8 +27,17 @@ watch(form_field.value, (value) => {
   emit('form', value)
 })
 
+
 watch(value, () => {
   emit('value', value.value)
+
+  if (charge.value > 0) {
+    if(value.value) {
+      emit('charge', charge.value)
+    } else {
+      emit('charge', -charge.value)
+    }
+  }
 })
 </script>
 
@@ -77,6 +87,11 @@ watch(value, () => {
 
     <template v-else-if="tag === FieldEnum.TEXTAREA" class="textarea">
       <textarea v-model="value"/>
+    </template>
+
+    <template v-else-if="tag === FieldEnum.OPTIONAL_PAY">
+      <input type="checkbox" v-model="value" class="input"/>
+      <small class="text-gray-500 text-sm ml-2">This field requires an additional charge of {{ charge }} KES</small>
     </template>
   </div>
 </template>

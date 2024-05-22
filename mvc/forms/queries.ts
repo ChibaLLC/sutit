@@ -32,7 +32,7 @@ export async function createForm(form: Omit<Drizzle.Form.insert, 'formUuid'>, fi
     await db.insert(formFields).values(fields.map(field => ({
         ...field,
         formId: formId.id
-    } satisfies Drizzle.FormFields.insert)))
+    } satisfies Drizzle.FormFields.insert))).catch(console.error)
 
     return formId.id
 }

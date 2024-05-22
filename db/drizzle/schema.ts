@@ -74,11 +74,12 @@ export const forms = pgTable("forms", {
 export const formFields = pgTable("form_fields", {
 	id: serial("id").primaryKey().notNull(),
 	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	fieldName: varchar("field_name", { length: 255 }).notNull(),
+	fieldName: text("field_name").notNull(),
 	fieldDescription: text("field_description"),
 	fieldType: varchar("field_type", { length: 255 }).notNull(),
 	fieldOptions: json("field_options"),
 	formPosition: integer("form_position").notNull(),
+	fieldCharge: integer("field_charge").default(0).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 	required: boolean("required").default(false).notNull(),

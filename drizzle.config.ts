@@ -24,8 +24,7 @@ export default defineConfig({
         port: config.port,
         user: config.user,
         password: config.password,
-        database: config.database!,
-        ssl: 'prefer' as any
+        database: config.database!
     },
     verbose: true,
     strict: true,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { type Drizzle } from "~/db/types";
-import { Status, type APIResponse } from "~/types";
+import {type Drizzle} from "~/db/types";
+import {Status, type APIResponse} from "~/types";
 
 const form = ref({} as {
   form: Drizzle.Form.select,
@@ -16,13 +16,13 @@ if (!userIsAuthenticated()) {
   await navigateTo(`/login?redirect=/forms/${ulid}`)
 }
 
-const { data } = await useFetch<APIResponse>(`/api/v1/forms/${ulid}`, {
-  onResponseError({ response }) {
+const response = await useFetch<APIResponse>(`/api/v1/forms/${ulid}`, {
+  onResponseError({response}) {
     console.log(response)
   }
 }).catch(console.error)
 
-const res = data.value
+const res = response.data.value
 if (res.statusCode === 200) form.value = res.body
 form.value.fields = res.body.fields?.map((field: any) => {
   return {
@@ -32,6 +32,7 @@ form.value.fields = res.body.fields?.map((field: any) => {
     required: field.required,
     description: field.fieldDescription,
     value: null,
+    fieldCharge: field.fieldCharge
   }
 })
 
@@ -55,7 +56,7 @@ async function submitPayment(): Promise<boolean> {
     body: {
       phone: payment_details.value.phone
     },
-    onResponseError({ response }): Promise<void> | void {
+    onResponseError({response}): Promise<void> | void {
       console.log(response._data.body)
       alert('Payment failed, please try again later')
     }
@@ -104,12 +105,12 @@ async function submitPayment(): Promise<boolean> {
 async function processForm() {
   loading.value = true
   if (
-    form.value.paymentDetails &&
-    form.value.paymentDetails.amount > 0 &&
-    payment_success.value === false &&
-    (!payment_details.value.phone ||
-      payment_details.value.phone === '') &&
-    payment_details.value.phone.length <= 10
+      form.value.paymentDetails &&
+      form.value.paymentDetails.amount > 0 &&
+      payment_success.value === false &&
+      (!payment_details.value.phone ||
+          payment_details.value.phone === '') &&
+      payment_details.value.phone.length <= 10
   ) {
     paymentModal.value = true
   } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
@@ -143,14 +144,14 @@ async function submit() {
       body: {
         fields: fieldsMap
       },
-      onResponse({ response }): Promise<void> | void {
+      onResponse({response}): Promise<void> | void {
         if (response._data.statusCode === Status.success) {
           alert('Form submitted successfully')
         } else {
           alert('Form submission failed, please try again later')
         }
       },
-      onResponseError({ response }) {
+      onResponseError({response}) {
         log.error(response)
       }
     })
@@ -160,17 +161,25 @@ async function submit() {
   }
   loading.value = false
 }
+
+function addCharge(amount: number) {
+  if(form.value.paymentDetails.amount){
+    form.value.paymentDetails.amount += amount
+  } else {
+    form.value.paymentDetails.amount = amount
+  }
+}
 </script>
 
 <template>
   <Title>Form | {{ ulid }}</Title>
   <div class="flex min-h-screen -mt-3">
-    <Aside />
+    <Aside/>
     <div class="flex flex-col p-8 lg:w-1/2 ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
         <h1 class="text-2xl font-bold flex items-center content-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
             <path d="M17 6.1H3"></path>
             <path d="M21 12.1H3"></path>
             <path d="M15.1 18H3"></path>
@@ -180,7 +189,7 @@ async function submit() {
       </div>
       <form class="form" @submit.prevent="processForm">
         <div v-for="field in form.fields" :key="field.id" class="form-group">
-          <FormField :field="field" :preview="true" @value="assignValue(field, $event)" />
+          <FormField :field="field" :preview="true" @value="assignValue(field, $event)" @charge="addCharge"/>
         </div>
         <div class="buttons">
           <small v-if="form.paymentDetails.amount > 0" class="justify-self-start mt-5 text-gray-500">
@@ -188,13 +197,13 @@ async function submit() {
             <span class="text-red-400 ">Amount Due: {{ form.paymentDetails.amount }}</span> KES
           </small>
           <button
-            class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none submit"
-            type="submit" style="transition: all 0.15s ease 0s;">
+              class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none submit"
+              type="submit" style="transition: all 0.15s ease 0s;">
             <span v-if="!loading">Send</span>
             <span :class="{ 'loading': loading }" class="w-full grid place-items-center" v-else>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                 <path
-                  d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                    d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
                 </path>
               </svg>
             </span>
@@ -202,9 +211,9 @@ async function submit() {
         </div>
       </form>
       <Modal :open="paymentModal" title="Please provide your MPESA phone number" @close="processForm"
-        @cancel="payment_details = { phone: '' }; paymentModal = false">
+             @cancel="payment_details = { phone: '' }; paymentModal = false">
         <div class="flex flex-col">
-          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
+          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone"/>
         </div>
       </Modal>
     </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {h, render} from 'vue'
-import {FieldEnum, type APIResponse, type FormField, type Select, type Textarea} from "~/types";
+import {type APIResponse, FieldEnum, type FormField, type Select, type Textarea} from "~/types";
 import {v4} from "uuid";
 
 const svgs = {
@@ -28,12 +28,52 @@ const svgs = {
 }
 const FormFieldComponent = resolveComponent('FormField')
 const preview = ref(false)
-const formFields = ref<Set<FormField>>(new Set())
+const formFields = ref<Set<FormField & {
+  fieldCharge?: number
+}>>(new Set())
 const payment = ref(false)
 
 const payment_details = ref({
   amount: 0
 })
+
+const addOnPay = ref(false)
+const addOnPayDetails = reactive({
+  name: '',
+  amount: 0,
+  description: undefined as string | undefined
+})
+
+function launchOptionalPayDialog() {
+  addOnPay.value = true
+}
+
+function createAddOnPay() {
+  const container = document.querySelector('#drop-zone .container')
+  const field = {
+    name: addOnPayDetails.name,
+    type: FieldEnum.OPTIONAL_PAY,
+    required: true,
+    placeholder: 'Add a label',
+    fieldCharge: addOnPayDetails.amount,
+    description: addOnPayDetails.description
+  }
+  formFields.value.add(field)
+
+  addOnPayDetails.amount = 0
+  addOnPayDetails.name = ''
+  addOnPayDetails.description = ''
+
+  const anchor = document.createElement('div')
+  render(h(FormFieldComponent, {
+    field: field,
+    preview: preview,
+    onForm: (value: FormField) => {
+      formFields.value.add(value)
+    }
+  }), anchor)
+  container?.appendChild(anchor)
+}
 
 async function submit() {
   const payload: {
@@ -41,13 +81,17 @@ async function submit() {
     payment: {
       amount: number,
     },
+    optionalPayments: Array<FormField & {
+      fieldCharge?: number
+    }>
     fields: FormField[]
   } = {
     name: v4(),
     payment: {
       amount: payment_details.value.amount,
     },
-    fields: Array.from(formFields.value)
+    optionalPayments: Array.from(formFields.value).filter(field => field.type === FieldEnum.OPTIONAL_PAY),
+    fields: Array.from(formFields.value).filter(field => field.type !== FieldEnum.OPTIONAL_PAY)
   }
 
   const res = await unFetch<APIResponse>('/api/v1/forms/create', {
@@ -86,6 +130,15 @@ function createFormField(name: string | null) {
         placeholder: 'Add a label',
         options: []
       } satisfies Select
+    case FieldEnum.OPTIONAL_PAY:
+      return {
+        name: '',
+        type: name as FieldEnum,
+        required: true,
+        placeholder: 'Add a label',
+        amount: 0,
+        description: ''
+      }
     default:
       return {
         name: '',
@@ -132,16 +185,19 @@ onMounted(() => {
     if (hint) hint.remove()
     const draggable = currentDraggable
     if (!draggable) return console.error('Draggable not found')
+
     const anchor = document.createElement('div')
     const field = createFormField(draggable.getAttribute('data-name'))
-    render(h(FormFieldComponent, {
-      field: field,
-      preview: preview,
-      onForm: (value: FormField) => {
-        formFields.value.add(value)
-      }
-    }), anchor)
-    container.appendChild(anchor)
+    if (field?.type !== FieldEnum.OPTIONAL_PAY) {
+      render(h(FormFieldComponent, {
+        field: field,
+        preview: preview,
+        onForm: (value: FormField) => {
+          formFields.value.add(value)
+        }
+      }), anchor)
+      container.appendChild(anchor)
+    }
   })
 })
 </script>
@@ -168,6 +224,9 @@ onMounted(() => {
                                  :data-name="FieldEnum.CHECKBOX"/>
                 <FormFieldChoice :display-name="`Date`" :demo="true" :svg="svgs.date"
                                  :data-name="FieldEnum.DATE"/>
+                <FormFieldChoice display-name="Add On" :demo="true" :svg="svgs.checkbox"
+                                 @dragend="launchOptionalPayDialog"
+                                 :data-name="FieldEnum.OPTIONAL_PAY"/>
               </div>
             </div>
           </div>
@@ -220,6 +279,19 @@ onMounted(() => {
             <div class="form-group">
               <label for="amount" class="text-white dark:text-slate-900 font-semibold mb-2">Amount in KES</label>
               <input type="number" id="amount" class="input" v-model="payment_details.amount"/>
+            </div>
+          </div>
+        </Modal>
+        <Modal :open="addOnPay" @close="addOnPay = false;createAddOnPay()" @cancel="addOnPay = false"
+               title="Add On Payment">
+          <div class="p-4">
+            <div class="form-group">
+              <label>Field Name</label>
+              <input type="text" class="input" v-model="addOnPayDetails.name"/>
+              <label>Description</label>
+              <textarea class="input" v-model="addOnPayDetails.description"/>
+              <label for="amount" class="text-white dark:text-slate-900 font-semibold mb-2">Amount in KES</label>
+              <input type="number" class="input" v-model="addOnPayDetails.amount"/>
             </div>
           </div>
         </Modal>

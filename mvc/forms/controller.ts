@@ -48,9 +48,12 @@ router.post('/create', defineEventHandler(async event => {
     const form = await readBody(event) as {
         name: string,
         payment: {
-            amount: number
+            amount: number,
         },
         fields: Array<FormField>
+        optionalPayments: Array<FormField & {
+            fieldCharge: number
+        }>
     }
 
     const insertForm = {
@@ -60,16 +63,27 @@ router.post('/create', defineEventHandler(async event => {
         paymentDetails: undefined
     } satisfies Omit<Drizzle.Form.insert, 'formUuid'>
 
-    const insertFields = form.fields.map((field: any, index) => ({
+    const insertFields = form.fields?.map((field: any, index) => ({
         fieldName: field.name,
         fieldType: field.type,
         required: !!field?.required,
         formPosition: index,
         id: undefined,
-        fieldOptions: field?.options ? JSON.stringify(field.options) : undefined
+        fieldOptions: field?.options ? JSON.stringify(field.options) : undefined,
     }) satisfies Omit<Drizzle.FormFields.insert, 'formId'>)
 
+    insertFields.push(...form.optionalPayments?.map((field: any, index) => ({
+        fieldName: field.name,
+        fieldType: field.type,
+        required: false,
+        formPosition: index,
+        id: undefined,
+        fieldOptions: field?.options ? JSON.stringify(field.options) : undefined,
+        fieldCharge: field.fieldCharge
+    }) satisfies Omit<Drizzle.FormFields.insert, 'formId'>))
+
     const formId = await createForm(insertForm, insertFields).catch(err => {
+        console.error(err)
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while creating form"
@@ -224,7 +238,7 @@ router.post('/pay/:formUlid', defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if(await hasPaid(form.form.id, details.phone)){
+    if (await hasPaid(form.form.id, details.phone)) {
         return useHttpEnd(event, {
             statusCode: Status.success,
             body: "Payment already made"

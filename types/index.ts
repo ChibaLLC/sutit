@@ -146,6 +146,7 @@ export enum FieldEnum {
     RADIO = "radio",
     SELECT = "select",
     TEXTAREA = "textarea",
+    OPTIONAL_PAY = "optional_pay"
 }
 
 export type Base = {
