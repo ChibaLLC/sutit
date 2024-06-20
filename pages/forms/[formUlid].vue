@@ -188,9 +188,7 @@ function addCharge(amount: number) {
         </h1>
       </div>
       <form class="form" @submit.prevent="processForm">
-        <div v-for="field in form.fields" :key="field.id" class="form-group">
-          <FormField :field="field" :preview="true" @value="assignValue(field, $event)" @charge="addCharge"/>
-        </div>
+        <FormRenderer />
         <div class="buttons">
           <small v-if="form.paymentDetails.amount > 0" class="justify-self-start mt-5 text-gray-500">
             This form requires payment for submission <br>

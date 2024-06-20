@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    devtools: {enabled: true},
+    devtools: {enabled: false},
     nitro: {
         storage: {
             'redis': {
@@ -21,6 +21,10 @@ export default defineNuxtConfig({
         '~/assets/css/main.css'
     ],
     modules: [
-        "@nuxtjs/tailwindcss"
-    ]
+        "@nuxtjs/tailwindcss",
+        "@chiballc/nuxt-form-builder"
+    ],
+    tailwindcss: {
+        configPath: '~/tailwind.config.js',
+    }
 })

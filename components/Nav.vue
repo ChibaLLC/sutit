@@ -1,9 +1,9 @@
 <template>
-  <nav class="relative flex flex-wrap items-center justify-between px-2 py-3 mb-3 bg-gray-100 dark:bg-slate-900">
+  <nav class="relative flex flex-wrap items-center justify-between px-2 py-3 mb-3 bg-[#262626] text-white">
     <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
       <div class="w-full relative flex justify-between lg:w-auto  px-4 lg:static lg:block lg:justify-start">
         <NuxtLink
-            class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase dark:text-white"
+            class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase"
             to="/">
           Sutit
         </NuxtLink>
@@ -26,14 +26,14 @@
           </li>
           <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
-                class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug dark:text-white hover:opacity-75"
+                class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug hover:opacity-75"
                 to="/login?redirect=/forms">
               Log In
             </NuxtLink>
           </li>
           <li class="nav-item" v-if="userIsAuthenticated()">
             <button
-                class="btn log-out px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug dark:text-white hover:opacity-75"
+                class="btn log-out px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug hover:opacity-75"
                 @click="logout">
               Log Out
             </button>

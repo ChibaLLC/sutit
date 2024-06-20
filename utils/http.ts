@@ -1,6 +1,7 @@
 import type { APIResponse } from "~/types";
 import { type NitroFetchOptions, type NitroFetchRequest } from "nitropack";
 import { ulid } from "ulid";
+import { date } from "drizzle-orm/mysql-core";
 
 const textDecoder = new TextDecoder()
 
@@ -43,8 +44,38 @@ export function isAPIResponse(data: any): data is APIResponse {
     return data?.statusCode || (data?.statusCode && data?.body)
 }
 
-export async function unFetch<T>(url: string | URL, options?: NitroFetchOptions<NitroFetchRequest>) {
-    return await $fetch<T>(url.toString(), options)
+/**
+ * This function is a wrapper around useFetch, but decomposes it
+ * 
+ * @param url 
+ * @param options 
+ * @returns 
+ */
+export async function unFetch<T>(url: NitroFetchRequest, options?: NitroFetchOptions<NitroFetchRequest>) {
+    const _options = { ...options, watch: false, immediate: false } as any
+    const { execute } = await useFetch<T>(url, _options)
+
+    return await execute()
+}
+
+/**
+ * This is a useAsyncData wrapper, that uses useAuthStream to retrieve data.
+ *
+ * @param url
+ * @param key
+ *
+ * @see unFetch
+ */
+export async function useData(url: string | Ref<string>, key?: string) {
+    if (!key) {
+        return useAsyncData(() => $fetch((typeof url === "string") ? url : url.value), {
+            watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
+        })
+    } else {
+        return useAsyncData(key, () => $fetch((typeof url === "string") ? url : url.value), {
+            watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
+        })
+    }
 }
 
 
