@@ -1,27 +1,20 @@
-import type { Drizzle } from "~/db/types";
+import type {Drizzle} from "~/db/types";
 import db from "~/db";
-import { sessions, users } from "~/db/drizzle/schema";
-import { and, eq } from "drizzle-orm";
+import {sessions, users} from "~/db/drizzle/schema";
+import {and, eq} from "drizzle-orm";
+import {ulid} from "ulid";
 
 export async function getUserByToken(token: string): Promise<Drizzle.User.select | null> {
     if (!token) return null
-    const tokenUser = await db.select()
+    const rows = await db.select()
         .from(sessions)
         .where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
-        .catch((err) => {
-            console.error(err)
-            throw new Error('Unable to verify token')
-        })
-
-    if (tokenUser.length === 0) return null
-    const rows = await db.select()
-        .from(users)
-        .where(eq(users.id, tokenUser.at(0)!.userId))
+        .innerJoin(users, eq(users.ulid, sessions.userUlid))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to get users')
         })
-    return rows.at(0) || null
+    return rows.at(0)?.users || null
 }
 
 export async function getUserByEmail(email: string): Promise<Drizzle.User.select | null> {
@@ -47,24 +40,26 @@ export async function createUser(data: {
         email: data.email,
         password: auth.hash,
         salt: auth.salt,
+        ulid: ulid()
     } satisfies Drizzle.User.insert
 
     return db.insert(users).values(values).catch((err) => {
-        log.error(err.message || err, { type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal' })
+        log.error(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal'})
         throw err
     })
 }
 
-export async function deleteUser(id: number) {
+export async function deleteUser(ulid: string) {
     await db.update(users).set({
         isDeleted: true
-    }).where(eq(users.id, id))
+    }).where(eq(users.ulid, ulid))
 }
 
-
-export async function getUserById(id: number) {
-    return (await db.select().from(users).where(eq(users.id, id)).catch(e => {
-        log.error(e)
-        return []
-    })).at(0) || null
+export async function getUserByUlId(ulid: string) {
+    return (await db.select().from(users)
+        .where(eq(users.ulid, ulid))
+        .catch(e => {
+            log.error(e)
+            return []
+        })).at(0) || null
 }

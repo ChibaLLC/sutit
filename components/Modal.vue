@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps({
-  title: {
+  name: {
     type: String,
     default: 'Modal'
   },

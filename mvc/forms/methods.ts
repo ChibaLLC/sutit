@@ -8,21 +8,11 @@ declare global {
     var paymentProcessingQueue: Array<{
         stream: Stream,
         mpesa: { merchantRequestID: string, checkoutRequestID: string },
-        form: {
-            form: Drizzle.Form.select,
-            fields?: Drizzle.FormFields.select[],
-            paymentDetails: Drizzle.PaymentDetails.select
-        }
+        form: Drizzle.Form.select
     }>
 }
 
-type Form = {
-    form: Drizzle.Form.select,
-    fields?: Drizzle.FormFields.select[],
-    paymentDetails: Drizzle.PaymentDetails.select
-}
-
-export async function processFormPayments(event: H3Event, form: Form, details: { phone: string; identity: string; }, accountNumber: string) {
+export async function processFormPayments(event: H3Event, form: Drizzle.Form.select, details: { phone: string; identity: string; }, accountNumber: string) {
     const stream = await useSSE(event, details.identity)
     if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
     
@@ -49,8 +39,8 @@ export async function processFormPayments(event: H3Event, form: Form, details: {
         })
 }
 
-async function makeSTKPush(phone: string, form: Form, accountNumber: string) {
-    return await call_stk(+phone, form.paymentDetails.amount, `Payment for ${form.form.formName} form`, accountNumber)
+async function makeSTKPush(phone: string, form: Drizzle.Form.select, accountNumber: string) {
+    return await call_stk(+phone, form.price, `Payment for ${form.formName} form`, accountNumber)
         .catch(err => {
             console.error(err)
             return null

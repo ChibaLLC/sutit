@@ -1,5 +1,6 @@
 create or replace function update_timestamp()
-    returns trigger as $$
+    returns trigger as
+$$
 begin
     new.updated_at = current_timestamp;
     return new;
@@ -8,14 +9,15 @@ $$ language plpgsql;
 
 create table if not exists users
 (
-    id         serial primary key,
+    ulid       varchar(255) not null unique,
     name       varchar(255) not null,
     email      varchar(255) not null unique,
     password   varchar(255) not null,
     salt       varchar(255) not null,
     is_deleted boolean,
     created_at timestamp    not null default current_timestamp,
-    updated_at timestamp    not null default current_timestamp
+    updated_at timestamp    not null default current_timestamp,
+    primary key (ulid)
 );
 create trigger users_updated_at_trigger
     before update
@@ -25,12 +27,13 @@ execute function update_timestamp();
 
 create table if not exists sessions
 (
-    id         serial primary key,
-    user_id    integer      not null references users (id),
+    ulid       varchar(255) not null unique,
+    user_ulid  varchar(255) not null references users (ulid) on delete cascade,
     token      varchar(255) not null unique,
     is_valid   boolean      not null default true,
     created_at timestamp    not null default current_timestamp,
-    updated_at timestamp    not null default current_timestamp
+    updated_at timestamp    not null default current_timestamp,
+    primary key (ulid)
 );
 create index if not exists token_index on sessions (token);
 create trigger sessions_updated_at_trigger
@@ -41,11 +44,13 @@ execute function update_timestamp();
 
 create table if not exists payments
 (
-    id         serial primary key,
-    user_id    integer   not null references users (id),
-    amount     integer   not null,
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    ulid       varchar(255) not null unique,
+    reference_code varchar(30) not null unique,
+    phone_number   varchar(30) not null,
+    amount     integer      not null,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (ulid)
 );
 create trigger payments_updated_at_trigger
     before update
@@ -55,14 +60,15 @@ execute function update_timestamp();
 
 create table if not exists forms
 (
-    id               serial primary key,
-    form_name        varchar(255) not null,
-    user_id          integer      not null references users (id) on delete cascade,
+    ulid             varchar(255) not null,
     form_name        varchar(255) not null,
     form_description text,
-    form             jsonb,
+    form             jsonb        not null,
+    price            integer      not null,
+    user_ulid        varchar(255) not null references users(ulid) on delete cascade,
     created_at       timestamp    not null default current_timestamp,
-    updated_at       timestamp    not null default current_timestamp
+    updated_at       timestamp    not null default current_timestamp,
+    primary key (ulid)
 );
 create trigger forms_updated_at_trigger
     before update
@@ -70,13 +76,28 @@ create trigger forms_updated_at_trigger
     for each row
 execute function update_timestamp();
 
+create table if not exists stores
+(
+    ulid varchar(255) not null,
+    form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
+    store      jsonb        not null,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (ulid)
+);
+create trigger stores_updated_at_trigger
+    before update
+    on stores
+    for each row
+execute function update_timestamp();
+
 create table if not exists form_payments
 (
-    id             serial primary key,
-    form_id        integer      not null references forms (id) on delete cascade,
-    payment_id     integer      not null references payments (id) on delete cascade,
-    created_at     timestamp    not null default current_timestamp,
-    updated_at     timestamp    not null default current_timestamp
+    form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
+    payment_ulid varchar(255) not null references payments (ulid) on delete cascade,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (form_ulid, payment_ulid)
 );
 create trigger form_payments_updated_at_trigger
     before update
@@ -84,19 +105,31 @@ create trigger form_payments_updated_at_trigger
     for each row
 execute function update_timestamp();
 
+create table store_payments(
+    form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
+    payment_ulid varchar(255) not null references payments (ulid) on delete cascade,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (form_ulid, payment_ulid)
+);
+create trigger store_payments_updated_at_trigger
+    before update
+    on store_payments
+    for each row
+execute function update_timestamp();
 
 create table if not exists responses
 (
-    id         serial primary key,
-    form_id    integer   not null references forms (id) on delete cascade,
-    user_id    integer references users (id) on delete cascade,
+    form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
+    user_ulid  varchar(255) not null references users (ulid) on delete cascade,
     response   text,
-    field     varchar(255) not null,
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    field      varchar(255) not null,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (form_ulid, user_ulid)
 );
 alter table responses
-add constraint single_response_per_form unique (form_id, user_id);
+    add constraint single_response_per_form unique (form_ulid, user_ulid);
 create trigger responses_updated_at_trigger
     before update
     on responses
@@ -106,7 +139,7 @@ execute function update_timestamp();
 create table if not exists sys_logs
 (
     id         serial primary key,
-    level       varchar(10) not null,
+    level      varchar(10) not null,
     message    text        not null,
     created_at timestamp   not null default current_timestamp
 );

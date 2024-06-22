@@ -6,10 +6,15 @@ const helpText = ref(false)
 type FormData = { forms: Array<any>; stores: Array<any>; }
 
 const submitData = reactive({
-  title: '',
+  name: '',
   description: '',
-  formData: {},
-  price: 0,
+  formData: {
+    forms: [],
+    stores: []
+  },
+  payment: {
+    amount: 0
+  },
 })
 
 function addPaymentOption() {
@@ -18,9 +23,9 @@ function addPaymentOption() {
 
 function submit(data: FormData) {
   submitData.formData = data.forms
-  // if(data.forms.length === 0 && data.stores.length === 0) {
-  //   alert('Please add a form ir a store')
-  // }
+  if(data.forms.length === 0 && data.stores.length === 0) {
+    alert('Please add a form or a store')
+  }
   console.log(data)
 }
 
@@ -29,7 +34,7 @@ onMounted(() => {
 })
 
 function closeFormDetailsModal() {
-  if (submitData.title.trim() === '') {
+  if (submitData.name.trim() === '') {
     helpText.value = true
   } else {
     showFormNameModal.value = false
@@ -55,7 +60,7 @@ function closeFormDetailsModal() {
       <label for="payment-amount">Amount</label>
       <input type="number" id="payment-amount"
              class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2"
-             placeholder="Amount to charge for the form" v-model="submitData.price">
+             placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
     </div>
   </Modal>
   <Modal :open="showFormNameModal" @cancel="closeFormDetailsModal" @close="closeFormDetailsModal"
@@ -64,7 +69,7 @@ function closeFormDetailsModal() {
       <label for="form-name">Name</label>
       <input type="text" id="form-name"
              class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
-             placeholder="Name of the form" v-model="submitData.title">
+             placeholder="Name of the form" v-model="submitData.name">
       <small class="text-gray-500">This will be the title of the form</small>
     </div>
     <div class="mt-4">
