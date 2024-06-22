@@ -1,7 +1,6 @@
 import type { APIResponse } from "~/types";
 import { type NitroFetchOptions, type NitroFetchRequest } from "nitropack";
 import { ulid } from "ulid";
-import { date } from "drizzle-orm/mysql-core";
 
 const textDecoder = new TextDecoder()
 

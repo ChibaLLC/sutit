@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type {APIResponse} from "~/types";
+
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
 const helpText = ref(false)
@@ -11,7 +13,7 @@ const submitData = reactive({
   formData: {
     forms: [],
     stores: []
-  },
+  } as FormData,
   payment: {
     amount: 0
   },
@@ -21,12 +23,23 @@ function addPaymentOption() {
   showPriceModal.value = true
 }
 
-function submit(data: FormData) {
-  submitData.formData = data.forms
-  if(data.forms.length === 0 && data.stores.length === 0) {
+const {execute: upload} = await useFetch<APIResponse>('/api/v1/forms/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: submitData,
+  watch: false,
+  immediate: false
+})
+
+async function submit(data: FormData) {
+  submitData.formData = data
+  if (data.forms.length === 0 && data.stores.length === 0) {
     alert('Please add a form or a store')
   }
-  console.log(data)
+  const response = await upload()
+  console.log(response)
 }
 
 onMounted(() => {

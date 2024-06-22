@@ -20,13 +20,11 @@ router.get('/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const form = await getFormByUlid(formUuid).catch(err => {
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while getting form"
-        } as APIResponse, Status.internalServerError)
-    })
-
+    const form = await getFormByUlid(formUuid).catch(err => err as Error)
+    if (form instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: form.message || "Unknown error while getting form"
+    } as APIResponse, Status.internalServerError)
     if (!form) return useHttpEnd(event, {
         statusCode: Status.notFound,
         body: "Form not found"

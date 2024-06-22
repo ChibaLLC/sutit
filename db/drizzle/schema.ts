@@ -108,7 +108,7 @@ export const responses = pgTable("responses", {
 },
 (table) => {
 	return {
-		responsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "responses_pkey"})
+		responsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "responses_pkey"}),
 		singleResponsePerForm: unique("single_response_per_form").on(table.formUlid, table.userUlid),
 	}
 });

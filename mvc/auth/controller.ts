@@ -35,24 +35,25 @@ router.post('/signup', defineEventHandler(async event => {
     })
     if (!revoked) return
 
-    const create = await createUser(data).catch(async err => {
-        const code = err?.code === 'ER_DUP_ENTRY' ? Status.conflict : Status.internalServerError
-        useHttpEnd(event, {
+    const create = await createUser(data).catch(async err => err as Error & {code?: string})
+    if (create instanceof Error) {
+        console.log(create.code)
+        const code = create.code === '23505' ? Status.conflict : Status.internalServerError
+        return useHttpEnd(event, {
             statusCode: code,
-            body: err.message
+            body: create.message
         }, code)
-        return false
-    })
-    if (!create) return
+    }
 
-    const token = await authenticate({email: data.email, password: data.password}).catch(async (err: Error) => {
-        useHttpEnd(event, {
-            body: err.message,
+    const token = await authenticate({email: data.email, password: data.password}).catch(async (err: Error & {
+        code?: string
+    }) => err)
+    if (token instanceof Error) {
+        return useHttpEnd(event, {
+            body: token.message,
             statusCode: Status.internalServerError
         }, Status.internalServerError)
-        return false
-    })
-    if (!token) return
+    }
 
     response.statusCode = Status.success
     response.body = token

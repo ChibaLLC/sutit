@@ -44,8 +44,8 @@ export async function createUser(data: {
     } satisfies Drizzle.User.insert
 
     return db.insert(users).values(values).catch((err) => {
-        log.error(err.message || err, {type: err?.code === 'ER_DUP_ENTRY' ? 'error' : 'fatal'})
-        throw err
+        log.error(err.message || err, {type: err?.code === '23505' ? 'error' : 'fatal'})
+        return Promise.reject(err)
     })
 }
 
