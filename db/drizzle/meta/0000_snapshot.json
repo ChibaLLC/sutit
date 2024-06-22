@@ -49,14 +49,14 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -106,14 +106,14 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {
@@ -126,8 +126,8 @@
         }
       },
       "foreignKeys": {
-        "sessions_user_ulid_fkey": {
-          "name": "sessions_user_ulid_fkey",
+        "sessions_user_ulid_users_ulid_fk": {
+          "name": "sessions_user_ulid_users_ulid_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
           "schemaTo": "public",
@@ -185,14 +185,14 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -230,8 +230,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "form": {
-          "name": "form",
+        "pages": {
+          "name": "pages",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
@@ -253,20 +253,20 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "forms_user_ulid_fkey": {
-          "name": "forms_user_ulid_fkey",
+        "forms_user_ulid_users_ulid_fk": {
+          "name": "forms_user_ulid_users_ulid_fk",
           "tableFrom": "forms",
           "tableTo": "users",
           "schemaTo": "public",
@@ -310,20 +310,20 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "stores_form_ulid_fkey": {
-          "name": "stores_form_ulid_fkey",
+        "stores_form_ulid_forms_ulid_fk": {
+          "name": "stores_form_ulid_forms_ulid_fk",
           "tableFrom": "stores",
           "tableTo": "forms",
           "schemaTo": "public",
@@ -367,7 +367,7 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -396,20 +396,20 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "form_payments_form_ulid_fkey": {
-          "name": "form_payments_form_ulid_fkey",
+        "form_payments_form_ulid_forms_ulid_fk": {
+          "name": "form_payments_form_ulid_forms_ulid_fk",
           "tableFrom": "form_payments",
           "tableTo": "forms",
           "schemaTo": "public",
@@ -422,8 +422,8 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "form_payments_payment_ulid_fkey": {
-          "name": "form_payments_payment_ulid_fkey",
+        "form_payments_payment_ulid_payments_ulid_fk": {
+          "name": "form_payments_payment_ulid_payments_ulid_fk",
           "tableFrom": "form_payments",
           "tableTo": "payments",
           "schemaTo": "public",
@@ -469,20 +469,20 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "store_payments_form_ulid_fkey": {
-          "name": "store_payments_form_ulid_fkey",
+        "store_payments_form_ulid_forms_ulid_fk": {
+          "name": "store_payments_form_ulid_forms_ulid_fk",
           "tableFrom": "store_payments",
           "tableTo": "forms",
           "schemaTo": "public",
@@ -495,8 +495,8 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "store_payments_payment_ulid_fkey": {
-          "name": "store_payments_payment_ulid_fkey",
+        "store_payments_payment_ulid_payments_ulid_fk": {
+          "name": "store_payments_payment_ulid_payments_ulid_fk",
           "tableFrom": "store_payments",
           "tableTo": "payments",
           "schemaTo": "public",
@@ -554,20 +554,20 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "responses_form_ulid_fkey": {
-          "name": "responses_form_ulid_fkey",
+        "responses_form_ulid_forms_ulid_fk": {
+          "name": "responses_form_ulid_forms_ulid_fk",
           "tableFrom": "responses",
           "tableTo": "forms",
           "schemaTo": "public",
@@ -580,8 +580,8 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "responses_user_ulid_fkey": {
-          "name": "responses_user_ulid_fkey",
+        "responses_user_ulid_users_ulid_fk": {
+          "name": "responses_user_ulid_users_ulid_fk",
           "tableFrom": "responses",
           "tableTo": "users",
           "schemaTo": "public",

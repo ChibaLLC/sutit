@@ -11,9 +11,9 @@ const submitData = reactive({
   name: '',
   description: '',
   formData: {
-    forms: [],
-    stores: []
-  } as FormData,
+    pages: [] as any[],
+    stores: [] as any[]
+  },
   payment: {
     amount: 0
   },
@@ -23,23 +23,29 @@ function addPaymentOption() {
   showPriceModal.value = true
 }
 
-const {execute: upload} = await useFetch<APIResponse>('/api/v1/forms/create', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: submitData,
-  watch: false,
-  immediate: false
-})
-
 async function submit(data: FormData) {
-  submitData.formData = data
+  submitData.formData = {
+    pages: data.forms,
+    stores: data.stores
+  }
   if (data.forms.length === 0 && data.stores.length === 0) {
     alert('Please add a form or a store')
   }
-  const response = await upload()
-  console.log(response)
+
+  const res = await $fetch<APIResponse>('/api/v1/forms/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + getAuthToken()
+    },
+    body: submitData
+  })
+
+  if (res.statusCode === 200) {
+    await navigateTo('/forms')
+  } else {
+    alert(res.body)
+  }
 }
 
 onMounted(() => {
@@ -68,7 +74,7 @@ function closeFormDetailsModal() {
       </FormBuilderFooterItem>
     </template>
   </FormBuilder>
-  <Modal :open="showPriceModal" @close="showPriceModal = false" @cancel="showPriceModal = false" title="Add Charge">
+  <Modal :open="showPriceModal" @close="showPriceModal = false" @cancel="showPriceModal = false" name="Add Charge">
     <div>
       <label for="payment-amount">Amount</label>
       <input type="number" id="payment-amount"
@@ -77,7 +83,7 @@ function closeFormDetailsModal() {
     </div>
   </Modal>
   <Modal :open="showFormNameModal" @cancel="closeFormDetailsModal" @close="closeFormDetailsModal"
-         title="New Form Details">
+         name="New Form Details">
     <div>
       <label for="form-name">Name</label>
       <input type="text" id="form-name"

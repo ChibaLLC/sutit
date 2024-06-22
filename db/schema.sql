@@ -63,7 +63,7 @@ create table if not exists forms
     ulid             varchar(255) not null,
     form_name        varchar(255) not null,
     form_description text,
-    form             jsonb        not null,
+    pages             jsonb        not null,
     price            integer      not null,
     user_ulid        varchar(255) not null references users(ulid) on delete cascade,
     created_at       timestamp    not null default current_timestamp,

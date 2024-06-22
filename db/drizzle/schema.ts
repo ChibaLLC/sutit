@@ -52,7 +52,7 @@ export const forms = pgTable("forms", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
 	formName: varchar("form_name", { length: 255 }).notNull(),
 	formDescription: text("form_description"),
-	form: jsonb("form").notNull(),
+	pages: jsonb("pages").notNull(),
 	price: integer("price").notNull(),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),

@@ -4,12 +4,17 @@ import {type Drizzle} from "~/db/types";
 import {and, eq} from "drizzle-orm";
 import {ulid} from "ulid";
 
-export async function createForms(form: Array<Omit<Drizzle.Form.insert, 'ulid'>>): Promise<Array<string>> {
-    const _forms = form.map(form => {
-        return {...form, ulid: ulid()} satisfies Drizzle.Form.insert
-    })
-    await db.insert(forms).values(_forms)
-    return _forms.map(form => form.ulid)
+export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Record<string, any>): Promise<string> {
+    const _form = {
+        pages: pages,
+        ulid: ulid(),
+        formName: name,
+        formDescription: description,
+        userUlid: userUlid,
+        price: price
+    } satisfies Drizzle.Form.insert
+    await db.insert(forms).values(_form)
+    return _form.ulid
 }
 
 export async function getFormByUlid(formUlid: string): Promise<Drizzle.Form.select | undefined> {
@@ -32,7 +37,7 @@ export async function insertData(userUlid: string, form: Drizzle.Form.insert, da
 }
 
 export async function getFormResponses(formUlId: string) {
-    return db.select().from(forms).where(eq(forms.ulid, formUlId))
+    return db.select().from(responses).where(eq(responses.formUlid, formUlId))
 }
 
 export async function getFormsByUser(userUlid: string) {

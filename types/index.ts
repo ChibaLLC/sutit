@@ -1,6 +1,11 @@
-export type APIResponse = {
+export interface Response {
     statusCode: number;
     body?: any;
+}
+
+export type APIResponse<T> = {
+    statusCode: number;
+    body?: T;
 }
 
 export enum Status {
