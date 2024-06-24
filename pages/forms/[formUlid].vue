@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {type Drizzle} from "~/db/types";
 import {Status, type APIResponse} from "~/types";
+import type {FormStoreData} from "@chiballc/nuxt-form-builder/dist/runtime/types";
 
 const loading = ref(false)
 const ulid = useRoute().params?.formUlid
@@ -18,7 +19,7 @@ const {data} = await useFetch<APIResponse<Drizzle.Form.select>>(`/api/v1/forms/$
   }
 }).catch(console.error)
 
-const form = useState(() => data.value.body)
+const form = data.value?.body
 const paymentModal = ref(false)
 const payment_success = ref(false)
 const payment_details = ref({
@@ -106,36 +107,38 @@ async function processForm() {
 
 
 async function submit() {
-  loading.value = true
-  if (payment_success.value) {
-    const fieldsMap = form.value.fields.reduce((acc, field) => {
-      acc[field.id] = field.value
-      return acc
-    }, {} as Record<string, any>)
-    await unFetch(`/api/v1/forms/submit/${ulid}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${getAuthToken()}`
-      },
-      body: {
-        fields: fieldsMap
-      },
-      onResponse({response}): Promise<void> | void {
-        if (response._data.statusCode === Status.success) {
-          alert('Form submitted successfully')
-        } else {
-          alert('Form submission failed, please try again later')
-        }
-      },
-      onResponseError({response}) {
-        log.error(response)
-      }
-    })
-  } else {
-    console.log(payment_success.value)
-    alert('Payment failed, please try again later')
-  }
-  loading.value = false
+  console.log("Submitting form", formStoreData.value)
+  alert('Form submitted successfully')
+  // loading.value = true
+  // if (payment_success.value) {
+  //   const fieldsMap = form.value.fields.reduce((acc, field) => {
+  //     acc[field.id] = field.value
+  //     return acc
+  //   }, {} as Record<string, any>)
+  //   await unFetch(`/api/v1/forms/submit/${ulid}`, {
+  //     method: 'POST',
+  //     headers: {
+  //       Authorization: `Bearer ${getAuthToken()}`
+  //     },
+  //     body: {
+  //       fields: fieldsMap
+  //     },
+  //     onResponse({response}): Promise<void> | void {
+  //       if (response._data.statusCode === Status.success) {
+  //         alert('Form submitted successfully')
+  //       } else {
+  //         alert('Form submission failed, please try again later')
+  //       }
+  //     },
+  //     onResponseError({response}) {
+  //       log.error(response)
+  //     }
+  //   })
+  // } else {
+  //   console.log(payment_success.value)
+  //   alert('Payment failed, please try again later')
+  // }
+  // loading.value = false
 }
 
 function addCharge(amount: number) {
@@ -146,11 +149,12 @@ function addCharge(amount: number) {
   }
 }
 
-console.log(form.value)
-const formStoreData = {
-  forms: form.value.pages,
-  stores: {}
-}
+const formStoreData = computed(() => {
+  return {
+    forms: form.pages,
+    stores: {}
+  } as FormStoreData
+})
 </script>
 
 <template>
@@ -170,7 +174,7 @@ const formStoreData = {
         </h1>
       </div>
       <form class="form" @submit.prevent="processForm">
-        <Viewer :data="formStoreData" />
+        <FormViewer :data="formStoreData" @submit="submit"/>
         <div class="buttons">
           <small v-if="form.price > 0" class="justify-self-start mt-5 text-gray-500">
             This form requires payment for submission <br>
