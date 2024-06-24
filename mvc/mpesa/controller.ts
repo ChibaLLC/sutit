@@ -1,6 +1,5 @@
 import {callBackIpWhitelist as whitelist, Status, type StkCallbackHook} from "~/types";
-import {insertFormPayment} from "~/mvc/forms/queries";
-import {insertAnonymousPayment} from "~/mvc/mpesa/queries";
+import {insertFormPayment, insertPayment} from "~/mvc/forms/queries";
 
 const router = createRouter()
 
@@ -41,27 +40,24 @@ router.use('/forms/callback', defineEventHandler(async event => {
             return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
         }
 
+        const ulid = await insertPayment(+amount, transactionCode.toString(), phoneNumber.toString()).catch(e => e as Error)
+        if (ulid instanceof Error) {
+            log.error(`Failed to insert payment: ${ulid.message} \t code: ${transactionCode}`)
+            client?.stream.send({statusCode: Status.internalServerError, body: "Failed to process payment"})
+            return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
+        }
+
         if (client?.form) {
             await insertFormPayment({
-                form_id: client.form.form.id,
-                amount: +amount,
-                referenceCode: transactionCode.toString(),
-                phone: phoneNumber.toString()
+                formUlid: client.form.ulid,
+                paymentUlid: ulid
             }).catch(e => {
                 log.error(`Failed to insert form payment: ${e.message}`)
                 client?.stream.send({statusCode: Status.internalServerError, body: "Failed to process payment"})
                 return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
             })
         } else {
-            insertAnonymousPayment({
-                amount: +amount,
-                referenceCode: transactionCode.toString(),
-                phone: phoneNumber.toString()
-            }).catch(e => {
-                log.error(`Failed to insert anonymous payment: ${e.message}`)
-                client?.stream.send({statusCode: Status.internalServerError, body: "Failed to process payment"})
-                return useHttpEnd(event, {statusCode: 500, body: "Failed to process payment"}, 500)
-            })
+            log.warn(`No form found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
         }
 
         globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))

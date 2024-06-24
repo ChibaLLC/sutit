@@ -18,10 +18,10 @@ async function submit() {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
+    body: {
       email: details.email,
       password: details.password
-    }),
+    },
     async onResponse({response}) {
       const res = response._data
       loading.value = false
@@ -30,15 +30,15 @@ async function submit() {
         if (remember.value) setAuthCookie(res.body)
         useUser().value!.token = res.body
         await navigateTo('/')
+
+        if (redirect) {
+          if (typeof redirect !== 'string') throw new Error("Redirect Error")
+          await navigateTo(redirect)
+        } else {
+          await navigateTo('/')
+        }
       } else {
         errors.value.add(res.body || 'An unknown error occurred')
-      }
-
-      if (redirect) {
-        if (typeof redirect !== 'string') throw new Error("Redirect Error")
-        await navigateTo(redirect)
-      } else {
-        await navigateTo('/')
       }
     }
   })

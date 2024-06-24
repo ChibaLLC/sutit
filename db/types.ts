@@ -1,4 +1,4 @@
-import {users, forms, formFields, responses, responseData, sessions, formPayments, paymentDetails, payments, initiatedTransactions} from "./drizzle/schema"
+import {users, forms, responses, sessions, formPayments, payments, stores, storePayments} from "./drizzle/schema"
 
 export namespace Drizzle {
     export namespace User {
@@ -11,19 +11,9 @@ export namespace Drizzle {
         export type select = typeof forms.$inferSelect
     }
 
-    export namespace FormFields {
-        export type insert = typeof formFields.$inferInsert
-        export type select = typeof formFields.$inferSelect
-    }
-
     export namespace Responses {
         export type insert = typeof responses.$inferInsert
         export type select = typeof responses.$inferSelect
-    }
-
-    export namespace ResponseData {
-        export type insert = typeof responseData.$inferInsert
-        export type select = typeof responseData.$inferSelect
     }
 
     export namespace Session {
@@ -36,18 +26,18 @@ export namespace Drizzle {
         export type select = typeof formPayments.$inferSelect
     }
 
-    export namespace PaymentDetails {
-        export type insert = typeof paymentDetails.$inferInsert
-        export type select = typeof paymentDetails.$inferSelect
-    }
-
     export namespace Payment {
         export type insert = typeof payments.$inferInsert
         export type select = typeof payments.$inferSelect
     }
 
-    export namespace InitiatedTransaction {
-        export type insert = typeof initiatedTransactions.$inferInsert
-        export type select = typeof initiatedTransactions.$inferSelect
+    export namespace Store {
+        export type insert = typeof stores.$inferInsert
+        export type select = typeof stores.$inferSelect
+    }
+
+    export namespace StorePayment {
+        export type insert = typeof storePayments.$inferInsert
+        export type select = typeof storePayments.$inferSelect
     }
 }

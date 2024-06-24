@@ -6,18 +6,14 @@ import type {Drizzle} from "~/db/types";
 import {getUserByEmail} from "~/mvc/users/queries";
 
 
-export async function createToken(user: { userId: number, email: string }): Promise<string> {
+export async function createToken(user: { userUlid: string, email: string }): Promise<string> {
     const uuid = v4()
     const values = {
-        userId: user.userId,
+        ulid: uuid,
         token: uuid,
-        id: undefined
+        userUlid: user.userUlid,
     } satisfies Drizzle.Session.insert
     return await db.insert(sessions).values(values).then(() => uuid)
-        .catch((err) => {
-            console.error(err)
-            throw new Error('Unable to create token')
-        })
 }
 
 export async function revokeToken(token: string) {
@@ -30,10 +26,10 @@ export async function revokeToken(token: string) {
         })
 }
 
-export async function revokeAllTokens(userId: number) {
+export async function revokeAllTokens(userUlid: string) {
     return await db.update(sessions).set({
         isValid: false,
-    }).where(eq(sessions.userId, userId))
+    }).where(eq(sessions.userUlid, userUlid))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to revoke token')
@@ -60,5 +56,5 @@ export async function authenticate(data: { email: string, password: string }): P
     if (!valid) throw new Error('Invalid password')
 
 
-    return await createToken({userId: user.id, email: user.email})
+    return await createToken({userUlid: user.ulid, email: user.email})
 }

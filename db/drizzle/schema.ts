@@ -1,10 +1,10 @@
-import { pgTable, unique, serial, varchar, boolean, timestamp, index, foreignKey, integer, text, json } from "drizzle-orm/pg-core"
+import { pgTable, unique, varchar, boolean, timestamp, index, foreignKey, integer, text, jsonb, serial, primaryKey } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
 
 
 export const users = pgTable("users", {
-	id: serial("id").primaryKey().notNull(),
+	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
 	name: varchar("name", { length: 255 }).notNull(),
 	email: varchar("email", { length: 255 }).notNull(),
 	password: varchar("password", { length: 255 }).notNull(),
@@ -20,8 +20,8 @@ export const users = pgTable("users", {
 });
 
 export const sessions = pgTable("sessions", {
-	id: serial("id").primaryKey().notNull(),
-	userId: integer("user_id").notNull().references(() => users.id),
+	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
+	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
 	token: varchar("token", { length: 255 }).notNull(),
 	isValid: boolean("is_valid").default(true).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
@@ -34,84 +34,81 @@ export const sessions = pgTable("sessions", {
 	}
 });
 
-export const paymentDetails = pgTable("payment_details", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull(),
+export const payments = pgTable("payments", {
+	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
+	referenceCode: varchar("reference_code", { length: 30 }).notNull(),
+	phoneNumber: varchar("phone_number", { length: 30 }).notNull(),
 	amount: integer("amount").notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-});
-
-export const responses = pgTable("responses", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 },
 (table) => {
 	return {
-		singleResponsePerForm: unique("single_response_per_form").on(table.formId, table.userId),
+		paymentsReferenceCodeKey: unique("payments_reference_code_key").on(table.referenceCode),
 	}
 });
 
 export const forms = pgTable("forms", {
-	id: serial("id").primaryKey().notNull(),
-	formUuid: varchar("form_uuid", { length: 255 }).notNull(),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
 	formName: varchar("form_name", { length: 255 }).notNull(),
 	formDescription: text("form_description"),
-	paymentDetails: integer("payment_details").references(() => paymentDetails.id, { onDelete: "set null" } ),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-},
-(table) => {
-	return {
-		formsFormUuidKey: unique("forms_form_uuid_key").on(table.formUuid),
-	}
-});
-
-export const formFields = pgTable("form_fields", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "cascade" } ),
-	fieldName: text("field_name").notNull(),
-	fieldDescription: text("field_description"),
-	fieldType: varchar("field_type", { length: 255 }).notNull(),
-	fieldOptions: json("field_options"),
-	formPosition: integer("form_position").notNull(),
-	fieldCharge: integer("field_charge").default(0).notNull(),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-	required: boolean("required").default(false).notNull(),
-});
-
-export const responseData = pgTable("response_data", {
-	id: serial("id").primaryKey().notNull(),
-	responseId: integer("response_id").notNull().references(() => responses.id, { onDelete: "cascade" } ),
-	formFieldId: integer("form_field_id").notNull().references(() => formFields.id, { onDelete: "cascade" } ),
-	value: text("value"),
-});
-
-export const payments = pgTable("payments", {
-	id: serial("id").primaryKey().notNull(),
-	referenceCode: varchar("reference_code", { length: 255 }).notNull().unique(),
-	phoneNumber: varchar("phone_number", { length: 15 }).notNull(),
-	amount: integer("amount").notNull(),
+	pages: jsonb("pages").notNull(),
+	price: integer("price").notNull(),
+	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
-export const formPayments = pgTable("form_payments", {
-	id: serial("id").primaryKey().notNull(),
-	formId: integer("form_id").notNull().references(() => forms.id, { onDelete: "set null" } ),
-	paymentId: integer("payment_id").notNull().references(() => payments.id, { onDelete: "cascade" } ),
+export const stores = pgTable("stores", {
+	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
+	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
+	store: jsonb("store").notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
 export const sysLogs = pgTable("sys_logs", {
 	id: serial("id").primaryKey().notNull(),
-	type: varchar("type", { length: 10 }).notNull(),
+	level: varchar("level", { length: 10 }).notNull(),
 	message: text("message").notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+});
+
+export const formPayments = pgTable("form_payments", {
+	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		formPaymentsPkey: primaryKey({ columns: [table.formUlid, table.paymentUlid], name: "form_payments_pkey"})
+	}
+});
+
+export const storePayments = pgTable("store_payments", {
+	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		storePaymentsPkey: primaryKey({ columns: [table.formUlid, table.paymentUlid], name: "store_payments_pkey"})
+	}
+});
+
+export const responses = pgTable("responses", {
+	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
+	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
+	response: text("response"),
+	field: varchar("field", { length: 255 }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		responsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "responses_pkey"}),
+		singleResponsePerForm: unique("single_response_per_form").on(table.formUlid, table.userUlid),
+	}
 });

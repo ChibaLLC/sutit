@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps({
-  title: {
+  name: {
     type: String,
     default: 'Modal'
   },
@@ -23,8 +23,8 @@ defineProps({
             <div v-show="open"
                  class="bg-white rounded-md shadow-xl overflow-hidden max-w-md w-full sm:w-96 md:w-1/2 lg:w-2/3 xl:w-1/3 z-50">
               <!-- Modal Header -->
-              <div class="bg-indigo-500 text-white px-4 py-2 flex justify-between">
-                <h2 class="text-lg font-semibold">{{title}}</h2>
+              <div class="bg-[#363636] text-white px-4 py-2 flex justify-between">
+                <h2 class="text-lg font-semibold">{{name}}</h2>
               </div>
               <!-- Modal Body -->
               <div class="p-4">
@@ -32,10 +32,10 @@ defineProps({
               </div>
               <!-- Modal Footer -->
               <div class="border-t px-4 py-2 flex justify-end">
-                <button class="px-3 py-1 bg-indigo-500 text-white  rounded-md w-full sm:w-auto" @click="$emit('close')">
+                <button class="px-3 py-1 bg-[#16946a] text-white  rounded-md w-full sm:w-auto" @click="$emit('close')">
                   Done
                 </button>
-                <button class="px-3 py-1 bg-indigo-500 text-white ml-2 rounded-md w-full sm:w-auto" @click="$emit('cancel')">
+                <button class="px-3 py-1 bg-[#949faf] text-white ml-2 rounded-md w-full sm:w-auto" @click="$emit('cancel')">
                   Cancel
                 </button>
               </div>

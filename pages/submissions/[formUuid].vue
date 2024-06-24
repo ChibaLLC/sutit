@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { type APIResponse, Status } from "~/types";
+import {type Drizzle} from "~/db/types";
 
 const ulid = useRoute().params.formUuid
 if (!ulid) navigateTo('/forms')
 
-const { data } = await useFetch<APIResponse>(`/api/v1/forms/submissions/${ulid}`, {
+const { data } = await useFetch<APIResponse<Drizzle.Form.select>>(`/api/v1/forms/submissions/${ulid}`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
   onResponse({ response }): Promise<void> | void {
-    const res = response._data as APIResponse
+    const res = response._data as APIResponse<any>
     if (res.statusCode === Status.success) {
       console.log(res.body)
     }
@@ -17,31 +18,7 @@ const { data } = await useFetch<APIResponse>(`/api/v1/forms/submissions/${ulid}`
   onResponseError({ response }) {
     console.log(response)
   }
-})
-
-const responses = data.value?.body as Array<{
-  responses: {
-    id: number,
-    formId: number,
-    userId: number,
-    createdAt: string,
-    updatedAt: string
-  },
-  data: {
-    id: number,
-    responseId: number,
-    formFieldId: number,
-    value: string
-  }
-}>
-
-const grouped = responses.reduce((acc, curr) => {
-  if (!acc[curr.responses.userId]) {
-    acc[curr.responses.userId] = []
-  }
-  acc[curr.responses.userId].push(curr)
-  return acc
-}, {} as Record<number, Array<typeof responses[0]>>) as Record<number, Array<typeof responses[0]>>
+}).catch(console.error)
 </script>
 
 <template>
@@ -61,7 +38,7 @@ const grouped = responses.reduce((acc, curr) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(submission, index) in grouped">
+            <tr v-for="(submission, index) in data.body">
               <td class="border border-gray-300">{{ index }}</td>
               <td class="border border-gray-300">{{ submission[0].responses.createdAt }}</td>
               <td class="border border-gray-300">

@@ -1,26 +1,6 @@
 import { type APIResponse, type UserState } from "~/types";
 
 /**
- * This is a useAsyncData wrapper, that uses useAuthStream to retrieve data.
- *
- * @param url
- * @param key
- *
- * @see useAuthStream
- */
-export async function useData(url: string | Ref<string>, key?: string) {
-    if (!key) {
-        return useAsyncData(() => $fetch((typeof url === "string") ? url : url.value), {
-            watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
-        })
-    } else {
-        return useAsyncData(key, () => $fetch((typeof url === "string") ? url : url.value), {
-            watch: (typeof url === "string" || url instanceof URL) ? undefined : [url]
-        })
-    }
-}
-
-/**
  * This function sets the auth cookie
  *
  * @param token the string value of the token

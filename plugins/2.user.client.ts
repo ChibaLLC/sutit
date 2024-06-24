@@ -11,7 +11,10 @@ export default defineNuxtPlugin(async () => {
         user.value?.token === token
     ) return
 
-    const { data } = await useFetch<APIResponse>(`/api/v1/users/me`, {
+    console.log("Fetching user data")
+    console.log("Current user: ", user.value)
+
+    const { data } = await useFetch<APIResponse<any>>(`/api/v1/users/me`, {
         headers: {
             Authorization: `Bearer ${token}`
         },
@@ -27,7 +30,10 @@ export default defineNuxtPlugin(async () => {
     })
 
     const res = data?.value
-    if (res?.statusCode === Status.success) return user.value = res.body
-    setAuthCookie("", 0)
-    useUser().value = {} as UserState
+    if (res?.statusCode === Status.success) {
+        user.value = res.body
+    } else {
+        setAuthCookie("", 0)
+        useUser().value = {} as UserState
+    }
 })

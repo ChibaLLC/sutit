@@ -1,13 +1,14 @@
-import {type APIResponse, type FormField, Status} from "~/types";
+import {type APIResponse, Status} from "~/types";
 import {
     createForm,
-    createFormPayment,
-    getFormByUlid, getFormResponses,
-    getFormsByUser, hasPaid, insertData,
-    updateFormPaymentDetails
+    getFormByUlid,
+    getFormResponses,
+    getFormsByUser,
+    hasPaid,
+    insertData
 } from "~/mvc/forms/queries";
 import type {Drizzle} from "~/db/types";
-import {getUserById} from "~/mvc/users/queries";
+import {getUserByUlId} from "~/mvc/users/queries";
 import {processFormPayments} from "~/mvc/forms/methods";
 
 const router = createRouter()
@@ -19,19 +20,17 @@ router.get('/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const form = await getFormByUlid(formUuid).catch(err => {
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while getting form"
-        } as APIResponse, Status.internalServerError)
-    })
-
+    const form = await getFormByUlid(formUuid).catch(err => err as Error)
+    if (form instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: form?.message || "Unknown error while getting form"
+    } as APIResponse<string>, Status.internalServerError)
     if (!form) return useHttpEnd(event, {
         statusCode: Status.notFound,
         body: "Form not found"
     }, Status.notFound)
 
-    const response = {} as APIResponse
+    const response = {} as APIResponse<Drizzle.Form.select>
     response.statusCode = Status.success
     response.body = form
 
@@ -40,83 +39,36 @@ router.get('/:formUlid', defineEventHandler(async event => {
 
 router.post('/create', defineEventHandler(async event => {
     const [details, error] = await useAuth(event)
-    if (error) return useHttpEnd(event, {
+    if (error || !details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: error
     }, Status.unauthorized)
 
     const form = await readBody(event) as {
         name: string,
+        description: string,
         payment: {
             amount: number,
         },
-        fields: Array<FormField>
-        optionalPayments: Array<FormField & {
-            fieldCharge: number
-        }>
+        formData: {
+            pages: Record<string, Array<any>>,
+            stores: Record<string, Array<any>>,
+        }
+    }
+    if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No form data or store data provided"
+    }, Status.badRequest)
+
+    const formId = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages).catch(err => err as Error)
+    if (formId instanceof Error) {
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: formId?.message || "Unknown error while creating form"
+        } as APIResponse<string>, Status.internalServerError)
     }
 
-    const insertForm = {
-        formName: form.name,
-        userId: details!.user.id,
-        id: undefined,
-        paymentDetails: undefined
-    } satisfies Omit<Drizzle.Form.insert, 'formUuid'>
-
-    const insertFields = form.fields?.map((field: any, index) => ({
-        fieldName: field.name,
-        fieldType: field.type,
-        required: !!field?.required,
-        formPosition: index,
-        id: undefined,
-        fieldOptions: field?.options ? JSON.stringify(field.options) : undefined,
-    }) satisfies Omit<Drizzle.FormFields.insert, 'formId'>)
-
-    insertFields.push(...form.optionalPayments?.map((field: any, index) => ({
-        fieldName: field.name,
-        fieldType: field.type,
-        required: false,
-        formPosition: index,
-        id: undefined,
-        fieldOptions: field?.options ? JSON.stringify(field.options) : undefined,
-        fieldCharge: field.fieldCharge
-    }) satisfies Omit<Drizzle.FormFields.insert, 'formId'>))
-
-    const formId = await createForm(insertForm, insertFields).catch(err => {
-        console.error(err)
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while creating form"
-        } as APIResponse, Status.internalServerError)
-    })
-
-    if (!formId) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: "Unknown error while creating form"
-    } as APIResponse, Status.internalServerError)
-
-    if (form.payment.amount && form.payment.amount > 0) {
-        const payment_details_id = await createFormPayment(formId, form.payment).catch(err => {
-            useHttpEnd(event, {
-                statusCode: Status.internalServerError,
-                body: err.message || "Unknown error while creating form payment"
-            } as APIResponse, Status.internalServerError)
-        })
-
-        if (!payment_details_id) return useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: "Unknown error while creating form payment"
-        } as APIResponse, Status.internalServerError)
-
-        updateFormPaymentDetails(formId, payment_details_id).catch(err => {
-            useHttpEnd(event, {
-                statusCode: Status.internalServerError,
-                body: err.message || "Unknown error while updating form payment details"
-            } as APIResponse, Status.internalServerError)
-        })
-    }
-
-    const response = {} as APIResponse
+    const response = {} as APIResponse<string>
     response.statusCode = Status.success
     response.body = "Form created"
 
@@ -125,20 +77,20 @@ router.post('/create', defineEventHandler(async event => {
 
 
 router.get('/me', defineEventHandler(async event => {
-    const response = {} as APIResponse
+    const response = {} as APIResponse<Drizzle.Form.select[]>
     const [details, error] = await useAuth(event)
     if (!details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: "Unauthorized"
     }, Status.unauthorized)
 
-    const forms = await getFormsByUser(details.user.id).catch(err => {
-        useHttpEnd(event, {
-            body: err.message,
+    const forms = await getFormsByUser(details.user.ulid).catch(err => err as Error)
+    if (forms instanceof Error) {
+        return useHttpEnd(event, {
+            body: forms.message,
             statusCode: Status.internalServerError
         }, Status.internalServerError)
-        return []
-    })
+    }
 
     response.statusCode = Status.success
     response.body = forms
@@ -154,27 +106,38 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
     }, Status.badRequest)
 
     const [details, error] = await useAuth(event)
-    if (error) return useHttpEnd(event, {
+    if (error || !details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: "Unauthorized"
     })
-    const data = await readBody(event) as {
-        fields: Record<number, any>
-    }
 
-    const fieldsMap = new Map<number, any>()
-    for (const [id, value] of Object.entries(data.fields)) {
-        fieldsMap.set(Number(id), value)
-    }
+    const data = await readBody(event) as Array<{
+        label: string,
+        value: any
+    }>
+    if (!data || data?.length == 0) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No data provided"
+    }, Status.badRequest)
 
-    await insertData(details!.user.id, formUlid, fieldsMap).catch(err => {
+    const form = await getFormByUlid(formUlid).catch(err => err as Error)
+    if (form instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: form.message || "Unknown error while getting form"
+    } as APIResponse<string>, Status.internalServerError)
+    if (!form) return useHttpEnd(event, {
+        statusCode: Status.notFound,
+        body: "Form not found"
+    }, Status.notFound)
+
+    await insertData(details.user.ulid, form, data).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while submitting form"
-        } as APIResponse, Status.internalServerError)
+        } as APIResponse<string>, Status.internalServerError)
     })
 
-    const response = {} as APIResponse
+    const response = {} as APIResponse<string>
     response.statusCode = Status.success
     response.body = "Form submitted"
 
@@ -189,21 +152,18 @@ router.get('/submissions/:formUlid', defineEventHandler(async event => {
     }, Status.badRequest)
 
     const [details, error] = await useAuth(event)
-    if (error) return useHttpEnd(event, {
+    if (error || !details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,
         body: "Unauthorized"
     })
 
-    const submissions = await getFormResponses(formUlid).catch(err => {
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while getting form submissions"
-        } as APIResponse, Status.internalServerError)
+    const submissions = await getFormResponses(formUlid).catch(err => err as Error)
+    if (submissions instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: submissions.message || "Unknown error while getting form submissions"
+    }, Status.internalServerError)
 
-        return null
-    })
-
-    const response = {} as APIResponse
+    const response = {} as APIResponse<Drizzle.Responses.select[]>
     response.statusCode = Status.success
     response.body = submissions
 
@@ -226,27 +186,28 @@ router.post('/pay/:formUlid', defineEventHandler(async event => {
         body: "Phone and identity of the request origin are required; identity can be a UUID or a phone number with country code"
     }, Status.badRequest)
 
-    const form = await getFormByUlid(formUlid).catch(err => {
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while getting form"
-        } as APIResponse, Status.internalServerError)
-    })
-
+    const form = await getFormByUlid(formUlid).catch(err => err as Error)
+    if (form instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: form?.message || "Unknown error while getting form"
+    }, Status.internalServerError)
     if (!form) return useHttpEnd(event, {
         statusCode: Status.notFound,
         body: "Form not found"
     }, Status.notFound)
 
-    if (await hasPaid(form.form.id, details.phone)) {
+    if (await hasPaid(form.ulid, details.phone)) {
         return useHttpEnd(event, {
             statusCode: Status.success,
             body: "Payment already made"
         }, Status.success)
     }
 
-    const user = await getUserById(form.form.userId)
-
+    const user = await getUserByUlId(form.userUlid).catch(err => err as Error)
+    if (user instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: user?.message || "Unknown error while getting user"
+    }, Status.internalServerError)
     if (!user) return useHttpEnd(event, {
         statusCode: Status.notFound,
         body: "User not found"
