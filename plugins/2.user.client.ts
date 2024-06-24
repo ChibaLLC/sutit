@@ -14,7 +14,7 @@ export default defineNuxtPlugin(async () => {
     console.log("Fetching user data")
     console.log("Current user: ", user.value)
 
-    const { data } = await useFetch<APIResponse>(`/api/v1/users/me`, {
+    const { data } = await useFetch<APIResponse<any>>(`/api/v1/users/me`, {
         headers: {
             Authorization: `Bearer ${token}`
         },

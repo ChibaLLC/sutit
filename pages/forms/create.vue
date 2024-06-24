@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type {APIResponse} from "~/types";
+import type {FormStoreData} from "@chiballc/nuxt-form-builder/dist/runtime/types";
 
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
 const helpText = ref(false)
-
-type FormData = { forms: Array<any>; stores: Array<any>; }
 
 const submitData = reactive({
   name: '',
@@ -23,7 +22,7 @@ function addPaymentOption() {
   showPriceModal.value = true
 }
 
-async function submit(data: FormData) {
+async function submit(data: FormStoreData) {
   submitData.formData = {
     pages: data.forms,
     stores: data.stores
@@ -32,7 +31,7 @@ async function submit(data: FormData) {
     alert('Please add a form or a store')
   }
 
-  const res = await $fetch<APIResponse>('/api/v1/forms/create', {
+  const res = await $fetch<APIResponse<any>>('/api/v1/forms/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
