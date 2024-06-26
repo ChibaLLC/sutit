@@ -107,42 +107,36 @@ async function processForm() {
 
 
 async function submit() {
-  console.log("Submitting form", formStoreData.value)
-  alert('Form submitted successfully')
-  // loading.value = true
-  // if (payment_success.value) {
-  //   const fieldsMap = form.value.fields.reduce((acc, field) => {
-  //     acc[field.id] = field.value
-  //     return acc
-  //   }, {} as Record<string, any>)
-  //   await unFetch(`/api/v1/forms/submit/${ulid}`, {
-  //     method: 'POST',
-  //     headers: {
-  //       Authorization: `Bearer ${getAuthToken()}`
-  //     },
-  //     body: {
-  //       fields: fieldsMap
-  //     },
-  //     onResponse({response}): Promise<void> | void {
-  //       if (response._data.statusCode === Status.success) {
-  //         alert('Form submitted successfully')
-  //       } else {
-  //         alert('Form submission failed, please try again later')
-  //       }
-  //     },
-  //     onResponseError({response}) {
-  //       log.error(response)
-  //     }
-  //   })
-  // } else {
-  //   console.log(payment_success.value)
-  //   alert('Payment failed, please try again later')
-  // }
-  // loading.value = false
+  loading.value = true
+  if (payment_success.value) {
+    await unFetch(`/api/v1/forms/submit/${ulid}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getAuthToken()}`
+      },
+      body: {
+        form: form.value
+      },
+      onResponse({response}): Promise<void> | void {
+        if (response._data.statusCode === Status.success) {
+          alert('Form submitted successfully')
+        } else {
+          alert('Form submission failed, please try again later')
+        }
+      },
+      onResponseError({response}) {
+        log.error(response)
+      }
+    })
+  } else {
+    console.log(payment_success.value)
+    alert('Payment failed, please try again later')
+  }
+  loading.value = false
 }
 
 function addCharge(amount: number) {
-  if(form.value.price){
+  if (form.value.price) {
     form.value.price += amount
   } else {
     form.value.price = amount
@@ -161,9 +155,9 @@ const formStoreData = computed(() => {
   <Title>Form | {{ ulid }}</Title>
   <div class="flex min-h-screen -mt-3">
     <Aside/>
-    <div class="flex flex-col p-8 lg:w-1/2 ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
+    <div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
-        <h1 class="text-2xl font-bold flex items-center content-center">
+        <h1 class="text-2xl p-2 font-bold flex items-center content-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
             <path d="M17 6.1H3"></path>
@@ -172,11 +166,14 @@ const formStoreData = computed(() => {
           </svg>
           <span class="ml-2">{{ form.formName }}</span>
         </h1>
+        <p class="bg-slate-700 w-full px-4 py-2 rounded" v-if="form.description">
+          {{ form.description }}
+        </p>
       </div>
       <form class="form" @submit.prevent="processForm">
         <FormViewer :data="formStoreData" @submit="submit"/>
-        <div class="buttons">
-          <small v-if="form.price > 0" class="justify-self-start mt-5 text-gray-500">
+        <div class="flex mt-4 items-center ml-5 relative" v-if="form.price > 0">
+          <small class="justify-self-start mt-5 text-gray-500 absolute" style="top: -5.5rem">
             This form requires payment for submission <br>
             <span class="text-red-400 ">Amount Due: {{ form.price }}</span> KES
           </small>
@@ -195,17 +192,10 @@ const formStoreData = computed(() => {
 <style scoped>
 .header {
   @apply bg-slate-600;
-  @apply p-4;
   @apply rounded-md;
-  @apply mb-4;
   @apply text-white;
 }
 
-.buttons {
-  @apply flex;
-  @apply mt-4;
-  @apply items-center;
-}
 
 .submit {
   @apply bg-emerald-700;
