@@ -5,11 +5,13 @@ import {
     getFormResponses,
     getFormsByUser,
     hasPaid,
-    insertData
+    insertData,
+    createFormStore
 } from "~/mvc/forms/queries";
 import type {Drizzle} from "~/db/types";
 import {getUserByUlId} from "~/mvc/users/queries";
 import {processFormPayments} from "~/mvc/forms/methods";
+import type {Forms, Stores} from "@chiballc/nuxt-form-builder/dist/runtime/types";
 
 const router = createRouter()
 
@@ -51,33 +53,43 @@ router.post('/create', defineEventHandler(async event => {
             amount: number,
         },
         formData: {
-            pages: Record<string, Array<any>>,
-            stores: Record<string, Array<any>>,
+            pages: Forms,
+            stores: Stores,
         }
     }
-    if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form data or store data provided"
-    }, Status.badRequest)
+    if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
+        return useHttpEnd(event, {
+            statusCode: Status.badRequest,
+            body: "No form data or store data provided"
+        }, Status.badRequest)
+    }
 
-    const formId = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages).catch(err => err as Error)
-    if (formId instanceof Error) {
+    const formUlid = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages).catch(err => err as Error)
+    if (formUlid instanceof Error) {
         return useHttpEnd(event, {
             statusCode: Status.internalServerError,
-            body: formId?.message || "Unknown error while creating form"
+            body: formUlid?.message || "Unknown error while creating form"
+        } as APIResponse<string>, Status.internalServerError)
+    }
+
+    const storeResult = await createFormStore(formUlid, form.formData.stores).catch(err => err as Error)
+    if (storeResult instanceof Error) {
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: storeResult?.message || "Unknown error while creating form store"
         } as APIResponse<string>, Status.internalServerError)
     }
 
     const response = {} as APIResponse<string>
-    response.statusCode = Status.success
-    response.body = "Form created"
+    response.statusCode = Status.created
+    response.body = formUlid
 
     return response
 }))
 
 
 router.get('/me', defineEventHandler(async event => {
-    const response = {} as APIResponse<Drizzle.Form.select[]>
+    const response = {} as APIResponse<Array<{ pages: Drizzle.Form.select, stores: Drizzle.Store.select }>>
     const [details, error] = await useAuth(event)
     if (!details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,

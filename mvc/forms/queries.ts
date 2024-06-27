@@ -1,4 +1,4 @@
-import {forms, responses, formPayments, payments} from "~/db/drizzle/schema";
+import {forms, stores, responses, formPayments, payments} from "~/db/drizzle/schema";
 import db from "~/db";
 import {type Drizzle} from "~/db/types";
 import {and, eq} from "drizzle-orm";
@@ -15,6 +15,14 @@ export async function createForm(name: string, description: string, price: numbe
     } satisfies Drizzle.Form.insert
     await db.insert(forms).values(_form)
     return _form.ulid
+}
+
+export async function createFormStore(formUlid: string, store: Drizzle.Store.insert) {
+    await db.insert(stores).values({
+        ulid: ulid(),
+        formUlid: formUlid,
+        store: store
+    } satisfies Drizzle.Store.insert)
 }
 
 export async function getFormByUlid(formUlid: string): Promise<Drizzle.Form.select | undefined> {
@@ -41,7 +49,16 @@ export async function getFormResponses(formUlId: string) {
 }
 
 export async function getFormsByUser(userUlid: string) {
-    return db.select().from(forms).where(eq(forms.userUlid, userUlid));
+    const result = await db.select()
+        .from(forms)
+        .where(eq(forms.userUlid, userUlid))
+        .innerJoin(stores, eq(stores.formUlid, forms.ulid))
+    return result.map(item => {
+        return {
+            pages: item.forms,
+            stores: item.stores
+        }
+    })
 }
 
 export async function insertFormPayment(details: {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type {APIResponse} from "~/types";
-import type {FormStoreData} from "@chiballc/nuxt-form-builder/dist/runtime/types";
+import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder/dist/runtime/types";
 
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
@@ -10,8 +10,8 @@ const submitData = reactive({
   name: '',
   description: '',
   formData: {
-    pages: [] as any[],
-    stores: [] as any[]
+    pages: {} as Forms,
+    stores: {} as Stores,
   },
   payment: {
     amount: 0

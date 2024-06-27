@@ -10,7 +10,10 @@ if (!userIsAuthenticated()) {
   await navigateTo(`/login?redirect=/forms/${ulid}`)
 }
 
-const {data} = await useFetch<APIResponse<Drizzle.Form.select>>(`/api/v1/forms/${ulid}`, {
+const {data} = await useFetch<APIResponse<{
+  pages: Drizzle.Form.select,
+  stores: Drizzle.Store.select
+}>>(`/api/v1/forms/${ulid}`, {
   onResponseError({response}) {
     console.log(response)
   },
@@ -146,7 +149,7 @@ function addCharge(amount: number) {
 const formStoreData = computed(() => {
   return {
     forms: form.pages,
-    stores: {}
+    stores: form.stores
   } as FormStoreData
 })
 </script>
