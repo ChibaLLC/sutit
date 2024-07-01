@@ -1,4 +1,4 @@
-import {forms, stores, responses, formPayments, payments} from "~/db/drizzle/schema";
+import {formPayments, forms, payments, responses, stores} from "~/db/drizzle/schema";
 import db from "~/db";
 import {type Drizzle} from "~/db/types";
 import {and, eq} from "drizzle-orm";
@@ -17,7 +17,7 @@ export async function createForm(name: string, description: string, price: numbe
     return _form.ulid
 }
 
-export async function createFormStore(formUlid: string, store: Drizzle.Store.insert) {
+export async function createStore(formUlid: string, store: Drizzle.Store.insert) {
     await db.insert(stores).values({
         ulid: ulid(),
         formUlid: formUlid,
@@ -25,8 +25,8 @@ export async function createFormStore(formUlid: string, store: Drizzle.Store.ins
     } satisfies Drizzle.Store.insert)
 }
 
-export async function getFormByUlid(formUlid: string): Promise<Drizzle.Form.select | undefined> {
-    const results = await db.select().from(forms).where(eq(forms.ulid, formUlid))
+export async function getFormByUlid(formUlid: string) {
+    const results = await db.select().from(forms).where(eq(forms.ulid, formUlid)).innerJoin(stores, eq(stores.formUlid, forms.ulid))
     return results.at(0)
 }
 
@@ -49,16 +49,10 @@ export async function getFormResponses(formUlId: string) {
 }
 
 export async function getFormsByUser(userUlid: string) {
-    const result = await db.select()
+    return db.select()
         .from(forms)
         .where(eq(forms.userUlid, userUlid))
-        .innerJoin(stores, eq(stores.formUlid, forms.ulid))
-    return result.map(item => {
-        return {
-            pages: item.forms,
-            stores: item.stores
-        }
-    })
+        .innerJoin(stores, eq(stores.formUlid, forms.ulid));
 }
 
 export async function insertFormPayment(details: {

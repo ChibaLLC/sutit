@@ -40,7 +40,7 @@ async function submit(data: FormStoreData) {
     body: submitData
   })
 
-  if (res.statusCode === 200) {
+  if (res.statusCode === 201 || res.statusCode === 200) {
     await navigateTo('/forms')
   } else {
     alert(res.body)
