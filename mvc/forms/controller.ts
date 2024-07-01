@@ -122,11 +122,11 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "Unauthorized"
     })
 
-    const _data = await readBody(event) as Array<{
-        label: string,
-        value: any
-    }>
-    if (!_data || _data?.length == 0) return useHttpEnd(event, {
+    const _data = await readBody(event) as {
+        forms: FBTypes.Forms,
+        stores: FBTypes.Stores
+    }
+    if (!_data) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No data provided"
     }, Status.badRequest)
@@ -141,7 +141,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    await insertData(details.user.ulid, data.forms, _data).catch(err => {
+    await insertData(details.user.ulid, formUlid, _data).catch(err => {
         useHttpEnd(event, {
             statusCode: Status.internalServerError,
             body: err.message || "Unknown error while submitting form"
@@ -174,7 +174,7 @@ router.get('/submissions/:formUlid', defineEventHandler(async event => {
         body: submissions.message || "Unknown error while getting form submissions"
     }, Status.internalServerError)
 
-    const response = {} as APIResponse<Drizzle.Responses.select[]>
+    const response = {} as APIResponse<Drizzle.FormResponses.select[]>
     response.statusCode = Status.success
     response.body = submissions
 

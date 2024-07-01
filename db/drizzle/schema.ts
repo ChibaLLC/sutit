@@ -74,6 +74,18 @@ export const sysLogs = pgTable("sys_logs", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
+export const storePayments = pgTable("store_payments", {
+	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "cascade" } ),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		storePaymentsPkey: primaryKey({ columns: [table.storeUlid, table.paymentUlid], name: "store_payments_pkey"})
+	}
+});
+
 export const formPayments = pgTable("form_payments", {
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
 	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" } ),
@@ -86,19 +98,7 @@ export const formPayments = pgTable("form_payments", {
 	}
 });
 
-export const storePayments = pgTable("store_payments", {
-	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
-	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" } ),
-	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-},
-(table) => {
-	return {
-		storePaymentsPkey: primaryKey({ columns: [table.formUlid, table.paymentUlid], name: "store_payments_pkey"})
-	}
-});
-
-export const responses = pgTable("responses", {
+export const formResponses = pgTable("form_responses", {
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" } ),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
 	response: text("response"),
@@ -108,7 +108,22 @@ export const responses = pgTable("responses", {
 },
 (table) => {
 	return {
-		responsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "responses_pkey"}),
-		singleResponsePerForm: unique("single_response_per_form").on(table.formUlid, table.userUlid),
+		formResponsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "form_responses_pkey"}),
+		singleFormResponsePerForm: unique("single_form_response_per_form").on(table.formUlid, table.userUlid),
+	}
+});
+
+export const storeResponses = pgTable("store_responses", {
+	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "cascade" } ),
+	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" } ),
+	response: boolean("response").default(false).notNull(),
+	field: varchar("field", { length: 255 }).notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+},
+(table) => {
+	return {
+		storeResponsesPkey: primaryKey({ columns: [table.storeUlid, table.userUlid], name: "store_responses_pkey"}),
+		singleStoreResponsePerStore: unique("single_store_response_per_store").on(table.storeUlid, table.userUlid),
 	}
 });

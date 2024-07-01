@@ -56,7 +56,7 @@ export function userIsAuthenticated() {
 export async function logout() {
     await unFetch("/api/v1/auth/logout", {
         async onResponse({ response }) {
-            const res = response._data as APIResponse
+            const res = response._data as APIResponse<any>
             if (res.statusCode !== 200) {
                 console.error(res)
                 return alert("Failed to logout")

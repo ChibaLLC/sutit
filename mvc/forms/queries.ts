@@ -1,4 +1,4 @@
-import {formPayments, forms, payments, responses, stores} from "~/db/drizzle/schema";
+import {formPayments, forms, payments, formResponses, storeResponses, stores} from "~/db/drizzle/schema";
 import db from "~/db";
 import {type Drizzle} from "~/db/types";
 import {and, eq} from "drizzle-orm";
@@ -30,22 +30,12 @@ export async function getFormByUlid(formUlid: string) {
     return results.at(0)
 }
 
-export async function insertData(userUlid: string, form: Drizzle.Form.insert, data: Array<{
-    label: string,
-    value: string
-}>) {
-    const _data = data.map(datum => ({
-        formUlid: form.ulid,
-        userUlid: userUlid,
-        field: datum.label,
-        response: datum.value
-    } satisfies Drizzle.Responses.insert))
-
-    await db.insert(responses).values(_data)
+export async function insertData(userUlid: string, formUlid: string, data: {forms: FBTypes.Forms, stores: FBTypes.Stores}) {
+    console.log(data)
 }
 
 export async function getFormResponses(formUlId: string) {
-    return db.select().from(responses).where(eq(responses.formUlid, formUlId))
+    return db.select().from(formResponses).where(eq(formResponses.formUlid, formUlId))
 }
 
 export async function getFormsByUser(userUlid: string) {

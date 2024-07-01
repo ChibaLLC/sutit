@@ -13,6 +13,7 @@ type ServerForm = {
 
 const loading = ref(false)
 const ulid = useRoute().params?.formUlid
+const rerender = ref(false)
 
 if (!userIsAuthenticated()) {
   await navigateTo(`/login?redirect=/forms/${ulid}`)
@@ -119,7 +120,8 @@ async function submit() {
         Authorization: `Bearer ${getAuthToken()}`
       },
       body: {
-        form: data
+        forms: formStoreData.value.forms,
+        stores: formStoreData.value.stores
       },
       onResponse({ response }): Promise<void> | void {
         if (response._data.statusCode === Status.success) {

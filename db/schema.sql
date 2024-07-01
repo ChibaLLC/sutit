@@ -106,7 +106,7 @@ create trigger form_payments_updated_at_trigger
 execute function update_timestamp();
 
 create table store_payments(
-    form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
+    store_ulid  varchar(255) not null references stores (ulid) on delete cascade,
     payment_ulid varchar(255) not null references payments (ulid) on delete cascade,
     created_at timestamp    not null default current_timestamp,
     updated_at timestamp    not null default current_timestamp,
@@ -118,7 +118,7 @@ create trigger store_payments_updated_at_trigger
     for each row
 execute function update_timestamp();
 
-create table if not exists responses
+create table if not exists form_responses
 (
     form_ulid  varchar(255) not null references forms (ulid) on delete cascade,
     user_ulid  varchar(255) not null references users (ulid) on delete cascade,
@@ -128,11 +128,30 @@ create table if not exists responses
     updated_at timestamp    not null default current_timestamp,
     primary key (form_ulid, user_ulid)
 );
-alter table responses
-    add constraint single_response_per_form unique (form_ulid, user_ulid);
-create trigger responses_updated_at_trigger
+alter table form_responses
+    add constraint single_form_response_per_form unique (form_ulid, user_ulid);
+create trigger form_responses_updated_at_trigger
     before update
-    on responses
+    on form_responses
+    for each row
+execute function update_timestamp();
+
+create table if not exists store_responses
+(
+    store_ulid  varchar(255) not null references stores (ulid) on delete cascade,
+    user_ulid  varchar(255) not null references users (ulid) on delete cascade,
+    response   boolean      not null default false,
+    field      varchar(255) not null,
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+    primary key (store_ulid, user_ulid)
+);
+
+alter table store_responses
+    add constraint single_store_response_per_store unique (store_ulid, user_ulid);
+create trigger store_responses_updated_at_trigger
+    before update
+    on store_responses
     for each row
 execute function update_timestamp();
 
