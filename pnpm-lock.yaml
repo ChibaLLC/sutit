@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chiballc/nuxt-form-builder':
-        specifier: 0.0.34
-        version: 0.0.34(rollup@4.13.2)
+        specifier: 0.0.35
+        version: 0.0.35(rollup@4.13.2)
       daraja.js:
         specifier: github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c
         version: https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c(ioredis@5.3.2)
@@ -267,8 +267,8 @@ packages:
     resolution: {integrity: sha512-+j7a5c253RfKh8iABBhywc8NSfP5LURe7Uh4qpsh6jc+aLJguvmIUBdjSdEMQv2bENrCR5MfRdjGo7vzS/ob7w==}
     engines: {node: '>=6.9.0'}
 
-  '@chiballc/nuxt-form-builder@0.0.34':
-    resolution: {integrity: sha512-A2sVXlYjB3WUaUQUpWaOipElCkCyUTAWd5VMzQDvsYbdBdDgb7SbDNL26QSuYhkOPanCsW6niZnBrbYLD7UUyw==}
+  '@chiballc/nuxt-form-builder@0.0.35':
+    resolution: {integrity: sha512-VecS/NC5dynhQrT1fiDHkkXObx+b9OBV4MbaLBNdH2Lj6SGvvKbdMRJv7Bn79b5Vq12gbGIdOKUOnoKv+gY86A==}
 
   '@cloudflare/kv-asset-handler@0.3.1':
     resolution: {integrity: sha512-lKN2XCfKCmpKb86a1tl4GIwsJYDy9TGuwjhDELLmpKygQhw8X2xR4dusgpC5Tg7q1pB96Eb0rBo81kxSILQMwA==}
@@ -5097,7 +5097,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  '@chiballc/nuxt-form-builder@0.0.34(rollup@4.13.2)':
+  '@chiballc/nuxt-form-builder@0.0.35(rollup@4.13.2)':
     dependencies:
       '@nuxt/kit': 3.12.2(magicast@0.3.3)(rollup@4.13.2)
     transitivePeerDependencies:

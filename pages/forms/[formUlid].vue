@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { type Drizzle } from "~/db/types";
-import { Status, type APIResponse } from "~/types";
-import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
+import {type Drizzle} from "~/db/types";
+import {Status, type APIResponse} from "~/types";
+import type {Stores, Forms, FormStoreData} from "@chiballc/nuxt-form-builder";
 
 type ServerForm = {
   forms: Omit<Drizzle.Form.select, 'pages'> & {
@@ -22,7 +22,7 @@ if (!userIsAuthenticated()) {
 }
 
 const res = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
-  onResponseError({ response }) {
+  onResponseError({response}) {
     console.log(response)
   }
 }).catch(console.error)
@@ -48,7 +48,7 @@ async function submitPayment(): Promise<boolean> {
       phone: payment_details.value.phone,
       amount: data.forms.price
     },
-    onResponseError({ response }): Promise<void> | void {
+    onResponseError({response}): Promise<void> | void {
       console.log(response._data.body)
       alert('Payment failed, please try again later')
     }
@@ -67,7 +67,9 @@ async function submitPayment(): Promise<boolean> {
           loading.value = true
           rerender.value = false
           await submit()
-          setTimeout(() => { navigateTo(`/`) }, 10)
+          setTimeout(() => {
+            navigateTo(`/`)
+          }, 10)
           alert("Payment Complete")
           break
         case Status.badRequest:
@@ -100,11 +102,11 @@ async function submitPayment(): Promise<boolean> {
 async function processForm() {
   loading.value = true
   if (
-    data.forms.price! > 0 &&
-    payment_success.value === false &&
-    (!payment_details.value.phone ||
-      payment_details.value.phone === '') &&
-    payment_details.value.phone.length <= 10
+      data.forms.price! > 0 &&
+      payment_success.value === false &&
+      (!payment_details.value.phone ||
+          payment_details.value.phone === '') &&
+      payment_details.value.phone.length <= 10
   ) {
     paymentModal.value = true
   } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
@@ -130,7 +132,7 @@ async function submit() {
         forms: formStoreData.value.forms,
         stores: formStoreData.value.stores
       },
-      onResponse({ response }): Promise<void> | void {
+      onResponse({response}): Promise<void> | void {
         if (response._data.statusCode === Status.success) {
           alert('Form submitted successfully')
         } else {
@@ -138,7 +140,7 @@ async function submit() {
           rerender.value = true
         }
       },
-      onResponseError({ response }) {
+      onResponseError({response}) {
         log.error(response)
       }
     })
@@ -163,17 +165,24 @@ const formStoreData = computed(() => {
     stores: data.stores.store
   } satisfies FormStoreData
 })
+
+function goBack(){
+  loading.value = false
+  payment_success.value = false
+  rerender.value = true
+  complete.value = false
+}
 </script>
 
 <template>
   <Title>Form | {{ data.forms.formName }}</Title>
   <div class="flex min-h-screen -mt-3">
-    <Aside />
+    <Aside/>
     <div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
         <h1 class="text-2xl p-2 font-bold flex items-center content-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8">
             <path d="M17 6.1H3"></path>
             <path d="M21 12.1H3"></path>
             <path d="M15.1 18H3"></path>
@@ -185,21 +194,27 @@ const formStoreData = computed(() => {
         </p>
       </div>
       <form class="form" @submit.prevent>
-        <FormViewer :data="formStoreData" @submit="complete = !complete" :re-render="rerender" @price="addCharge" :show-spinner="loading"/>
-        <div class="flex w-full px-8 ml-0.5 relative justify-between" v-if="data.forms.price > 0">
-          <small class="text-gray-500 w-fit mr-8">
+        <FormViewer :data="formStoreData" @submit="complete = !complete" :re-render="rerender" @price="addCharge"
+                    :show-spinner="loading"/>
+        <div class="flex w-full px-4 ml-0.5 relative justify-between" v-if="data.forms.price > 0">
+          <small class="text-gray-500 w-fit">
             This form requires payment for submission <br>
-            <span class="text-red-400 ">Amount Due: {{ data.forms.price }}</span> KES
+            <span class="text-red-400">Amount Due: {{ data.forms.price }}</span> KES
           </small>
-          <button v-if="complete" @click="processForm" class="bg-emerald-700 text-white rounded px-4 py-2">
-            Submit
-          </button>
+          <div>
+            <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
+              Back
+            </button>
+            <button v-if="complete" @click="processForm" class="bg-emerald-700 text-white rounded px-4 py-2">
+              Submit
+            </button>
+          </div>
         </div>
       </form>
       <Modal :open="paymentModal" name="Please provide your MPESA phone number" @close="processForm"
-        @cancel="payment_details = { phone: '' }; paymentModal = false">
+             @cancel="payment_details = { phone: '' }; paymentModal = false; loading = false">
         <div class="flex flex-col">
-          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
+          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone"/>
         </div>
       </Modal>
     </div>
