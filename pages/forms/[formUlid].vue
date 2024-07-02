@@ -15,6 +15,7 @@ type ServerForm = {
 const loading = ref(false)
 const ulid = useRoute().params?.formUlid
 const rerender = ref(false)
+const complete = ref(false)
 
 if (!userIsAuthenticated()) {
   await navigateTo(`/login?redirect=/forms/${ulid}`)
@@ -160,7 +161,7 @@ const formStoreData = computed(() => {
   return {
     forms: data.forms.pages,
     stores: data.stores.store
-  } as FormStoreData
+  } satisfies FormStoreData
 })
 </script>
 
@@ -183,13 +184,16 @@ const formStoreData = computed(() => {
           {{ data.forms.formDescription }}
         </p>
       </div>
-      <form class="form" @submit.prevent="processForm">
-        <FormViewer :data="formStoreData" @submit="processForm" :re-render="rerender" @price="addCharge" />
-        <div class="flex mt-4 items-center ml-5 relative" v-if="data.forms.price > 0">
-          <small class="justify-self-start mt-5 text-gray-500 absolute" style="top: -5.85rem">
+      <form class="form" @submit.prevent>
+        <FormViewer :data="formStoreData" @submit="complete = !complete" :re-render="rerender" @price="addCharge" :show-spinner="loading"/>
+        <div class="flex w-full px-8 ml-0.5 relative justify-between" v-if="data.forms.price > 0">
+          <small class="text-gray-500 w-fit mr-8">
             This form requires payment for submission <br>
             <span class="text-red-400 ">Amount Due: {{ data.forms.price }}</span> KES
           </small>
+          <button v-if="complete" @click="processForm" class="bg-emerald-700 text-white rounded px-4 py-2">
+            Submit
+          </button>
         </div>
       </form>
       <Modal :open="paymentModal" name="Please provide your MPESA phone number" @close="processForm"

@@ -55,14 +55,14 @@ const data = response!.data!.value || { body: [] }
                           <span>{{ field?.value }}</span>
                         </li>
                       </ul>
-                      <hr>
                     </li>
                   </ul>
+                  <hr>
                   <ul v-for="store in submission.stores.response">
                     <li v-for="field of store">
                       <span>{{ field?.name }}</span>:&nbsp;
+                      <hr>
                     </li>
-                    <hr>
                   </ul>
                 </td>
               </tr>
