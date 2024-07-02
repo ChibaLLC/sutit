@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type {APIResponse} from "~/types";
-import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder/dist/runtime/types";
+import {Status, type APIResponse} from "~/types";
+import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder";
 
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
@@ -27,7 +27,7 @@ async function submit(data: FormStoreData) {
     pages: data.forms,
     stores: data.stores
   }
-  if (data.forms.length === 0 && data.stores.length === 0) {
+  if (Object.entries(data.forms || {})?.length === 0 && Object.entries(data.stores || {})?.length === 0) {
     alert('Please add a form or a store')
   }
 
@@ -40,7 +40,8 @@ async function submit(data: FormStoreData) {
     body: submitData
   })
 
-  if (res.statusCode === 201 || res.statusCode === 200) {
+  if (res.statusCode < 299) {
+    alert('Form created successfully')
     await navigateTo('/forms')
   } else {
     alert(res.body)

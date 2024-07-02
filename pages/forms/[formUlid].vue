@@ -69,25 +69,32 @@ async function submitPayment(): Promise<boolean> {
           await submit()
           setTimeout(() => {
             navigateTo(`/`)
-          }, 10)
-          alert("Payment Complete")
+          })
           break
         case Status.badRequest:
           log.error(data.body)
           rerender.value = true
+          loading.value = false
+          complete.value = false
           resolve(false)
           break
         case Status.internalServerError:
-          alert('Payment failed, please try again later, you may have already responded to this form.')
           rerender.value = true
+          loading.value = false
+          complete.value = false
           resolve(false)
           break
         case Status.unprocessableEntity:
           alert(data.body)
           rerender.value = true
+          loading.value = false
+          complete.value = false
           resolve(false)
           break
         default:
+          rerender.value = true
+          loading.value = false
+          complete.value = false
           resolve(false)
       }
     })
@@ -102,7 +109,7 @@ async function submitPayment(): Promise<boolean> {
 async function processForm() {
   loading.value = true
   if (
-      data.forms.price! > 0 &&
+      data.forms?.price! > 0 &&
       payment_success.value === false &&
       (!payment_details.value.phone ||
           payment_details.value.phone === '') &&
@@ -168,9 +175,13 @@ const formStoreData = computed(() => {
 
 function goBack(){
   loading.value = false
-  payment_success.value = false
   rerender.value = true
   complete.value = false
+  payment_success.value = false
+}
+
+function completeForm() {
+  complete.value = true
 }
 </script>
 
@@ -194,14 +205,14 @@ function goBack(){
         </p>
       </div>
       <form class="form" @submit.prevent>
-        <FormViewer :data="formStoreData" @submit="complete = !complete" :re-render="rerender" @price="addCharge"
+        <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
                     :show-spinner="loading"/>
-        <div class="flex w-full px-4 ml-0.5 relative justify-between" v-if="data.forms.price > 0">
-          <small class="text-gray-500 w-fit">
-            This form requires payment for submission <br>
+        <div class="flex w-full px-4 ml-0.5 relative justify-between">
+          <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
+            This form requires payment for submission of <br>
             <span class="text-red-400">Amount Due: {{ data.forms.price }}</span> KES
           </small>
-          <div>
+          <div class="mt-4">
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
               Back
             </button>

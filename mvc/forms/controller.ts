@@ -226,7 +226,6 @@ router.post('/pay/:formUlid', defineEventHandler(async event => {
     }, Status.notFound)
 
     details.amount = details.amount || data.forms.price
-    console.log(details.amount, data.forms.price)
     if (Number(data.forms.price) > Number(details.amount)) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "Payment amount is less than required"
