@@ -59,14 +59,6 @@ CREATE TABLE IF NOT EXISTS "sys_logs" (
 	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "store_payments" (
-	"store_ulid" varchar(255) NOT NULL,
-	"payment_ulid" varchar(255) NOT NULL,
-	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	"updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	CONSTRAINT "store_payments_pkey" PRIMARY KEY("store_ulid","payment_ulid")
-);
---> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "form_payments" (
 	"form_ulid" varchar(255) NOT NULL,
 	"payment_ulid" varchar(255) NOT NULL,
@@ -75,26 +67,30 @@ CREATE TABLE IF NOT EXISTS "form_payments" (
 	CONSTRAINT "form_payments_pkey" PRIMARY KEY("form_ulid","payment_ulid")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "store_payments" (
+	"store_ulid" varchar(255) NOT NULL,
+	"payment_ulid" varchar(255) NOT NULL,
+	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	CONSTRAINT "store_payments_pkey" PRIMARY KEY("store_ulid","payment_ulid")
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "form_responses" (
 	"form_ulid" varchar(255) NOT NULL,
 	"user_ulid" varchar(255) NOT NULL,
-	"response" text,
-	"field" varchar(255) NOT NULL,
+	"response" jsonb NOT NULL,
 	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	CONSTRAINT "form_responses_pkey" PRIMARY KEY("form_ulid","user_ulid"),
-	CONSTRAINT "single_form_response_per_form" UNIQUE("form_ulid","user_ulid")
+	CONSTRAINT "form_responses_pkey" PRIMARY KEY("form_ulid","user_ulid")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "store_responses" (
 	"store_ulid" varchar(255) NOT NULL,
 	"user_ulid" varchar(255) NOT NULL,
-	"response" boolean DEFAULT false NOT NULL,
-	"field" varchar(255) NOT NULL,
+	"response" jsonb,
 	"created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	CONSTRAINT "store_responses_pkey" PRIMARY KEY("store_ulid","user_ulid"),
-	CONSTRAINT "single_store_response_per_store" UNIQUE("store_ulid","user_ulid")
+	CONSTRAINT "store_responses_pkey" PRIMARY KEY("store_ulid","user_ulid")
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "token_index" ON "sessions" ("token");--> statement-breakpoint
@@ -117,18 +113,6 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "store_payments" ADD CONSTRAINT "store_payments_store_ulid_fkey" FOREIGN KEY ("store_ulid") REFERENCES "public"."stores"("ulid") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "store_payments" ADD CONSTRAINT "store_payments_payment_ulid_fkey" FOREIGN KEY ("payment_ulid") REFERENCES "public"."payments"("ulid") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
  ALTER TABLE "form_payments" ADD CONSTRAINT "form_payments_form_ulid_fkey" FOREIGN KEY ("form_ulid") REFERENCES "public"."forms"("ulid") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -136,6 +120,18 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "form_payments" ADD CONSTRAINT "form_payments_payment_ulid_fkey" FOREIGN KEY ("payment_ulid") REFERENCES "public"."payments"("ulid") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "store_payments" ADD CONSTRAINT "store_payments_store_ulid_fkey" FOREIGN KEY ("store_ulid") REFERENCES "public"."stores"("ulid") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "store_payments" ADD CONSTRAINT "store_payments_payment_ulid_fkey" FOREIGN KEY ("payment_ulid") REFERENCES "public"."payments"("ulid") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

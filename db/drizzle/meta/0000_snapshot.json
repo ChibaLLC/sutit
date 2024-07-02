@@ -375,79 +375,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "store_payments": {
-      "name": "store_payments",
-      "schema": "",
-      "columns": {
-        "store_ulid": {
-          "name": "store_ulid",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payment_ulid": {
-          "name": "payment_ulid",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "store_payments_store_ulid_fkey": {
-          "name": "store_payments_store_ulid_fkey",
-          "tableFrom": "store_payments",
-          "tableTo": "stores",
-          "schemaTo": "public",
-          "columnsFrom": [
-            "store_ulid"
-          ],
-          "columnsTo": [
-            "ulid"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "store_payments_payment_ulid_fkey": {
-          "name": "store_payments_payment_ulid_fkey",
-          "tableFrom": "store_payments",
-          "tableTo": "payments",
-          "schemaTo": "public",
-          "columnsFrom": [
-            "payment_ulid"
-          ],
-          "columnsTo": [
-            "ulid"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "store_payments_pkey": {
-          "name": "store_payments_pkey",
-          "columns": [
-            "store_ulid",
-            "payment_ulid"
-          ]
-        }
-      },
-      "uniqueConstraints": {}
-    },
     "form_payments": {
       "name": "form_payments",
       "schema": "",
@@ -521,6 +448,79 @@
       },
       "uniqueConstraints": {}
     },
+    "store_payments": {
+      "name": "store_payments",
+      "schema": "",
+      "columns": {
+        "store_ulid": {
+          "name": "store_ulid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_ulid": {
+          "name": "payment_ulid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "store_payments_store_ulid_fkey": {
+          "name": "store_payments_store_ulid_fkey",
+          "tableFrom": "store_payments",
+          "tableTo": "stores",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "store_ulid"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "store_payments_payment_ulid_fkey": {
+          "name": "store_payments_payment_ulid_fkey",
+          "tableFrom": "store_payments",
+          "tableTo": "payments",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "payment_ulid"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "store_payments_pkey": {
+          "name": "store_payments_pkey",
+          "columns": [
+            "store_ulid",
+            "payment_ulid"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
     "form_responses": {
       "name": "form_responses",
       "schema": "",
@@ -539,13 +539,7 @@
         },
         "response": {
           "name": "response",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "field": {
-          "name": "field",
-          "type": "varchar(255)",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
@@ -604,16 +598,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "single_form_response_per_form": {
-          "columns": [
-            "form_ulid",
-            "user_ulid"
-          ],
-          "nullsNotDistinct": false,
-          "name": "single_form_response_per_form"
-        }
-      }
+      "uniqueConstraints": {}
     },
     "store_responses": {
       "name": "store_responses",
@@ -633,16 +618,9 @@
         },
         "response": {
           "name": "response",
-          "type": "boolean",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "field": {
-          "name": "field",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -699,16 +677,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "single_store_response_per_store": {
-          "columns": [
-            "store_ulid",
-            "user_ulid"
-          ],
-          "nullsNotDistinct": false,
-          "name": "single_store_response_per_store"
-        }
-      }
+      "uniqueConstraints": {}
     }
   },
   "enums": {},

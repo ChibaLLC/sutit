@@ -1,10 +1,11 @@
-import {formPayments, forms, payments, formResponses, storeResponses, stores} from "~/db/drizzle/schema";
+import { formPayments, forms, payments, formResponses, storeResponses, stores } from "~/db/drizzle/schema";
 import db from "~/db";
-import {type Drizzle} from "~/db/types";
-import {and, eq} from "drizzle-orm";
-import {ulid} from "ulid";
+import { type Drizzle } from "~/db/types";
+import { and, eq } from "drizzle-orm";
+import { ulid } from "ulid";
+import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 
-export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Record<string, any>): Promise<string> {
+export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Forms): Promise<string> {
     const _form = {
         pages: pages,
         ulid: ulid(),
@@ -17,7 +18,7 @@ export async function createForm(name: string, description: string, price: numbe
     return _form.ulid
 }
 
-export async function createStore(formUlid: string, store: Drizzle.Store.insert) {
+export async function createStore(formUlid: string, store: Stores) {
     await db.insert(stores).values({
         ulid: ulid(),
         formUlid: formUlid,
@@ -30,12 +31,29 @@ export async function getFormByUlid(formUlid: string) {
     return results.at(0)
 }
 
-export async function insertData(userUlid: string, formUlid: string, data: {forms: FBTypes.Forms, stores: FBTypes.Stores}) {
-    console.log(data)
+export async function insertData(userUlid: string, formUlid: string, data: { forms: Forms, stores: Stores }) {
+    await db.insert(formResponses).values({
+        userUlid: userUlid,
+        formUlid: formUlid,
+        response: data.forms,
+    } satisfies Drizzle.FormResponses.insert)
+
+    const _stores = await db.select().from(stores).where(eq(stores.formUlid, formUlid))
+    const storeUlid = (_stores && _stores.length > 0) ? _stores.at(0)?.ulid : null
+
+    if (storeUlid) {
+        await db.insert(storeResponses).values({
+            userUlid: userUlid,
+            storeUlid: storeUlid,
+            response: data.stores,
+        } satisfies Drizzle.StoreResponses.insert)
+    }
 }
 
 export async function getFormResponses(formUlId: string) {
-    return db.select().from(formResponses).where(eq(formResponses.formUlid, formUlId))
+    return db.select().from(formResponses)
+        .where(eq(formResponses.formUlid, formUlId))
+        .leftJoin(stores, eq(stores.formUlid, formResponses.formUlid))
 }
 
 export async function getFormsByUser(userUlid: string) {

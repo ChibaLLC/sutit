@@ -11,6 +11,7 @@ import {
 import type {Drizzle} from "~/db/types";
 import {getUserByUlId} from "~/mvc/users/queries";
 import {processFormPayments} from "~/mvc/forms/methods";
+import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 
 const router = createRouter()
 
@@ -52,8 +53,8 @@ router.post('/create', defineEventHandler(async event => {
             amount: number,
         },
         formData: {
-            pages: FBTypes.Forms,
-            stores: FBTypes.Stores,
+            pages: Forms,
+            stores: Stores,
         }
     }
     if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
@@ -123,8 +124,8 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
     })
 
     const _data = await readBody(event) as {
-        forms: FBTypes.Forms,
-        stores: FBTypes.Stores
+        forms: Forms,
+        stores: Stores
     }
     if (!_data) return useHttpEnd(event, {
         statusCode: Status.badRequest,
@@ -174,7 +175,7 @@ router.get('/submissions/:formUlid', defineEventHandler(async event => {
         body: submissions.message || "Unknown error while getting form submissions"
     }, Status.internalServerError)
 
-    const response = {} as APIResponse<Drizzle.FormResponses.select[]>
+    const response = {} as APIResponse<typeof submissions>
     response.statusCode = Status.success
     response.body = submissions
 

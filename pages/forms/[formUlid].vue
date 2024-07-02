@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { type Drizzle } from "~/db/types";
 import { Status, type APIResponse } from "~/types";
+import type {Stores, Forms, FormStoreData} from "@chiballc/nuxt-form-builder";
 
 type ServerForm = {
   forms: Omit<Drizzle.Form.select, 'pages'> & {
-    pages: FBTypes.Forms
+    pages: Forms
   },
   stores: Omit<Drizzle.Store.select, 'store'> & {
-    store: FBTypes.Stores
+    store: Stores
   }
 }
 
@@ -103,7 +104,7 @@ async function processForm() {
   } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
     paymentModal.value = false
     log.info("Processing Payment")
-    await submitPayment()
+    rerender.value = await submitPayment() || false
   } else {
     console.log("Submitting form", data)
     payment_success.value = true
@@ -153,7 +154,7 @@ const formStoreData = computed(() => {
   return {
     forms: data.forms.pages,
     stores: data.stores.store
-  } as FBTypes.FormStoreData
+  } as FormStoreData
 })
 </script>
 
@@ -177,7 +178,7 @@ const formStoreData = computed(() => {
         </p>
       </div>
       <form class="form" @submit.prevent="processForm">
-        <FormViewer :data="formStoreData" @submit="processForm" />
+        <FormViewer :data="formStoreData" @submit="processForm" :re-render="rerender" @price="addCharge"/>
         <div class="flex mt-4 items-center ml-5 relative" v-if="data.forms.price > 0">
           <small class="justify-self-start mt-5 text-gray-500 absolute" style="top: -5.85rem">
             This form requires payment for submission <br>
