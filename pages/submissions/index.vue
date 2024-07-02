@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { APIResponse } from '~/types';
 
-const { data } = await useFetch<APIResponse>('/api/v1/forms/me', {
+const { data } = await useFetch<APIResponse<any>>('/api/v1/forms/me', {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   }

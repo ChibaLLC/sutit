@@ -190,7 +190,7 @@ router.post('/pay/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const details = await readBody(event) as { phone: string, identity: string | undefined }
+    const details = await readBody(event) as { phone: string, identity: string | undefined, amount?: number}
     details.identity = details.identity || getHeader(event, "X-Request-ID")
 
     if (!details.phone || !details.identity) return useHttpEnd(event, {
@@ -225,8 +225,14 @@ router.post('/pay/:formUlid', defineEventHandler(async event => {
         body: "User not found"
     }, Status.notFound)
 
+    details.amount = details.amount || data.forms.price
+    console.log(details.amount, data.forms.price)
+    if (Number(data.forms.price) > Number(details.amount)) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "Payment amount is less than required"
+    }, Status.badRequest)
 
-    await processFormPayments(event, data.forms, {identity: details.identity, phone: details.phone}, user.email)
+    await processFormPayments(event, data.forms, {identity: details.identity, phone: details.phone, amount: details.amount}, user.email)
 }))
 
 export default useController('forms', router)

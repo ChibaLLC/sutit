@@ -12,13 +12,13 @@ declare global {
     }>
 }
 
-export async function processFormPayments(event: H3Event, form: Drizzle.Form.select, details: { phone: string; identity: string; }, accountNumber: string) {
+export async function processFormPayments(event: H3Event, form: Drizzle.Form.select, details: { phone: string; identity: string; amount: number }, accountNumber: string) {
     const stream = await useSSE(event, details.identity)
     if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
     
     details.phone = `254${details.phone.slice(-9)}`
 
-    await makeSTKPush(details.phone, form, accountNumber)
+    await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
         .then(async (result) => {
             if (!result) {
                 stream.send({
@@ -39,8 +39,8 @@ export async function processFormPayments(event: H3Event, form: Drizzle.Form.sel
         })
 }
 
-async function makeSTKPush(phone: string, form: Drizzle.Form.select, accountNumber: string) {
-    return await call_stk(+phone, form.price, `Payment for ${form.formName} form`, accountNumber)
+async function makeSTKPush(phone: string, pay_for: string, amount: number, accountNumber: string) {
+    return await call_stk(+phone, amount, `Payment for ${pay_for} form`, accountNumber)
         .catch(err => {
             console.error(err)
             return null

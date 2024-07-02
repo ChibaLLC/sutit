@@ -58,6 +58,12 @@ const data = response!.data!.value || { body: [] }
                       <hr>
                     </li>
                   </ul>
+                  <ul v-for="store in submission.stores.response">
+                    <li v-for="field of store">
+                      <span>{{ field?.name }}</span>:&nbsp;
+                    </li>
+                    <hr>
+                  </ul>
                 </td>
               </tr>
             </tbody>

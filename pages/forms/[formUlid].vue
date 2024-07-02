@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Drizzle } from "~/db/types";
 import { Status, type APIResponse } from "~/types";
-import type {Stores, Forms, FormStoreData} from "@chiballc/nuxt-form-builder";
+import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
 
 type ServerForm = {
   forms: Omit<Drizzle.Form.select, 'pages'> & {
@@ -44,7 +44,8 @@ async function submitPayment(): Promise<boolean> {
       Authorization: `Bearer ${getAuthToken()}`
     },
     body: {
-      phone: payment_details.value.phone
+      phone: payment_details.value.phone,
+      amount: data.forms.price
     },
     onResponseError({ response }): Promise<void> | void {
       console.log(response._data.body)
@@ -63,20 +64,24 @@ async function submitPayment(): Promise<boolean> {
           resolve(true)
           payment_success.value = true
           loading.value = true
+          rerender.value = false
           await submit()
+          setTimeout(() => { navigateTo(`/`) }, 10)
           alert("Payment Complete")
-          await navigateTo(`/`)
           break
         case Status.badRequest:
           log.error(data.body)
+          rerender.value = true
           resolve(false)
           break
         case Status.internalServerError:
-          alert('Payment failed, please try again later')
+          alert('Payment failed, please try again later, you may have already responded to this form.')
+          rerender.value = true
           resolve(false)
           break
         case Status.unprocessableEntity:
           alert(data.body)
+          rerender.value = true
           resolve(false)
           break
         default:
@@ -104,7 +109,7 @@ async function processForm() {
   } else if (payment_details.value.phone.length >= 10 && payment_details.value.phone !== '' && payment_success.value === false) {
     paymentModal.value = false
     log.info("Processing Payment")
-    rerender.value = await submitPayment() || false
+    await submitPayment()
   } else {
     console.log("Submitting form", data)
     payment_success.value = true
@@ -129,6 +134,7 @@ async function submit() {
           alert('Form submitted successfully')
         } else {
           alert('Form submission failed, please try again later')
+          rerender.value = true
         }
       },
       onResponseError({ response }) {
@@ -178,7 +184,7 @@ const formStoreData = computed(() => {
         </p>
       </div>
       <form class="form" @submit.prevent="processForm">
-        <FormViewer :data="formStoreData" @submit="processForm" :re-render="rerender" @price="addCharge"/>
+        <FormViewer :data="formStoreData" @submit="processForm" :re-render="rerender" @price="addCharge" />
         <div class="flex mt-4 items-center ml-5 relative" v-if="data.forms.price > 0">
           <small class="justify-self-start mt-5 text-gray-500 absolute" style="top: -5.85rem">
             This form requires payment for submission <br>
