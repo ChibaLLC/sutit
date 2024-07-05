@@ -29,3 +29,5 @@ dump.rdb
 puppet.*
 
 false
+
+nginx/certs
