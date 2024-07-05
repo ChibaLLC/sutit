@@ -1,6 +1,3 @@
--- Current sql file was generated after introspecting the database
--- If you want to run this migration please uncomment this code before executing migrations
-/*
 CREATE TABLE IF NOT EXISTS "users" (
 	"ulid" varchar(255) PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
@@ -159,5 +156,3 @@ DO $$ BEGIN
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
-
-*/
