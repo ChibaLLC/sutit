@@ -23,7 +23,7 @@ export function setAuthCookie(token: string, expiry?: number) {
  * @returns cookie
  */
 export function getAuthCookie(): string | null {
-    const cookie = useCookie<string>("auth").value?.trim()
+    const cookie = useCookie<string>("auth").value
     if (
         !cookie ||
         cookie === "undefined" ||

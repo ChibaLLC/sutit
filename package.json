@@ -5,7 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev:linux": "concurrently \"redis-server\" \"bun sass\" \"nuxt dev --host\"",
-    "dev:windows": "concurrently \"npm run sass\" \"nuxt dev --host -p 5500\"",
+    "dev:windows": "concurrently \"npm run sass\" \"nuxt dev --host\"",
     "dev": "run || ./run.sh",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
