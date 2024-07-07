@@ -4,12 +4,15 @@ const configHasNullValues = (config: any) => {
     return Object.keys(config).some(key => config[key] == undefined)
 }
 
+const dbUrlString: string | undefined = process.env.DATABASE_URL;
+const dbUrl = new URL(dbUrlString || '');
+
 const config = {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '0'),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
+    host: dbUrl.hostname || process.env.DB_HOST,
+    port: parseInt(dbUrl.port || "0") || parseInt(process.env.DB_PORT || "0"),
+    user: dbUrl.username || process.env.DB_USER,
+    password: dbUrl.password || process.env.DB_PASSWORD,
+    database: dbUrl.pathname.replace('/', '') || process.env.DB_USER
 }
 
 if (configHasNullValues(config)) throw new Error('Missing database credentials. Please check your .env file.')
