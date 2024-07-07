@@ -4,15 +4,12 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev:linux": "concurrently \"redis-server\" \"bun sass\" \"nuxt dev --host\"",
-    "dev:windows": "concurrently \"npm run sass\" \"nuxt dev --host\"",
-    "dev": "run || ./run.sh",
+    "dev": "nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "start": "node --env-file=.env .output/server/index.mjs",
+    "start": "node .output/server/index.mjs",
     "sass": "sass assets/scss/main.scss  assets/css/main.css --watch",
-    "prepare": "setup || chmod +x ./setup.sh && ./setup.sh && chmod +x ./run.sh",
     "test": "vitest",
     "introspect": "drizzle-kit introspect:pg",
     "migrate": "drizzle-kit push:pg"

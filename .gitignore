@@ -28,6 +28,8 @@ whatsapp-web
 dump.rdb
 puppet.*
 
+data
+
 false
 
 nginx/certs
