@@ -5,11 +5,6 @@ if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     exit 1
 fi
 
-if [[ $NODE_ENV == "production" || $NODE_ENV == "prod" ]]; then
-    echo "This script is for development only"
-    exit 1
-fi
-
 if [ -n "$VERCEL" ] || [ -n "$NOW_REGION" ]; then
     echo "This script will not work on a serverless environment"
     exit 0
