@@ -8,9 +8,7 @@ const dbUrlString: string | undefined = process.env.DATABASE_URL;
 let dbUrl: URL | undefined = undefined
 try {
     dbUrl = new URL(dbUrlString || "")
-} catch (e) {
-    console.error('Invalid database URL or missing DATABASE_URL environment variable; this isn\'t always a problem.')
-}
+} catch (_) {}
 
 const config = {
     host: dbUrl?.hostname || process.env.DB_HOST,
@@ -19,8 +17,6 @@ const config = {
     password: dbUrl?.password || process.env.DB_PASSWORD,
     database: dbUrl?.pathname.replace('/', '') || process.env.DB_DATABASE
 }
-
-console.log(config)
 
 if (configHasNullValues(config)) throw new Error('Missing database credentials. Please check your .env file.')
 

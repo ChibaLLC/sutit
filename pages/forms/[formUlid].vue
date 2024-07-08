@@ -101,7 +101,6 @@ async function submitPayment(): Promise<boolean> {
 
     response.on('end', () => {
       resolve(false)
-      loading.value = false
     })
   })
 }
@@ -143,7 +142,7 @@ async function submit() {
         if (response._data.statusCode === Status.success) {
           alert('Form submitted successfully')
         } else {
-          alert('Form submission failed, please try again later')
+          alert('Form submission failed:' + response._data.body)
           rerender.value = true
         }
       },
@@ -152,7 +151,6 @@ async function submit() {
       }
     })
   } else {
-    console.log(payment_success.value)
     alert('Payment failed, please try again later')
   }
   loading.value = false

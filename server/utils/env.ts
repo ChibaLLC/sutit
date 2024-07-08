@@ -3,7 +3,7 @@ function checkVercel() {
 }
 
 function checkDevelopment() {
-    let env = process.env.ENV;
+    let env = process.env.ENV || process.env.NODE_ENV;
     if (!env) return false;
 
     env = env.toLowerCase().trim();
