@@ -47,8 +47,7 @@
                 </div>
                 <h6 class="text-xl font-semibold">How It Started</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  We identified the need for for a simple payment and payment resolution for small businesses.
-                  For example WhatsApp Businesses among other local tertiary businesses.
+                  Revolutionizing Supply chains by Transforming complexity into simplicity.
                 </p>
               </div>
             </div>
@@ -62,7 +61,7 @@
                 </div>
                 <h6 class="text-xl font-semibold">How It's Going</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  We are working hard to provide an all encompassing solution that is seamless and easy to use.
+                  Innovation, collaboration, sustainability and Business
                 </p>
               </div>
             </div>
