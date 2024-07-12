@@ -61,7 +61,8 @@
                 </div>
                 <h6 class="text-xl font-semibold">How It's Going</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  Innovation, collaboration, sustainability and Business
+                  Innovation, collaboration, sustainability and Business Intelligence at its core. 
+                  All Inclusive, seamless and easy to use.
                 </p>
               </div>
             </div>
@@ -75,8 +76,7 @@
                 </div>
                 <h6 class="text-xl font-semibold">The Vision</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  To be a ubiquitous payment solution for businesses in Kenya and Africa at large.
-                  Facilitate transactions between different money platforms including cryptocurrencies.
+                  Futuristic ubiquitous unified platform where supply chains operate with unparalleled efficiency through the use of cutting-edge technology 
                 </p>
               </div>
             </div>
@@ -92,9 +92,9 @@
               Working with us is a pleasure
             </h3>
             <p class="text-lg font-light leading-relaxed mt-4 mb-4 text-gray-700">
-              We are here to help you. We are a team of dedicated
-              and passionate individuals who are ready to help you with your
-              business.
+              We are here to Co-elevate  
+              We are a team of dedicated and passionate individuals who are ready to learn and work together for a competitive edge to our businesses.
+              Ultimate goal is to eliminate inefficiencies, lower costs, and enhance overall supply chain performance.
             </p>
           </div>
           <div class="w-full md:w-4/12 px-4 mr-auto ml-auto">
@@ -111,11 +111,10 @@
                   Top Notch Services
                 </h4>
                 <p class="text-md font-light mt-2 text-white">
-                  The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that
-                  process will continue whatever happens.
+                 The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that process will continue whatever happens.
                 </p>
                 <p class="text-md font-light mt-0 text-white">
-                  We are inevitable, just like the seasons.
+                  We are inevitable, just like the seasons. Robust Business Intelligence (BI) platform
                 </p>
               </blockquote>
             </div>
@@ -190,6 +189,21 @@
                     </div>
                   </div>
                 </li>
+                
+                <li class="py-2">
+                  <div class="flex items-center">
+                    <div>
+                      <span
+                        class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-pink-600 bg-pink-200 mr-3"><i
+                          class="far fa-paper-plane"></i></span>
+                    </div>
+                    <div>
+                      <h4 class="text-gray-600">
+                        Automated Reconciliations
+                      </h4>
+                    </div>
+                  </div>
+                </li>
               </ul>
             </div>
           </div>
@@ -236,9 +250,9 @@
               <img alt="..." src="/images/profile_placeholder.webp" class="shadow-lg rounded-full max-w-full mx-auto"
                 style="max-width: 120px;" />
               <div class="pt-6 text-center">
-                <h5 class="text-xl font-bold">Grace</h5>
+                <h5 class="text-xl font-bold">Allen</h5>
                 <p class="mt-1 text-sm text-gray-500 uppercase font-semibold">
-                  Marketing Specialist
+                  Compliance Specialist
                 </p>
                 <div class="mt-6">
                   <button class="bg-red-600 text-white w-8 h-8 rounded-full outline-none focus:outline-none mr-1 mb-1"
