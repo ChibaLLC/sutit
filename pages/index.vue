@@ -89,7 +89,7 @@
             <div
               class="text-gray-600 p-3 text-center inline-flex items-center justify-center w-16 h-16 mb-6 shadow-lg rounded-full bg-gray-100">
               <i class="fas fa-user-friends text-xl"></i>
-            </div>
+            </div>t
             <h3 class="text-3xl mb-2 font-semibold leading-normal">
               Working with us is a pleasure
             </h3>
@@ -149,20 +149,7 @@
                 We are currently working on a lot of capabilities and functionalities stay tuned!
               </p>
               <ul class="list-none mt-6">
-                <li class="py-2">
-                  <div class="flex items-center">
-                    <div>
-                      <span
-                        class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-pink-600 bg-pink-200 mr-3"><i
-                          class="fas fa-fingerprint"></i></span>
-                    </div>
-                    <div>
-                      <h4 class="text-gray-600">
-                        Payment Gateway For Sign Ups and Forms ✅
-                      </h4>
-                    </div>
-                  </div>
-                </li>
+                
                 <li class="py-2">
                   <div class="flex items-center">
                     <div>
@@ -186,7 +173,7 @@
                     </div>
                     <div>
                       <h4 class="text-gray-600">
-                        Public API ❎
+                        Mpesa Paybill/Till Number Integration ❎
                       </h4>
                     </div>
                   </div>
@@ -201,7 +188,21 @@
                     </div>
                     <div>
                       <h4 class="text-gray-600">
-                        Automated Reconciliations
+                        Tracking turn around time after payment
+                      </h4>
+                    </div>
+                  </div>
+                </li>
+                <li class="py-2">
+                  <div class="flex items-center">
+                    <div>
+                      <span
+                        class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-pink-600 bg-pink-200 mr-3"><i
+                          class="fas fa-fingerprint"></i></span>
+                    </div>
+                    <div>
+                      <h4 class="text-gray-600">
+                        Mpesa Paybill Automated Reconciliations ✅
                       </h4>
                     </div>
                   </div>
