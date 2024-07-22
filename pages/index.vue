@@ -228,9 +228,9 @@
               <img alt="..." src="/images/profile_placeholder.webp" class="shadow-lg rounded-full max-w-full mx-auto"
                 style="max-width: 120px;" />
               <div class="pt-6 text-center">
-                <h5 class="text-xl font-bold">Jack</h5>
+                <h5 class="text-xl font-bold">Saxo Munene</h5>
                 <p class="mt-1 text-sm text-gray-500 uppercase font-semibold">
-                  Founder & CVO
+                  Supply Chain Acquisition Specialist
                 </p>
                 <div class="mt-6">
                   <button class="bg-blue-400 text-white w-8 h-8 rounded-full outline-none focus:outline-none mr-1 mb-1"
@@ -275,7 +275,7 @@
               <div class="pt-6 text-center">
                 <h5 class="text-xl font-bold">Bosire Allan</h5>
                 <p class="mt-1 text-sm text-gray-500 uppercase font-semibold">
-                  Software Engineer
+                  Founding Partner
                 </p>
                 <div class="mt-6">
                   <button class="bg-red-600 text-white w-8 h-8 rounded-full outline-none focus:outline-none mr-1 mb-1"
@@ -299,7 +299,7 @@
               <div class="pt-6 text-center">
                 <h5 class="text-xl font-bold">Antoney Sydney</h5>
                 <p class="mt-1 text-sm text-gray-500 uppercase font-semibold">
-                  Software Engineer
+                  Founding Partner
                 </p>
                 <div class="mt-6">
                   <button class="bg-pink-500 text-white w-8 h-8 rounded-full outline-none focus:outline-none mr-1 mb-1"
