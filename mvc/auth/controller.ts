@@ -1,7 +1,7 @@
 import {type APIResponse, Status} from "~/types";
-import {revokeAuthToken} from "~/mvc/auth/methods";
-import {authenticate} from "~/mvc/auth/queries";
-import {createUser} from "~/mvc/users/queries";
+import {resetPassword, revokeAuthToken} from "~/mvc/auth/methods";
+import {authenticate, createToken} from "~/mvc/auth/queries";
+import {createUser, getUserByEmail} from "~/mvc/users/queries";
 
 const router = createRouter()
 
@@ -103,6 +103,89 @@ router.get('/logout', defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = "Logged out"
     return response
+}))
+
+
+router.get("/reset", defineEventHandler(async event => {
+    const response = {} as APIResponse
+    const {email, origin, redirect} = getQuery(event)
+    if (!email || !origin) {
+        response.statusCode = Status.badRequest
+        response.body = "Email and Origin are required"
+        return response
+    }
+    const user = await getUserByEmail(email.toString()).catch(err => err as Error)
+    if (user instanceof Error) {
+        response.statusCode = Status.notFound
+        response.body = user.message
+        return response
+    }
+    if (!user) {
+        response.statusCode = Status.notFound
+        response.body = "User not found"
+        return response
+    }
+
+    const token = await createToken({userUlid: user.ulid, email: user.email}).catch(err => err as Error)
+    if (token instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = token.message
+        return response
+    }
+    
+    await mailResetPasswordLink(email.toString(), origin.toString(), token, redirect?.toString())
+    response.statusCode = Status.success
+    response.body = "Reset link sent"
+    return response
+}))
+
+router.post("/reset", defineEventHandler(async event => {
+    const query = getQuery(event)
+    const email = query.email?.toString()
+    const token = query.token?.toString()
+    const {password} = await readBody(event) as { password: string, origin: string }
+    const response = {} as APIResponse
+
+    if (!email || !token || !password) {
+        response.statusCode = Status.badRequest
+        response.body = "Email, token and password are required"
+        return response
+    }
+
+    const user = await getUserByEmail(email).catch(err => err as Error)
+    if (user instanceof Error) {
+        response.statusCode = Status.notFound
+        response.body = user.message
+        return response
+    }
+    if (!user) {
+        response.statusCode = Status.notFound
+        response.body = "User not found"
+        return response
+    }
+
+    const reset = await resetPassword({user, token, password}).catch(err => err as Error)
+    if (reset instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = reset.message
+        return response
+    }
+
+    const _token = await authenticate({email, password}).catch(err => err as Error)
+    if (_token instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = _token.message
+        return response
+    }
+    if (!_token) {
+        response.statusCode = Status.internalServerError
+        response.body = "Token not generated"
+        return response
+    }
+
+    response.statusCode = Status.success
+    response.body = _token
+    return response    
 }))
 
 

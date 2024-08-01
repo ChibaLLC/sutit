@@ -20,14 +20,14 @@
           <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
                 class="btn sign-up px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75"
-                to="/signup?redirect=/forms">
+                to="/auth/signup?redirect=/forms">
               Sign Up
             </NuxtLink>
           </li>
           <li class="nav-item" v-if="!userIsAuthenticated()">
             <NuxtLink
                 class="btn log-in px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug hover:opacity-75"
-                to="/login?redirect=/forms">
+                to="/auth/login?redirect=/forms">
               Log In
             </NuxtLink>
           </li>

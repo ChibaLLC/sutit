@@ -3,9 +3,17 @@ export interface Response {
     body?: any;
 }
 
-export type APIResponse<T> = {
+export type APIResponse<T = any> = {
     statusCode: number;
     body?: T;
+}
+
+
+export enum SocketStatus {
+    OPEN = "OPEN",
+    CLOSED = "CLOSED",
+    UNKNOWN = "UNKNOWN",
+    CONNECTING = "CONNECTING"
 }
 
 export enum Status {
@@ -23,6 +31,7 @@ export enum Status {
     notFound = 404,
     conflict = 409,
     unprocessableEntity = 422,
+    notPaid = 429,
     internalServerError = 500,
     notImplemented = 501,
     badGateway = 502,
@@ -220,4 +229,25 @@ export type UserState = {
     email: string;
     is_admin: boolean;
     token: string;
+}
+
+export enum TYPE {
+    AUTH_REQ = "AUTH_REQ",
+    AUTH_RES = "AUTH_RES",
+    HEARTBEAT = "heartbeat",
+    ERROR = "error",
+    CLOSE_SOCKET = "close socket",
+    PING = "ping",
+    PONG = "pong",
+    IDENTITY = "IDENTITY",
+    SUBSCRIBE = "SUBSCRIBE",
+    UNSUBSCRIBE = "UNSUBSCRIBE",
+    SUCCESS = "SUCCESS",
+}
+
+export type SocketTemplate<T = any> = {
+    statusCode: number;
+    type: TYPE;
+    body?: T,
+    channel?: string
 }

@@ -1,6 +1,8 @@
-import { callBackIpWhitelist as whitelist, Status, type StkCallbackHook } from "~/types";
+import { callBackIpWhitelist as whitelist, Status, type StkCallbackHook, TYPE } from "~/types";
 import { insertFormPayment, insertPayment } from "~/mvc/forms/queries";
 import { H3Event } from "h3"
+import { createChannelName } from "~/server/utils/socket";
+import type { Drizzle } from "~/db/types";
 
 const router = createRouter()
 
@@ -17,22 +19,16 @@ function _getRequestIP(event: H3Event): string {
 router.use('/forms/callback', defineEventHandler(async event => {
     const hook = await readBody(event) as StkCallbackHook
     const callback = hook.Body.stkCallback
-    const queue = globalThis.paymentProcessingQueue
-    if (!queue) throw new Error("Global Processing Queue not found")
-    const client = queue.find(item => (item.mpesa.checkoutRequestID === callback.CheckoutRequestID) && (item.mpesa.merchantRequestID === callback.MerchantRequestID))
-    if (!client) {
-        log.error(`Stream not found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
-    }
     if (!callback) {
-        client?.stream.send({ statusCode: Status.badRequest, body: "Fatal: No callback found" })
         return useHttpEnd(event, { statusCode: 400, body: "No callback found" }, 400)
     }
 
+    const channelName = createChannelName(callback.CheckoutRequestID, callback.MerchantRequestID)
     if (isProduction) {
         const ip = _getRequestIP(event)
         if (!ip) {
             log.error("No IP found")
-            client?.stream.send({ statusCode: Status.badRequest, body: "An unknown error occurred" })
+            global.channels?.publish(channelName, { statusCode: Status.badRequest, body: "An unknown error occurred", type: TYPE.ERROR, channel: channelName })
             useHttpEnd(event, { statusCode: 400, body: "No IP found" }, 400)
         }
         if (!whitelist.includes(ip.toString())) {
@@ -49,42 +45,46 @@ router.use('/forms/callback', defineEventHandler(async event => {
 
         if (!transactionCode || !amount || !date || !phoneNumber) {
             log.error(`Failed to process payment: ${callback.ResultDesc}`)
-            client?.stream.send({ statusCode: Status.unprocessableEntity, body: "Unable to process M-Pesa request" })
+            global.channels?.publish(channelName, { statusCode: Status.unprocessableEntity, body: "Unable to process M-Pesa request", type: TYPE.ERROR, channel: channelName })
+            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
         const ulid = await insertPayment(+amount, transactionCode.toString(), phoneNumber.toString()).catch(e => e as Error)
         if (ulid instanceof Error) {
             log.error(`Failed to insert payment: ${ulid.message} \t code: ${transactionCode}`)
-            client?.stream.send({ statusCode: Status.internalServerError, body: "Failed to process payment" })
+            global.channels?.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
+            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
-        if (client?.form) {
+        const {form, callback: funcall} = global.formPaymentProcessingQueue?.get(channelName) || {}
+        if (form) {
             await insertFormPayment({
-                formUlid: client.form.ulid,
+                formUlid: form.ulid,
                 paymentUlid: ulid
             }).catch(e => {
                 log.error(`Failed to insert form payment: ${e.message}`)
-                client?.stream.send({ statusCode: Status.internalServerError, body: "Failed to process payment" })
-                return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
+                global.channels!.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
+                global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+                useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
             })
+            funcall?.()
         } else {
             log.warn(`No form found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
+            global.channels?.publish(channelName, { statusCode: Status.notFound, body: "Form not found", type: TYPE.ERROR, channel: channelName })
+            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
         }
-
-        globalThis.paymentProcessingQueue = queue.filter(item => (item.mpesa.checkoutRequestID !== callback.CheckoutRequestID) && (item.mpesa.merchantRequestID !== callback.MerchantRequestID))
     } else {
         log.error(`Failed to process payment: ${callback.ResultDesc}`)
-        client?.stream.send({
-            statusCode: Status.unprocessableEntity,
-            body: `Failed to process payment: ${callback.ResultDesc}`
-        })
+        global.channels?.publish(channelName, { statusCode: Status.unprocessableEntity, body: `Failed to process payment: ${callback.ResultDesc}`, type: TYPE.ERROR, channel: channelName })
+        global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
         return useHttpEnd(event, null, 204)
     }
 
-    client?.stream.send({ statusCode: Status.success, body: "OK" })
-    client?.stream.end()
+    global.channels?.publish(channelName, { statusCode: Status.success, body: "OK", type: TYPE.SUCCESS, channel: channelName })
+    global.channels?.getChannel(channelName)?.clients.forEach(client => { client.close() })
+
     log.success("Payment processed successfully Ref: " + callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value)
     return useHttpEnd(event, { statusCode: Status.success, body: "OK" }, 200)
 }))

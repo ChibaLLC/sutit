@@ -1,17 +1,17 @@
-import {type APIResponse, Status} from "~/types";
+import { type APIResponse, Status } from "~/types";
 import {
     createForm,
     getFormByUlid,
     getFormResponses,
     getFormsByUser,
-    hasPaid,
+    assessForm,
     insertData,
     createStore
 } from "~/mvc/forms/queries";
-import type {Drizzle} from "~/db/types";
-import {getUserByUlId} from "~/mvc/users/queries";
-import {processFormPayments} from "~/mvc/forms/methods";
+import type { Drizzle } from "~/db/types";
 import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
+import { processFormPayments } from "./methods";
+import { getUserByUlId } from "../users/queries";
 
 const router = createRouter()
 
@@ -32,7 +32,7 @@ router.get('/:formUlid', defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    const response = {} as APIResponse<{forms: Drizzle.Form.select, stores: Drizzle.Store.select}>
+    const response = {} as APIResponse<{ forms: Drizzle.Form.select, stores: Drizzle.Store.select }>
     response.statusCode = Status.success
     response.body = form
 
@@ -116,23 +116,17 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         statusCode: Status.badRequest,
         body: "No form ID provided"
     }, Status.badRequest)
-
-    const [details, error] = await useAuth(event)
-    if (error || !details) return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Unauthorized"
-    })
-
     const _data = await readBody(event) as {
         forms: Forms,
-        stores: Stores
+        stores: Stores,
+        phone: string
     }
     if (!_data) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No data provided"
     }, Status.badRequest)
 
-    const data = await getFormByUlid(formUlid).catch(err => err as Error)
+    const [data, hasPaid] = await assessForm(formUlid, _data.phone).catch(err => [err as Error, false] as [Error, boolean])
     if (data instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: data.message || "Unknown error while getting form"
@@ -142,18 +136,41 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    await insertData(details.user.ulid, formUlid, _data).catch(err => {
-        useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: err.message || "Unknown error while submitting form"
-        } as APIResponse<string>, Status.internalServerError)
+    if (!_data.phone && !hasPaid) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "Need a phone number"
     })
+    const creator = await getUserByUlId(data.forms.userUlid).catch(err => err as Error)
+    if (creator instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: creator.message || "Unknown error while getting form creator"
+    } as APIResponse<string>, Status.internalServerError)
 
-    const response = {} as APIResponse<string>
-    response.statusCode = Status.success
-    response.body = "Form submitted"
+    if (!hasPaid) {
+        return await processFormPayments(data.forms,
+            { phone: _data.phone, amount: data.forms.price },
+            creator?.email || creator?.name || "Unknown", () => {
+                insertData(formUlid, _data).catch(log.error)
+            }).catch(err => {
+                return useHttpEnd(event, {
+                    statusCode: Status.internalServerError,
+                    body: err.message || "Unknown error while processing payment"
+                } as APIResponse<string>, Status.internalServerError)
+            })
+    } else {
+        await insertData(formUlid, _data).catch(err => {
+            useHttpEnd(event, {
+                statusCode: Status.internalServerError,
+                body: err.message || "Unknown error while submitting form"
+            } as APIResponse<string>, Status.internalServerError)
+        })
 
-    return response
+        const response = {} as APIResponse<string>
+        response.statusCode = Status.success
+        response.body = "Form submitted"
+
+        return response
+    }
 }))
 
 router.get('/submissions/:formUlid', defineEventHandler(async event => {
@@ -180,58 +197,6 @@ router.get('/submissions/:formUlid', defineEventHandler(async event => {
     response.body = submissions
 
     return response
-}))
-
-
-router.post('/pay/:formUlid', defineEventHandler(async event => {
-    const formUlid = getRouterParam(event, "formUlid")
-    if (!formUlid) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form ID provided"
-    }, Status.badRequest)
-
-    const details = await readBody(event) as { phone: string, identity: string | undefined, amount?: number}
-    details.identity = details.identity || getHeader(event, "X-Request-ID")
-
-    if (!details.phone || !details.identity) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "Phone and identity of the request origin are required; identity can be a UUID or a phone number with country code"
-    }, Status.badRequest)
-
-    const data = await getFormByUlid(formUlid).catch(err => err as Error)
-    if (data instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: data?.message || "Unknown error while getting form"
-    }, Status.internalServerError)
-    if (!data) return useHttpEnd(event, {
-        statusCode: Status.notFound,
-        body: "Form not found"
-    }, Status.notFound)
-
-    if (await hasPaid(data.forms.ulid, details.phone)) {
-        return useHttpEnd(event, {
-            statusCode: Status.success,
-            body: "Payment already made"
-        }, Status.success)
-    }
-
-    const user = await getUserByUlId(data.forms.userUlid).catch(err => err as Error)
-    if (user instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: user?.message || "Unknown error while getting user"
-    }, Status.internalServerError)
-    if (!user) return useHttpEnd(event, {
-        statusCode: Status.notFound,
-        body: "User not found"
-    }, Status.notFound)
-
-    details.amount = details.amount || data.forms.price
-    if (Number(data.forms.price) > Number(details.amount)) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "Payment amount is less than required"
-    }, Status.badRequest)
-
-    await processFormPayments(event, data.forms, {identity: details.identity, phone: details.phone, amount: details.amount}, user.email)
 }))
 
 export default useController('forms', router)

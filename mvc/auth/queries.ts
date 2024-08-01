@@ -1,9 +1,10 @@
-import {eq, and} from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import db from '~/db';
-import {sessions} from "~/db/drizzle/schema";
-import {v4} from "uuid";
-import type {Drizzle} from "~/db/types";
-import {getUserByEmail} from "~/mvc/users/queries";
+import { sessions } from "~/db/drizzle/schema";
+import { v4 } from "uuid";
+import type { Drizzle } from "~/db/types";
+import { getUserByEmail } from "~/mvc/users/queries";
+import { users } from "~/db/drizzle/schema";
 
 
 export async function createToken(user: { userUlid: string, email: string }): Promise<string> {
@@ -56,5 +57,13 @@ export async function authenticate(data: { email: string, password: string }): P
     if (!valid) throw new Error('Invalid password')
 
 
-    return await createToken({userUlid: user.ulid, email: user.email})
+    return await createToken({ userUlid: user.ulid, email: user.email })
+}
+
+export async function updatePassword(user: Drizzle.User.select, password: string) {
+    const auth = hashPassword(password)
+    return await db.update(users).set({
+        password: auth.hash,
+        salt: auth.salt
+    }).where(eq(users.ulid, user.ulid))
 }

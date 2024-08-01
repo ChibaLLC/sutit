@@ -64,7 +64,7 @@ export async function logout() {
             const state = useUser()
             state.value = {} as UserState
             setAuthCookie("", 0)
-            await navigateTo("/login")
+            await navigateTo("/auth/login")
         }
     }).catch(console.error)
 }

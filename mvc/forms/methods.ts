@@ -1,48 +1,29 @@
-import type {H3Event} from "h3";
-import type {Drizzle} from "~/db/types";
-import {Stream} from "~/server/utils/http";
-import {call_stk} from "~/mvc/mpesa/methods";
-
+import type { Drizzle } from "~/db/types";
+import { call_stk } from "~/mvc/mpesa/methods";
+import { createChannelName } from "~/server/utils/socket";
 
 declare global {
-    var paymentProcessingQueue: Array<{
-        stream: Stream,
-        mpesa: { merchantRequestID: string, checkoutRequestID: string },
-        form: Drizzle.Form.select
+    var formPaymentProcessingQueue: Map<string, {
+        form: Drizzle.Form.select,
+        callback?: (...args: any[]) => any
     }>
 }
 
-export async function processFormPayments(event: H3Event, form: Drizzle.Form.select, details: { phone: string; identity: string; amount: number }, accountNumber: string) {
-    const stream = await useSSE(event, details.identity)
-    if (!globalThis.paymentProcessingQueue) globalThis.paymentProcessingQueue = []
-    
+export async function processFormPayments(form: Drizzle.Form.select, details: { phone: string; amount: number }, accountNumber: string, callback?: (...args: any[]) => any) {
     details.phone = `254${details.phone.slice(-9)}`
-
-    await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
-        .then(async (result) => {
-            if (!result) {
-                stream.send({
-                    statusCode: 500,
-                    body: "Failed to initiate payment"
-                })
-                stream.end()
-            } else {
-                globalThis.paymentProcessingQueue.push({
-                    stream: stream,
-                    mpesa: {
-                        merchantRequestID: result.MerchantRequestID,
-                        checkoutRequestID: result.CheckoutRequestID
-                    },
-                    form: form
-                })
-            }
-        })
+    const result = await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
+    const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID)
+    if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map()
+    global.formPaymentProcessingQueue.set(channel, { form, callback })
+    return {
+        statusCode: 201,
+        body: {
+            merchantRequestID: result.MerchantRequestID,
+            checkoutRequestID: result.CheckoutRequestID
+        }
+    }
 }
 
 async function makeSTKPush(phone: string, pay_for: string, amount: number, accountNumber: string) {
     return await call_stk(+phone, amount, `Payment for ${pay_for} form`, accountNumber)
-        .catch(err => {
-            console.error(err)
-            return null
-        })
 }

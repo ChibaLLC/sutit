@@ -31,9 +31,8 @@ export async function getFormByUlid(formUlid: string) {
     return results.at(0)
 }
 
-export async function insertData(userUlid: string, formUlid: string, data: { forms: Forms, stores: Stores }) {
+export async function insertData(formUlid: string, data: { forms: Forms, stores: Stores }) {
     await db.insert(formResponses).values({
-        userUlid: userUlid,
         formUlid: formUlid,
         response: data.forms,
     } satisfies Drizzle.FormResponses.insert)
@@ -43,7 +42,6 @@ export async function insertData(userUlid: string, formUlid: string, data: { for
 
     if (storeUlid) {
         await db.insert(storeResponses).values({
-            userUlid: userUlid,
             storeUlid: storeUlid,
             response: data.stores,
         } satisfies Drizzle.StoreResponses.insert)
@@ -91,10 +89,19 @@ export async function getPayment(referenceCode: string) {
         .where(eq(payments.referenceCode, referenceCode))).at(0)
 }
 
+export async function getFormPayment(formUulid: string) {
+    return db.select().from(formPayments).where(eq(formPayments.formUlid, formUulid))
+}
 
-export async function hasPaid(formUlid: string, phone: string) {
+
+export async function assessForm(formUlid: string, phone: string): Promise<[{ forms: Drizzle.Form.select, store?: Drizzle.Store.select }, boolean]> {
+    const form = await getFormByUlid(formUlid)
+    if (!form) {
+        throw new Error("Form Does Not Exist")
+    }
+    if (form?.forms.price <= 0) return [form, true]
     const _payments = await db.select().from(payments)
-        .where(eq(payments.phoneNumber, phone))
+        .where(eq(payments.phoneNumber, `254${phone.slice(-9)}`))
         .innerJoin(formPayments, and(eq(formPayments.paymentUlid, payments.ulid), eq(formPayments.formUlid, formUlid)))
-    return _payments.length > 0
+    return [form, _payments.length > 0]
 }

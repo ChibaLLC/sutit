@@ -1,58 +1,68 @@
 <script setup lang="ts">
+import {Status} from "~/types";
+
 const url = useRoute()
 const redirect = url.query?.redirect
-const remember = ref(false)
-const errors = ref(new Set<string>())
 const loading = ref(false)
 const details = reactive({
   email: '',
-  password: ''
+  password1: '',
+  password2: ''
+})
+
+const errors = ref(new Set())
+
+watch(details, () => {
+  if (details.password2 !== '' && details.password1 !== details.password2) {
+    errors.value.add('Passwords do not match')
+  } else {
+    errors.value.clear()
+  }
 })
 
 async function submit() {
-  if (loading.value) return
+  if (errors.value.size > 0) return alert('Please fix the errors in the form.')
   loading.value = true
 
-  await unFetch('/api/v1/auth/login', {
+  await unFetch('/api/v1/auth/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: {
+    body: JSON.stringify({
       email: details.email,
-      password: details.password
-    },
+      password: details.password1
+    }),
     async onResponse({response}) {
       const res = response._data
       loading.value = false
 
-      if (res.statusCode === 200) {
-        if (remember.value) setAuthCookie(res.body)
-        useUser().value!.token = res.body
-        await navigateTo('/')
-
-        if (redirect) {
-          if (typeof redirect !== 'string') throw new Error("Redirect Error")
-          await navigateTo(redirect)
-        } else {
-          await navigateTo('/')
-        }
-      } else {
-        errors.value.add(res.body || 'An unknown error occurred')
+      switch (res.statusCode) {
+        case Status.success:
+          setAuthCookie(res.body)
+          useUser().value!.token = res.body
+          if (redirect) {
+            if (typeof redirect !== 'string') throw new Error("Redirect Error")
+            await navigateTo(redirect)
+          } else {
+            await navigateTo('/')
+          }
+          break
+        case Status.conflict:
+          errors.value.add("A user with that very email, already exists.")
+          break
+        default:
+          errors.value.add(res?.body?.error || res?.body?.message || res?.body || "An unknown error occurred. Please try again. Later.")
       }
     }
   })
 }
 
-function clearErrors() {
-  if (errors.value.size === 0) return
-  errors.value = new Set()
-}
 </script>
 
 <template>
-  <Title>Login</Title>
-  <section class="absolute w-full" style="margin-top: 100px">
+  <Title>Sign Up</Title>
+  <section class="relative w-full" style="margin-top: 100px">
     <div class="container mx-auto px-4 h-full">
       <div class="flex content-center items-center justify-center h-full">
         <div class="w-full lg:w-4/12 px-4">
@@ -62,12 +72,12 @@ function clearErrors() {
             <div class="rounded-t mb-0 px-6 py-6">
               <div class="text-center mb-3">
                 <h6 class="text-gray-600 text-sm font-bold">
-                  Sign in with
+                  Sign up with
                 </h6>
               </div>
               <div class="btn-wrapper text-center">
                 <button
-                    class="bg-white active:bg-gray-100 text-gray-800 font-normal px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
+                    class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
                     type="button"
                     style="transition: all 0.15s ease 0s;"
                 >
@@ -79,7 +89,7 @@ function clearErrors() {
                 </button
                 >
                 <button
-                    class="bg-white active:bg-gray-100 text-gray-800 font-normal px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
+                    class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
                     type="button"
                     style="transition: all 0.15s ease 0s;"
                 >
@@ -94,54 +104,55 @@ function clearErrors() {
             </div>
             <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
               <div class="text-gray-500 text-center mb-3 font-bold">
-                <small>Or sign in with credentials</small>
+                <small>Or sign up with credentials</small>
               </div>
-              <form>
+              <form @submit.prevent="submit">
+                <div class="relative w-full mb-3">
+                  <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password"
+                  >Email</label
+                  ><input
+                    type="email"
+                    v-model="details.email"
+                    autocomplete="email"
+                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                    placeholder="Email"
+                    style="transition: all 0.15s ease 0s;"
+                />
+                </div>
+                <div class="relative w-full mb-3">
+                  <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password"
+                  >Password</label
+                  ><input
+                    type="password"
+                    v-model="details.password1"
+                    autocomplete="new-password"
+                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                    placeholder="Password"
+                    style="transition: all 0.15s ease 0s;"
+                />
+                </div>
+                <div class="relative w-full mb-3">
+                  <label
+                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
+                      for="grid-password"
+                  >Password Again</label
+                  ><input
+                    type="password"
+                    autocomplete="new-password"
+                    v-model="details.password2"
+                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                    placeholder="Password"
+                    style="transition: all 0.15s ease 0s;"
+                />
+                </div>
                 <div class="text-red-500" v-if="errors.size > 0">
                   <ul>
-                    <li v-for="error in errors" :key="error"><small>{{ error }}</small></li>
+                    <li v-for="error in errors" :key="String(error)"><small>{{ error }}</small></li>
                   </ul>
-                </div>
-                <div class="relative w-full mb-3">
-                  <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password"
-                  >Email</label>
-                  <input
-                      type="email"
-                      class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                      placeholder="Email"
-                      v-model="details.email"
-                      v-on:focus="clearErrors"
-                      style="transition: all 0.15s ease 0s;"
-                  />
-                </div>
-                <div class="relative w-full mb-3">
-                  <label
-                      class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                      for="grid-password"
-                  >Password</label>
-                  <input
-                      type="password"
-                      v-model="details.password"
-                      class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                      placeholder="Password"
-                      v-on:focus="clearErrors"
-                      style="transition: all 0.15s ease 0s;"
-                  />
-                </div>
-                <div>
-                  <label class="inline-flex items-center cursor-pointer"
-                  ><input
-                      id="customCheckLogin"
-                      type="checkbox"
-                      v-model="remember"
-                      class="form-checkbox border-0 rounded text-gray-800 ml-1 w-5 h-5 checked:bg-gray-900 checked:border-transparent bg-white"
-                      style="transition: all 0.15s ease 0s;"
-                  />
-                    <span class="ml-2 text-sm font-semibold text-gray-700"
-                    >Remember me</span
-                    ></label>
                 </div>
                 <div class="text-center mt-6">
                   <button
@@ -161,14 +172,9 @@ function clearErrors() {
             </div>
           </div>
           <div class="flex flex-wrap mt-6">
-            <div class="w-1/2">
-              <a class="text-slate-900"
-              ><small>Forgot password?</small></a
-              >
-            </div>
-            <div class="w-1/2 text-right">
-              <NuxtLink class="text-slate-900" :to="`signup?redirect=${redirect}`"
-              ><small>Create new account</small></NuxtLink>
+            <div class="w-full text-right">
+              <NuxtLink class="text-slate-900" to="/auth/login"
+              ><small>Already Have an Account?</small></NuxtLink>
             </div>
           </div>
         </div>

@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import {Status, type APIResponse} from "~/types";
+import {type APIResponse} from "~/types";
 import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder";
 
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
 const helpText = ref(false)
+
+definePageMeta({
+  middleware: ["auth"]
+})
 
 const submitData = reactive({
   name: '',

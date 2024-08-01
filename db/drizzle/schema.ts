@@ -96,27 +96,17 @@ export const storePayments = pgTable("store_payments", {
 	});
 
 export const formResponses = pgTable("form_responses", {
+	id: serial("id").primaryKey().notNull(),
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" }),
-	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),
 	response: jsonb("response").notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-},
-	(table) => {
-		return {
-			formResponsesPkey: primaryKey({ columns: [table.formUlid, table.userUlid], name: "form_responses_pkey" })
-		}
-	});
+});
 
 export const storeResponses = pgTable("store_responses", {
+	id: serial("id").primaryKey().notNull(),
 	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "cascade" }),
-	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),
 	response: jsonb("response"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-},
-	(table) => {
-		return {
-			storeResponsesPkey: primaryKey({ columns: [table.storeUlid, table.userUlid], name: "store_responses_pkey" })
-		}
-	});
+});

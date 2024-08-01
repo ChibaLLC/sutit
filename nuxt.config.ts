@@ -15,6 +15,9 @@ export default defineNuxtConfig({
                 driver: 'fs',
                 base: "./filestore"
             }
+        },
+        experimental: {
+            websocket: true
         }
     },
     css: [
@@ -26,5 +29,5 @@ export default defineNuxtConfig({
     ],
     tailwindcss: {
         configPath: '~/tailwind.config.js',
-    }
+    },
 })

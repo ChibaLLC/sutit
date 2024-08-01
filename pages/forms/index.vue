@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {type APIResponse, Status} from "~/types";
 
-const formsStores = ref<any[]>([])
+definePageMeta({
+  middleware: ['auth']
+})
 
-if (!userIsAuthenticated()) {
-  await navigateTo("/login?redirect=forms")
-}
+const formsStores = ref<any[]>([])
 
 const {data} = await useFetch<APIResponse<any>>("/api/v1/forms/me", {
   headers: {
@@ -14,10 +14,9 @@ const {data} = await useFetch<APIResponse<any>>("/api/v1/forms/me", {
 }).catch(console.error)
 
 const res = data.value as APIResponse<any>
-if (res.statusCode === Status.success) {
+if (res?.statusCode === Status.success) {
   formsStores.value = res.body
 }
-
 
 function getShareableLink(formUuid: string) {
   const link = `${window.location.origin}/forms/${formUuid}`

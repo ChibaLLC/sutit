@@ -11,12 +11,18 @@ importers:
       '@chiballc/nuxt-form-builder':
         specifier: 0.0.37
         version: 0.0.37(rollup@4.13.2)
+      crossws:
+        specifier: ^0.2.4
+        version: 0.2.4
       daraja.js:
         specifier: github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c
         version: https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c(ioredis@5.3.2)
       drizzle-orm:
         specifier: ^0.29.3
         version: 0.29.5(postgres@3.4.4)
+      nodemailer:
+        specifier: ^6.9.14
+        version: 6.9.14
       object.groupby:
         specifier: ^1.0.2
         version: 1.0.3
@@ -36,6 +42,9 @@ importers:
       '@nuxtjs/tailwindcss':
         specifier: ^6.11.2
         version: 6.11.4(rollup@4.13.2)
+      '@types/nodemailer':
+        specifier: ^6.4.15
+        version: 6.4.15
       '@types/qrcode':
         specifier: ^1.5.5
         version: 1.5.5
@@ -1190,6 +1199,9 @@ packages:
 
   '@types/node@20.11.30':
     resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
+
+  '@types/nodemailer@6.4.15':
+    resolution: {integrity: sha512-0EBJxawVNjPkng1zm2vopRctuWVCxk34JcIlRuXSf54habUWdz1FB7wHDqOqvDa8Mtpt0Q3LTXQkAs2LNyK5jQ==}
 
   '@types/qrcode@1.5.5':
     resolution: {integrity: sha512-CdfBi/e3Qk+3Z/fXYShipBT13OJ2fDO2Q2w5CIP5anLTLIndQG9z6P1cnm+8zCWSpm5dnxMFd/uREtb0EXuQzg==}
@@ -3321,6 +3333,10 @@ packages:
 
   node-releases@2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
+
+  nodemailer@6.9.14:
+    resolution: {integrity: sha512-Dobp/ebDKBvz91sbtRKhcznLThrKxKt97GI2FAlAyy+fk19j73Uz3sBXolVtmcXjaorivqsbbbjDY+Jkt4/bQA==}
+    engines: {node: '>=6.0.0'}
 
   nopt@5.0.0:
     resolution: {integrity: sha512-Tbj67rffqceeLpcRXrT7vKAN8CwfPeIBgM7E6iBkmKLV7bEMwpGgYLGv0jACUsECaa/vuxP0IjEont6umdMgtQ==}
@@ -6048,6 +6064,10 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
+  '@types/nodemailer@6.4.15':
+    dependencies:
+      '@types/node': 20.11.30
+
   '@types/qrcode@1.5.5':
     dependencies:
       '@types/node': 20.11.30
@@ -8581,6 +8601,8 @@ snapshots:
       - supports-color
 
   node-releases@2.0.14: {}
+
+  nodemailer@6.9.14: {}
 
   nopt@5.0.0:
     dependencies:
