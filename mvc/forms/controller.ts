@@ -10,7 +10,7 @@ import {
 } from "~/mvc/forms/queries";
 import type { Drizzle } from "~/db/types";
 import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
-import { processFormPayments } from "./methods";
+import { processFormPayments, sendUserMail } from "./methods";
 import { getUserByUlId } from "../users/queries";
 
 const router = createRouter()
@@ -117,7 +117,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
     const _data = await readBody(event) as {
-        forms: Forms,
+        forms: Drizzle.Form.select,
         stores: Stores,
         phone: string
     }
@@ -147,10 +147,17 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
     } as APIResponse<string>, Status.internalServerError)
 
     if (!hasPaid) {
+        if(_data.forms.price < data.forms.price){
+            return useHttpEnd(event, {
+                statusCode: 400,
+                body: "Passed price is less than the allowed minimum for this form"
+            })
+        }
         return await processFormPayments(data.forms,
-            { phone: _data.phone, amount: data.forms.price },
+            { phone: _data.phone, amount: _data.forms.price },
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data).catch(log.error)
+                sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
             }).catch(err => {
                 return useHttpEnd(event, {
                     statusCode: Status.internalServerError,
@@ -164,7 +171,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                 body: err.message || "Unknown error while submitting form"
             } as APIResponse<string>, Status.internalServerError)
         })
-
+        sendUserMail({email: creator?.email}, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
         const response = {} as APIResponse<string>
         response.statusCode = Status.success
         response.body = "Form submitted"

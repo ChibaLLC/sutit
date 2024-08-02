@@ -84,7 +84,6 @@ router.use('/forms/callback', defineEventHandler(async event => {
 
     global.channels?.publish(channelName, { statusCode: Status.success, body: "OK", type: TYPE.SUCCESS, channel: channelName })
     global.channels?.getChannel(channelName)?.clients.forEach(client => { client.close() })
-
     log.success("Payment processed successfully Ref: " + callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value)
     return useHttpEnd(event, { statusCode: Status.success, body: "OK" })
 }))

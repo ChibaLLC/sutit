@@ -99,7 +99,7 @@ export const transporter = nodemailer.createTransport({
     }
 })
 
-export async function sendMail(mailDetails: { to: string, subject: string, text: string, html: string }) {
+export async function sendMail(mailDetails: { to: string, subject: string, text?: string, html?: string }) {
     try {
         return await transporter.sendMail({
             ...mailDetails,

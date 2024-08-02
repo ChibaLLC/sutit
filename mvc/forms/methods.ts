@@ -1,6 +1,7 @@
 import type { Drizzle } from "~/db/types";
 import { call_stk } from "~/mvc/mpesa/methods";
 import { createChannelName } from "~/server/utils/socket";
+import { getUserByUlId } from "../users/queries";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -26,4 +27,20 @@ export async function processFormPayments(form: Drizzle.Form.select, details: { 
 
 async function makeSTKPush(phone: string, pay_for: string, amount: number, accountNumber: string) {
     return await call_stk(+phone, amount, `Payment for ${pay_for} form`, accountNumber)
+}
+
+
+export async function sendUserMail(user: { userUlid?: string, email?: string }, message: string, subject: string) {
+    let email = user.email
+    if (!email){
+        const _user = await getUserByUlId(user.userUlid!)
+        email = _user?.email
+    }
+    if (!email) return log.warn("User has no email")
+
+    return sendMail({
+        to: email,
+        text: message,
+        subject: subject
+    })
 }

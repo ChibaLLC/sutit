@@ -2,6 +2,7 @@
 import { type Drizzle } from "~/db/types";
 import { Status, TYPE, type APIResponse } from "~/types";
 import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
+import { RealTime } from "#imports";
 
 type ServerForm = {
   forms: Omit<Drizzle.Form.select, 'pages'> & {
@@ -57,8 +58,15 @@ async function processForm() {
   }
 }
 
+const realtime = ref<RealTime | null>(null)
+onBeforeUnmount(() => {
+  realtime.value!.close()
+})
 
-const realtime = new RealTime()
+onMounted(() => {
+  realtime.value = new RealTime()
+})
+
 async function submit() {
   loading.value = true
   await $fetch(`/api/v1/forms/submit/${ulid}`, {
@@ -67,8 +75,8 @@ async function submit() {
       Authorization: `Bearer ${getAuthToken()}`
     },
     body: {
-      forms: formStoreData.value.forms,
-      stores: formStoreData.value.stores,
+      forms: data.forms,
+      stores: data.stores,
       phone: payment_details.value.phone
     },
     onResponse({ response }): Promise<void> | void {
@@ -83,13 +91,13 @@ async function submit() {
           return
         }
         alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
-        realtime.subscribe(createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID))
-        realtime.on('error', (error) => {
+        realtime.value!.subscribe(createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID))
+        realtime.value!.on('error', (error) => {
           console.error(error)
           alert('Payment failed, please try again later')
         })
 
-        realtime.on("data", (_data: any) => {
+        realtime.value!.on("data", (_data: any) => {
           const data = parseData(_data)
           console.log(data)
           if (data.channel !== createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID)) return console.warn('Invalid channel', data)
@@ -101,7 +109,6 @@ async function submit() {
               setTimeout(() => {
                 navigateTo(`/`)
               }, 1000)
-              realtime.close()
               break
             case TYPE.ERROR:
               switch (data.statusCode) {
