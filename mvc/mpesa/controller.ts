@@ -86,7 +86,7 @@ router.use('/forms/callback', defineEventHandler(async event => {
     global.channels?.getChannel(channelName)?.clients.forEach(client => { client.close() })
 
     log.success("Payment processed successfully Ref: " + callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value)
-    return useHttpEnd(event, { statusCode: Status.success, body: "OK" }, 200)
+    return useHttpEnd(event, { statusCode: Status.success, body: "OK" })
 }))
 
 export default useController('mpesa', router)

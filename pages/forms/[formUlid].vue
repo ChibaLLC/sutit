@@ -42,6 +42,7 @@ async function processForm() {
   count.value++
   console.log('Processing form', count.value)
   loading.value = true
+  paymentModal.value = false
   if (
     hasPrice(data.forms) &&
     !hasPhone()
@@ -90,6 +91,7 @@ async function submit() {
 
         realtime.on("data", (_data: any) => {
           const data = parseData(_data)
+          console.log(data)
           if (data.channel !== createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID)) return console.warn('Invalid channel', data)
           switch (data?.type) {
             case TYPE.SUCCESS:
@@ -98,7 +100,8 @@ async function submit() {
               alert('Form submitted successfully')
               setTimeout(() => {
                 navigateTo(`/`)
-              })
+              }, 1000)
+              realtime.close()
               break
             case TYPE.ERROR:
               switch (data.statusCode) {
@@ -135,7 +138,6 @@ async function submit() {
       log.error(response)
     }
   })
-  loading.value = false
 }
 
 function addCharge(amount: number) {

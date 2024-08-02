@@ -3,7 +3,7 @@ import consola from "consola";
 
 type Events = "data" | "error" | "open" | "close"
 abstract class _RealTime {
-    push(data: string) { }
+    send(data: string) { }
     setup() { }
     on(event: Events, callback: Function) { }
     emit(event: Events, data: any) { }
@@ -55,7 +55,7 @@ class SSE implements _RealTime {
             this.drain()
         }
     }
-    async push(data: string, options?: any) {
+    async send(data: string, options?: any) {
         if (this._status === SocketStatus.OPEN) {
             return await $fetch("/sse/put", {
                 method: "POST",
@@ -73,7 +73,7 @@ class SSE implements _RealTime {
     }
     private drain() {
         this._backpressure.forEach(data => {
-            this.push(data)
+            this.send(data)
         })
         this._backpressure = []
     }
@@ -159,7 +159,7 @@ class Poll implements _RealTime {
         this._status = SocketStatus.OPEN
         this.drain()
     }
-    async push(data: string, options?: any) {
+    async send(data: string, options?: any) {
         return await $fetch("/poll/put", {
             method: "POST",
             body: data,
@@ -173,7 +173,7 @@ class Poll implements _RealTime {
     }
     private drain() {
         this._backpressure.forEach(data => {
-            this.push(data)
+            this.send(data)
         })
         this._backpressure = []
     }
@@ -259,11 +259,11 @@ class WS implements _RealTime {
     }
     private drain() {
         this._backpressure.forEach(data => {
-            this.push(data)
+            this.send(data)
         })
         this._backpressure = []
     }
-    async push(data: string, options?: any) {
+    async send(data: string, options?: any) {
         if (this._status === SocketStatus.OPEN) {
             this.ws.send(data)
             return Promise.resolve(true)
@@ -386,7 +386,7 @@ export class RealTime {
         }, intervalSeconds * 1000)
     }
 
-    push(data: unknown) {
+    send(data: unknown) {
         if (this.status !== SocketStatus.OPEN) {
             this.current!.value.backpressure.push(data)
         }
@@ -395,7 +395,7 @@ export class RealTime {
         } else {
             var _data = data
         }
-        this.current!.value.push(_data)
+        this.current!.value.send(_data)
     }
 
     private syncData(target: _RealTime) {
@@ -417,11 +417,11 @@ export class RealTime {
     }
 
     subscribe(channel: string) {
-        this.push({ type: TYPE.SUBSCRIBE, body: channel })
+        this.send({ type: TYPE.SUBSCRIBE, body: channel })
     }
 
     unsubscribe(channel: string) {
-        this.push({ type: TYPE.UNSUBSCRIBE, body: channel })
+        this.send({ type: TYPE.UNSUBSCRIBE, body: channel })
     }
 
     get status() {
