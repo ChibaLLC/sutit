@@ -9,80 +9,120 @@ function PASSWORD_RESET_TEMPLATE(link: any) {
     <meta charset="utf-8">
     <title>Password Reset</title>
     <style>
-        * {
-            box-sizing: border-box;
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            overflow: hidden;
         }
 
-        .email-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #1a1a1a;
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
-
-        .email-container {
-            width: 400px;
-            height: 300px;
-            background: #fff;
-            border-radius: 5px;
+        
+        table td {
+            border: 1px solid #f4f4f4;
+            padding: 8px;
         }
-
-        .email-header {
-            background: linear-gradient(to bottom right, #9b08ff, #1ae7a3);
-            color: #fff;
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        .email-body {
-            padding: 20px;
-        }
-
-        .email-footer {
-            background: linear-gradient(to bottom right, #1ae7a3, #9b08ff);
-            color: #fff;
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        p {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-            font-weight: 300;
-            line-height: 22px;
-            margin: 0;
+        
+        table th {
+            border: 1px solid #f4f4f4;
+            padding: 8px;
+            background-color: #f4f4f4;
         }
 
         a {
-            color: #9b08ff;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+
+        a:hover {
+            color: #000;
+        }
+
+        .header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .main {
+            padding: 20px;
+        }
+
+        .footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .button a {
+            color: #fff;
             text-decoration: none;
         }
 
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+        .button a:hover {
+            color: #fff;
         }
+
+        .button a:active {
+            color: #fff;
+        }
+
+        .button a:visited {
+            color: #fff;
+        }
+
+        .button a:link {
+            color: #fff;
+        }
+
     </style>
 </head>
 
 <body>
-    <div class="email-content">
-        <div class="email-container">
-            <div class="email-header">
-                <h1>Password Reset</h1>
-            </div>
-            <div class="email-body">
-                <p>Hi there, you can reset your password by clicking this <strong><a href="${link}">link</a></strong>.</p>
-            </div>
-            <div class="email-footer">
-                <p>If you didn't request this, safely ignore this email.</p>
-            </div>
-        </div>
-    </div>
+    <table>
+        <tr>
+            <td>
+                <div class="header">
+                    <h1>Password Reset</h1>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="main">
+                    <p>Click the link below to reset your password</p>
+                    <a href="${link}">Reset Password</a>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="footer">
+                    <p>&copy; ${new Date().getFullYear()} All rights reserved</p>
+                </div>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

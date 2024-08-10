@@ -54,7 +54,7 @@ async function submit() {
                                     Enter your email to reset your password
                                 </h6>
                             </div>
-                            <form>
+                            <form @submit.prevent="submit">
                                 <div class="text-red-500" v-if="errors.size > 0">
                                     <ul>
                                         <li v-for="error in errors" :key="error"><small>{{ error }}</small></li>
@@ -65,6 +65,7 @@ async function submit() {
                                         for="grid-password">Email</label>
                                     <input type="email"
                                         class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
+                                        autocomplete="email"
                                         placeholder="Email" v-model="details.email" v-on:focus="clearErrors"
                                         style="transition: all 0.15s ease 0s;" />
                                 </div>

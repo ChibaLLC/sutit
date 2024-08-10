@@ -48,8 +48,8 @@ function clearErrors() {
   if (errors.value.size === 0) return
   errors.value = new Set()
 }
-</script>
 
+</script>
 <template>
   <Title>Login</Title>
   <section class="absolute w-full" style="margin-top: 100px">
@@ -81,7 +81,7 @@ function clearErrors() {
               <div class="text-gray-500 text-center mb-3 font-bold">
                 <small>Or sign in with credentials</small>
               </div>
-              <form>
+              <form @submit.prevent>
                 <div class="text-red-500" v-if="errors.size > 0">
                   <ul>
                     <li v-for="error in errors" :key="error"><small>{{ error }}</small></li>
@@ -128,10 +128,12 @@ function clearErrors() {
           <div class="flex flex-wrap mt-6">
             <div class="w-1/2">
               <NuxtLink class="text-slate-900" :to="`/auth/reset?redirect=${redirect}`">
-                <small>Forgot password?</small></NuxtLink>
+                <small>Forgot password?</small>
+              </NuxtLink>
             </div>
             <div class="w-1/2 text-right">
-              <NuxtLink class="text-slate-900" :to="`/auth/signup?redirect=${redirect}`"><small>Create new account</small>
+              <NuxtLink class="text-slate-900" :to="`/auth/signup?redirect=${redirect}`"><small>Create new
+                  account</small>
               </NuxtLink>
             </div>
           </div>

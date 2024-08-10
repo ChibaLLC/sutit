@@ -7,8 +7,14 @@ import { getUserByEmail } from "~/mvc/users/queries";
 import { users } from "~/db/drizzle/schema";
 
 
-export async function createToken(user: { userUlid: string, email: string }): Promise<string> {
+export async function createToken(user: { userUlid?: string, email?: string }): Promise<string> {
     const uuid = v4()
+    if (!user.userUlid && !user.email) throw new Error('User not found')
+    if(!user.userUlid){
+        const _user = await getUserByEmail(user.email!)
+        if (!_user) throw new Error('User not found')
+        user.userUlid = _user.ulid
+    }
     const values = {
         ulid: uuid,
         token: uuid,

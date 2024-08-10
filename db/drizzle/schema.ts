@@ -99,6 +99,7 @@ export const formResponses = pgTable("form_responses", {
 	id: serial("id").primaryKey().notNull(),
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" }),
 	response: jsonb("response").notNull(),
+	price: integer("price"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });

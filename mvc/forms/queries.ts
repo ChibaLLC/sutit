@@ -3,7 +3,7 @@ import db from "~/db";
 import { type Drizzle } from "~/db/types";
 import { and, eq } from "drizzle-orm";
 import { ulid } from "ulid";
-import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
 
 export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Forms): Promise<string> {
     const _form = {
@@ -31,10 +31,11 @@ export async function getFormByUlid(formUlid: string) {
     return results.at(0)
 }
 
-export async function insertData(formUlid: string, data: { forms: Forms, stores: Stores }) {
+export async function insertData(formUlid: string, data: { forms: {pages: FormElementData[]}, stores: Stores }, price?: string | number) {
     await db.insert(formResponses).values({
         formUlid: formUlid,
-        response: data.forms,
+        response: data.forms.pages,
+        price: price ? +price : 0
     } satisfies Drizzle.FormResponses.insert)
 
     const _stores = await db.select().from(stores).where(eq(stores.formUlid, formUlid))

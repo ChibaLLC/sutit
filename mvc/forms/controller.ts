@@ -9,7 +9,7 @@ import {
     createStore
 } from "~/mvc/forms/queries";
 import type { Drizzle } from "~/db/types";
-import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
 import { processFormPayments, sendUserMail } from "./methods";
 import { getUserByUlId } from "../users/queries";
 
@@ -117,7 +117,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
     const _data = await readBody(event) as {
-        forms: Drizzle.Form.select,
+        forms: Drizzle.Form.select & { pages: FormElementData[] },
         stores: Stores,
         phone: string
     }
@@ -146,8 +146,10 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: creator.message || "Unknown error while getting form creator"
     } as APIResponse<string>, Status.internalServerError)
 
+    const [details, error] = await useAuth(event)
+
     if (!hasPaid) {
-        if(_data.forms.price < data.forms.price){
+        if (_data.forms.price < data.forms.price) {
             return useHttpEnd(event, {
                 statusCode: 400,
                 body: "Passed price is less than the allowed minimum for this form"
@@ -156,8 +158,11 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         return await processFormPayments(data.forms,
             { phone: _data.phone, amount: _data.forms.price },
             creator?.email || creator?.name || "Unknown", () => {
-                insertData(formUlid, _data).catch(log.error)
-                sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                insertData(formUlid, _data, _data.forms.price).catch(log.error)
+                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                if(details?.user) {
+                    sendUserMail({ email: details.user.email }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
+                }
             }).catch(err => {
                 return useHttpEnd(event, {
                     statusCode: Status.internalServerError,
@@ -171,7 +176,10 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                 body: err.message || "Unknown error while submitting form"
             } as APIResponse<string>, Status.internalServerError)
         })
-        sendUserMail({email: creator?.email}, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        sendUserMail({ email: creator?.email }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        if(details?.user) {
+            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+        }
         const response = {} as APIResponse<string>
         response.statusCode = Status.success
         response.body = "Form submitted"
@@ -203,6 +211,38 @@ router.get('/submissions/:formUlid', defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = submissions
 
+    return response
+}))
+
+router.get('/submissions/:formUlid/excel', defineEventHandler(async event => {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No form ID provided"
+    }, Status.badRequest)
+
+    const [details, error] = await useAuth(event)
+    if (error || !details) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: "Unauthorized"
+    })
+
+    const submissions = await getFormResponses(formUlid).catch(err => err as Error)
+    if (submissions instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: submissions.message || "Unknown error while getting form submissions"
+    }, Status.internalServerError)
+
+    const excel = await constructExcel(submissions).catch(err => err as Error)
+    if (excel instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: excel.message || "Unknown error while constructing excel"
+    }, Status.internalServerError)
+
+    const response = {} as APIResponse<string>
+    response.statusCode = Status.success
+    response.body = excel
+    
     return response
 }))
 

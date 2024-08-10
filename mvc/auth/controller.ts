@@ -1,5 +1,5 @@
 import {type APIResponse, Status} from "~/types";
-import {resetPassword, revokeAuthToken} from "~/mvc/auth/methods";
+import {resetPassword, revokeAuthToken, googleAuth} from "~/mvc/auth/methods";
 import {authenticate, createToken} from "~/mvc/auth/queries";
 import {createUser, getUserByEmail} from "~/mvc/users/queries";
 
@@ -186,6 +186,18 @@ router.post("/reset", defineEventHandler(async event => {
     response.statusCode = Status.success
     response.body = _token
     return response    
+}))
+
+router.use("/google/callback", defineEventHandler(async event => {
+    const response = {} as APIResponse
+    const {code, origin, ..._else} = getQuery(event)
+    console.log(code, origin, _else)
+    console.log(await readBody(event))
+    if (!code || !origin) {
+        response.statusCode = Status.badRequest
+        response.body = "Code and Origin are required"
+        return response
+    }
 }))
 
 

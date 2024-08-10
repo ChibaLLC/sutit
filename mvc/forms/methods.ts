@@ -32,7 +32,7 @@ async function makeSTKPush(phone: string, pay_for: string, amount: number, accou
 
 export async function sendUserMail(user: { userUlid?: string, email?: string }, message: string, subject: string) {
     let email = user.email
-    if (!email){
+    if (!email) {
         const _user = await getUserByUlId(user.userUlid!)
         email = _user?.email
     }
@@ -43,4 +43,24 @@ export async function sendUserMail(user: { userUlid?: string, email?: string }, 
         text: message,
         subject: subject
     })
+}
+
+export function constructExcel(data: {
+    stores: {
+        ulid: string;
+        createdAt: string;
+        updatedAt: string;
+        formUlid: string;
+        store: unknown;
+    } | null;
+    form_responses: {
+        price: number | null;
+        createdAt: string;
+        updatedAt: string;
+        formUlid: string;
+        response: unknown;
+        id: number;
+    };
+}) {
+    return undefined
 }
