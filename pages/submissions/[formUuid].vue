@@ -204,7 +204,7 @@ async function downloadExcel() {
                   {{ column.value }}
                 </td>
                 <td v-if="hasPayment()" class="px-6 py-4">
-                  {{ data.meta.price }}
+                  KES {{ data.meta.price }}
                 </td>
               </tr>
             </tbody>

@@ -11,7 +11,7 @@
     "start": "node .output/server/index.mjs",
     "test": "vitest",
     "introspect": "drizzle-kit introspect:pg",
-    "migrate": "drizzle-kit push:pg"
+    "migrate": "drizzle-kit generate:pg && drizzle-kit push:pg"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.11.2",
