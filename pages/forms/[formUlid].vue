@@ -90,8 +90,10 @@ async function submit() {
           })
           return
         }
+
+        const channelName = createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID)
         alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
-        realtime.value!.subscribe(createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID))
+        realtime.value!.subscribe(channelName)
         realtime.value!.on('error', (error) => {
           console.error(error)
           alert('Payment failed, please try again later')
@@ -100,7 +102,7 @@ async function submit() {
         realtime.value!.on("data", (_data: any) => {
           const data = parseData(_data)
           console.log(data)
-          if (data.channel !== createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID)) return console.warn('Invalid channel', data)
+          if (data.channel !== channelName) return console.warn('Invalid channel', data)
           switch (data?.type) {
             case TYPE.SUCCESS:
               loading.value = true

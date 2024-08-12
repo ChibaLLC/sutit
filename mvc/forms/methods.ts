@@ -45,7 +45,7 @@ export async function sendUserMail(user: { userUlid?: string, email?: string }, 
     })
 }
 
-export function constructExcel(data: {
+export async function constructExcel(data: {
     stores: {
         ulid: string;
         createdAt: string;
