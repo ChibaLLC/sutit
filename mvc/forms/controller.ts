@@ -1,17 +1,19 @@
-import { type APIResponse, Status } from "~/types";
+import {type APIResponse, Status} from "~/types";
 import {
+    assessForm,
     createForm,
+    createStore,
     getFormByUlid,
     getFormResponses,
     getFormsByUser,
-    assessForm,
-    insertData,
-    createStore
+    insertData
 } from "~/mvc/forms/queries";
-import type { Drizzle } from "~/db/types";
-import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
-import { constructExcel, processFormPayments, sendUserMail } from "./methods";
-import { getUserByUlId } from "../users/queries";
+import type {Drizzle} from "~/db/types";
+import type {FormElementData, Forms, Stores} from "@chiballc/nuxt-form-builder";
+import {constructExcel, processFormPayments, sendUserMail} from "./methods";
+import {getUserByUlId} from "../users/queries";
+import {resolve, join} from "pathe";
+import {readFile, mkdir, access, unlink} from "fs/promises";
 
 const router = createRouter()
 
@@ -156,19 +158,19 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
             })
         }
         return await processFormPayments(data.forms,
-            { phone: _data.phone, amount: _data.forms.price },
+            {phone: _data.phone, amount: _data.forms.price},
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data, _data.forms.price).catch(log.error)
-                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
-                if(details?.user) {
-                    sendUserMail({ email: details.user.email }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
+                sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                if (details?.user) {
+                    sendUserMail({email: details.user.email}, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
                 }
             }).catch(err => {
-                return useHttpEnd(event, {
-                    statusCode: Status.internalServerError,
-                    body: err.message || "Unknown error while processing payment"
-                } as APIResponse<string>, Status.internalServerError)
-            })
+            return useHttpEnd(event, {
+                statusCode: Status.internalServerError,
+                body: err.message || "Unknown error while processing payment"
+            } as APIResponse<string>, Status.internalServerError)
+        })
     } else {
         await insertData(formUlid, _data).catch(err => {
             useHttpEnd(event, {
@@ -176,9 +178,9 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                 body: err.message || "Unknown error while submitting form"
             } as APIResponse<string>, Status.internalServerError)
         })
-        sendUserMail({ email: creator?.email }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
-        if(details?.user) {
-            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+        sendUserMail({email: creator?.email}, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        if (details?.user) {
+            sendUserMail({email: details.user.email}, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
         }
         const response = {} as APIResponse<string>
         response.statusCode = Status.success
@@ -233,17 +235,18 @@ router.get('/submissions/:formUlid/excel', defineEventHandler(async event => {
         body: submissions.message || "Unknown error while getting form submissions"
     }, Status.internalServerError)
 
-    const excel = await constructExcel(submissions).catch(err => err as Error)
+    const excel = await constructExcel(submissions, details.user).catch(err => err as Error)
     if (excel instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: excel.message || "Unknown error while constructing excel"
     }, Status.internalServerError)
 
-    const response = {} as APIResponse<string>
-    response.statusCode = Status.success
-    response.body = excel
-    
-    return response
+    return new Response(await excel.writeBuffer(), {
+        headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': `attachment; filename=${formUlid}.xlsx`
+        }
+    })
 }))
 
 export default useController('forms', router)
