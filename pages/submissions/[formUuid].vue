@@ -219,9 +219,6 @@ async function downloadExcel() {
               <td v-for="column of data.fields" class="px-6 py-4">
                 {{ column.value }}
               </td>
-              <pre>
-                {{data}}
-              </pre>
               <td v-if="hasPayment()" class="px-6 py-4">
                 KES {{ data.meta.price }}
               </td>
