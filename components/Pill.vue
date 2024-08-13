@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="border-gray-200 bottom-4 bg-[#262626] fixed rounded shadow z-10 right-1/2 transform translate-x-1/2">
+  <div class="border-gray-200 bottom-4 bg-[#262626] fixed rounded shadow z-10 right-1/2 transform translate-x-1/2 hover:opacity-100 opacity-50 transition-opacity duration-300">
     <div class="flex rounded">
       <NuxtLink to="/"
         class="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-400 transition-all hover:text-gray-50 w-32 justify-center">

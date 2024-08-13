@@ -178,7 +178,6 @@ function completeForm() {
 <template>
   <Title>Form | {{ data.forms.formName }}</Title>
   <div class="flex min-h-screen -mt-3">
-    <Pill />
     <div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
         <h1 class="text-2xl p-2 font-bold flex items-center content-center">
@@ -194,15 +193,15 @@ function completeForm() {
           {{ data.forms.formDescription }}
         </p>
       </div>
-      <form class="form" @submit.prevent>
+      <form class="pb-4 mt-2" @submit.prevent>
         <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           :show-spinner="loading" />
-        <div class="flex w-full px-4 ml-0.5 relative justify-between">
+        <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2">
           <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
             This form requires payment for submission of <br>
             <span class="text-red-400">Amount Due: {{ data.forms.price }}</span> KES
           </small>
-          <div class="mt-4">
+          <div>
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
               Back
             </button>

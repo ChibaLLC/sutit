@@ -13,7 +13,7 @@ const forms = data.value?.body
 <template>
   <Title>Submissions</Title>
   <div class="flex min-h-screen w-full -mt-3">
-    <Aside />
+    <Pill />
   </div>
 </template>
 
