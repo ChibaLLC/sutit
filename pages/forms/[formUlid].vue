@@ -196,7 +196,7 @@ function completeForm() {
       <form class="pb-4 mt-2" @submit.prevent>
         <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           :show-spinner="loading" />
-        <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2">
+        <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
             This form requires payment for submission of <br>
             <span class="text-red-400">Amount Due: {{ data.forms.price }}</span> KES
