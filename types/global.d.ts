@@ -8,4 +8,5 @@ declare global {
     }
 
     var log: ConsolaInstance
+    var alert: (message: string, onClose: string, icon: string) => void
 }

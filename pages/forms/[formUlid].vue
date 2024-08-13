@@ -178,7 +178,7 @@ function completeForm() {
 <template>
   <Title>Form | {{ data.forms.formName }}</Title>
   <div class="flex min-h-screen -mt-3">
-    <Aside />
+    <Pill />
     <div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
         <h1 class="text-2xl p-2 font-bold flex items-center content-center">

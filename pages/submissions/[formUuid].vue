@@ -175,7 +175,7 @@ async function downloadExcel() {
   <Title>Submissions | {{ ulid }}</Title>
   <ClientOnly>
     <div class="flex min-h-screen w-full -mt-3">
-      <Aside/>
+      <Pill />
       <main class="w-full flex flex-col items-center">
         <div class="mt-4 w-full flex justify-between items-center px-10">
           <span class="text-2xl font-bold text-left">Submissions for {{ capitalize(form?.forms.formName!) }}</span>

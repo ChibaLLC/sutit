@@ -16,14 +16,14 @@
               <h1 class="font-semibold text-5xl text-slate-900">
                 Your success story starts with us.
               </h1>
-              <p class="mt-4 text-lg">
-               Supply Chain end to end efficiency
+              <p class="mt-4 text-lg mb-3">
+                Supply Chain end to end efficiency
                 Automate Marketing/Sales, Purchase/Orders, Payments till Receipt/Order Fulfillment😋
               </p>
-              <button @click="navigateTo('/forms')"
-                class="bg-white text-gray-800 active:bg-gray-100 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 mt-3 hover:bg-slate-300 transition-all duration-500 ease-in-out">Get
-                Started
-              </button>
+              <NuxtLink to="/forms"
+                class="bg-white text-gray-800 active:bg-gray-100 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 mt-5 hover:bg-slate-300 transition-all duration-500 ease-in-out">
+                Get Started
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -62,7 +62,7 @@
                 </div>
                 <h6 class="text-xl font-semibold">How It's Going</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  Innovation, collaboration, sustainability and Business Intelligence at its core. 
+                  Innovation, collaboration, sustainability and Business Intelligence at its core.
                   All Inclusive, seamless and easy to use.
                 </p>
               </div>
@@ -77,7 +77,8 @@
                 </div>
                 <h6 class="text-xl font-semibold">The Vision</h6>
                 <p class="mt-2 mb-4 text-gray-600">
-                  Futuristic ubiquitous unified platform where supply chains operate with unparalleled efficiency through the use of cutting-edge technology 
+                  Futuristic ubiquitous unified platform where supply chains operate with unparalleled efficiency
+                  through the use of cutting-edge technology
                 </p>
               </div>
             </div>
@@ -93,8 +94,9 @@
               Working with us is a pleasure
             </h3>
             <p class="text-lg font-light leading-relaxed mt-4 mb-4 text-gray-700">
-              We are here to Co-elevate  
-              We are a team of dedicated and passionate individuals who are ready to learn and work together for a competitive edge to our businesses.
+              We are here to Co-elevate
+              We are a team of dedicated and passionate individuals who are ready to learn and work together for a
+              competitive edge to our businesses.
               Ultimate goal is to eliminate inefficiencies, lower costs, and enhance overall supply chain performance.
             </p>
           </div>
@@ -112,7 +114,8 @@
                   Top Notch Services
                 </h4>
                 <p class="text-md font-light mt-2 text-white">
-                 The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that process will continue whatever happens.
+                  The Arctic Ocean freezes every winter and much of the sea-ice then thaws every summer, and that
+                  process will continue whatever happens.
                 </p>
                 <p class="text-md font-light mt-0 text-white">
                   We are inevitable, just like the seasons. Robust Business Intelligence (BI) platform
@@ -148,7 +151,7 @@
                 We are currently working on a lot of capabilities and functionalities stay tuned!
               </p>
               <ul class="list-none mt-6">
-                
+
                 <li class="py-2">
                   <div class="flex items-center">
                     <div>
@@ -177,7 +180,7 @@
                     </div>
                   </div>
                 </li>
-                
+
                 <li class="py-2">
                   <div class="flex items-center">
                     <div>

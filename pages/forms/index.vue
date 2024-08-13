@@ -10,8 +10,11 @@ const formsStores = ref<any[]>([])
 const {data} = await useFetch<APIResponse<any>>("/api/v1/forms/me", {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`,
+  },
+  onResponseError({response}) {
+    console.error(response)
   }
-}).catch(console.error)
+})
 
 const res = data.value as APIResponse<any>
 if (res?.statusCode === Status.success) {
@@ -44,12 +47,12 @@ function navigateIfTarget(event: MouseEvent, location: string) {
 <template>
   <Title>Dashboard</Title>
   <div class="flex min-h-screen w-full -mt-3">
-    <Aside/>
+    <Pill />
     <main class="w-full flex flex-col items-center">
       <div class="relative rounded-xl overflow-auto">
         <div class="flex self-start">
           <NuxtLink to="/forms/create"
-                    class="p-4 mb-5 bg-emerald-700 text-white rounded mt-4 ml-auto hover:bg-emerald-600 transition-colors">
+                    class="px-4 py-2 mb-5 bg-emerald-700 text-white rounded mt-4 ml-auto hover:bg-emerald-600 transition-colors">
             Create Form
           </NuxtLink>
         </div>

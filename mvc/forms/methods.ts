@@ -94,7 +94,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
 
     const titles: string[] = getFields(form.pages as Record<string, FormElementData[]>).map(field => field.label)
     if(hasPayment) titles.push("Price")
-    worksheet.addRow(titles)
+    worksheet.addRow(titles).font = {bold: true}
 
     const responses = (response: Entries[]) => {
         if (!response) return {} as {
