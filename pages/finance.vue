@@ -1,2 +1,3 @@
 <template>
+    Coming Soon
 </template>

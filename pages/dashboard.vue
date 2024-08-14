@@ -72,7 +72,7 @@
                 </div>
             </div>
         </NuxtLink>
-        <div class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px]">
+        <NuxtLink class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300" to="/finance">
             <div class="relative flex flex-col min-w-0 break-words bg-white rounded mb-6 xl:mb-0 shadow-lg h-full">
                 <div class="flex-auto p-4 h-full">
                     <div class="flex">
@@ -104,24 +104,26 @@
                     </p>
                 </div>
             </div>
-        </div>
+        </NuxtLink>
     </div>
-    <div class="flex flex-col px-4 xl:px-6 mt-8">
+    <div class="flex flex-col px-4 xl:px-6 mt-8 w-full">
         <h1 class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto uppercase font-bold mt-1">Recents</h1>
         <ul class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto recent-list" v-if="recents?.forms.length">
-            <li v-for="item in recents?.forms" class="flex align-middle gap-3 m-auto p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+            <li v-for="item in recents?.forms" class="flex align-middle gap-3 m-auto p-2 w-full">
+                <div class="w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                     class="w-6 h-6 text-gray-500">
                     <path
                         d="M17 2V4H20.0066C20.5552 4 21 4.44495 21 4.9934V21.0066C21 21.5552 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5551 3 21.0066V4.9934C3 4.44476 3.44495 4 3.9934 4H7V2H17ZM7 6H5V20H19V6H17V8H7V6ZM9 16V18H7V16H9ZM9 13V15H7V13H9ZM9 10V12H7V10H9ZM15 4H9V6H15V4Z">
                     </path>
                 </svg>
+                </div>
                 <div class="flex w-full">
-                    <div class="flex w-full">
-                        <h2>{{ item.formName }}</h2>
-                        <p>{{ item.formDescription }}</p>
+                    <div class="inline-flex align-middle">
+                        <h2 class="text-[#262626] text-nowrap text-ellipsis overflow-clip h-full uppercase font-semibold mr-2 mt-auto w-[100px]" style="font-size: 0.85rem;">{{ item.formName }}</h2>
+                        <span class="text-gray-500 text-nowrap text-ellipsis overflow-clip h-full flex-1 max-w-[200px]" style="font-size: 0.85rem;">{{ item.formDescription }}</span>
                     </div>
-                    <div class="flex">
+                    <div class="inline-flex w-fit ml-auto">
                         <NuxtLink :to="`/forms/${item.ulid}`">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-6 h-6 hover:text-blue-500 text-gray-500 transition-colors">
