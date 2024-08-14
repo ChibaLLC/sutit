@@ -101,7 +101,6 @@ async function submit() {
 
         realtime.value!.on("data", (_data: any) => {
           const data = parseData(_data)
-          console.log(data)
           if (data.channel !== channelName) return console.warn('Invalid channel', data)
           switch (data?.type) {
             case TYPE.SUCCESS:

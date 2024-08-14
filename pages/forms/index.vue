@@ -39,13 +39,12 @@ function getShareableLink(formUuid: string) {
 }
 
 function navigateIfTarget(event: MouseEvent, location: string) {
-  console.log(event.target?.tagName)
   if (event.target?.tagName?.toLowerCase() !== 'td') return
   navigateTo(location)
 }
 </script>
 <template>
-  <Title>Dashboard</Title>
+  <Title>Forms</Title>
   <div class="flex min-h-screen w-full -mt-3">
     <Pill />
     <main class="w-full flex flex-col items-center">

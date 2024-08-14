@@ -1,7 +1,7 @@
 import { formPayments, forms, payments, formResponses, storeResponses, stores } from "~/db/drizzle/schema";
 import db from "~/db";
 import { type Drizzle } from "~/db/types";
-import { and, eq } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { ulid } from "ulid";
 import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
 
@@ -18,12 +18,27 @@ export async function createForm(name: string, description: string, price: numbe
     return _form.ulid
 }
 
+export async function updateForm(formUlid: string, name: string, description: string, price: number, pages: Forms) {
+    await db.update(forms).set({
+        formName: name,
+        formDescription: description,
+        price: price,
+        pages: pages
+    }).where(eq(forms.ulid, formUlid))
+}
+
 export async function createStore(formUlid: string, store: Stores) {
     await db.insert(stores).values({
         ulid: ulid(),
         formUlid: formUlid,
         store: store
     } satisfies Drizzle.Store.insert)
+}
+
+export async function updateStore(formUlid: string, store: Stores) {
+    await db.update(stores).set({
+        store: store
+    }).where(eq(stores.formUlid, formUlid))
 }
 
 export async function getFormByUlid(formUlid: string) {
@@ -53,13 +68,15 @@ export async function getFormResponses(formUlId: string) {
     return db.select().from(formResponses)
         .where(eq(formResponses.formUlid, formUlId))
         .leftJoin(stores, eq(stores.formUlid, formResponses.formUlid))
+        .orderBy(desc(formResponses.createdAt))
 }
 
 export async function getFormsByUser(userUlid: string) {
     return db.select()
         .from(forms)
         .where(eq(forms.userUlid, userUlid))
-        .innerJoin(stores, eq(stores.formUlid, forms.ulid));
+        .innerJoin(stores, eq(stores.formUlid, forms.ulid))
+        .orderBy(desc(forms.createdAt))
 }
 
 export async function insertFormPayment(details: {
@@ -105,4 +122,12 @@ export async function assessForm(formUlid: string, phone: string): Promise<[{ fo
         .where(eq(payments.phoneNumber, `254${phone.slice(-9)}`))
         .innerJoin(formPayments, and(eq(formPayments.paymentUlid, payments.ulid), eq(formPayments.formUlid, formUlid)))
     return [form, _payments.length > 0]
+}
+
+
+export async function getRecentForms(userUlid: string) {
+    return db.select().from(forms)
+        .where(eq(forms.userUlid, userUlid))
+        .limit(5)
+        .orderBy(desc(forms.updatedAt))
 }

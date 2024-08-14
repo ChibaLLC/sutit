@@ -420,3 +420,8 @@
   @apply animate-pulse;
 }
 </style>
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'dash'
+})
+</script>

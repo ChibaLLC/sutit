@@ -6,7 +6,9 @@ import {
     getFormByUlid,
     getFormResponses,
     getFormsByUser,
-    insertData
+    insertData,
+    updateForm,
+    updateStore
 } from "~/mvc/forms/queries";
 import type {Drizzle} from "~/db/types";
 import type {FormElementData, Forms, Stores} from "@chiballc/nuxt-form-builder";
@@ -82,6 +84,62 @@ router.post('/create', defineEventHandler(async event => {
 
     const response = {} as APIResponse<string>
     response.statusCode = Status.created
+    response.body = formUlid
+
+    return response
+}))
+
+
+router.post("/update/:formUlid", defineEventHandler(async event => {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No form ID provided"
+    }, Status.badRequest)
+
+    const [details, error] = await useAuth(event)
+    if (error || !details) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: "Unauthorized"
+    })
+
+    const form = await readBody(event) as {
+        name: string,
+        description: string,
+        payment: {
+            amount: number,
+        },
+        formData: {
+            pages: Forms,
+            stores: Stores,
+        }
+    }
+
+    if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
+        return useHttpEnd(event, {
+            statusCode: Status.badRequest,
+            body: "No form data or store data provided"
+        }, Status.badRequest)
+    }
+
+    const err = await updateForm(formUlid, form.name, form.description, form.payment.amount, form.formData.pages).catch(err => err as Error)
+    if (err instanceof Error) {
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: err?.message || "Unknown error while updating form"
+        } as APIResponse<string>, Status.internalServerError)
+    }
+
+    const storeResult = await updateStore(formUlid, form.formData.stores).catch(err => err as Error)
+    if (storeResult instanceof Error) {
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: storeResult?.message || "Unknown error while updating form store"
+        } as APIResponse<string>, Status.internalServerError)
+    }
+
+    const response = {} as APIResponse<string>
+    response.statusCode = Status.success
     response.body = formUlid
 
     return response

@@ -92,7 +92,7 @@ function closeFormDetailsModal() {
       <label for="form-name">Name</label>
       <input type="text" id="form-name"
              class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
-             placeholder="Name of the form" v-model="submitData.name">
+             placeholder="Name of the form (Required)" v-model="submitData.name">
       <small class="text-gray-500">This will be the title of the form</small>
     </div>
     <div class="mt-4">

@@ -3,6 +3,7 @@ import db from "~/db";
 import {sessions, users} from "~/db/drizzle/schema";
 import {and, eq} from "drizzle-orm";
 import {ulid} from "ulid";
+import { getRecentForms as _getRecentForms } from "../forms/queries";
 
 export async function getUserByToken(token: string): Promise<Drizzle.User.select | null> {
     if (!token) return null
@@ -62,4 +63,9 @@ export async function getUserByUlId(ulid: string) {
             log.error(e)
             return []
         })).at(0) || null
+}
+
+
+export async function getRecentForms(userUlid: string) {
+    return await _getRecentForms(userUlid)
 }
