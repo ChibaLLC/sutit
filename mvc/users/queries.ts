@@ -21,7 +21,7 @@ export async function getUserByToken(token: string): Promise<Drizzle.User.select
 export async function getUserByEmail(email: string): Promise<Drizzle.User.select | null> {
     const rows = await db.select()
         .from(users)
-        .where(and(eq(users.email, email)))
+        .where(and(eq(users.email, email.toLowerCase())))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to get users')
@@ -38,7 +38,7 @@ export async function createUser(data: {
     const auth = hashPassword(data.password)
     const values = {
         name: data.name,
-        email: data.email,
+        email: data.email.toLowerCase(),
         password: auth.hash,
         salt: auth.salt,
         ulid: ulid()

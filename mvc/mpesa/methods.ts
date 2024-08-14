@@ -31,3 +31,7 @@ export async function call_stk(phone_number: number, amount: number, description
     }
     return response.data
 }
+
+export async function call_b2c() {
+    return true
+}

@@ -172,6 +172,10 @@
 import type { Drizzle } from '~/db/types';
 import type { APIResponse } from '~/types';
 
+definePageMeta({
+    middleware: ['auth']
+})
+
 const formCount = ref(0);
 const moneyCount = ref(0);
 const reachCount = ref(0);

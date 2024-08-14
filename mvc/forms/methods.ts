@@ -4,7 +4,7 @@ import {createChannelName} from "~/server/utils/socket";
 import {getUserByUlId} from "../users/queries";
 import excel from "exceljs";
 import type {FormElementData} from "@chiballc/nuxt-form-builder";
-import {getFormByUlid} from "~/mvc/forms/queries";
+import {getFormByUlid, getFormResponses} from "~/mvc/forms/queries";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -125,4 +125,20 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     })
 
     return workbook.xlsx
+}
+
+
+async function withdrawFunds(formUlid: string, phone: string){
+    const responses = await getFormResponses(formUlid)
+    const form = await getFormByUlid(formUlid)
+    let baseRevenue = (form?.forms.price || 0) * responses.length
+    let storeRevenue = 0
+
+    for (const response of responses){
+        const stores = response.stores
+        if(!stores) continue
+        
+    }
+
+    const totalRevenue = baseRevenue + storeRevenue
 }
