@@ -12,7 +12,7 @@ import {
 } from "~/mvc/forms/queries";
 import type {Drizzle} from "~/db/types";
 import type {FormElementData, Forms, Stores} from "@chiballc/nuxt-form-builder";
-import {constructExcel, processFormPayments, sendUserMail} from "./methods";
+import {constructExcel, processFormPayments, sendUserMail, withdrawFunds} from "./methods";
 import {getUserByUlId} from "../users/queries";
 
 const router = createRouter()
@@ -173,7 +173,7 @@ router.get("/forms/credit/:formUlid", defineEventHandler(async event => {
         body: "Unauthorized"
     }, Status.forbidden)
 
-    const result = await withdrawFunds(formUlid).catch(err => err as Error)
+    const result = await withdrawFunds(formUlid, '0').catch(err => err as Error)
     if (result instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: result?.message || "Unknown error while withdrawing funds"

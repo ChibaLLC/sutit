@@ -128,7 +128,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
 }
 
 
-async function withdrawFunds(formUlid: string, phone: string){
+export async function withdrawFunds(formUlid: string, phone: string){
     const responses = await getFormResponses(formUlid)
     const form = await getFormByUlid(formUlid)
     let baseRevenue = (form?.forms.price || 0) * responses.length
