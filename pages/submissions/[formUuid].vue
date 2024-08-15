@@ -194,7 +194,7 @@ async function credit() {
       phone: phone.value
     },
     onResponseError({ response }) {
-      console.log(response)
+      alert(response._data.body || 'Failed to credit, an error occcured')
       loadingCheckout.value = false
     },
     onRequestError({ error }) {
@@ -208,8 +208,6 @@ async function credit() {
 
   if (res?.statusCode === Status.success) {
     alert('Credited successfully')
-  } else {
-    alert('Failed to credit ' + res?.body)
   }
   loadingCheckout.value = false
 }

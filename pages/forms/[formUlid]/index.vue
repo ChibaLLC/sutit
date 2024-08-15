@@ -193,7 +193,7 @@ function completeForm() {
           {{ data.forms.formDescription }}
         </p>
       </div>
-      <form class="pb-4 mt-2" @submit.prevent>
+      <form class="pb-4 mt-2 min-h-max" @submit.prevent>
         <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
