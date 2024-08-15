@@ -51,6 +51,7 @@ export const forms = pgTable("forms", {
 	formDescription: text("form_description"),
 	pages: jsonb("pages").notNull(),
 	price: integer("price").notNull(),
+	withDrawnFunds: integer("withdrawn_funds").default(0).notNull(),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
@@ -108,6 +109,15 @@ export const storeResponses = pgTable("store_responses", {
 	id: serial("id").primaryKey().notNull(),
 	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "cascade" }),
 	response: jsonb("response"),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+});
+
+
+export const withDrawals = pgTable("with_drawals", {
+	id: serial("id").primaryKey().notNull(),
+	amount: integer("amount").notNull(),
+	transactionCode: varchar("transaction_code", { length: 30 }).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });

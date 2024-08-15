@@ -1,7 +1,7 @@
 import { formPayments, forms, payments, formResponses, storeResponses, stores } from "~/db/drizzle/schema";
 import db from "~/db";
 import { type Drizzle } from "~/db/types";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
 import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
 
@@ -46,7 +46,7 @@ export async function getFormByUlid(formUlid: string) {
     return results.at(0)
 }
 
-export async function insertData(formUlid: string, data: { forms: {pages: FormElementData[]}, stores: Stores }, price?: string | number) {
+export async function insertData(formUlid: string, data: { forms: { pages: FormElementData[] }, stores: Stores }, price?: string | number) {
     await db.insert(formResponses).values({
         formUlid: formUlid,
         response: data.forms.pages,
@@ -107,8 +107,65 @@ export async function getPayment(referenceCode: string) {
         .where(eq(payments.referenceCode, referenceCode))).at(0)
 }
 
-export async function getFormPayment(formUulid: string) {
+export async function getFormPayments(formUulid: string) {
     return db.select().from(formPayments).where(eq(formPayments.formUlid, formUulid))
+}
+
+export async function getFormPaymentsSum(formUulid: string) {
+    const form = await getFormByUlid(formUulid)
+    if (!form) return 0
+    const result = await db.select({ total: sum(payments.amount) })
+        .from(formPayments)
+        .where(eq(formPayments.formUlid, formUulid))
+        .innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid))
+
+    const total = result.reduce((acc, curr) => {
+        const { total } = curr
+        if (!total) return acc
+        return acc + +total
+    }, 0)
+
+    return total - form.forms.withDrawnFunds
+}
+
+export async function getAllFormPayments(userUlid: string) {
+    return db.select().from(forms).where(eq(forms.userUlid, userUlid)).innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
+}
+
+export async function getAllFormPaymentsSum(userUlid: string) {
+    const _sum = await db.select({ total: sum(payments.amount) })
+        .from(forms)
+        .where(eq(forms.userUlid, userUlid))
+        .innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
+        .innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid))
+        .groupBy(forms.ulid)
+
+    return _sum.reduce((acc, curr) => {
+        const { total } = curr
+        if (!total) return acc
+        return acc + +total
+    }, 0)
+}
+
+export async function getFormCount(userUlid: string) {
+    const result = await db.select({ count: count(forms.ulid) }).from(forms).where(eq(forms.userUlid, userUlid))
+    return result.reduce((acc, curr) => {
+        const { count } = curr
+        if (!count) return acc
+        return acc + +count
+    }, 0)
+}
+
+export async function getResponsesCount(userUlid: string) {
+    const result = await db.select({ count: count(forms.ulid) })
+        .from(forms)
+        .where(eq(forms.userUlid, userUlid))
+        .innerJoin(formResponses, eq(formResponses.formUlid, forms.ulid))
+    return result.reduce((acc, curr) => {
+        const { count } = curr
+        if (!count) return acc
+        return acc + +count
+    }, 0)
 }
 
 
@@ -130,4 +187,12 @@ export async function getRecentForms(userUlid: string) {
         .where(eq(forms.userUlid, userUlid))
         .limit(5)
         .orderBy(desc(forms.updatedAt))
+}
+
+
+export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {
+    const form = await getFormByUlid(formUlid)
+    await db.update(forms).set({
+        withDrawnFunds: Number((form?.forms.withDrawnFunds || 0)) + amount
+    }).where(eq(forms.ulid, formUlid))
 }

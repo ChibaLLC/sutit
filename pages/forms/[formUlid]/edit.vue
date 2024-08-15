@@ -63,7 +63,7 @@ async function submit(data: FormStoreData) {
     })
 
     if (res.statusCode < 299) {
-        alert('Form created successfully')
+        alert('Form edit successful')
         await navigateTo('/forms')
     } else {
         alert(res.body)

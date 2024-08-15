@@ -1,19 +1,20 @@
-import {type APIResponse, Status} from "~/types";
+import { type APIResponse, Status } from "~/types";
 import {
     assessForm,
     createForm,
     createStore,
     getFormByUlid,
+    getFormPaymentsSum,
     getFormResponses,
     getFormsByUser,
     insertData,
     updateForm,
     updateStore
 } from "~/mvc/forms/queries";
-import type {Drizzle} from "~/db/types";
-import type {FormElementData, Forms, Stores} from "@chiballc/nuxt-form-builder";
-import {constructExcel, processFormPayments, sendUserMail, withdrawFunds} from "./methods";
-import {getUserByUlId} from "../users/queries";
+import type { Drizzle } from "~/db/types";
+import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
+import { constructExcel, getStats, processFormPayments, sendUserMail, withdrawFunds } from "./methods";
+import { getUserByUlId } from "../users/queries";
 
 const router = createRouter()
 
@@ -145,7 +146,55 @@ router.post("/update/:formUlid", defineEventHandler(async event => {
     return response
 }))
 
-router.get("/forms/credit/:formUlid", defineEventHandler(async event => {
+router.post("/credit/:formUlid", defineEventHandler(async event => {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No form ID provided"
+    }, Status.badRequest)
+
+    const phonePayload = await readBody(event) as { phone: string }
+    if (!phonePayload) return useHttpEnd(event, {
+        statusCode: Status.badRequest,
+        body: "No phone number provided"
+    }, Status.badRequest)
+
+    const [details, error] = await useAuth(event)
+    if (error || !details) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: "Unauthorized"
+    })
+
+    const form = await getFormByUlid(formUlid).catch(err => err as Error)
+    if (form instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: form?.message || "Unknown error while getting form"
+    } as APIResponse<string>, Status.internalServerError)
+    if (!form) return useHttpEnd(event, {
+        statusCode: Status.notFound,
+        body: "Form not found"
+    }, Status.notFound)
+
+    if (form.forms.userUlid !== details.user.ulid) return useHttpEnd(event, {
+        statusCode: Status.forbidden,
+        body: "Unauthorized"
+    }, Status.forbidden)
+
+    const result = await withdrawFunds({ formUlid, phone: phonePayload.phone, reason: "User Initiated Form Witdrawal" }).catch(err => err as Error)
+    if (result instanceof Error) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: result?.message || "Unknown error while withdrawing funds"
+    } as APIResponse<string>, Status.internalServerError)
+
+    const response = {} as APIResponse<string>
+    response.statusCode = Status.success
+    response.body = "Funds withdrawn"
+
+    return response
+}))
+
+
+router.get("/submissions/:formUlid/total", defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid
     if (!formUlid) return useHttpEnd(event, {
         statusCode: Status.badRequest,
@@ -168,20 +217,20 @@ router.get("/forms/credit/:formUlid", defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if(form.forms.userUlid !== details.user.ulid) return useHttpEnd(event, {
+    if (form.forms.userUlid !== details.user.ulid) return useHttpEnd(event, {
         statusCode: Status.forbidden,
         body: "Unauthorized"
     }, Status.forbidden)
 
-    const result = await withdrawFunds(formUlid, '0').catch(err => err as Error)
-    if (result instanceof Error) return useHttpEnd(event, {
+    const total = await getFormPaymentsSum(formUlid).catch(err => err as Error)
+    if (total instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
-        body: result?.message || "Unknown error while withdrawing funds"
+        body: total?.message || "Unknown error while getting form payments total"
     } as APIResponse<string>, Status.internalServerError)
 
-    const response = {} as APIResponse<string>
+    const response = {} as APIResponse<number>
     response.statusCode = Status.success
-    response.body = "Funds withdrawn"
+    response.body = total
 
     return response
 }))
@@ -205,6 +254,28 @@ router.get('/me', defineEventHandler(async event => {
 
     response.statusCode = Status.success
     response.body = forms
+    return response
+}))
+
+router.get("/me/stats", defineEventHandler(async event => {
+    const response = {} as APIResponse<{ forms: number, responses: number, earnings: number }>
+    const [details, error] = await useAuth(event)
+    if (!details) return useHttpEnd(event, {
+        statusCode: Status.unauthorized,
+        body: "Unauthorized"
+    }, Status.unauthorized)
+
+    const forms = await getStats(details.user.ulid).catch(err => err as Error)
+    if (forms instanceof Error) {
+        return useHttpEnd(event, {
+            body: forms.message,
+            statusCode: Status.internalServerError
+        }, Status.internalServerError)
+    }
+
+    response.statusCode = Status.success
+    response.body = forms
+
     return response
 }))
 
@@ -255,19 +326,19 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
             })
         }
         return await processFormPayments(data.forms,
-            {phone: _data.phone, amount: _data.forms.price},
+            { phone: _data.phone, amount: _data.forms.price },
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data, _data.forms.price).catch(log.error)
-                sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
                 if (details?.user) {
-                    sendUserMail({email: details.user.email}, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
+                    sendUserMail({ email: details.user.email }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
                 }
             }).catch(err => {
-            return useHttpEnd(event, {
-                statusCode: Status.internalServerError,
-                body: err.message || "Unknown error while processing payment"
-            } as APIResponse<string>, Status.internalServerError)
-        })
+                return useHttpEnd(event, {
+                    statusCode: Status.internalServerError,
+                    body: err.message || "Unknown error while processing payment"
+                } as APIResponse<string>, Status.internalServerError)
+            })
     } else {
         await insertData(formUlid, _data).catch(err => {
             useHttpEnd(event, {
@@ -275,9 +346,9 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                 body: err.message || "Unknown error while submitting form"
             } as APIResponse<string>, Status.internalServerError)
         })
-        sendUserMail({email: creator?.email}, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        sendUserMail({ email: creator?.email }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
         if (details?.user) {
-            sendUserMail({email: details.user.email}, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
         }
         const response = {} as APIResponse<string>
         response.statusCode = Status.success

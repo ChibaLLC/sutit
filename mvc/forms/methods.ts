@@ -1,10 +1,10 @@
-import type {Drizzle} from "~/db/types";
-import {call_stk} from "~/mvc/mpesa/methods";
-import {createChannelName} from "~/server/utils/socket";
-import {getUserByUlId} from "../users/queries";
+import type { Drizzle } from "~/db/types";
+import { call_b2c, call_stk } from "~/mvc/mpesa/methods";
+import { createChannelName } from "~/server/utils/socket";
+import { getUserByUlId } from "../users/queries";
 import excel from "exceljs";
-import type {FormElementData} from "@chiballc/nuxt-form-builder";
-import {getFormByUlid, getFormResponses} from "~/mvc/forms/queries";
+import type { FormElementData } from "@chiballc/nuxt-form-builder";
+import { getFormByUlid, getFormCount, getFormPaymentsSum, getFormResponses, getResponsesCount, updateFormWithdrawnFunds } from "~/mvc/forms/queries";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -21,7 +21,7 @@ export async function processFormPayments(form: Drizzle.Form.select, details: {
     const result = await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
     const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID)
     if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map()
-    global.formPaymentProcessingQueue.set(channel, {form, callback})
+    global.formPaymentProcessingQueue.set(channel, { form, callback })
     return {
         statusCode: 201,
         body: {
@@ -93,8 +93,8 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     const worksheet = workbook.addWorksheet(form.formName)
 
     const titles: string[] = getFields(form.pages as Record<string, FormElementData[]>).map(field => field.label)
-    if(hasPayment) titles.push("Price")
-    worksheet.addRow(titles).font = {bold: true}
+    if (hasPayment) titles.push("Price")
+    worksheet.addRow(titles).font = { bold: true }
 
     const responses = (response: Entries[]) => {
         if (!response) return {} as {
@@ -110,6 +110,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
             } else {
                 return {
                     meta: entry.form_responses,
+                    // @ts-ignore
                     response: entry.form_responses.response!.pages
                 }
             }
@@ -118,8 +119,9 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
 
     responses(data).forEach(response => {
         const values: string[] = getFields(response.response as Record<string, FormElementData[]>).map(field => field.value)
-        if (hasPayment){
-            values.push(response.meta.price?.toString() || "UNRECORDED")
+        if (hasPayment) {
+            // @ts-ignore
+            values.push(response.meta?.price?.toString() || "UNRECORDED")
         }
         worksheet.addRow(values)
     })
@@ -127,18 +129,27 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     return workbook.xlsx
 }
 
+export async function withdrawFunds(data: { formUlid: string, phone: string, reason: string }) {
+    const total = await getFormPaymentsSum(data.formUlid)
+    if (!total) return log.error("No payments found")
+    
 
-export async function withdrawFunds(formUlid: string, phone: string){
-    const responses = await getFormResponses(formUlid)
-    const form = await getFormByUlid(formUlid)
-    let baseRevenue = (form?.forms.price || 0) * responses.length
-    let storeRevenue = 0
+    const result = await call_b2c({ phone_number: String(data.phone), amount: total, reason: data.reason })
+    if (!result) return log.error("Failed to send funds")
 
-    for (const response of responses){
-        const stores = response.stores
-        if(!stores) continue
-        
+    await updateFormWithdrawnFunds(data.formUlid, total)
+
+    return result
+}
+
+
+export async function getStats(userUlid: string) {
+    const formsCount = await getFormCount(userUlid)
+    const responsesCount = await getResponsesCount(userUlid)
+    const totalPayments = await getFormPaymentsSum(userUlid)
+    return {
+        forms: formsCount,
+        responses: responsesCount,
+        earnings: totalPayments
     }
-
-    const totalRevenue = baseRevenue + storeRevenue
 }

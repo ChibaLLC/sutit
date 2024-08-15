@@ -127,10 +127,28 @@ export type StkCallbackHook = {
     }
 }
 
-export enum DarajaLinks {
-    OAuth_Access_Token = "https://sandbox.safaricom.co.ke/oauth/v1/generate",
-    STK_Push = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-}
+export type B2cCallback = {
+    Result: {
+        ResultType: number;
+        ResultCode: number;
+        ResultDesc: string;
+        OriginatorConversationID: string;
+        ConversationID: string;
+        TransactionID: string;
+        ResultParameters: {
+            ResultParameter: {
+                Key: string;
+                Value: string | number;
+            }[];
+        };
+        ReferenceData: {
+            ReferenceItem: {
+                Key: string;
+                Value: string;
+            };
+        };
+    };
+};
 
 export const callBackIpWhitelist = [
     '196.201.214.200',

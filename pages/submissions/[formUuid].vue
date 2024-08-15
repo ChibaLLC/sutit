@@ -169,36 +169,67 @@ async function downloadExcel() {
   a.remove()
 }
 
+const total = await useFetch<APIResponse<number>>(`/api/v1/forms/submissions/${ulid}/total`, {
+  headers: {
+    Authorization: `Bearer ${getAuthToken()}`
+  },
+  onResponseError({ response }) {
+    console.log(response)
+  }
+}).then(({ data }) => data.value?.body)
+
 const loadingCheckout = ref(false)
+const phone = ref('')
+const con_phone = ref('')
+const helpText = ref(false)
+const noMatch = ref(false)
 async function credit() {
   loadingCheckout.value = true
   const res = await $fetch<APIResponse>(`/api/v1/forms/credit/${ulid}`, {
+    method: 'POST',
     headers: {
-      Authorization: `Bearer ${getAuthToken()}`
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
+    body: {
+      phone: phone.value
     },
     onResponseError({ response }) {
       console.log(response)
-      alert('Failed to withdraw')
       loadingCheckout.value = false
     },
     onRequestError({ error }) {
       console.log(error)
-      alert('Failed to withdraw' + error?.message)
       loadingCheckout.value = false
     }
   }).catch(err => {
     console.log(err)
-    alert('Failed to withdraw' + err?.message)
     loadingCheckout.value = false
   })
 
   if (res?.statusCode === Status.success) {
     alert('Credited successfully')
   } else {
-    alert('Failed to credit' + res?.body)
+    alert('Failed to credit ' + res?.body)
   }
   loadingCheckout.value = false
 }
+const showPhoneModal = ref(false)
+function addPhone() {
+  if (phone.value.trim() === '' || con_phone.value.trim() === '' || phone.value !== con_phone.value) {
+    helpText.value = true
+  } else {
+    helpText.value = false
+    credit()
+  }
+}
+
+watch([phone, con_phone], () => {
+  if (con_phone.value && con_phone.value !== phone.value) {
+    noMatch.value = true
+  } else {
+    noMatch.value = false
+  }
+})
 </script>
 
 <template>
@@ -232,9 +263,10 @@ async function credit() {
               </button>
               <button
                 class="flex items-center space-x-2 gap-2 px-3 py-1 bg-[#262626] rounded text-white :hover:bg-gray-20 transition-colors"
-                @click="credit" :class="{ 'cursor-not-allowed': loadingExcel }" :disabled="loadingExcel">
+                v-if="hasPayment()" @click="showPhoneModal = true" :class="{ 'cursor-not-allowed': loadingCheckout }"
+                :disabled="loadingCheckout">
                 Credit
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" v-if="!loadingExcel"
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" v-if="!loadingCheckout"
                   class="w-4 h-4">
                   <path
                     d="M12 9C11.4477 9 11 9.44771 11 10V15.5856L9.70711 14.2928C9.3166 13.9024 8.68343 13.9024 8.29292 14.2928C7.90236 14.6834 7.90236 15.3165 8.29292 15.7071L11.292 18.7063C11.6823 19.0965 12.3149 19.0968 12.7055 18.707L15.705 15.7137C16.0955 15.3233 16.0955 14.69 15.705 14.2996C15.3145 13.909 14.6814 13.909 14.2908 14.2996L13 15.5903V10C13 9.44771 12.5523 9 12 9Z"
@@ -251,9 +283,9 @@ async function credit() {
                   </svg>
                 </span>
               </button>
-              <span class="flex items-center space-x-2 gap-2 px-3 py-1 rounded text-[#262626]">
+              <span class="flex items-center space-x-2 px-3 py-1 rounded text-[#262626]" v-if="hasPayment()">
                 <span class="text-[#262626]">Total:</span>
-                <span class="text-[#262626]">KES {{ form?.forms.price }}</span>
+                <span class="text-[#262626] font-bold font-mono">KES {{ total }}</span>
               </span>
             </div>
           </span>
@@ -283,6 +315,30 @@ async function credit() {
             </tbody>
           </table>
         </div>
+
+        <Modal title="Enter Phone Number" @close="showPhoneModal = false; addPhone()" @cancel="showPhoneModal = false"
+          :open="showPhoneModal">
+          <div>
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone"
+              class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
+              placeholder="Phone number" v-model="phone">
+            <small class="text-gray-500">This is where the funds will be sent</small>
+          </div>
+          <div class="mt-2">
+            <label for="phone">Phone Number Again</label>
+            <input type="tel" id="phone_confirm"
+              class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
+              placeholder="Phone number" v-model="con_phone">
+            <small class="text-gray-500">Just to make sure we have the right one</small>
+          </div>
+          <div v-if="helpText">
+            <p class="text-red-500 text-sm">Please provide a phone number</p>
+          </div>
+          <div v-if="noMatch">
+            <p class="text-red-500 text-sm">Phone numbers do not match</p>
+          </div>
+        </Modal>
       </main>
     </div>
   </ClientOnly>

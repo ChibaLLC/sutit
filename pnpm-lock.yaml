@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chiballc/nuxt-form-builder':
-        specifier: 0.0.39
-        version: 0.0.39(rollup@4.13.2)
+        specifier: 0.0.40
+        version: 0.0.40(rollup@4.13.2)
       crossws:
         specifier: ^0.2.4
         version: 0.2.4
@@ -279,8 +279,8 @@ packages:
     resolution: {integrity: sha512-+j7a5c253RfKh8iABBhywc8NSfP5LURe7Uh4qpsh6jc+aLJguvmIUBdjSdEMQv2bENrCR5MfRdjGo7vzS/ob7w==}
     engines: {node: '>=6.9.0'}
 
-  '@chiballc/nuxt-form-builder@0.0.39':
-    resolution: {integrity: sha512-K4KAUAg4J5GSgyJ4E0ZZD++/S1ddKLawg9PzB6w/ioIl+tclvWgc+UHnsc5hPTS3tHoioL7AFobC3W51ACZiOQ==}
+  '@chiballc/nuxt-form-builder@0.0.40':
+    resolution: {integrity: sha512-rK/fmaEuJHJTRqj87Qo9mUgXdq+5Jir3SKMPCJ6wtxKyDOhCBfgluRPPOLO9t9Ay4eiW2indZmQS0ZCG8PqiaA==}
 
   '@cloudflare/kv-asset-handler@0.3.1':
     resolution: {integrity: sha512-lKN2XCfKCmpKb86a1tl4GIwsJYDy9TGuwjhDELLmpKygQhw8X2xR4dusgpC5Tg7q1pB96Eb0rBo81kxSILQMwA==}
@@ -5287,7 +5287,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  '@chiballc/nuxt-form-builder@0.0.39(rollup@4.13.2)':
+  '@chiballc/nuxt-form-builder@0.0.40(rollup@4.13.2)':
     dependencies:
       '@nuxt/kit': 3.12.2(magicast@0.3.3)(rollup@4.13.2)
     transitivePeerDependencies:
@@ -6102,7 +6102,7 @@ snapshots:
       estree-walker: 2.0.2
       glob: 8.1.0
       is-reference: 1.2.1
-      magic-string: 0.30.8
+      magic-string: 0.30.10
     optionalDependencies:
       rollup: 4.13.2
 
@@ -6110,7 +6110,7 @@ snapshots:
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.13.2)
       estree-walker: 2.0.2
-      magic-string: 0.30.8
+      magic-string: 0.30.10
     optionalDependencies:
       rollup: 4.13.2
 
@@ -6134,7 +6134,7 @@ snapshots:
   '@rollup/plugin-replace@5.0.5(rollup@4.13.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.13.2)
-      magic-string: 0.30.8
+      magic-string: 0.30.10
     optionalDependencies:
       rollup: 4.13.2
 
@@ -10450,11 +10450,11 @@ snapshots:
   unwasm@0.3.8:
     dependencies:
       knitwork: 1.1.0
-      magic-string: 0.30.8
+      magic-string: 0.30.10
       mlly: 1.7.1
       pathe: 1.1.2
       pkg-types: 1.1.1
-      unplugin: 1.10.0
+      unplugin: 1.10.1
 
   unzipper@0.10.14:
     dependencies:

@@ -1,0 +1,1 @@
+ALTER TABLE "forms" ADD COLUMN "withdrawn_funds" integer DEFAULT 0 NOT NULL;
