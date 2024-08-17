@@ -33,7 +33,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             githubClientId: process.env.GITHUB_CLIENT_ID,
-            githubRedirectUri: process.env.GITHUB_REDIRECT_URI,
+            googleClientId: process.env.GOOGLE_CLIENT_ID
         }
     }
 })

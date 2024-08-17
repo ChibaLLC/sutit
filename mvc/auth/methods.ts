@@ -45,18 +45,26 @@ export async function googleAuth(token: string) {
 
 
 export async function githubAuth(code: string) {
-    const response = await $fetch<
-        { access_token: string, token_type: string, scope: string }
-    >(`https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${code}`)
-    const data = new URLSearchParams(response)
+    const response = await $fetch<Blob>(`https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${code}`)
+    const data = new URLSearchParams(await response.text())
     const token = data.get('access_token')
     if (!token) throw new Error('Invalid token')
-    const user = await $fetch<{ login: string }>('https://api.github.com/user', {
+    const _user = await $fetch<{ login: string, email: string }>('https://api.github.com/user', {
         headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json'
         }
     })
-    if (!user.login) throw new Error('Invalid user')
-    return createToken({ email: user.login })
+    
+    if (!_user.email && !_user.login) throw new Error('Invalid user')
+    const user = await getUserByEmail(_user.email)
+    if (!user) {
+        await createUser({
+            email: _user.email || _user.login + '@github.com',
+            name: _user.login || _user.email.split('@').at(0)!,
+            password: Math.random().toString(36).slice(-8)
+        })
+    }
+    return createToken({ email: _user.email })
 }
+

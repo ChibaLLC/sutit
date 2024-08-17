@@ -10,6 +10,7 @@ const details = reactive({
   email: '',
   password: ''
 })
+const config = useRuntimeConfig()
 
 async function submit() {
   if (loading.value) return
@@ -71,8 +72,6 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
   }).then(() => loadingGoogle.value = false)
 }
 
-const config = useRuntimeConfig()
-
 const loadingGithub = ref(false)
 async function loginWithGithub() {
   loadingGithub.value = true
@@ -81,26 +80,15 @@ async function loginWithGithub() {
   })
 }
 
-
+const origin = ref("")
 onMounted(() => {
+  origin.value = window.location.origin
   const script = document.createElement('script')
-  script.src = 'https://apis.google.com/js/platform.js'
+  script.src = 'https://accounts.google.com/gsi/client'
   script.async = true
   script.defer = true
-  script.onload = (e) => {
-    // @ts-ignore
-    gapi.load("auth2", () => {
-      // @ts-ignore
-      gapi.auth2.init({ client_id: '526674632808-inpsr3b6r5o1erc0ka81i56lpsviob3a.apps.googleusercontent.com' })
-      const customGoogleSignIn = document.getElementById('customGoogleSignIn')
-      customGoogleSignIn?.addEventListener('click', () => {
-        // @ts-ignore
-        const auth2 = gapi.auth2.getAuthInstance()
-        auth2.signIn().then(onSignIn)
-      })
-    })
-  }
-  document.head.appendChild(script)
+
+  document.body.appendChild(script)
 })
 
 </script>
@@ -122,25 +110,30 @@ onMounted(() => {
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
                   type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/github.svg" />Github
-                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                        <path
-                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                        </path>
-                      </svg>
-                    </span>
+                  <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center"
+                    v-if="loadingGithub">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path
+                        d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                      </path>
+                    </svg>
+                  </span>
+                  <ClientOnly>
+                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="redirect" :data-login_uri="`${origin}/api/v1/auth/login/google`"></div>
+                  </ClientOnly>
                 </button>
                 <button
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
                   type="button" style="transition: all 0.15s ease 0s;" id="customGoogleSignIn">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/google.svg" />Google
-                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                        <path
-                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                        </path>
-                      </svg>
-                    </span>
+                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center"
+                    v-if="loadingGoogle">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path
+                        d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                      </path>
+                    </svg>
+                  </span>
                 </button>
               </div>
               <hr class="mt-6 border-b-1 border-gray-400" />

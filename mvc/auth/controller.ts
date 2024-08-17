@@ -218,9 +218,8 @@ router.use("/github/callback", defineEventHandler(async event => {
         return response
     }
 
-    response.statusCode = Status.success
-    response.body = token
-    return response
+    setCookie(event, "auth", token)
+    return sendRedirect(event, `/dashboard`)
 }))
 
 
