@@ -52,25 +52,6 @@ function clearErrors() {
   errors.value = new Set()
 }
 
-const loadingGoogle = ref(false)
-function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; getName: () => string; getImageUrl: () => string; getEmail: () => string; }; getAuthResponse: () => { id_token: string; }; }) {
-  var id_token = googleUser.getAuthResponse().id_token;
-  loadingGoogle.value = true
-  $fetch<APIResponse>("/api/v1/auth/login/google", {
-    method: "POST",
-    body: { id_token },
-    onResponse({ response }) {
-      const res = response._data
-      if (res.statusCode === 200) {
-        if (remember.value) setAuthCookie(res.body)
-        useUser().value!.token = res.body
-        navigateTo('/')
-      } else {
-        errors.value.add(res.body || 'An unknown error occurred')
-      }
-    }
-  }).then(() => loadingGoogle.value = false)
-}
 
 const loadingGithub = ref(false)
 async function loginWithGithub() {
@@ -89,8 +70,36 @@ onMounted(() => {
   script.defer = true
 
   document.body.appendChild(script)
+  Object.defineProperty(window, 'onSignIn', { value: onSignIn })
 })
 
+const loadingGoogle = ref(false)
+const googleButton = ref<HTMLDivElement | null>(null)
+function clickGoogleBtn() {
+  loadingGoogle.value = true
+  if (!googleButton.value) return console.warn("Google Button Not Found");
+  (googleButton.value.querySelector("[role='button']") as HTMLDivElement).click()
+  loadingGoogle.value = false
+}
+
+function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; getName: () => string; getImageUrl: () => string; getEmail: () => string; }; getAuthResponse: () => { id_token: string; }; }) {
+  var id_token = googleUser.getAuthResponse().id_token;
+  loadingGoogle.value = true
+  $fetch<APIResponse>("/api/v1/auth/login/google", {
+    method: "POST",
+    body: { id_token },
+    onResponse({ response }) {
+      const res = response._data
+      if (res.statusCode === 200) {
+        if (remember.value) setAuthCookie(res.body)
+        useUser().value!.token = res.body
+        navigateTo('/')
+      } else {
+        errors.value.add(res.body || 'An unknown error occurred')
+      }
+    }
+  }).then(() => { loadingGoogle.value = false })
+}
 </script>
 <template>
   <Title>Login</Title>
@@ -118,13 +127,10 @@ onMounted(() => {
                       </path>
                     </svg>
                   </span>
-                  <ClientOnly>
-                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="redirect" :data-login_uri="`${origin}/api/v1/auth/login/google`"></div>
-                  </ClientOnly>
                 </button>
-                <button
+                <button @click="clickGoogleBtn"
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;" id="customGoogleSignIn">
+                  type="button" style="transition: all 0.15s ease 0s;">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/google.svg" />Google
                   <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center"
                     v-if="loadingGoogle">
@@ -134,6 +140,11 @@ onMounted(() => {
                       </path>
                     </svg>
                   </span>
+                  <ClientOnly>
+                    <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
+                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"
+                      :data-login_uri="`${origin}/api/v1/auth/login/google`"></div>
+                  </ClientOnly>
                 </button>
               </div>
               <hr class="mt-6 border-b-1 border-gray-400" />
