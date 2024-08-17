@@ -188,9 +188,10 @@ router.post("/reset", defineEventHandler(async event => {
     return response
 }))
 
-router.use("/login/google", defineEventHandler(async event => {
+router.use("/google/callback", defineEventHandler(async event => {
     const response = {} as APIResponse
     const { id_token } = await readBody(event) as { id_token: string }
+    console.log(id_token)
     const token = await googleAuth(id_token).catch(err => err as Error)
     if (token instanceof Error) {
         response.statusCode = Status.internalServerError
