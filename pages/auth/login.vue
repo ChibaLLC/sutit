@@ -85,7 +85,7 @@ function clickGoogleBtn() {
 function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; getName: () => string; getImageUrl: () => string; getEmail: () => string; }; getAuthResponse: () => { id_token: string; }; }) {
   var id_token = googleUser.getAuthResponse().id_token;
   loadingGoogle.value = true
-  $fetch<APIResponse>("/api/v1/auth/login/google", {
+  $fetch<APIResponse>("https://lxm8dc42-3000.uks1.devtunnels.ms/api/v1/auth/login/google", {
     method: "POST",
     body: { id_token },
     onResponse({ response }) {
@@ -142,8 +142,7 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
                   </span>
                   <ClientOnly>
                     <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
-                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"
-                      :data-login_uri="`${origin}/api/v1/auth/login/google`"></div>
+                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"></div>
                   </ClientOnly>
                 </button>
               </div>
