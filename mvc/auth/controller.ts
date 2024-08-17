@@ -1,7 +1,7 @@
-import {type APIResponse, Status} from "~/types";
-import {resetPassword, revokeAuthToken, googleAuth} from "~/mvc/auth/methods";
-import {authenticate, createToken} from "~/mvc/auth/queries";
-import {createUser, getUserByEmail} from "~/mvc/users/queries";
+import { type APIResponse, Status } from "~/types";
+import { resetPassword, revokeAuthToken, googleAuth, githubAuth } from "~/mvc/auth/methods";
+import { authenticate, createToken } from "~/mvc/auth/queries";
+import { createUser, getUserByEmail } from "~/mvc/users/queries";
 
 const router = createRouter()
 
@@ -35,7 +35,7 @@ router.post('/signup', defineEventHandler(async event => {
     })
     if (!revoked) return
 
-    const create = await createUser(data).catch(async err => err as Error & {code?: string})
+    const create = await createUser(data).catch(async err => err as Error & { code?: string })
     if (create instanceof Error) {
         console.log(create.code)
         const code = create.code === '23505' ? Status.conflict : Status.internalServerError
@@ -45,7 +45,7 @@ router.post('/signup', defineEventHandler(async event => {
         }, code)
     }
 
-    const token = await authenticate({email: data.email, password: data.password}).catch(async (err: Error & {
+    const token = await authenticate({ email: data.email, password: data.password }).catch(async (err: Error & {
         code?: string
     }) => err)
     if (token instanceof Error) {
@@ -73,7 +73,7 @@ router.post('/login', defineEventHandler(async event => {
     })
     if (!revoked) return
 
-    const token = await authenticate({email: data.email, password: data.password})
+    const token = await authenticate({ email: data.email, password: data.password })
         .catch((err: Error) => {
             useHttpEnd(event, {
                 body: err.message,
@@ -108,7 +108,7 @@ router.get('/logout', defineEventHandler(async event => {
 
 router.get("/reset", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const {email, origin, redirect} = getQuery(event)
+    const { email, origin, redirect } = getQuery(event)
     if (!email || !origin) {
         response.statusCode = Status.badRequest
         response.body = "Email and Origin are required"
@@ -126,13 +126,13 @@ router.get("/reset", defineEventHandler(async event => {
         return response
     }
 
-    const token = await createToken({userUlid: user.ulid, email: user.email}).catch(err => err as Error)
+    const token = await createToken({ userUlid: user.ulid, email: user.email }).catch(err => err as Error)
     if (token instanceof Error) {
         response.statusCode = Status.internalServerError
         response.body = token.message
         return response
     }
-    
+
     await mailResetPasswordLink(email.toString(), origin.toString(), token, redirect?.toString())
     response.statusCode = Status.success
     response.body = "Reset link sent"
@@ -143,7 +143,7 @@ router.post("/reset", defineEventHandler(async event => {
     const query = getQuery(event)
     const email = query.email?.toString()
     const token = query.token?.toString()
-    const {password} = await readBody(event) as { password: string, origin: string }
+    const { password } = await readBody(event) as { password: string, origin: string }
     const response = {} as APIResponse
 
     if (!email || !token || !password) {
@@ -164,14 +164,14 @@ router.post("/reset", defineEventHandler(async event => {
         return response
     }
 
-    const reset = await resetPassword({user, token, password}).catch(err => err as Error)
+    const reset = await resetPassword({ user, token, password }).catch(err => err as Error)
     if (reset instanceof Error) {
         response.statusCode = Status.internalServerError
         response.body = reset.message
         return response
     }
 
-    const _token = await authenticate({email, password}).catch(err => err as Error)
+    const _token = await authenticate({ email, password }).catch(err => err as Error)
     if (_token instanceof Error) {
         response.statusCode = Status.internalServerError
         response.body = _token.message
@@ -185,19 +185,42 @@ router.post("/reset", defineEventHandler(async event => {
 
     response.statusCode = Status.success
     response.body = _token
-    return response    
+    return response
 }))
 
-router.use("/google/callback", defineEventHandler(async event => {
+router.use("/login/google", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const {code, origin, ..._else} = getQuery(event)
-    console.log(code, origin, _else)
-    console.log(await readBody(event))
-    if (!code || !origin) {
-        response.statusCode = Status.badRequest
-        response.body = "Code and Origin are required"
+    const { id_token } = await readBody(event) as { id_token: string }
+    const token = await googleAuth(id_token).catch(err => err as Error)
+    if (token instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = token.message
         return response
     }
+
+    response.statusCode = Status.success
+    response.body = token
+    return response
+}))
+
+router.use("/github/callback", defineEventHandler(async event => {
+    const response = {} as APIResponse
+    const { code } = getQuery(event)
+    if (!code) {
+        response.statusCode = Status.badRequest
+        response.body = "Code is required"
+        return response
+    }
+    const token = await githubAuth(code.toString()).catch(err => err as Error)
+    if (token instanceof Error) {
+        response.statusCode = Status.internalServerError
+        response.body = token.message
+        return response
+    }
+
+    response.statusCode = Status.success
+    response.body = token
+    return response
 }))
 
 

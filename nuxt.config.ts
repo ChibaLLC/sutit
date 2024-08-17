@@ -30,4 +30,10 @@ export default defineNuxtConfig({
     tailwindcss: {
         configPath: '~/tailwind.config.js',
     },
+    runtimeConfig: {
+        public: {
+            githubClientId: process.env.GITHUB_CLIENT_ID,
+            githubRedirectUri: process.env.GITHUB_REDIRECT_URI,
+        }
+    }
 })

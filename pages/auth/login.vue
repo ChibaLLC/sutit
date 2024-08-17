@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { APIResponse } from '~/types';
+
 const url = useRoute()
 const redirect = collapseString(url.query?.redirect as string)
 const remember = ref(false)
@@ -49,6 +51,58 @@ function clearErrors() {
   errors.value = new Set()
 }
 
+const loadingGoogle = ref(false)
+function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; getName: () => string; getImageUrl: () => string; getEmail: () => string; }; getAuthResponse: () => { id_token: string; }; }) {
+  var id_token = googleUser.getAuthResponse().id_token;
+  loadingGoogle.value = true
+  $fetch<APIResponse>("/api/v1/auth/login/google", {
+    method: "POST",
+    body: { id_token },
+    onResponse({ response }) {
+      const res = response._data
+      if (res.statusCode === 200) {
+        if (remember.value) setAuthCookie(res.body)
+        useUser().value!.token = res.body
+        navigateTo('/')
+      } else {
+        errors.value.add(res.body || 'An unknown error occurred')
+      }
+    }
+  }).then(() => loadingGoogle.value = false)
+}
+
+const config = useRuntimeConfig()
+
+const loadingGithub = ref(false)
+async function loginWithGithub() {
+  loadingGithub.value = true
+  await navigateTo(`https://github.com/login/oauth/authorize?client_id=${config.public.githubClientId}`, {
+    external: true
+  })
+}
+
+
+onMounted(() => {
+  const script = document.createElement('script')
+  script.src = 'https://apis.google.com/js/platform.js'
+  script.async = true
+  script.defer = true
+  script.onload = (e) => {
+    // @ts-ignore
+    gapi.load("auth2", () => {
+      // @ts-ignore
+      gapi.auth2.init({ client_id: '526674632808-inpsr3b6r5o1erc0ka81i56lpsviob3a.apps.googleusercontent.com' })
+      const customGoogleSignIn = document.getElementById('customGoogleSignIn')
+      customGoogleSignIn?.addEventListener('click', () => {
+        // @ts-ignore
+        const auth2 = gapi.auth2.getAuthInstance()
+        auth2.signIn().then(onSignIn)
+      })
+    })
+  }
+  document.head.appendChild(script)
+})
+
 </script>
 <template>
   <Title>Login</Title>
@@ -66,13 +120,27 @@ function clearErrors() {
               <div class="btn-wrapper text-center">
                 <button
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;">
+                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/github.svg" />Github
+                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                        <path
+                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                        </path>
+                      </svg>
+                    </span>
                 </button>
                 <button
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;">
+                  type="button" style="transition: all 0.15s ease 0s;" id="customGoogleSignIn">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/google.svg" />Google
+                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                        <path
+                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                        </path>
+                      </svg>
+                    </span>
                 </button>
               </div>
               <hr class="mt-6 border-b-1 border-gray-400" />
