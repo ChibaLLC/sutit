@@ -33,6 +33,7 @@
     "daraja.js": "github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c",
     "drizzle-orm": "^0.29.3",
     "exceljs": "^4.4.0",
+    "google-auth-library": "^9.13.0",
     "nodemailer": "^6.9.14",
     "object.groupby": "^1.0.2",
     "postgres": "^3.4.4",
