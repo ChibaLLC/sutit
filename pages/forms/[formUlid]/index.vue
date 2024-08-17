@@ -37,11 +37,8 @@ function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): 
 function hasPhone() {
   return payment_details.value.phone.length >= 10
 }
-const count = ref(0)
 
 async function processForm() {
-  count.value++
-  console.log('Processing form', count.value)
   loading.value = true
   paymentModal.value = false
   if (
@@ -194,8 +191,7 @@ function completeForm() {
         </p>
       </div>
       <form class="pb-4 mt-2 min-h-max" @submit.prevent>
-        <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
-          :show-spinner="loading" />
+        <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
             This form requires payment for submission of <br>
