@@ -76,7 +76,9 @@ onMounted(() => {
   script.defer = true
 
   document.body.appendChild(script)
-  Object.defineProperty(window, 'onSignIn', { value: onSignIn })
+  if (!(window as any)?.onSignIn) {
+    Object.defineProperty(window, 'onSignIn', { value: onSignIn })
+  }
   loadingGoogle.value = false
 })
 

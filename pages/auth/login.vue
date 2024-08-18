@@ -69,7 +69,9 @@ onMounted(() => {
   script.defer = true
 
   document.body.appendChild(script)
-  Object.defineProperty(window, 'onSignIn', { value: onSignIn })
+  if (!(window as any)?.onSignIn) {
+    Object.defineProperty(window, 'onSignIn', { value: onSignIn })
+  }
   loadingGoogle.value = false
 })
 
@@ -113,7 +115,8 @@ function onSignIn(googleCrdential: GoogleCredential) {
               <div class="btn-wrapper text-center">
                 <button
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub" :disabled="loadingGithub">
+                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub"
+                  :disabled="loadingGithub">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/github.svg" />Github
                   <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center"
                     v-if="loadingGithub">
@@ -138,7 +141,8 @@ function onSignIn(googleCrdential: GoogleCredential) {
                   </span>
                   <ClientOnly>
                     <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
-                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup" data-callback="onSignIn"></div>
+                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"
+                      data-callback="onSignIn"></div>
                   </ClientOnly>
                 </button>
               </div>
