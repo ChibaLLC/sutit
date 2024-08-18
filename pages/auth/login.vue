@@ -62,9 +62,7 @@ async function loginWithGithub() {
 }
 
 const loadingGoogle = ref(true)
-const origin = ref("")
 onMounted(() => {
-  origin.value = window.location.origin
   const script = document.createElement('script')
   script.src = 'https://accounts.google.com/gsi/client'
   script.async = true
