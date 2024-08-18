@@ -41,9 +41,9 @@ async function submit() {
         case Status.success:
           setAuthCookie(res.body)
           useUser().value!.token = res.body
-          if (redirect) {
-            if (typeof redirect !== 'string') throw new Error("Redirect Error")
-            await navigateTo(redirect)
+          const _redirect = collapseString(redirect)
+          if (_redirect) {
+            await navigateTo(_redirect)
           } else {
             await navigateTo('/')
           }
