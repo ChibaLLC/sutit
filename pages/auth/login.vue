@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { APIResponse } from '~/types';
+import type { APIResponse, GoogleCredential } from '~/types';
 
 const url = useRoute()
 const redirect = collapseString(url.query?.redirect as string)
@@ -61,6 +61,7 @@ async function loginWithGithub() {
   })
 }
 
+const loadingGoogle = ref(true)
 const origin = ref("")
 onMounted(() => {
   origin.value = window.location.origin
@@ -71,23 +72,20 @@ onMounted(() => {
 
   document.body.appendChild(script)
   Object.defineProperty(window, 'onSignIn', { value: onSignIn })
+  loadingGoogle.value = false
 })
 
-const loadingGoogle = ref(false)
 const googleButton = ref<HTMLDivElement | null>(null)
 function clickGoogleBtn() {
   loadingGoogle.value = true
   if (!googleButton.value) return console.warn("Google Button Not Found");
   (googleButton.value.querySelector("[role='button']") as HTMLDivElement).click()
-  loadingGoogle.value = false
 }
 
-function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; getName: () => string; getImageUrl: () => string; getEmail: () => string; }; getAuthResponse: () => { id_token: string; }; }) {
-  var id_token = googleUser.getAuthResponse().id_token;
-  loadingGoogle.value = true
-  $fetch<APIResponse>("https://lxm8dc42-3000.uks1.devtunnels.ms/api/v1/auth/login/google", {
+function onSignIn(googleCrdential: GoogleCredential) {
+  $fetch<APIResponse>("/api/v1/auth/google/callback", {
     method: "POST",
-    body: { id_token },
+    body: googleCrdential,
     onResponse({ response }) {
       const res = response._data
       if (res.statusCode === 200) {
@@ -117,7 +115,7 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
               <div class="btn-wrapper text-center">
                 <button
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub">
+                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub" :disabled="loadingGithub">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/github.svg" />Github
                   <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center"
                     v-if="loadingGithub">
@@ -128,7 +126,7 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
                     </svg>
                   </span>
                 </button>
-                <button @click="clickGoogleBtn"
+                <button @click="clickGoogleBtn" :disabled="loadingGoogle"
                   class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
                   type="button" style="transition: all 0.15s ease 0s;">
                   <img alt="..." class="w-5 mr-1" src="/images/svg/google.svg" />Google
@@ -142,7 +140,7 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
                   </span>
                   <ClientOnly>
                     <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
-                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"></div>
+                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup" data-callback="onSignIn"></div>
                   </ClientOnly>
                 </button>
               </div>
@@ -217,5 +215,11 @@ function onSignIn(googleUser: { getBasicProfile: () => { getId: () => string; ge
 <style scoped>
 .loading {
   @apply animate-spin;
+}
+
+button[disabled] {
+  @apply cursor-not-allowed;
+  @apply pointer-events-none;
+  @apply opacity-50;
 }
 </style>

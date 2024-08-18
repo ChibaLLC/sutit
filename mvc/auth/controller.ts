@@ -1,4 +1,4 @@
-import { type APIResponse, Status } from "~/types";
+import { type APIResponse, type GoogleCredential, Status } from "~/types";
 import { resetPassword, revokeAuthToken, googleAuth, githubAuth } from "~/mvc/auth/methods";
 import { authenticate, createToken } from "~/mvc/auth/queries";
 import { createUser, getUserByEmail } from "~/mvc/users/queries";
@@ -190,9 +190,8 @@ router.post("/reset", defineEventHandler(async event => {
 
 router.use("/google/callback", defineEventHandler(async event => {
     const response = {} as APIResponse
-    const { id_token } = await readBody(event) as { id_token: string }
-    console.log(id_token)
-    const token = await googleAuth(id_token).catch(err => err as Error)
+    const data = await readBody(event) as GoogleCredential
+    const token = await googleAuth(data).catch(err => err as Error)
     if (token instanceof Error) {
         response.statusCode = Status.internalServerError
         response.body = token.message

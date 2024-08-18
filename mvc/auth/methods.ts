@@ -4,6 +4,7 @@ import type { Drizzle } from "~/db/types";
 import { updatePassword } from "./queries";
 import { createUser, getUserByEmail } from "../users/queries";
 import { OAuth2Client } from "google-auth-library"
+import type { GoogleCredential } from "~/types";
 
 export async function revokeAuthToken(event: H3Event) {
     const token = readAuthToken(event)
@@ -24,9 +25,9 @@ export async function resetPassword(data: {
     await revokeToken(data.token)
 }
 
-export async function googleAuth(token: string) {
+export async function googleAuth(data: GoogleCredential) {
     const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET)
-    const ticket = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID })
+    const ticket = await client.verifyIdToken({ idToken: data.credential, audience: process.env.GOOGLE_CLIENT_ID })
     const payload = ticket.getPayload()
     if (!payload) throw new Error('Invalid token')
     const email = payload.email
