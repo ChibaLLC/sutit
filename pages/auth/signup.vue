@@ -186,7 +186,7 @@ function onSignIn(googleCrdential: GoogleCredential) {
                   <button
                     class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full"
                     type="button" @click="submit" style="transition: all 0.15s ease 0s;">
-                    <span v-if="!loading">Sign In</span>
+                    <span v-if="!loading">Sign Up</span>
                     <span :class="{ 'loading': loading }" class="w-full grid place-items-center" v-else>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                         <path
