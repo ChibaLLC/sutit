@@ -39,6 +39,7 @@ function getShareableLink(formUuid: string) {
 }
 
 function navigateIfTarget(event: MouseEvent, location: string) {
+  // @ts-ignore
   if (event.target?.tagName?.toLowerCase() !== 'td') return
   navigateTo(location)
 }
