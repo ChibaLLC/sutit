@@ -27,5 +27,10 @@ export default defineNuxtPlugin(app => {
         toastContainer.style.transform = 'translateX(-50%)'
         toastContainer.innerHTML = toast
         document.body.appendChild(toastContainer)
+
+        setTimeout(() => {
+            Array.from(document.querySelectorAll('[title=toast-default]')).pop()?.remove()
+            onClose?.()
+        }, 3000)
     }
 })

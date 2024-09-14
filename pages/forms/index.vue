@@ -23,7 +23,8 @@ if (res?.statusCode === Status.success) {
 
 function getShareableLink(formUuid: string) {
   const link = `${window.location.origin}/forms/${formUuid}`
-  navigator?.clipboard?.writeText(link) || alert('Failed to copy link')
+  navigator?.clipboard?.writeText(link)
+  navigator.share({ url: link  })
 
   const copyLink = document.getElementById(`copy_link_${formUuid}`)
   const copySuccess = document.getElementById(`copy_success_${formUuid}`)

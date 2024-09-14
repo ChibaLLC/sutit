@@ -15,8 +15,8 @@ importers:
         specifier: ^0.2.4
         version: 0.2.4
       daraja.js:
-        specifier: github:kgarchie/daraja.js#c8035ef849eb7d0de358f41fc14acc960a1c9a1c
-        version: https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c(ioredis@5.3.2)
+        specifier: github:kgarchie/daraja.js#13a50094f436e417f8c1452d0e02741808254c79
+        version: https://codeload.github.com/kgarchie/daraja.js/tar.gz/13a50094f436e417f8c1452d0e02741808254c79(ioredis@5.3.2)
       drizzle-orm:
         specifier: ^0.29.3
         version: 0.29.5(postgres@3.4.4)
@@ -2069,8 +2069,8 @@ packages:
     resolution: {integrity: sha512-MOqHvMWF9/9MX6nza0KgvFH4HpMU0EF5uUDXqX/BtxtU8NfB0QzRtJ8Oe/6SuS4kbhyzVJwjd97EA4PKrzJ8bw==}
     engines: {node: '>=0.12'}
 
-  daraja.js@https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c:
-    resolution: {tarball: https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c}
+  daraja.js@https://codeload.github.com/kgarchie/daraja.js/tar.gz/13a50094f436e417f8c1452d0e02741808254c79:
+    resolution: {tarball: https://codeload.github.com/kgarchie/daraja.js/tar.gz/13a50094f436e417f8c1452d0e02741808254c79}
     version: 0.1.0
 
   data-view-buffer@1.0.1:
@@ -7418,7 +7418,7 @@ snapshots:
       es5-ext: 0.10.64
       type: 2.7.2
 
-  daraja.js@https://codeload.github.com/kgarchie/daraja.js/tar.gz/c8035ef849eb7d0de358f41fc14acc960a1c9a1c(ioredis@5.3.2):
+  daraja.js@https://codeload.github.com/kgarchie/daraja.js/tar.gz/13a50094f436e417f8c1452d0e02741808254c79(ioredis@5.3.2):
     dependencies:
       ofetch: 1.3.4
       unstorage: 1.10.2(ioredis@5.3.2)

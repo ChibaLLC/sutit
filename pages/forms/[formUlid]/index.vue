@@ -93,8 +93,8 @@ async function submit() {
         alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
         realtime.value!.subscribe(channelName)
         realtime.value!.on('error', (error) => {
+          debugger
           console.error(error)
-          alert('Payment failed, please try again later')
         })
 
         realtime.value!.on("data", (_data: any) => {
