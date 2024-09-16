@@ -1,10 +1,18 @@
-import type { Drizzle } from "~/db/types";
-import { call_b2c, call_stk } from "~/mvc/mpesa/methods";
-import { createChannelName } from "~/server/utils/socket";
-import { getUserByUlId } from "../users/queries";
+import type {Drizzle} from "~/db/types";
+import {call_b2b, call_b2c, call_stk} from "~/mvc/mpesa/methods";
+import {createChannelName} from "~/server/utils/socket";
+import {getUserByUlId} from "../users/queries";
 import excel from "exceljs";
-import type { FormElementData } from "@chiballc/nuxt-form-builder";
-import { getFormByUlid, getFormCount, getFormPaymentsSum, getFormResponses, getResponsesCount, updateFormWithdrawnFunds } from "~/mvc/forms/queries";
+import type {FormElementData} from "@chiballc/nuxt-form-builder";
+import {
+    getAllFormPaymentsSum,
+    getFormByUlid,
+    getFormCount,
+    getFormPaymentsSum,
+    getResponsesCount,
+    updateFormWithdrawnFunds
+} from "~/mvc/forms/queries";
+import type {BuyGoodsCreditMethod, CreditMethod, PayBillCreditMethod, PhoneCreditMethod} from "~/types";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -21,7 +29,7 @@ export async function processFormPayments(form: Drizzle.Form.select, details: {
     const result = await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
     const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID)
     if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map()
-    global.formPaymentProcessingQueue.set(channel, { form, callback })
+    global.formPaymentProcessingQueue.set(channel, {form, callback})
     return {
         statusCode: 201,
         body: {
@@ -68,6 +76,7 @@ type Entries = {
         id: number;
     };
 }
+
 export async function constructExcel(data: Entries[], user: Drizzle.User.select) {
     function getFields(pages: Record<string, FormElementData[]>): FormElementData[] {
         return Object.values(pages || {}).reduce((acc, page) => {
@@ -94,7 +103,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
 
     const titles: string[] = getFields(form.pages as Record<string, FormElementData[]>).map(field => field.label)
     if (hasPayment) titles.push("Price")
-    worksheet.addRow(titles).font = { bold: true }
+    worksheet.addRow(titles).font = {bold: true}
 
     const responses = (response: Entries[]) => {
         if (!response) return {} as {
@@ -129,13 +138,55 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     return workbook.xlsx
 }
 
-export async function withdrawFunds(data: { formUlid: string, phone: string, reason: string }) {
+function isPhoneCreditMethod(creditMethod: CreditMethod): creditMethod is PhoneCreditMethod {
+    return !!creditMethod?.phone
+}
+
+function isPayBillCreditMethod(creditMethod: CreditMethod): creditMethod is PayBillCreditMethod {
+    return !!creditMethod?.paybill_no && !!creditMethod?.account_no
+}
+
+function isBuyGoodsCreditMethod(creditMethod: CreditMethod): creditMethod is BuyGoodsCreditMethod {
+    return !!creditMethod?.till_no
+}
+
+export async function withdrawFunds(data: {
+    formUlid: string,
+    creditMethod: CreditMethod,
+    reason: string,
+    requester?: string
+}) {
     const total = await getFormPaymentsSum(data.formUlid)
     if (!total) return log.error("No payments found")
-    
 
-    const result = await call_b2c({ phone_number: String(data.phone), amount: total, reason: data.reason })
-    if (!result) return log.error("Failed to send funds")
+    switch (data.creditMethod) {
+        case isPhoneCreditMethod(data.creditMethod):
+            data.creditMethod.phone = `254${data.creditMethod.phone.slice(-9)}`
+            const result = await call_b2c({phone_number: data.creditMethod.phone, amount: total, reason: `Withdrawal for ${data.reason} by ${data.requester}`})
+            if (!result) return log.error("Failed to send funds")
+            break
+        case isPayBillCreditMethod(data.creditMethod):
+            const result = await call_b2b({
+                paybill: {
+                    business_no: data.creditMethod.paybill_no,
+                    account_no: data.creditMethod.account_no
+                },
+                amount: total,
+                requester: data.requester
+            })
+            if (!result) return log.error("Failed to send funds")
+            break
+        case isBuyGoodsCreditMethod(data.creditMethod):
+            const result = await call_b2b({
+                till_number: data.creditMethod.till_no,
+                amount: total,
+                requester: data.requester
+            })
+            if (!result) return log.error("Failed to send funds")
+            break
+        default:
+            return log.error("Invalid credit method")
+    }
 
     await updateFormWithdrawnFunds(data.formUlid, total)
 
@@ -146,7 +197,7 @@ export async function withdrawFunds(data: { formUlid: string, phone: string, rea
 export async function getStats(userUlid: string) {
     const formsCount = await getFormCount(userUlid)
     const responsesCount = await getResponsesCount(userUlid)
-    const totalPayments = await getFormPaymentsSum(userUlid)
+    const totalPayments = await getAllFormPaymentsSum(userUlid)
     return {
         forms: formsCount,
         responses: responsesCount,

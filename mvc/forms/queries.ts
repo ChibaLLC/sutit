@@ -125,8 +125,9 @@ export async function getFormPaymentsSum(formUulid: string) {
         return acc + +total
     }, 0)
 
-    return total - form.forms.withDrawnFunds
+    return total - (form.forms.withDrawnFunds || 0)
 }
+
 
 export async function getAllFormPayments(userUlid: string) {
     return db.select().from(forms).where(eq(forms.userUlid, userUlid)).innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
@@ -138,7 +139,6 @@ export async function getAllFormPaymentsSum(userUlid: string) {
         .where(eq(forms.userUlid, userUlid))
         .innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
         .innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid))
-        .groupBy(forms.ulid)
 
     return _sum.reduce((acc, curr) => {
         const { total } = curr

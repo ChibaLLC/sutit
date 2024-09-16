@@ -30,7 +30,7 @@
   "dependencies": {
     "@chiballc/nuxt-form-builder": "0.0.41",
     "crossws": "^0.2.4",
-    "daraja.js": "github:kgarchie/daraja.js#13a50094f436e417f8c1452d0e02741808254c79",
+    "daraja.js": "github:kgarchie/daraja.js#42e371dedfabbbca6b73895f26bd62f64e77ac14",
     "drizzle-orm": "^0.29.3",
     "exceljs": "^4.4.0",
     "google-auth-library": "^9.13.0",
