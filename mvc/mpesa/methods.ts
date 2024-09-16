@@ -60,7 +60,7 @@ export async function call_b2c(data: {
     return response.data
 }
 
-function business_pay_bill(payload: { amount: number, accountNumber: string, paybill: string }) {
+async function business_pay_bill(payload: { amount: number, accountNumber: string, paybill: string }) {
     const response = await app.b2b()
         .amount(payload.amount)
         .accountNumber(payload.accountNumber)
@@ -80,7 +80,7 @@ function business_pay_bill(payload: { amount: number, accountNumber: string, pay
     return response.data
 }
 
-function business_buy_goods(payload: { amount: number, till: string, requester?: string }) {
+async function business_buy_goods(payload: { amount: number, till: string, requester?: string }) {
     const response = await app.b2b()
         .amount(payload.amount)
         .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)

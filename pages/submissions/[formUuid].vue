@@ -207,6 +207,7 @@ async function credit() {
   }).catch(err => {
     console.log(err)
     loadingCheckout.value = false
+    alert('Failed to credit, an error occurred')
   })
 
   if (res?.statusCode === Status.success) {

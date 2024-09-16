@@ -159,14 +159,14 @@ export async function withdrawFunds(data: {
     const total = await getFormPaymentsSum(data.formUlid)
     if (!total) return log.error("No payments found")
 
-    switch (data.creditMethod) {
+    switch (true) {
         case isPhoneCreditMethod(data.creditMethod):
             data.creditMethod.phone = `254${data.creditMethod.phone.slice(-9)}`
-            const result = await call_b2c({phone_number: data.creditMethod.phone, amount: total, reason: `Withdrawal for ${data.reason} by ${data.requester}`})
+            var result = await call_b2c({phone_number: data.creditMethod.phone, amount: total, reason: `Withdrawal for ${data.reason} by ${data.requester}`})
             if (!result) return log.error("Failed to send funds")
             break
         case isPayBillCreditMethod(data.creditMethod):
-            const result = await call_b2b({
+            var result = await call_b2b({
                 paybill: {
                     business_no: data.creditMethod.paybill_no,
                     account_no: data.creditMethod.account_no
@@ -177,7 +177,7 @@ export async function withdrawFunds(data: {
             if (!result) return log.error("Failed to send funds")
             break
         case isBuyGoodsCreditMethod(data.creditMethod):
-            const result = await call_b2b({
+            var result = await call_b2b({
                 till_number: data.creditMethod.till_no,
                 amount: total,
                 requester: data.requester

@@ -1,4 +1,4 @@
-import {type APIResponse, CreditMethod, Status} from "~/types";
+import {type APIResponse, type CreditMethod, Status} from "~/types";
 import {
     assessForm,
     createForm,
@@ -181,10 +181,14 @@ router.post("/credit/:formUlid", defineEventHandler(async event => {
     }, Status.forbidden)
 
     const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: details.user.ulid }).catch(err => err as Error)
-    if (result instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: result?.message || "Unknown error while withdrawing funds"
-    } as APIResponse<string>, Status.internalServerError)
+    if (result instanceof Error) {
+        console.error(result)
+        console.trace(result)
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: result?.message || "Unknown error while withdrawing funds"
+        } as APIResponse<string>, Status.internalServerError)
+    }
 
     const response = {} as APIResponse<string>
     response.statusCode = Status.success
