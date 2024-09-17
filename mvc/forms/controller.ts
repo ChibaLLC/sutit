@@ -1,4 +1,4 @@
-import { type APIResponse, Status } from "~/types";
+import {type APIResponse, type CreditMethod, Status} from "~/types";
 import {
     assessForm,
     createForm,
@@ -153,8 +153,8 @@ router.post("/credit/:formUlid", defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
 
-    const phonePayload = await readBody(event) as { phone: string }
-    if (!phonePayload) return useHttpEnd(event, {
+    const sendToPayload = await readBody(event) as CreditMethod
+    if (!sendToPayload) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No phone number provided"
     }, Status.badRequest)
@@ -175,16 +175,20 @@ router.post("/credit/:formUlid", defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if (form.forms.userUlid !== details.user.ulid) return useHttpEnd(event, {
+    if (form.forms?.userUlid !== details.user.ulid) return useHttpEnd(event, {
         statusCode: Status.forbidden,
         body: "Unauthorized"
     }, Status.forbidden)
 
-    const result = await withdrawFunds({ formUlid, phone: phonePayload.phone, reason: "User Initiated Form Witdrawal" }).catch(err => err as Error)
-    if (result instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: result?.message || "Unknown error while withdrawing funds"
-    } as APIResponse<string>, Status.internalServerError)
+    const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: details.user.ulid }).catch(err => err as Error)
+    if (result instanceof Error) {
+        console.error(result)
+        console.trace(result)
+        return useHttpEnd(event, {
+            statusCode: Status.internalServerError,
+            body: result?.message || "Unknown error while withdrawing funds"
+        } as APIResponse<string>, Status.internalServerError)
+    }
 
     const response = {} as APIResponse<string>
     response.statusCode = Status.success
@@ -265,16 +269,16 @@ router.get("/me/stats", defineEventHandler(async event => {
         body: "Unauthorized"
     }, Status.unauthorized)
 
-    const forms = await getStats(details.user.ulid).catch(err => err as Error)
-    if (forms instanceof Error) {
+    const stats = await getStats(details.user.ulid).catch(err => err as Error)
+    if (stats instanceof Error) {
         return useHttpEnd(event, {
-            body: forms.message,
+            body: stats.message,
             statusCode: Status.internalServerError
         }, Status.internalServerError)
     }
 
     response.statusCode = Status.success
-    response.body = forms
+    response.body = stats
 
     return response
 }))
