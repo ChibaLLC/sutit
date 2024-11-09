@@ -14,7 +14,8 @@
             Your success story starts with us.
           </h1>
           <p class="mt-2 mb-3 font-serif">
-            See how you can automate payments, data collection, make actual sales via whatsapp and increase your revenue
+            Supply Chain end to end efficiency
+            Automate Marketing/Sales, Purchase/Orders, Payments till Receipt/Order Fulfillment
           </p>
           <NuxtLink to="/dashboard"
             class="bg-white text-gray-800 active:bg-gray-100 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 mt-5 hover:bg-slate-300 transition-all duration-500 ease-in-out">
@@ -24,7 +25,8 @@
         <div class="p-4 rounded-md faze w-full mt-8">
           <h1 class="font-bold uppercase text-slate-900 mb-1">Our Products</h1>
           <div class="flex gap-2 justify-between m-auto max-md:flex-col">
-            <NuxtLink to="/dashboard" class="flex items-center gap-2 bg-[#262626] text-white rounded px-2 py-1 w-[100%]">
+            <NuxtLink to="/dashboard"
+              class="flex items-center gap-2 bg-[#262626] text-white rounded px-2 py-1 w-[100%]">
               <div class="bg-white rounded-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                   class="w-8 h-8 text-[#262626]">
