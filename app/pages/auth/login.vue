@@ -1,4 +1,4 @@
-<script setup lang="ts"> 
+<script setup lang="ts">
 const url = useRoute()
 const redirect = collapseString(url.query?.redirect as string)
 const remember = ref(false)
@@ -11,6 +11,7 @@ const details = reactive({
 const config = useRuntimeConfig()
 
 async function submit() {
+  debugger
   if (loading.value) return
   loading.value = true
 
@@ -28,9 +29,14 @@ async function submit() {
       loading.value = false
 
       if (res.statusCode === 200) {
-        if (remember.value) setAuthCookie(res.body);
+        setAuthCookie(res.body);
+        if (!remember.value) {
+          window.addEventListener("beforeunload", () => {
+            setAuthCookie(undefined);
+          })
+        }
         (await useUser()).value!.token = res.body
-        await navigateTo('/')
+        console.log((await useUser()).value)
 
         if (redirect) {
           if (typeof redirect !== 'string') throw new Error("Redirect Error")
@@ -99,117 +105,116 @@ function onSignIn(googleCrdential: GoogleCredential) {
 </script>
 <template>
   <Title>Login</Title>
-  <section class="absolute w-full" style="margin-top: 100px">
-    <div class="container mx-auto px-4 h-full">
-      <div class="flex content-center items-center justify-center h-full">
-        <div class="w-full lg:w-4/12 px-4">
-          <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300 border-0">
-            <div class="rounded-t mb-0 px-6 py-6">
-              <div class="text-center mb-3">
-                <h6 class="text-gray-600 text-sm font-bold">
-                  Sign in with
-                </h6>
-              </div>
-              <div class="btn-wrapper text-center">
-                <button
-                  class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;" @click="loginWithGithub"
-                  :disabled="loadingGithub">
-                  <img alt="..." class="w-5 mr-1" src="/images/svg/github.svg" />Github
-                  <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center"
-                    v-if="loadingGithub">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                      <path
-                        d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                      </path>
-                    </svg>
-                  </span>
-                </button>
-                <button @click="clickGoogleBtn" :disabled="loadingGoogle"
-                  class="bg-white active:bg-gray-100 text-gray-800 px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs"
-                  type="button" style="transition: all 0.15s ease 0s;">
-                  <img alt="..." class="w-5 mr-1" src="/images/svg/google.svg" />Google
-                  <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center"
-                    v-if="loadingGoogle">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                      <path
-                        d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                      </path>
-                    </svg>
-                  </span>
-                  <ClientOnly>
-                    <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
-                    <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"
-                      data-callback="onSignIn"></div>
-                  </ClientOnly>
-                </button>
-              </div>
-              <hr class="mt-6 border-b-1 border-gray-400" />
-            </div>
-            <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
-              <div class="text-gray-500 text-center mb-3 font-bold">
-                <small>Or sign in with credentials</small>
-              </div>
-              <form @submit.prevent>
-                <div class="text-red-500" v-if="errors.size > 0">
-                  <ul>
-                    <li v-for="error in errors" :key="error"><small>{{ error }}</small></li>
-                  </ul>
-                </div>
-                <div class="relative w-full mb-3">
-                  <label class="block uppercase text-gray-700 text-xs font-bold mb-2" for="grid-password">Email</label>
-                  <input type="email"
-                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                    placeholder="Email" v-model="details.email" v-on:focus="clearErrors"
-                    style="transition: all 0.15s ease 0s;" />
-                </div>
-                <div class="relative w-full mb-3">
-                  <label class="block uppercase text-gray-700 text-xs font-bold mb-2"
-                    for="grid-password">Password</label>
-                  <input type="password" v-model="details.password"
-                    class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full"
-                    placeholder="Password" v-on:focus="clearErrors" style="transition: all 0.15s ease 0s;" />
-                </div>
-                <div>
-                  <label class="inline-flex items-center cursor-pointer"><input id="customCheckLogin" type="checkbox"
-                      v-model="remember"
-                      class="form-checkbox border-0 rounded text-gray-800 ml-1 w-5 h-5 checked:bg-gray-900 checked:border-transparent bg-white"
-                      style="transition: all 0.15s ease 0s;" />
-                    <span class="ml-2 text-sm font-semibold text-gray-700">Remember me</span></label>
-                </div>
-                <div class="text-center mt-6">
-                  <button
-                    class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full"
-                    type="button" @click="submit" style="transition: all 0.15s ease 0s;">
-                    <span v-if="!loading">Sign In</span>
-                    <span :class="{ 'loading': loading }" class="w-full grid place-items-center" v-else>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                        <path
-                          d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                        </path>
-                      </svg>
-                    </span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div class="flex flex-wrap mt-6">
-            <div class="w-1/2">
-              <NuxtLink class="text-slate-900" :to="`/auth/reset?redirect=${redirect}`">
-                <small>Forgot password?</small>
-              </NuxtLink>
-            </div>
-            <div class="w-1/2 text-right">
-              <NuxtLink class="text-slate-900" :to="`/auth/signup?redirect=${redirect}`"><small>Create new
-                  account</small>
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
+  <div class="wrapper"></div>
+  <div
+    class="border border-sky bg-light/20 rounded-2xl max-sm:rounded w-[600px] max-w-[90vw] m-auto mt-20 p-10 shadow-md shadow-sky max-sm:mt-10">
+    <form @submit.prevent="submit" class="flex flex-col gap-8 max-sm:gap-4">
+      <div>
+        <h2 class="text-lg uppercase font-serif">Sutit.</h2>
+        <h1 class="text-4xl font-sans font-bold">Login</h1>
       </div>
-    </div>
-  </section>
+      <div class="flex flex-col gap-1">
+        <label for="email" class="font-mono text-lg">Email</label>
+        <input type="email" id="email" placeholder="username@mail.com" v-model="details.email" v-on:focus="clearErrors"
+          class="rounded-md px-3 py-2 focus:ring-1 outline-none focus:ring-sky focus:ring-opacity-50 border border-[#bdc6d7]"
+          autocomplete="email">
+      </div>
+      <div class="flex flex-col gap-1">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" v-model="details.password"
+          v-on:focus="clearErrors"
+          class="rounded-md px-3 py-2 focus:ring-1 outline-none focus:ring-sky focus:ring-opacity-50 border border-[#bdc6d7]">
+        <NuxtLink class="text-xs hover:underline font-mulish" to="/auth/reset">Forgot Password?</NuxtLink>
+      </div>
+      <div>
+        <div class="mb-2 ml-0.5">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="remember" v-on:focus="clearErrors"
+              class="border-0 rounded-md text-gray-800 w-4 h-4 checked:bg-gray-900 checked:border-transparent bg-white"
+              style="transition: all 0.15s ease 0s;" />
+            <span class="ml-2 text-sm font-semibold text-gray-700">Remember me</span></label>
+        </div>
+        <button type="submit" :disabled="loading"
+          class="bg-peach w-full text-white rounded-md px-3 py-2 hover:bg-peach/90 transition-colors duration-300 disabled:cursor-not-allowed ease-in-out">
+          <span v-if="!loading">Sign In</span>
+          <span :class="{ 'loading': loading }" class="w-full grid place-items-center" v-else>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path
+                d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+              </path>
+            </svg>
+          </span>
+        </button>
+      </div>
+      <p class="text-center text-sm font-mono capitalize">
+        or continue with
+      </p>
+      <div class="flex justify-center gap-x-6 items-center w-full -mt-2">
+        <button :disabled="loadingGoogle" type="button" @click="loginWithGithub"
+          class="bg-white rounded-md px-4 py-2 border border-[#bdc6d7] hover:bg-[#e8f0fe] transition-colors">
+          <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center" v-if="loadingGoogle">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path
+                d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+              </path>
+            </svg>
+          </span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" v-else>
+            <g clip-path="url(#clip0_22_4029)">
+              <path
+                d="M23.7662 9.64963H22.7996V9.59983H11.9998V14.3998H18.7815C17.7921 17.1939 15.1335 19.1997 11.9998 19.1997C8.02366 19.1997 4.79992 15.9759 4.79992 11.9998C4.79992 8.02366 8.02366 4.79992 11.9998 4.79992C13.8352 4.79992 15.5049 5.4923 16.7763 6.62329L20.1705 3.22914C18.0273 1.23178 15.1605 0 11.9998 0C5.37291 0 0 5.37291 0 11.9998C0 18.6267 5.37291 23.9996 11.9998 23.9996C18.6267 23.9996 23.9996 18.6267 23.9996 11.9998C23.9996 11.1952 23.9168 10.4098 23.7662 9.64963Z"
+                fill="#FFC107" />
+              <path
+                d="M1.38281 6.41449L5.32534 9.30584C6.39213 6.66468 8.97568 4.79992 11.999 4.79992C13.8344 4.79992 15.5042 5.4923 16.7755 6.62328L20.1697 3.22914C18.0265 1.23178 15.1598 0 11.999 0C7.38991 0 3.39278 2.60215 1.38281 6.41449Z"
+                fill="#FF3D00" />
+              <path
+                d="M12 24C15.0995 24 17.9159 22.8138 20.0452 20.8848L16.3313 17.7421C15.086 18.6891 13.5644 19.2013 12 19.2001C8.87881 19.2001 6.22865 17.2099 5.23027 14.4326L1.31714 17.4475C3.3031 21.3336 7.33623 24 12 24Z"
+                fill="#4CAF50" />
+              <path
+                d="M23.7662 9.64964H22.7996V9.59984H11.9998V14.3998H18.7814C18.3082 15.7296 17.4557 16.8916 16.3293 17.7423L16.3311 17.7411L20.045 20.8838C19.7822 21.1226 23.9996 17.9997 23.9996 11.9998C23.9996 11.1952 23.9168 10.4098 23.7662 9.64964Z"
+                fill="#1976D2" />
+            </g>
+            <defs>
+              <clipPath id="clip0_22_4029">
+                <rect width="24" height="24" rx="12" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+          <ClientOnly>
+            <div class="g_id_signin hidden" data-type="standard" ref="googleButton"></div>
+            <div id="g_id_onload" :data-client_id="config.public.googleClientId" data-ux_mode="popup"
+              data-callback="onSignIn"></div>
+          </ClientOnly>
+        </button>
+        <button :disabled="loadingGoogle" type="button" @click="clickGoogleBtn"
+          class="bg-white rounded-md px-4 py-2 border border-[#bdc6d7] hover:bg-[#e8f0fe] transition-colors">
+          <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center" v-if="loadingGithub">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path
+                d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+              </path>
+            </svg>
+          </span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" v-else>
+            <g clip-path="url(#clip0_22_4037)">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 0C5.37 0 0 5.37 0 12C0 17.31 3.435 21.795 8.205 23.385C8.805 23.49 9.03 23.13 9.03 22.815C9.03 22.53 9.015 21.585 9.015 20.58C6 21.135 5.22 19.845 4.98 19.17C4.845 18.825 4.26 17.76 3.75 17.475C3.33 17.25 2.73 16.695 3.735 16.68C4.68 16.665 5.355 17.55 5.58 17.91C6.66 19.725 8.385 19.215 9.075 18.9C9.18 18.12 9.495 17.595 9.84 17.295C7.17 16.995 4.38 15.96 4.38 11.37C4.38 10.065 4.845 8.985 5.61 8.145C5.49 7.845 5.07 6.615 5.73 4.965C5.73 4.965 6.735 4.65 9.03 6.195C9.99 5.925 11.01 5.79 12.03 5.79C13.05 5.79 14.07 5.925 15.03 6.195C17.325 4.635 18.33 4.965 18.33 4.965C18.99 6.615 18.57 7.845 18.45 8.145C19.215 8.985 19.68 10.05 19.68 11.37C19.68 15.975 16.875 16.995 14.205 17.295C14.64 17.67 15.015 18.39 15.015 19.515C15.015 21.12 15 22.41 15 22.815C15 23.13 15.225 23.505 15.825 23.385C18.2072 22.5807 20.2772 21.0497 21.7437 19.0074C23.2101 16.965 23.9993 14.5143 24 12C24 5.37 18.63 0 12 0Z"
+                fill="black" />
+            </g>
+            <defs>
+              <clipPath id="clip0_22_4037">
+                <rect width="24" height="24" rx="12" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+        </button>
+      </div>
+      <p class="text-center text-sm font-mono capitalize mt-1">
+        Don't have an account?
+        <NuxtLink to="/auth/signup" class="text-dark font-bold hover:underline">Sign Up</NuxtLink>
+      </p>
+    </form>
+  </div>
 </template>
 
 <style scoped>
@@ -221,5 +226,21 @@ button[disabled] {
   @apply cursor-not-allowed;
   @apply pointer-events-none;
   @apply opacity-50;
+}
+
+.wrapper {
+  z-index: -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-top: 5rem;
+  min-width: 100vw;
+  min-height: 100vh;
+  background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #FFFFFF 25.3%, #E0FBFC 100%)
+}
+
+.shadow-md.shadow-sky {
+  box-shadow: 2px 4px 10px rgba(152, 193, 217, 0.25);
+  backdrop-filter: blur(10px);
 }
 </style>

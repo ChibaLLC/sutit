@@ -7,7 +7,7 @@
  * setAuthCookie("token", 3600)
  */
 export function setAuthCookie(token: string | undefined | null, expiry?: number) {
-    if(Boolish(token)){
+    if (Boolish(token)) {
         const expires = expiry ? new Date(Date.now() + expiry * 1000) : undefined
         const cookie = useCookie<string>("auth", {
             expires: expires
@@ -30,29 +30,30 @@ export function getAuthCookie(): string | null {
     return cookie
 }
 
-export function getAuthToken() {
-    const state = useUser().value?.token?.trim()
-    const cookie = getAuthCookie()
-
-    if (Boolish(state)) return cookie
-    return state
+export async function getAuthToken() {
+    if (import.meta.client) {
+        const state = (await useUser()).value?.token?.trim()
+        if (Boolish(state)) return state
+    }
+    return Promise.resolve(getAuthCookie())
 }
 
-export function userIsAuthenticated() {
-    return !!getAuthToken()
+export async function userIsAuthenticated() {
+    const token = await getAuthToken()
+    return !!token
 }
 
 export async function logout() {
     await $fetch("/api/v1/auth/logout", {
-        async onResponse({response}) {
+        async onResponse({ response }) {
             const res = response._data as APIResponse<any>
             if (res.statusCode !== 200) {
                 console.error(res)
-                return alert("Failed to logout")
+                return window.alertError("Failed to logout")
             }
             const state = await useUser()
             state.value = {} as UserState
-            setAuthCookie("", 0)
+            setAuthCookie(undefined)
             await navigateTo("/auth/login")
         }
     }).catch(console.error)

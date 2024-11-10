@@ -1,5 +1,8 @@
 <template>
-    <section class="pb-20 mt-8">
+    <div class="bg-sky w-full h-fit absolute top-0 -z-10">
+        <img src="/images/bg.jpg" alt="" class="w-full aspect-video object-cover mix-blend-multiply blur">
+    </div>
+    <section class="pb-20 mt-24 w-10/12 max-sm:w-11/12 m-auto">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap">
                 <div class="lg:pt-12 pt-6 w-full md:w-4/12 px-4 text-center">
@@ -50,11 +53,11 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center mt-32">
-                <div class="w-full md:w-5/12 px-4 mr-auto ml-auto">
+                <div class="w-full md:w-5/12 p-6 mr-auto ml-auto bg-white rounded-lg shadow-lg">
                     <div
                         class="text-gray-600 p-3 text-center inline-flex items-center justify-center w-16 h-16 mb-6 shadow-lg rounded-full bg-gray-100">
                         <i class="fas fa-user-friends text-xl"></i>
-                    </div>t
+                    </div>
                     <h3 class="text-3xl mb-2 font-semibold leading-normal">
                         Working with us is a pleasure
                     </h3>

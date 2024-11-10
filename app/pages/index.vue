@@ -25,8 +25,9 @@
           </svg>
         </NuxtLink>
       </div>
-      <p class="text-center mt-4 text-navy lowercase first-letter:uppercase font-bold text-xl max-sm:text-base max-sm:font-extrabold max-sm:leading-5">
-        Automate Marketing and Sales, Purchases, <br> Payments and Order Fulfillment
+      <p
+        class="text-center mt-4 text-navy lowercase first-letter:uppercase font-bold text-xl max-sm:text-base max-sm:font-extrabold max-sm:leading-5">
+        Automate Marketing and Sales, Purchases, <br> Payments and Order Fulfillment.
       </p>
       <Highlight />
     </div>

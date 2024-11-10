@@ -30,7 +30,7 @@
       </ul>
       <div class="isolate">
         <div>
-          <div v-if="!userIsAuthenticated()">
+          <div v-if="!is_authenticated">
             <NuxtLink
               class="bg-navy px-8 max-sm:px-5 py-2 max-sm:py-1.5 rounded-sm text-white font-bold max-sm:hidden dropdown-item"
               to="/auth/login">
@@ -53,8 +53,8 @@
         </div>
         <ul ref="dropdown"
           class="absolute border px-10 py-1 dropdown text-white bg-navy/80 mt-1 -mr-0.5 rounded-b-md backdrop-blur-lg">
-          <li class="hover:bg-sky/20 w-full transition-colors py-1 initial">
-            <button @click="logout" v-if="userIsAuthenticated()">Log Out</button>
+          <li class="hover:text-sky w-full transition-colors py-1 initial">
+            <button @click="logout" v-if="is_authenticated">Log Out</button>
           </li>
         </ul>
       </div>
@@ -65,6 +65,8 @@
 const dropdown = ref<HTMLDivElement | null>(null);
 let collectedDropdownItems = false;
 const pp = '/images/profile.png'
+
+const is_authenticated = !!getAuthCookie()
 
 function handleWindowSize() {
   if (window.innerWidth <= 768 && !collectedDropdownItems) {

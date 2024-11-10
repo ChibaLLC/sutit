@@ -1,8 +1,4 @@
-type NotificationOptions = {
-    timeout?: number | 'never';
-    intensity?: 'info' | 'success' | 'error';
-};
-
+import type { NotificationOptions } from "~~/shared/types";
 class Notification {
     private readonly notificationElement: HTMLDivElement | null = null;
     private readonly message: string;
@@ -165,7 +161,7 @@ export default defineNuxtPlugin(() => {
         new Notification(message, options);
     }
 
-    Object.defineProperty(window, '$alert', {
+    Object.defineProperty(window, 'alert', {
         configurable: false,
         enumerable: false,
         writable: false,

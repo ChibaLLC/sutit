@@ -217,7 +217,7 @@ const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(`/
     display: flex;
     justify-content: center;
     gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 5rem;
 }
 
 .recent-list li:hover {

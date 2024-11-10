@@ -8,7 +8,7 @@ export const useUser = () => useAsyncState<UserState>('user', async () => {
         },
         async onResponseError({ response }) {
             log.error(response)
-            setAuthCookie(undefined)
+            setAuthCookie(undefined);
             (await useUser()).value = {} as UserState
         }
     })

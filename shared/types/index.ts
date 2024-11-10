@@ -333,3 +333,8 @@ export interface BusinessPaybillRequest {
 }
 
 export type BusinessBuyGoodsRequest = BusinessPaybillRequest
+
+export type NotificationOptions = {
+    timeout?: number | 'never';
+    intensity?: 'info' | 'success' | 'error';
+};
