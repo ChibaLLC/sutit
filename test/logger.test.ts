@@ -38,7 +38,7 @@ test("Testing for $FileLogger.tail", async () => {
     expect(logs.length).toBe(5)
 
     logs.forEach((log, index) => {
-        expect(log.args.join(" ")).toBe(items[index].message + " " + items[index].timestamp)
+        expect(log.args.join(" ")).toBe(items[index]?.message + " " + items[index]?.timestamp)
     })
 
     for (const item of items) {

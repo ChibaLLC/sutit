@@ -1,6 +1,5 @@
 import type {H3Event} from "h3";
-import {getUserByToken} from "~/mvc/users/queries";
-import {type Drizzle} from "~/db/types";
+import {getUserByToken} from "~~/server/mvc/users/queries";
 
 export async function useAuth(event: H3Event): Promise<[{
     token: string,
@@ -25,14 +24,7 @@ export function readAuthToken(event: H3Event) {
     let [bearer, token] = auth.split(" ")
     if (bearer !== "Bearer") return null
 
-    token = token.trim()
-    if (
-        !token ||
-        token === "undefined" ||
-        token === "null" ||
-        token === "false" ||
-        token === ""
-    ) return null
+    if (!Boolish(token)) return null
 
     return token
 }

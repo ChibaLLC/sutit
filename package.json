@@ -14,14 +14,14 @@
     "migrate": "drizzle-kit generate:pg && drizzle-kit push:pg"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.11.2",
+    "@nuxtjs/tailwindcss": "^6.12.1",
     "@types/nodemailer": "^6.4.15",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
     "dotenv": "^16.4.1",
     "drizzle-kit": "^0.20.14",
-    "nuxt": "^3.10.0",
+    "nuxt": "^3.14.159",
     "sass": "^1.70.0",
     "vitest": "^1.2.2",
     "vue": "^3.4.15",

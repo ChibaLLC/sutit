@@ -1,6 +1,5 @@
 import type { Peer } from "crossws";
 import { WsClient } from "../utils/socket";
-import { SocketStatus, type SocketTemplate, TYPE } from "~/types";
 
 export default defineWebSocketHandler({
     open(peer: Peer) {

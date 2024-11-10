@@ -1,0 +1,26 @@
+<svg width="546" height="288" viewBox="0 0 546 288" fill="none" xmlns="http://www.w3.org/2000/svg" v-for="i in repeat">
+    <g filter="url(#filter0_f_89_64)" class="hover:animate-pulse">
+        <path d="M5 5H105V105H5V5Z" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M205 5H305V105H205V5Z" fill="#E0FBFC" fill-opacity="0.780392" stroke="#E0FBFC" stroke-width="1.6" />
+        <path
+            d="M605 5H505V105H605M605 5V105M605 5H705M605 105H705M705 5V105M705 5H805M705 105H805M805 5V105M805 5H905V105H805"
+            stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M5 105H105V205H5V105Z" fill="#E0FBFC" fill-opacity="0.0941176" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M305 105H205V205H305M305 105V205M305 105H405V205H305" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M405 105H505V205H405V105Z" fill="#E0FBFC" fill-opacity="0.784314" stroke="#E0FBFC"
+            stroke-width="1.6" />
+        <path d="M605 105H505V205H605M605 105V205M605 105H705V205H605" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M205 205H305V305H205V205Z" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M405 205H505V305H405V205Z" fill="#E0FBFC" fill-opacity="0.94902" stroke="#E0FBFC" stroke-width="1.6" />
+        <path d="M805 205H705V305H805M805 205V305M805 205H905V305H805M505 205H605V305H505V205Z" stroke="#E0FBFC"
+            stroke-width="1.6" />
+    </g>
+    <defs>
+        <filter id="filter0_f_89_64" x="0.199997" y="0.199997" width="1009.6" height="709.6"
+            filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+            <feGaussianBlur stdDeviation="2" result="effect1_foregroundBlur_89_64" />
+        </filter>
+    </defs>
+</svg>

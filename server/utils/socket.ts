@@ -1,5 +1,4 @@
 import { ulid } from "ulid"
-import { SocketStatus, TYPE, type SocketTemplate } from "~/types"
 import { H3Event } from "h3"
 import { Peer } from "crossws"
 
@@ -648,40 +647,6 @@ export class PollClient extends Client {
     }
 }
 
-export function parseData(data: any): {
-    data: SocketTemplate,
-    type: "json" | "string" | string
-} {
-    let _data = data
-    if (typeof data === "string") {
-        try {
-            _data = JSON.parse(data)
-        } catch (_) {
-            console.warn("Invalid JSON", data)
-            _data = data
-        }
-    }
-
-    if (hasRawData(_data)) {
-        const decoder = new TextDecoder()
-        try {
-            _data = JSON.parse(decoder.decode(new Uint8Array(_data.rawData)))
-        } catch (_) {
-            console.warn("Invalid JSON")
-        }
-    }
-
-    return _data
-}
-
 export function isSocketTemplate(data: any): data is SocketTemplate {
     return (data as SocketTemplate)?.type !== undefined
-}
-
-export function hasRawData(data: any): data is { rawData: number[], type: string } {
-    return (data)?.rawData !== undefined
-}
-
-export function createChannelName(...args: string[]) {
-    return args.sort().join(":")
 }

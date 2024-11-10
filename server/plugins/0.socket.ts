@@ -1,4 +1,3 @@
-import { TYPE, type SocketTemplate } from "~/types";
 import { Clients, Channels } from "../utils/socket";
 
 declare global {

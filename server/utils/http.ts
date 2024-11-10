@@ -1,5 +1,4 @@
 import {defineEventHandler, H3Event, type Router} from "h3";
-import {type APIResponse, Status} from "~/types";
 import {useBase} from "h3";
 import {ulid} from "ulid";
 

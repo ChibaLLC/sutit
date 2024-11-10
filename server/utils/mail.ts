@@ -1,4 +1,3 @@
-import { type SocketTemplate, TYPE } from "~/types";
 import nodemailer from "nodemailer";
 
 function PASSWORD_RESET_TEMPLATE(link: any) {
