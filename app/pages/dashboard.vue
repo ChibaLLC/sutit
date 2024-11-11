@@ -111,7 +111,7 @@
     <div class="flex flex-col px-4 xl:px-6 mt-8 w-full">
         <h1 class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto uppercase font-bold mt-1">Recents</h1>
         <ul class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto recent-list"
-            v-if="recents?.forms.length">
+            v-if="recents?.forms?.length">
             <li v-for="item in recents?.forms" class="flex align-middle gap-3 m-auto p-2 w-full">
                 <div class="w-fit">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
