@@ -51,7 +51,7 @@ function deleteForm(ulid: string) {
     },
     onResponse({ response }) {
       if (!response.ok) return
-      formsStores.value = formsStores.value.filter((fs) => fs.forms.ulid === ulid)
+      formsStores.value = formsStores.value.filter((fs) => fs.forms.ulid !== ulid)
     },
     onResponseError({error}){
       log.error(error)
