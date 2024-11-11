@@ -14,10 +14,12 @@ const emits = defineEmits<{
 
 function cancel(){
   props.onCancel?.()
+  emits("cancel")
 }
 
 function confirm(){
   props.onConfirm?.()
+  emits("confirm")
 }
 </script>
 
