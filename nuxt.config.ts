@@ -18,6 +18,12 @@ export default defineNuxtConfig({
         },
         experimental: {
             websocket: true
+        },
+        imports: {
+            dirs: [
+                "./shared/utils",
+                "./shared/types"
+            ]
         }
     },
     css: [
@@ -27,13 +33,20 @@ export default defineNuxtConfig({
         "@nuxtjs/tailwindcss",
         "@chiballc/nuxt-form-builder"
     ],
-    tailwindcss: {
-        configPath: '~/tailwind.config.js',
-    },
     runtimeConfig: {
         public: {
             githubClientId: process.env.GITHUB_CLIENT_ID,
             googleClientId: process.env.GOOGLE_CLIENT_ID
         }
-    }
+    },
+    future: {
+        compatibilityVersion: 4
+    },
+    imports: {
+        dirs: [
+            "../shared/types",
+            "../shared/utils"
+        ]
+    },
+    compatibilityDate: "2024-11-09"
 })

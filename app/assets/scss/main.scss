@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+#notification-dock {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  top: 6.5rem;
+  z-index: 50;
+
+  .info {
+    background-color: hsla(190, 59%, 90%, 0.8);
+    border: 2px solid #3681CB;
+  }
+
+  .success {
+    background-color: hsla(122, 71%, 93%, 0.8);
+    border: 2px solid #4CAF50;
+  }
+
+  .error {
+    background-color: hsla(0, 59%, 90%, 0.8);
+    border: 2px solid #FF0B0B;
+  }
+
+  .closing {
+    animation: close 0.5s ease-in-out forwards;
+  }
+
+  .opening {
+    animation: open 0.5s ease-in-out forwards;
+  }
+
+  @keyframes close {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    100% {
+      transform: scale(0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes open {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}

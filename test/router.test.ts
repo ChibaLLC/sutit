@@ -1,5 +1,5 @@
 import {test, expect} from 'vitest'
-import type {APIResponse} from "../types";
+import type {APIResponse} from "../shared/types";
 
 test('Testing known api test route', async () => {
     const response = await fetch('http://localhost:3000/api/v1/status')

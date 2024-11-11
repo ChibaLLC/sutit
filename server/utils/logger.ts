@@ -11,7 +11,7 @@ import path from "node:path";
 import {createInterface} from "node:readline";
 import {consola, createConsola, type LogObject, type LogType} from "consola";
 import {execSync} from "node:child_process";
-import type {NitroApp} from "nitropack";
+import type {Nitro} from "nitropack";
 
 
 export class Logger {
@@ -34,12 +34,12 @@ export class Logger {
         this.streams = this.makeStreams()
     }
 
-    constructor(app?: NitroApp) {
+    constructor(app?: Nitro) {
         app?.hooks.hookOnce('close', () => {
             this.dispose()
         })
 
-        if(isVercel) {
+        if (isVercel) {
             this.streams = {} as typeof this.streams
             return
         }
@@ -55,6 +55,7 @@ export class Logger {
         const files = readdirSync(path.join('./logs'))
         for (const file of files) {
             const log = file.split('.')[0]
+            if (!log) continue
             this.logs.add(log)
         }
     }
@@ -118,13 +119,13 @@ export class Logger {
             const logArray = logString.split('\t')
             const logObject = {} as LogObject
             const tag_type = logArray[1]?.replace('(', '').replace(')', '').split(' ')
-            logObject.date = new Date(logArray[0]?.replace('[', '').replace(']', ''))
-            logObject.tag = tag_type[0]
-            logObject.type = tag_type[1] as LogType
+            logObject.date = new Date(logArray[0]?.replace('[', '').replace(']', '')!)
+            logObject.tag = tag_type?.[0] || "UNKNOWN"
+            logObject.type = tag_type?.[1] as LogType
             try {
-                logObject.args = JSON.parse(logArray[2])
+                logObject.args = JSON.parse(logArray[2] || '{}')
             } catch (e) {
-                logObject.args = logArray[2].replace('\\t', '\t').split(' ')
+                logObject.args = logArray[2]?.replace('\\t', '\t').split(' ') || ["<empty>"]
             }
             logObject.message = logArray[3]
             return logObject
@@ -207,6 +208,7 @@ export class Logger {
     public getLogsByDate(date: Date, log: string = 'master'): LogObject[] | undefined {
         try {
             const dateString = date.toISOString().split('T')[0]
+            if (!dateString) return undefined
             return this.grep(dateString, log)
         } catch (e) {
             consola.error(e)
@@ -228,7 +230,7 @@ export class Logger {
     public getLogsByDateAndTime(date: Date, log: string = 'master'): LogObject[] | undefined {
         try {
             const dateString = date.toISOString().split('T')[0]
-            const timeString = date.toISOString().split('T')[1].split('.')[0]
+            const timeString = date.toISOString().split('T')[1]?.split('.')[0]
             return this.grep(`${dateString}.*${timeString}`, log)
         } catch (e) {
             consola.error(e)

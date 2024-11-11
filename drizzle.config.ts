@@ -23,7 +23,7 @@ if (configHasNullValues(config)) throw new Error('Missing database credentials. 
 export const credentials = config
 
 export default defineConfig({
-    schema: "./db/drizzle/schema.ts",
+    schema: "./server/db/drizzle/schema.ts",
     driver: 'pg',
     dbCredentials: {
         host: config.host!,
@@ -33,6 +33,6 @@ export default defineConfig({
         database: config.database!
     },
     verbose: true,
-    strict: true,
-    out: './db/drizzle',
+    strict: false,
+    out: './server/db/drizzle',
 })
