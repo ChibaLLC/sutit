@@ -145,7 +145,7 @@ function onSignIn(googleCrdential: GoogleCredential) {
         or continue with
       </p>
       <div class="flex justify-center gap-x-6 items-center w-full -mt-2">
-        <button :disabled="loadingGoogle" type="button" @click="loginWithGithub"
+        <button :disabled="loadingGoogle" type="button" @click="clickGoogleBtn"
           class="bg-white rounded-md px-4 py-2 border border-[#bdc6d7] hover:bg-[#e8f0fe] transition-colors">
           <span :class="{ 'loading': loadingGoogle }" class="w-full grid place-items-center" v-if="loadingGoogle">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
@@ -181,7 +181,7 @@ function onSignIn(googleCrdential: GoogleCredential) {
               data-callback="onSignIn"></div>
           </ClientOnly>
         </button>
-        <button :disabled="loadingGoogle" type="button" @click="clickGoogleBtn"
+        <button :disabled="loadingGithub" type="button" @click="loginWithGithub"
           class="bg-white rounded-md px-4 py-2 border border-[#bdc6d7] hover:bg-[#e8f0fe] transition-colors">
           <span :class="{ 'loading': loadingGithub }" class="w-full grid place-items-center" v-if="loadingGithub">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
