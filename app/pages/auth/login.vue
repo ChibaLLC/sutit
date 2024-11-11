@@ -2,7 +2,6 @@
 const url = useRoute()
 const redirect = collapseString(url.query?.redirect as string)
 const remember = ref(false)
-const errors = ref(new Set<string>())
 const loading = ref(false)
 const details = reactive({
   email: '',
@@ -11,7 +10,6 @@ const details = reactive({
 const config = useRuntimeConfig()
 
 async function submit() {
-  debugger
   if (loading.value) return
   loading.value = true
 
@@ -36,8 +34,6 @@ async function submit() {
           })
         }
         (await useUser()).value!.token = res.body
-        console.log((await useUser()).value)
-
         if (redirect) {
           if (typeof redirect !== 'string') throw new Error("Redirect Error")
           await navigateTo(redirect)
@@ -45,15 +41,10 @@ async function submit() {
           await navigateTo('/')
         }
       } else {
-        errors.value.add(res.body || 'An unknown error occurred')
+        window.alertError(res.body || 'An unknown error occurred')
       }
     }
   })
-}
-
-function clearErrors() {
-  if (errors.value.size === 0) return
-  errors.value = new Set()
 }
 
 
@@ -93,11 +84,16 @@ function onSignIn(googleCrdential: GoogleCredential) {
     async onResponse({ response }) {
       const res = response._data
       if (res.statusCode === 200) {
-        if (remember.value) setAuthCookie(res.body);
+        setAuthCookie(res.body);
+        if (!remember.value) {
+          window.addEventListener("beforeunload", () => {
+            setAuthCookie(undefined);
+          })
+        }
         (await useUser()).value!.token = res.body
         navigateTo('/')
       } else {
-        errors.value.add(res.body || 'An unknown error occurred')
+        window.alertError(res.body || 'An unknown error occurred', { timeout: 'never' })
       }
     }
   }).then(() => { loadingGoogle.value = false })
@@ -115,21 +111,20 @@ function onSignIn(googleCrdential: GoogleCredential) {
       </div>
       <div class="flex flex-col gap-1">
         <label for="email" class="font-mono text-lg">Email</label>
-        <input type="email" id="email" placeholder="username@mail.com" v-model="details.email" v-on:focus="clearErrors"
+        <input type="email" id="email" placeholder="username@mail.com" v-model="details.email"
           class="rounded-md px-3 py-2 focus:ring-1 outline-none focus:ring-sky focus:ring-opacity-50 border border-[#bdc6d7]"
           autocomplete="email">
       </div>
       <div class="flex flex-col gap-1">
         <label for="password">Password</label>
         <input type="password" id="password" autocomplete="current-password" v-model="details.password"
-          v-on:focus="clearErrors"
           class="rounded-md px-3 py-2 focus:ring-1 outline-none focus:ring-sky focus:ring-opacity-50 border border-[#bdc6d7]">
         <NuxtLink class="text-xs hover:underline font-mulish" to="/auth/reset">Forgot Password?</NuxtLink>
       </div>
       <div>
         <div class="mb-2 ml-0.5">
           <label class="inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="remember" v-on:focus="clearErrors"
+            <input type="checkbox" v-model="remember"
               class="border-0 rounded-md text-gray-800 w-4 h-4 checked:bg-gray-900 checked:border-transparent bg-white"
               style="transition: all 0.15s ease 0s;" />
             <span class="ml-2 text-sm font-semibold text-gray-700">Remember me</span></label>

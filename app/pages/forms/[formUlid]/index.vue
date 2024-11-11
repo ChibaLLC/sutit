@@ -54,7 +54,7 @@ async function processForm() {
 }
 
 const realtime = ref<RealTime | null>(null)
-onBeforeUnmount(() => {
+onUnmounted(() => {
   realtime.value?.close()
   realtime.value = null
 })

@@ -1,9 +1,10 @@
-import type {Drizzle} from "~~/server/db/types";
+import type { Drizzle } from "~~/server/db/types";
 import { call_b2b, call_b2c, call_stk } from "../../mvc/mpesa/methods";
-import {getUserByUlId} from "../users/queries";
+import { getUserByUlId } from "../users/queries";
 import excel from "exceljs";
-import type {FormElementData} from "@chiballc/nuxt-form-builder";
+import type { FormElementData } from "@chiballc/nuxt-form-builder";
 import {
+    deleteForm,
     getAllFormPaymentsSum,
     getFormByUlid,
     getFormCount,
@@ -27,7 +28,7 @@ export async function processFormPayments(form: Drizzle.Form.select, details: {
     const result = await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
     const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID)
     if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map()
-    global.formPaymentProcessingQueue.set(channel, {form, callback})
+    global.formPaymentProcessingQueue.set(channel, { form, callback })
     return {
         statusCode: 201,
         body: {
@@ -101,7 +102,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
 
     const titles: string[] = getFields(form.pages as Record<string, FormElementData[]>).map(field => field.label)
     if (hasPayment) titles.push("Price")
-    worksheet.addRow(titles).font = {bold: true}
+    worksheet.addRow(titles).font = { bold: true }
 
     const responses = (response: Entries[]) => {
         if (!response) return {} as {
@@ -160,7 +161,7 @@ export async function withdrawFunds(data: {
     switch (true) {
         case isPhoneCreditMethod(data.creditMethod):
             data.creditMethod.phone = `254${data.creditMethod.phone.slice(-9)}`
-            var result = await call_b2c({phone_number: data.creditMethod.phone, amount: total, reason: `Withdrawal for ${data.reason} by ${data.requester}`})
+            var result = await call_b2c({ phone_number: data.creditMethod.phone, amount: total, reason: `Withdrawal for ${data.reason} by ${data.requester}` })
             if (!result) return log.error("Failed to send funds")
             break
         case isPayBillCreditMethod(data.creditMethod):
@@ -201,4 +202,11 @@ export async function getStats(userUlid: string) {
         responses: responsesCount,
         earnings: totalPayments
     }
+}
+
+export async function deleteUserForm(userUlid: string, formUlid: string) {
+    const form = await getFormByUlid(formUlid)
+    if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
+    if (form.forms.userUlid !== userUlid) throw new Error(`Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`);
+    return deleteForm(formUlid)
 }

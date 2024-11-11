@@ -10,9 +10,8 @@ import {
     updateForm,
     updateStore
 } from "../../mvc/forms/queries";
-import type { Drizzle } from "~~/server/db/types";
 import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
-import { constructExcel, getStats, processFormPayments, sendUserMail, withdrawFunds } from "./methods";
+import { constructExcel, deleteUserForm, getStats, processFormPayments, sendUserMail, withdrawFunds } from "./methods";
 import { getUserByUlId } from "../users/queries";
 
 const router = createRouter()
@@ -57,7 +56,8 @@ router.post('/create', defineEventHandler(async event => {
         formData: {
             pages: Forms,
             stores: Stores,
-        }
+        },
+        allowGroups: boolean
     }
     if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
         return useHttpEnd(event, {
@@ -66,7 +66,7 @@ router.post('/create', defineEventHandler(async event => {
         }, Status.badRequest)
     }
 
-    const formUlid = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages).catch(err => err as Error)
+    const formUlid = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages, form.allowGroups).catch(err => err as Error)
     if (formUlid instanceof Error) {
         return useHttpEnd(event, {
             statusCode: Status.internalServerError,
@@ -143,6 +143,38 @@ router.post("/update/:formUlid", defineEventHandler(async event => {
     response.body = formUlid
 
     return response
+}))
+
+router.delete("/delete/:formUlid", defineEventHandler(async event => {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) {
+        return createError({
+            status: 400,
+            message: "No formUlid provided"
+        })
+    }
+
+    const [user, error] = await useAuth(event)
+    if (!user || error) {
+        return createError({
+            statusCode: 403,
+            message: error || "Error getting user"
+        })
+    }
+
+    const result = await deleteUserForm(user.user.ulid, formUlid).catch((e: Error) => e)
+    if (result instanceof Error) {
+        return createError({
+            status: 500,
+            data: result,
+            message: result.message
+        })
+    }
+
+    return createResponse({
+        statusCode: 200,
+        statusMessage: "OK"
+    })
 }))
 
 router.post("/credit/:formUlid", defineEventHandler(async event => {

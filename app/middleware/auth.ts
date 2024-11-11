@@ -1,4 +1,4 @@
 export default defineNuxtRouteMiddleware(async (from, to) =>{
-    if(await userIsAuthenticated()) return
+    if(userIsAuthenticated()) return
     return await navigateTo(`/auth/login?redirect=${from.path}`)
 })

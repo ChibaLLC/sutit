@@ -29,6 +29,13 @@
       "when": 1723716122375,
       "tag": "0003_magenta_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1731314810105,
+      "tag": "0004_salty_jackal",
+      "breakpoints": true
     }
   ]
 }

@@ -30,17 +30,12 @@ export function getAuthCookie(): string | null {
     return cookie
 }
 
-export async function getAuthToken() {
-    if (import.meta.client) {
-        const state = (await useUser()).value?.token?.trim()
-        if (Boolish(state)) return state
-    }
-    return Promise.resolve(getAuthCookie())
+export function getAuthToken() {
+    return getAuthCookie()
 }
 
-export async function userIsAuthenticated() {
-    const token = await getAuthToken()
-    return !!token
+export function userIsAuthenticated() {
+    return !!getAuthToken()
 }
 
 export async function logout() {

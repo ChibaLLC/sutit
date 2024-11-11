@@ -5,14 +5,15 @@ import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
 import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
 
-export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Forms): Promise<string> {
+export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Forms, allowGroups: boolean): Promise<string> {
     const _form = {
         pages: pages,
         ulid: ulid(),
         formName: name,
         formDescription: description,
         userUlid: userUlid,
-        price: price
+        price: price,
+        allowGroups: allowGroups
     } satisfies Drizzle.Form.insert
     await db.insert(forms).values(_form)
     return _form.ulid
@@ -25,6 +26,11 @@ export async function updateForm(formUlid: string, name: string, description: st
         price: price,
         pages: pages
     }).where(eq(forms.ulid, formUlid))
+}
+
+export function deleteForm(formUlid: string) {
+    return db.delete(forms)
+        .where(eq(forms.ulid, formUlid))
 }
 
 export async function createStore(formUlid: string, store: Stores) {

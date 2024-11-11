@@ -15,8 +15,8 @@ export default defineNuxtPlugin(async () => {
         async onResponseError({ response }) {
             const res = response._data
             if (res.statusCode === Status.success) return user.value = res.body
-            setAuthCookie(undefined)
-            (await useUser()).value = {}
+            setAuthCookie(undefined);
+            (await useUser()).value = {} as UserState
         }
     }).catch((e) => {
         log.error(e)
@@ -27,7 +27,7 @@ export default defineNuxtPlugin(async () => {
     if (res?.statusCode === Status.success) {
         user.value = res.body
     } else {
-        setAuthCookie(undefined)
+        setAuthCookie(undefined);
         (await useUser()).value = {} as UserState
     }
 })

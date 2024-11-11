@@ -52,6 +52,7 @@ export const forms = pgTable("forms", {
 	pages: jsonb("pages").notNull(),
 	price: integer("price").notNull(),
 	withDrawnFunds: integer("withdrawn_funds").default(0).notNull(),
+	allowGroups: boolean("allow_groups").default(false),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),

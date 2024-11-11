@@ -17,12 +17,12 @@ export async function useAuth(event: H3Event): Promise<[{
 }
 
 export function readAuthToken(event: H3Event) {
-    let auth = event.headers.get("Authorization") || null
+    let auth = getHeader(event, "Authorization") || null
     if (!auth) auth = getCookie(event, "Authorization") || null
     if (!auth) return null
 
     let [bearer, token] = auth.split(" ")
-    if (bearer !== "Bearer") return null
+    if (bearer?.toLowerCase() !== "bearer") return null
 
     if (!Boolish(token)) return null
 

@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder";
 
+definePageMeta({
+  middleware: ["auth"],
+  layout: 'novbar'
+})
+
+
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
 const helpText = ref(false)
 
-definePageMeta({
-  middleware: ["auth"]
-})
-
 const submitData = reactive({
   name: '',
   description: '',
+  allowGroups: false,
   formData: {
     pages: {} as Forms,
     stores: {} as Stores,
@@ -66,7 +69,7 @@ function closeFormDetailsModal() {
 
 <template>
   <Title>Build Form</Title>
-  <LazyFormBuilder :styles="{height: '100vh'}" style="margin-top: -1rem" @submit="submit">
+  <LazyFormBuilder :styles="{height: '100vh'}" @submit="submit">
     <template #footer>
       <LazyFormBuilderFooterItem>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7"
@@ -99,6 +102,10 @@ function closeFormDetailsModal() {
       <textarea id="form-description"
                 class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
                 placeholder="Description of the form" v-model="submitData.description"></textarea>
+    </div>
+    <div class="mt-2 flex gap-3 cursor-pointer flex-row-reverse justify-end">
+      <label for="groups">Allow grouped responses</label>
+      <input type="checkbox" id="groups" v-model="submitData.allowGroups">
     </div>
     <div v-if="helpText">
       <p class="text-red-500 text-sm">Please provide a name for the form</p>
