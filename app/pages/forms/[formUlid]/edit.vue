@@ -11,7 +11,8 @@ type ServerForm = {
 }
 
 definePageMeta({
-    middleware: ["auth"]
+    middleware: ["auth"],
+    layout: 'novbar'
 })
 const ulid = useRoute().params?.formUlid
 const response = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
