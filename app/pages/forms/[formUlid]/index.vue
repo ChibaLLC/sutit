@@ -189,7 +189,8 @@ function completeForm() {
         </p>
       </div>
       <form class="pb-4 mt-2 min-h-max" @submit.prevent>
-        <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge" :show-spinner="loading" />
+        <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
+          :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
             This form requires payment for submission of <br>
@@ -205,7 +206,7 @@ function completeForm() {
           </div>
         </div>
       </form>
-      <Modal :open="paymentModal" name="Please provide your MPESA phone number" @close="processForm"
+      <Modal :show="paymentModal" name="Please provide your MPESA phone number" @confirm="processForm"
         @cancel="payment_details = { phone: '' }; paymentModal = false; loading = false">
         <div class="flex flex-col">
           <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone" />

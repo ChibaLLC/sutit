@@ -99,7 +99,7 @@ class Notification {
             tooltip.innerHTML = 'Tip: Press <code>escape</code> to close';
             tooltip.style.zIndex = '100';
             tooltip.style.display = 'none';
-            tooltip.classList.add('absolute', 'text-xs', 'bg-slate-200', 'text-light', 'rounded-md', 'px-2', 'py-1', 'z-10', 'opacity-90');
+            tooltip.classList.add('absolute', 'text-xs', 'bg-dark', 'text-white', 'rounded-md', 'px-2', 'py-1', 'z-10', 'opacity-90');
             button.addEventListener("mouseenter", () => {
                 const {x, y} = button.getBoundingClientRect();
                 tooltip.style.top = `${y - 30}px`;

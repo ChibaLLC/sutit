@@ -97,7 +97,7 @@ function closeFormDetailsModal() {
             </LazyFormBuilderFooterItem>
         </template>
     </LazyFormBuilder>
-    <Modal :open="showPriceModal" @close="showPriceModal = false" @cancel="showPriceModal = false" name="Add Charge">
+    <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false" name="Add Charge">
         <div>
             <label for="payment-amount">Amount</label>
             <input type="number" id="payment-amount"
@@ -105,7 +105,7 @@ function closeFormDetailsModal() {
                 placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
         </div>
     </Modal>
-    <Modal :open="showFormNameModal" @cancel="closeFormDetailsModal" @close="closeFormDetailsModal"
+    <Modal :show="showFormNameModal" @cancel="closeFormDetailsModal" @confirm="closeFormDetailsModal"
         name="Edit Details">
         <div>
             <label for="form-name">Name</label>
