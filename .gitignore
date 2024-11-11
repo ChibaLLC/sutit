@@ -28,7 +28,7 @@ whatsapp-web
 dump.rdb
 puppet.*
 
-data
+./data
 
 false
 
