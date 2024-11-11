@@ -9,6 +9,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "start": "node .output/server/index.mjs",
+    "local": "node --env-file=.env .output/server/index.mjs",
     "test": "vitest",
     "introspect": "drizzle-kit introspect:pg",
     "migrate": "drizzle-kit generate:pg && drizzle-kit push:pg"
