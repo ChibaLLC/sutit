@@ -2,7 +2,7 @@
 const url = useRoute()
 const redirect = collapseString(url.query?.redirect as string)
 const remember = ref(false)
-const loading = ref(true)
+const loading = ref(false)
 const details = reactive({
   email: '',
   password: ''
