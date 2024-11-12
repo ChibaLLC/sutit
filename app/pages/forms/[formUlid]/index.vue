@@ -165,9 +165,10 @@ function goBack() {
   complete.value = false
 }
 
-function goBack2(){
-  if (data?.forms?.allowGroups && group.chosen){
+function goBack2() {
+  if (data?.forms?.allowGroups && group.chosen) {
     group.chosen = false
+    group.self = false
   } else {
     window.history.back()
   }
@@ -175,31 +176,6 @@ function goBack2(){
 
 function completeForm() {
   complete.value = true
-}
-
-const group = reactive({
-  chosen: false,
-  self: false
-})
-
-
-function chooseSelfOrGroup(e: Event) {
-  if ((e.target as HTMLElement).id === "for_me") {
-    group.self = true
-  } else {
-    group.self = false
-  }
-  group.chosen = true
-}
-
-function isEmail(val: string) {
-  return val.includes("@")
-}
-
-function isPhone(val: string) {
-  const regex = /^\+?\d{1,3}([ -]?\d{2,4}){2,4}$/
-  const exp = new RegExp(regex)
-  return exp.test(val)
 }
 
 const inviteTexts = ref('')
@@ -227,7 +203,13 @@ class Invite<T extends { email: string } | { phone: string } = any> extends Set<
     }
 
     for (const item of this) {
-      if ((item as { email?: string }).email === email || (item as { phone?: string }).phone === phone) return item
+      if (email && (item as { email?: string })?.email) {
+        if (email === (item as { email?: string })?.email) return item
+      } else if (phone && (item as { phone?: string })?.phone) {
+        if (phone === (item as { phone?: string })?.phone) {
+          return item
+        }
+      }
     }
 
     return undefined
@@ -244,23 +226,39 @@ class Invite<T extends { email: string } | { phone: string } = any> extends Set<
 }
 
 const invites = ref<Invite>(new Invite())
+const _member_count = ref(0)
+const member_count = computed({
+  get: () => _member_count.value || invites.value.size,
+  set: (value: number) => {
+    _member_count.value = value
+  }
+})
+const group = reactive({
+  chosen: false,
+  self: false,
+  invites: invites,
+  count: member_count,
+  name: ""
+})
 
-function copyInviteLink() {
-  loading.value = true
-  $fetch("/api/auth/onboard/invite/link", {
-    headers: {
-      Authorization: `Bearer ${getAuthToken()}`
-    },
-    method: "POST",
-    async onResponse({ response }) {
-      loading.value = false
-      if (!response.ok) return
 
-      const { link } = response._data
-      navigator.clipboard.writeText(link)
-      navigator.share?.({ title: 'Invite Link', text: link, url: link })
-    }
-  })
+function chooseSelfOrGroup(e: Event) {
+  if ((e.target as HTMLElement).id === "for_me") {
+    group.self = true
+  } else {
+    group.self = false
+  }
+  group.chosen = true
+}
+
+function isEmail(val: string) {
+  return val.includes("@")
+}
+
+function isPhone(val: string) {
+  const regex = /^\+?\d{1,3}([ -]?\d{2,4}){2,4}$/
+  const exp = new RegExp(regex)
+  return exp.test(val)
 }
 
 function addPhoneOrEmail() {
@@ -316,6 +314,42 @@ function showPlaceholder() {
 function addText() {
   inviteTexts.value = getText()
 }
+
+const invitesForm = ref<HTMLFormElement | null>(null)
+function processInvites(){
+  loading.value = true
+  console.log(group)
+}
+
+const loadingShare = ref(false)
+function copyInviteLink() {
+  if (!invitesForm.value) return log.warn("Invite Form Not Found")
+  if (validateInputs(invitesForm.value)) {
+    loadingShare.value = true
+  }
+  // $fetch("/api/auth/onboard/invite/link", {
+  //   headers: {
+  //     Authorization: `Bearer ${getAuthToken()}`
+  //   },
+  //   method: "POST",
+  //   async onResponse({ response }) {
+  //     loadingShare.value = false
+  //     if (!response.ok) return
+
+  //     const { link } = response._data
+  //     navigator.clipboard.writeText(link)
+  //     navigator.share?.({ title: 'Paid Details Link', text: link, url: link })
+  //   }
+  // })
+}
+
+function validateInputs(form: HTMLFormElement){
+  if(!form.checkValidity()){
+    form.reportValidity()
+    return false
+  }
+  return true
+}
 </script>
 
 <template>
@@ -337,8 +371,8 @@ function addText() {
         </p>
       </div>
       <form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.forms?.allowGroups || group.self">
-        <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge" @back="goBack2"
-          :show-spinner="loading" />
+        <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
+          @back="goBack2" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
             This form requires payment for submission of <br>
@@ -356,7 +390,8 @@ function addText() {
       </form>
       <form @submit.prevent v-if="data?.forms?.allowGroups && !group.chosen" class="w-full grid place-items-center">
         <div class="flex flex-wrap">
-          <label for="for_me" class="flex text-xl font-bold items-center m-2 gap-2 px-4 py-2 hover:bg-gray-200 cursor-pointer rounded">
+          <label for="for_me"
+            class="flex text-xl font-bold items-center m-2 gap-2 px-4 py-2 hover:bg-gray-200 cursor-pointer rounded">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
               <path
                 d="M4 22C4 17.5817 7.58172 14 12 14C16.4183 14 20 17.5817 20 22H18C18 18.6863 15.3137 16 12 16C8.68629 16 6 18.6863 6 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13ZM12 11C14.21 11 16 9.21 16 7C16 4.79 14.21 3 12 3C9.79 3 8 4.79 8 7C8 9.21 9.79 11 12 11Z">
@@ -377,45 +412,87 @@ function addText() {
           </label>
         </div>
       </form>
-      <form @submit.prevent v-if="group.chosen && !group.self" class="mt-2">
-        <label for="members" class="mt-4">Add the phone numbers or emails for your members.</label>
-        <div class="relative">
-          <div @keydown.enter.prevent="addPhoneOrEmail" contenteditable="true" @keyup.,.prevent="addPhoneOrEmail"
-            id="members"
-            class="block w-full text-sm text-gray-900 bg-gray-50 rounded border border-gray-300 focus:outline-none focus:ring-navy focus:border-navy textarea has-placeholder"
-            ref="invitesInput" @focusin="hidePlaceholder = true" @focusout="showPlaceholder" @input="addText">
-            <span class="placeholder" v-if="!hidePlaceholder">
-              Example: allan@gmail.com, 0712345678, +254712345678, boni@mail.com, etc.
-            </span>
-            <br v-if="invites.size > 0">
-            <div v-for="invite in invites" class="bg-navy text-white rounded p-0.5 invite mt-1" :key="invite.email">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"
-                v-if="invite?.email">
-                <path
-                  d="M21.7267 2.95694L16.2734 22.0432C16.1225 22.5716 15.7979 22.5956 15.5563 22.1126L11 13L1.9229 9.36919C1.41322 9.16532 1.41953 8.86022 1.95695 8.68108L21.0432 2.31901C21.5716 2.14285 21.8747 2.43866 21.7267 2.95694ZM19.0353 5.09647L6.81221 9.17085L12.4488 11.4255L15.4895 17.5068L19.0353 5.09647Z">
-                </path>
-              </svg>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" v-else class="h-4 w-4">
-                <path
-                  d="M6.45455 19L2 22.5V4C2 3.44772 2.44772 3 3 3H21C21.5523 3 22 3.44772 22 4V18C22 18.5523 21.5523 19 21 19H6.45455ZM5.76282 17H20V5H4V18.3851L5.76282 17ZM11 10H13V12H11V10ZM7 10H9V12H7V10ZM15 10H17V12H15V10Z">
-                </path>
-              </svg>
-              <p class="mx-0.5">
-                {{ invite.email || invite.phone }}
-              </p>
-              <button type="button" @click="invites.delete(invite)" class="hover:text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3">
+      <form @submit.prevent v-if="group.chosen && !group.self" class="mt-6 px-4" ref="invitesForm">
+        <div class="flex flex-col">
+          <label for="group_name" class="font-semibold">Group Name</label>
+          <input id="group_name" type="text" required class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none"
+            v-model="group.name" placeholder="Some rad name" />
+        </div>
+        <div class="mt-4">
+          <label for="members" class="font-semibold">Phone or Email</label>
+          <br />
+          <small class="ml-0.5">Add the phone numbers or emails for your members.</small>
+          <div class="relative">
+            <div @keydown.enter.prevent="addPhoneOrEmail" contenteditable="true" @keyup.,.prevent="addPhoneOrEmail"
+              id="members"
+              class="block w-full text-sm text-gray-900 bg-gray-50 rounded border border-gray-300 focus:outline-none focus:ring-navy focus:border-navy textarea has-placeholder"
+              ref="invitesInput" @focusin="hidePlaceholder = true" @focusout="showPlaceholder" @input="addText">
+              <span class="placeholder" v-if="!hidePlaceholder">
+                Example: allan@gmail.com, 0712345678, +254712345678, boni@mail.com, etc.
+              </span>
+              <br v-if="invites.size > 0">
+              <div v-for="invite in invites" class="bg-navy text-white rounded p-0.5 invite mt-1" :key="invite.email">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"
+                  v-if="invite?.email">
                   <path
-                    d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z">
+                    d="M21.7267 2.95694L16.2734 22.0432C16.1225 22.5716 15.7979 22.5956 15.5563 22.1126L11 13L1.9229 9.36919C1.41322 9.16532 1.41953 8.86022 1.95695 8.68108L21.0432 2.31901C21.5716 2.14285 21.8747 2.43866 21.7267 2.95694ZM19.0353 5.09647L6.81221 9.17085L12.4488 11.4255L15.4895 17.5068L19.0353 5.09647Z">
                   </path>
                 </svg>
-              </button>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" v-else class="h-4 w-4">
+                  <path
+                    d="M6.45455 19L2 22.5V4C2 3.44772 2.44772 3 3 3H21C21.5523 3 22 3.44772 22 4V18C22 18.5523 21.5523 19 21 19H6.45455ZM5.76282 17H20V5H4V18.3851L5.76282 17ZM11 10H13V12H11V10ZM7 10H9V12H7V10ZM15 10H17V12H15V10Z">
+                  </path>
+                </svg>
+                <p class="mx-0.5">
+                  {{ invite.email || invite.phone }}
+                </p>
+                <button type="button" @click="invites.delete(invite)" class="hover:text-red-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3">
+                    <path
+                      d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z">
+                    </path>
+                  </svg>
+                </button>
+              </div>
             </div>
+            <small class="help has-text-grey">Press <code>Enter</code> or <code>,</code> to add a contact</small>
           </div>
-          <small class="help has-text-grey">Press <code>Enter</code> or <code>,</code> to add an email</small>
         </div>
-        <div class="mt-2">
+        <div class="flex flex-col mt-4">
+          <label for="group_number" class="font-semibold">Member count</label>
+          <input id="group_number" type="number" required
+            class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none" title="Change as needed"
+            v-model="group.count" />
+        </div>
+        <div class="mt-4 flex w-full justify-between">
           <button type="button" @click="group.chosen = false" class="px-4 py-2 bg-gray-200 rounded">Back</button>
+          <button class="bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-300" type="button" @click="copyInviteLink">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"
+              v-if="!loadingShare">
+              <path
+                d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z">
+              </path>
+            </svg>
+            <span :class="{ 'animate-spin': loadingShare }" class="w-full grid place-items-center" v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path
+                  d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                </path>
+              </svg>
+            </span>
+          </button>
+          <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded" @click="processInvites">
+            <span v-if="!loading">
+              Next
+            </span>
+            <span :class="{ 'animate-spin': loading }" class="w-full grid place-items-center" v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path
+                  d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
+                </path>
+              </svg>
+            </span>
+          </button>
         </div>
       </form>
       <Modal :show="paymentModal" name="Please provide your MPESA phone number" @confirm="processForm"
