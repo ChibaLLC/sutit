@@ -324,7 +324,7 @@ function processInvites(){
 const loadingShare = ref(false)
 function copyInviteLink() {
   if (!invitesForm.value) return log.warn("Invite Form Not Found")
-  if (validateInputs(invitesForm.value)) {
+  if (validateForm(invitesForm.value)) {
     loadingShare.value = true
   }
   // $fetch("/api/auth/onboard/invite/link", {
@@ -343,7 +343,7 @@ function copyInviteLink() {
   // })
 }
 
-function validateInputs(form: HTMLFormElement){
+function validateForm(form: HTMLFormElement){
   if(!form.checkValidity()){
     form.reportValidity()
     return false

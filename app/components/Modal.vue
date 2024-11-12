@@ -26,7 +26,7 @@ function confirm(){
 <template>
   <div class="z-100 isolate veil w-full fixed top-0 left-0 h-full backdrop-blur-2xl" v-if="show">
     <div
-      class="modal min-w-[500px] max-w-5/6 rounded-lg fixed left-1/2 transform -translate-x-1/2 mt-20 bg-white border-2 border-dark/20">
+      class="modal sm:min-w-[500px] rounded-lg fixed left-1/2 transform -translate-x-1/2 mt-20 bg-white border-2 border-dark/20">
       <span class="flex px-4 items-center gap-2 border-b border-gray-300 py-2">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -61,6 +61,6 @@ function confirm(){
 .modal {
   box-shadow: 0 8px 20px #000000;
   backdrop-filter: blur(5px);
-  background: radial-gradient(325.39% 325.39% at 2.42% 8.67%, rgba(255, 255, 255, 0.8) 7%, rgba(152, 193, 217, 0.8) 100%)
+  background: radial-gradient(325.39% 325.39% at 2.42% 8.67%, rgba(255, 255, 255, 0.8) 7%, rgba(152, 193, 217, 0.8) 100%);
 }
 </style>

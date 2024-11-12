@@ -58,6 +58,13 @@ export const forms = pgTable("forms", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
+export const prepaidForms = pgTable("prepaid_forms", {
+	id: serial("id").primaryKey(),
+	formUlid: varchar("form_ulid", { length: 255 }),
+	paymentUlid: varchar("payment_ulid", { length: 255 }),
+	token: varchar("token", { length: 255 })
+})
+
 export const stores = pgTable("stores", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" }),

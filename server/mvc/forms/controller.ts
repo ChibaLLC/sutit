@@ -40,6 +40,31 @@ router.get('/:formUlid', defineEventHandler(async event => {
     return response
 }))
 
+router.get('/:formUlid/prepaid', defineEventHandler(async event => {
+    const formUuid = getRouterParam(event, "formUlid")
+    if (!formUuid) return createError({
+        statusCode: Status.badRequest,
+        message: "No form ID provided"
+    })
+
+    const form = await getFormByUlid(formUuid).catch(err => err as Error)
+    if (form instanceof Error) return createError({
+        statusCode: Status.internalServerError,
+        message: form?.message || "Unknown error while getting form"
+    })
+    if (!form) return createError({
+        statusCode: Status.notFound,
+        message: "Form not found"
+    })
+
+    if(!form.forms.allowGroups){
+        return createError({
+            statusCode: 403,
+            message: "This form is not eligible for that action"
+        })
+    }
+}))
+
 router.post('/create', defineEventHandler(async event => {
     const [details, error] = await useAuth(event)
     if (error || !details) return useHttpEnd(event, {
@@ -269,7 +294,6 @@ router.get("/submissions/:formUlid/total", defineEventHandler(async event => {
 
     return response
 }))
-
 
 router.get('/me', defineEventHandler(async event => {
     const response = {} as APIResponse<Array<{ forms: Drizzle.Form.select, stores: Drizzle.Store.select }>>
