@@ -24,7 +24,7 @@ function confirm(){
 </script>
 
 <template>
-  <div class="z-100 isolate ababwa veil w-full fixed top-0 left-0 h-full backdrop-blur-2xl" v-if="show">
+  <div class="z-100 isolate veil w-full fixed top-0 left-0 h-full backdrop-blur-2xl" v-if="show">
     <div
       class="modal min-w-[500px] max-w-5/6 rounded-lg fixed left-1/2 transform -translate-x-1/2 mt-20 bg-white border-2 border-dark/20">
       <span class="flex px-4 items-center gap-2 border-b border-gray-300 py-2">
@@ -55,6 +55,7 @@ function confirm(){
 <style scoped>
 .veil {
   background: radial-gradient(66.53% 131.56% at 70.49% 47.56%, rgba(61, 90, 128, 0.2) 0%, rgba(243, 106, 62, 0.2) 100%);
+  z-index: 20;
 }
 
 .modal {
