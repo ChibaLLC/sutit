@@ -118,12 +118,13 @@ async function submit() {
               complete.value = false
               break
             case Status.internalServerError:
+              log.error(data)
               rerender.value = true
               loading.value = false
               complete.value = false
               break
             case Status.unprocessableEntity:
-              alert(data.body)
+              window.alertError(data.body)
               rerender.value = true
               loading.value = false
               complete.value = false

@@ -36,6 +36,20 @@
       "when": 1731314810105,
       "tag": "0004_salty_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1731495701024,
+      "tag": "0005_sudden_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1731496749705,
+      "tag": "0006_big_captain_america",
+      "breakpoints": true
     }
   ]
 }

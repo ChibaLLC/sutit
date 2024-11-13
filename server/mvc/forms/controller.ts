@@ -10,7 +10,7 @@ import {
     updateForm,
     updateStore
 } from "../../mvc/forms/queries";
-import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 import { constructExcel, deleteUserForm, getStats, processFormPayments, sendUserMail, withdrawFunds } from "./methods";
 import { getUserByUlId } from "../users/queries";
 
@@ -392,7 +392,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                 let formMail;
                 for (const key in _data.forms.pages){
                     for(const field of _data.forms.pages[key] || []){
-                        if(field.type === Field.EMAIL){
+                        if(field.type === "email"){
                             formMail = field.value as string  | undefined
                             break
                         }

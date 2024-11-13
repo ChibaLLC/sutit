@@ -21,7 +21,7 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
         return useHttpEnd(event, { statusCode: 400, body: "No callback found" }, 400)
     }
 
-    const channelName = createChannelName(callback.CheckoutRequestID, callback.MerchantRequestID)    
+    const channelName = createChannelName(callback.CheckoutRequestID, callback.MerchantRequestID)
     if (isProduction) {
         const ip = _getRequestIP(event)
         if (!ip) {
@@ -67,7 +67,11 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
                 global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
                 useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
             })
-            funcall?.()
+            try {
+                funcall?.()
+            } catch (e) {
+                log.warn("Error on callback", funcall)
+            }
         } else {
             log.warn(`No form found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
             global.channels?.publish(channelName, { statusCode: Status.notFound, body: "Form not found", type: TYPE.ERROR, channel: channelName })

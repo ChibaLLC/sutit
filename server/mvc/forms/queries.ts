@@ -89,22 +89,51 @@ export async function insertFormPayment(details: {
     formUlid: string,
     paymentUlid: string
 }) {
+    const processed = await isProcessedFormPayment(details)
+    if (processed) return
     await db.insert(formPayments).values({
         formUlid: details.formUlid,
         paymentUlid: details.paymentUlid,
-    } satisfies Drizzle.FormPayment.insert)
+    } satisfies Drizzle.FormPayment.insert).catch(e => {
+        console.error(e)
+        throw e
+    })
+}
+
+export async function isProcessedFormPayment(details: {
+    formUlid: string,
+    paymentUlid: string
+}) {
+    const payment = await db.select().from(formPayments).where(and(eq(formPayments.formUlid, details.formUlid), eq(formPayments.paymentUlid, details.paymentUlid)))
+    if (payment.length) return payment.at(0)
+    return false
 }
 
 
 export async function insertPayment(amount: number, reference_code: string, phone_number: string) {
+    const processed = await isProcessedPayment(reference_code)
+    if (processed) {
+        log.warn("Attempt to re-process payment", reference_code)
+        return processed.ulid
+    }
+
     const _ulid = ulid()
     await db.insert(payments).values({
         ulid: _ulid,
         amount: amount,
         referenceCode: reference_code,
         phoneNumber: phone_number.slice(-9),
-    } satisfies Drizzle.Payment.insert)
+    } satisfies Drizzle.Payment.insert).catch(e => {
+        console.error(e)
+        throw e
+    })
     return _ulid
+}
+
+export async function isProcessedPayment(ref_code: string) {
+    const payment = await db.select().from(payments).where(eq(payments.referenceCode, ref_code))
+    if (payment.length) return payment.at(0)
+    return false
 }
 
 

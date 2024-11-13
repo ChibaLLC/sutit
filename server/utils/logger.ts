@@ -105,7 +105,7 @@ export class Logger {
             `${logObj.args.map(arg => {
                 if (typeof arg === 'object') {
                     return JSON.stringify(arg)
-                } else {
+                } else if(typeof arg === 'string'){
                     arg.replace('\t', '\\t')
                     return arg
                 }
