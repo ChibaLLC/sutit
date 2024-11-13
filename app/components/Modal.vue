@@ -7,19 +7,12 @@ const props = defineProps({
   onCancel: Function
 })
 
-const emits = defineEmits<{
-  cancel: [],
-  confirm: []
-}>()
-
 function cancel(){
   props.onCancel?.()
-  emits("cancel")
 }
 
 function confirm(){
   props.onConfirm?.()
-  emits("confirm")
 }
 </script>
 

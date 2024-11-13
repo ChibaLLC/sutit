@@ -80,6 +80,8 @@ export class Clients extends Map<string, Client> {
 }
 
 export class Channels extends Map<string, Channel> {
+    backpressure: Map<string, SocketTemplate[]> = new Map()
+
     constructor() {
         super()
     }
@@ -116,11 +118,19 @@ export class Channels extends Map<string, Channel> {
 
     subscribe(client: Client, channel: string) {
         client.channels.push(new Channel(channel))
-        const chan = this.get(channel)
+        let chan = this.get(channel)
         if (chan) {
             chan.add(client)
         } else {
-            new Channel(channel).add(client)
+            chan = new Channel(channel)
+            chan.add(client)
+        }
+        const hist = this.backpressure.get(channel)
+        if (hist) {
+            hist.forEach(datum => {
+                chan.send(datum)
+            })
+            this.backpressure.delete(channel)
         }
     }
 
@@ -129,7 +139,13 @@ export class Channels extends Map<string, Channel> {
         if (chan) {
             chan.send(data)
         } else {
-            console.warn("Channel not found")
+            console.warn("Channel not found", channel)
+            const hist = this.backpressure.get(channel)
+            if (hist) {
+                hist.push(data)
+            } else {
+                this.backpressure.set(channel, [data])
+            }
         }
     }
 
@@ -162,7 +178,7 @@ export class Channel {
     }
 
     send(data: any) {
-        if(typeof data !== "string") {
+        if (typeof data !== "string") {
             data = JSON.stringify(data)
         }
         this._clients.forEach(c => c.send(data))
@@ -331,7 +347,7 @@ export class WsClient extends Client {
         this.detailsRequest()
     }
 
-    get id(): string {
+    override get id(): string {
         return this._id
     }
 
@@ -339,15 +355,15 @@ export class WsClient extends Client {
         return this.peer.id
     }
 
-    get value() {
+    override get value() {
         return this.peer
     }
 
-    get type() {
+    override get type() {
         return "WebSocket Cient"
     }
 
-    send(data: any, fallback = true): void {
+    override send(data: any, fallback = true): void {
         try {
             const _data = typeof data === "string" ? data : JSON.stringify(data)
             this.peer.send(_data)
@@ -363,20 +379,20 @@ export class WsClient extends Client {
         }
     }
 
-    drain(): void {
+    override drain(): void {
         if (this._backpressure.length > 0) {
             this._backpressure.forEach(data => this.send(data, false))
             this._backpressure = []
         }
     }
 
-    close() {
+    override close() {
         this.value.ctx?.node?.req?.socket?.destroy()
         this.status = SocketStatus.CLOSED
         global.clients!.removeClient(this.id)
     }
 
-    toString() {
+    override toString() {
         return `WS Client ${this.id}`
     }
 }
@@ -512,19 +528,19 @@ export class SseClient extends Client {
         this.detailsRequest()
     }
 
-    get value() {
+    override get value() {
         return this.eventStream
     }
 
-    get id() {
+    override get id() {
         return this._id!
     }
 
-    get type() {
+    override get type() {
         return "SSE Client"
     }
 
-    send(data: any, backpressure = true): void {
+    override send(data: any, backpressure = true): void {
         try {
             if (typeof data === "string") {
                 this.eventStream?.push(data)
@@ -538,25 +554,25 @@ export class SseClient extends Client {
         }
     }
 
-    drain(): void {
+    override drain(): void {
         if (this._backpressure.length > 0) {
             this._backpressure.forEach(data => this.send(data, false))
             this._backpressure = []
         }
     }
 
-    close() {
+    override close() {
         this.eventStream?.close()
         this.status = SocketStatus.CLOSED
         global.clients!.removeClient(this.id!)
         this.emit("end", null)
     }
 
-    [Symbol.dispose]() {
+    override[Symbol.dispose]() {
         this.eventStream?.close()
     }
 
-    toString() {
+    override toString() {
         return `SSE Client ${this.id}`
     }
 }
@@ -617,32 +633,32 @@ export class PollClient extends Client {
         this.detailsRequest()
     }
 
-    get id() {
+    override get id() {
         return this._id!
     }
 
-    get value() {
+    override get value() {
         return this._H3Event
     }
 
-    get type() {
+    override get type() {
         return "Poll Client"
     }
 
-    send(data: any): void {
+    override send(data: any): void {
         this._backpressure.push(data as unknown as never)
     }
 
-    close() {
+    override close() {
         global.clients!.removeClient(this.id)
         this.emit("end", null)
     }
 
-    [Symbol.dispose]() {
+    override[Symbol.dispose]() {
         this._H3Event!.node.res.end()
     }
 
-    toString() {
+    override toString() {
         return `Poll Client ${this.id}`
     }
 }

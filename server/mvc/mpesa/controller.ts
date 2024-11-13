@@ -21,7 +21,7 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
         return useHttpEnd(event, { statusCode: 400, body: "No callback found" }, 400)
     }
 
-    const channelName = createChannelName(callback.CheckoutRequestID, callback.MerchantRequestID)
+    const channelName = createChannelName(callback.CheckoutRequestID, callback.MerchantRequestID)    
     if (isProduction) {
         const ip = _getRequestIP(event)
         if (!ip) {

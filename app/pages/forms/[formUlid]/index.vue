@@ -45,10 +45,10 @@ async function processForm() {
   ) {
     paymentModal.value = true
   } else if (hasPrice(data.forms) && hasPhone()) {
-    console.log("Submitting form", data)
+    console.log("Submitting paid form", data)
     await submit()
   } else if (!hasPrice(data.forms)) {
-    console.log("Submitting form", data)
+    console.log("Submitting unpaid form", data)
     await submit()
   }
 }
@@ -65,7 +65,7 @@ onMounted(() => {
 
 async function submit() {
   loading.value = true
-  await $fetch(`/api/v1/forms/submit/${ulid}`, {
+  const response = await $fetch(`/api/v1/forms/submit/${ulid}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAuthToken()}`
@@ -75,73 +75,71 @@ async function submit() {
       stores: data.stores,
       phone: payment_details.value.phone
     },
-    onResponse({ response }): Promise<void> | void {
-      if (response._data.statusCode <= 299) {
-        if (!hasPrice(data.forms)) {
+    onResponseError({ response }) {
+      log.error(response)
+    }
+  })
+  if (response.statusCode <= 299) {
+    if (!hasPrice(data.forms)) {
+      loading.value = true
+      rerender.value = false
+      alert('Form submitted successfully')
+      setTimeout(() => {
+        navigateTo(`/`)
+      })
+      return
+    }
+
+    const channelName = createChannelName(response.body.checkoutRequestID, response.body.merchantRequestID)
+    console.log(channelName)
+    realtime.value!.subscribe(channelName)
+    alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
+    realtime.value!.on('error', (error) => {
+      console.error(error)
+    })
+
+    realtime.value?.on("data", (_data: any) => {
+      const { data } = parseData(_data)
+      if (data?.channel !== channelName) return console.warn('Invalid channel', data)
+      switch (data.type) {
+        case TYPE.SUCCESS:
           loading.value = true
           rerender.value = false
           alert('Form submitted successfully')
           setTimeout(() => {
             navigateTo(`/`)
-          })
-          return
-        }
-
-        const channelName = createChannelName(response._data.body.checkoutRequestID, response._data.body.merchantRequestID)
-        alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
-        realtime.value!.subscribe(channelName)
-        realtime.value!.on('error', (error) => {
-          debugger
-          console.error(error)
-        })
-
-        realtime.value!.on("data", (_data: any) => {
-          const data = parseData(_data)
-          if (data.channel !== channelName) return console.warn('Invalid channel', data)
-          switch (data?.type) {
-            case TYPE.SUCCESS:
-              loading.value = true
-              rerender.value = false
-              alert('Form submitted successfully')
-              setTimeout(() => {
-                navigateTo(`/`)
-              }, 1000)
-              break
-            case TYPE.ERROR:
-              switch (data.statusCode) {
-                case Status.badRequest:
-                  log.error(data.body)
-                  rerender.value = true
-                  loading.value = false
-                  complete.value = false
-                  break
-                case Status.internalServerError:
-                  rerender.value = true
-                  loading.value = false
-                  complete.value = false
-                  break
-                case Status.unprocessableEntity:
-                  alert(data.body)
-                  rerender.value = true
-                  loading.value = false
-                  complete.value = false
-                  break
-              }
-            default:
+          }, 1000)
+          break
+        case TYPE.ERROR:
+          switch (data.statusCode) {
+            case Status.badRequest:
+              log.error(data.body)
               rerender.value = true
               loading.value = false
               complete.value = false
+              break
+            case Status.internalServerError:
+              rerender.value = true
+              loading.value = false
+              complete.value = false
+              break
+            case Status.unprocessableEntity:
+              alert(data.body)
+              rerender.value = true
+              loading.value = false
+              complete.value = false
+              break
           }
-        })
-      } else {
-        alert('Form submission failed: ' + response._data.body)
-        rerender.value = true
+        default:
+          rerender.value = true
+          loading.value = false
+          complete.value = false
       }
-    },
-    onResponseError({ response }) {
-      log.error(response)
-    }
-  })
+    })
+  } else {
+    alert('Form submission failed: ' + response.body)
+    rerender.value = true
+  }
 }
 
 function addCharge(amount: number) {
@@ -336,7 +334,7 @@ function copyInviteLink() {
   //     loadingShare.value = false
   //     if (!response.ok) return
 
-  //     const { link } = response._data
+  //     const { link } = response
   //     navigator.clipboard.writeText(link)
   //     navigator.share?.({ title: 'Paid Details Link', text: link, url: link })
   //   }
@@ -382,7 +380,7 @@ function validateForm(form: HTMLFormElement){
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
               Back
             </button>
-            <button v-if="complete" @click="processForm" class="bg-emerald-700 text-white rounded px-4 py-2">
+            <button v-if="complete" @click="processForm()" class="bg-emerald-700 text-white rounded px-4 py-2">
               Submit
             </button>
           </div>
@@ -495,10 +493,10 @@ function validateForm(form: HTMLFormElement){
           </button>
         </div>
       </form>
-      <Modal :show="paymentModal" name="Please provide your MPESA phone number" @confirm="processForm"
+      <Modal :show="paymentModal" name="Please provide your MPESA phone number" @confirm="processForm()"
         @cancel="payment_details = { phone: '' }; paymentModal = false; loading = false">
         <div class="flex flex-col">
-          <input type="tel" class="input" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
+          <input type="tel" class="input focus:outline-none focus:ring-1" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
         </div>
       </Modal>
     </div>

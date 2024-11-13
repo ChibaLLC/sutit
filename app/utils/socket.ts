@@ -351,8 +351,8 @@ export class RealTime {
             this.handleError(error)
         })
         rt.on("data", (_data: any) => {
-            const data = parseData(_data)
-            switch (data.type) {
+            const {data, type} = parseData(_data)
+            switch (type) {
                 case TYPE.IDENTITY:
                     useCookie("X-Request-Id", data.body)
                     break
@@ -405,6 +405,7 @@ export class RealTime {
             close: [],
         }
         target.backpressure = this.current?.value.backpressure || []
+        this.close()
     }
 
     on(event: Events, callback: (data: any) => void) {
