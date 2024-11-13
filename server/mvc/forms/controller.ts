@@ -346,7 +346,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
     const _data = await readBody(event) as {
-        forms: Drizzle.Form.select & { pages: FormElementData[] },
+        forms: Drizzle.Form.select & { pages: Forms },
         stores: Stores,
         phone: string
     }
@@ -355,7 +355,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "No data provided"
     }, Status.badRequest)
 
-    const [data, hasPaid] = await assessForm(formUlid, _data.phone).catch(err => [err as Error, false] as [Error, boolean])
+    const [data, hasPaid] = await assessForm(formUlid, _data.phone, _data.forms.price).catch(err => [err as Error, false] as [Error, boolean])
     if (data instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: data.message || "Unknown error while getting form"
@@ -389,8 +389,17 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data, _data.forms.price).catch(log.error)
                 sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
-                if (details?.user) {
-                    sendUserMail({ email: details.user.email }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
+                let formMail;
+                for (const key in _data.forms.pages){
+                    for(const field of _data.forms.pages[key] || []){
+                        if(field.type === Field.EMAIL){
+                            formMail = field.value as string  | undefined
+                            break
+                        }
+                    }
+                }
+                if (details?.user || formMail) {
+                    sendUserMail({ email: details?.user.email || formMail }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
                 }
             }).catch(err => {
                 return useHttpEnd(event, {
