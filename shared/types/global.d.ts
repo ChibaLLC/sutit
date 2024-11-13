@@ -23,7 +23,7 @@ declare global {
     interface Window {
         alert: (message: string, options: NotificationOptions) => void
         alertError: (message: string, options?: Pick<NotificationOptions, 'timeout'>) => void
-        alertSuccess: (message: string, options: Pick<NotificationOptions, 'timeout'>) => void
-        alertInfo: (message: string, options: Pick<NotificationOptions, 'timeout'>) => void
+        alertSuccess: (message: string, options?: Pick<NotificationOptions, 'timeout'>) => void
+        alertInfo: (message: string, options?: Pick<NotificationOptions, 'timeout'>) => void
     }
 }

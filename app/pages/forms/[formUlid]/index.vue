@@ -83,7 +83,7 @@ async function submit() {
     if (!hasPrice(data.forms)) {
       loading.value = true
       rerender.value = false
-      alert('Form submitted successfully')
+      window.alertSuccess('Form submitted successfully', {timeout: 'never'})
       setTimeout(() => {
         navigateTo(`/`)
       })
@@ -91,7 +91,6 @@ async function submit() {
     }
 
     const channelName = createChannelName(response.body.checkoutRequestID, response.body.merchantRequestID)
-    console.log(channelName)
     realtime.value!.subscribe(channelName)
     alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
     realtime.value!.on('error', (error) => {
@@ -105,7 +104,7 @@ async function submit() {
         case TYPE.SUCCESS:
           loading.value = true
           rerender.value = false
-          alert('Form submitted successfully')
+          window.alertSuccess('Form submitted successfully', {timeout: 'never'})
           setTimeout(() => {
             navigateTo(`/`)
           }, 1000)
@@ -137,7 +136,7 @@ async function submit() {
       }
     })
   } else {
-    alert('Form submission failed: ' + response.body)
+    window.alertError('Form submission failed: ' + response.body)
     rerender.value = true
   }
 }
