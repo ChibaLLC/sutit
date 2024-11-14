@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ADD CONSTRAINT "payments_reference_code_key" UNIQUE("reference_code");

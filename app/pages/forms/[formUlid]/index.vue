@@ -4,7 +4,7 @@ import { RealTime } from "#imports";
 
 const loading = ref(false)
 const route = useRoute()
-const token = route.query?.prepaid
+const token = route.query?.token
 const ulid = route.params?.formUlid
 const rerender = ref(false)
 const complete = ref(false)
@@ -185,7 +185,6 @@ if (token) {
   group.self = true
 }
 
-
 function chooseSelfOrGroup(e: Event) {
   if ((e.target as HTMLElement).id === "for_me") {
     group.self = true
@@ -300,11 +299,11 @@ async function processInvites() {
         <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           @back="goBack2" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
-          <small class="text-gray-500 w-fit" v-if="data.forms.price_individual > 0">
+          <small class="text-gray-500 w-fit" v-if="(data.forms.price_individual > 0) && !token">
             This form requires payment for submission of <br>
             <span class="text-red-400">Amount Due: {{ data.forms.price_individual }}</span> KES
           </small>
-          <div>
+          <div v-if="complete && !rerender">
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
               Back
             </button>

@@ -248,7 +248,7 @@ export async function generateFormLinkTokens(data: {
 
 export async function validateFormLinkToken(token: string) {
     const linkData = await getPrepaidFormLink(token)
-    if (!linkData) return false
+    if (!linkData || !linkData.isValid) return false
     return linkData
 }
 

@@ -435,7 +435,8 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         if (!token || token instanceof Error) {
             return useHttpEnd(event, {
                 statusCode: 403,
-                body: "The provided token is not valid"
+                // @ts-ignore
+                body: token?.message || "The provided token is not valid"
             })
         }
 
@@ -510,7 +511,7 @@ router.post('/invite/:formUlid', defineEventHandler(async event => {
     } else {
         const links = (await generateFormLinkTokens({
             form: form
-        }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}/${form.forms.ulid}?token=${bud}`)
+        }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
         const message = "Hello, you have been invited to participate in the following survery. Follow the link to submit your details: "
         sendResponseInvites(data.invites, links, message)
         return {
