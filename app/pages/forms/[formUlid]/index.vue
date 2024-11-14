@@ -80,7 +80,7 @@ async function submit() {
       log.error(response)
     }
   })
-
+  console.log(response)
   ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
 }
 
@@ -215,7 +215,8 @@ function addPhoneOrEmail() {
       }
       invites.value.add({ email: text })
     } else if (isPhone(text)) {
-      invites.value.add({ phone: text })
+      // invites.value.add({ phone: text })
+      window.alertError("Sorry, SMS is not yet supported")
     } else {
       console.warn("Illegal Text Input Found: ", text)
     }

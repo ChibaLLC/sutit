@@ -232,7 +232,7 @@ export async function generateFormLinkTokens(data: {
     }
 
     const linkData: Drizzle.PrepaidForms.insert[] = []
-    for (let i = 0; i <= limit; i++) {
+    for (let i = 0; i < limit; i++) {
         linkData.push({
             formUlid: form.forms.ulid,
             paymentUlid: data.formPaymentulid,
@@ -256,7 +256,7 @@ export async function sendResponseInvites(invites: Array<{ email: string } | { p
     invites.forEach((invite, idx) => {
         const link = links[idx]
         if ((invite as { phone: string }).phone) {
-            log.info((invite as { phone: string }).phone)
+            log.info((invite as { phone: string }).phone, invite)
         } else {
             sendUserMail({
                 email: (invite as { email: string }).email

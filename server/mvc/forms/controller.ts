@@ -387,9 +387,9 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
             }
         }
         await insertData(formUlid!, _data)
-        sendUserMail({ email: creator?.email || formMail }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        sendUserMail({ email: creator?.email || formMail }, `New response on form ${data.forms.formName}`, `[Update] Submission ${data.forms.formName}`)
         if (details?.user) {
-            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `[Update] Successful form submission ${data.forms.formName}`)
         }
 
         const response = {} as APIResponse<string>
@@ -411,7 +411,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
             { phone: _data.phone, amount: _data.forms.price_individual },
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data, _data.forms.price_individual).catch(log.error)
-                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `[Payment]: Confirmed payment on ${data.forms.formName}`)
                 let formMail;
                 for (const key in _data.forms.pages) {
                     for (const field of _data.forms.pages[key] || []) {
@@ -422,7 +422,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                     }
                 }
                 if (details?.user || formMail) {
-                    sendUserMail({ email: details?.user.email || formMail }, `Payment successful for ${data.forms.formName}`, `You have successfully paid for form: ${data.forms.formName}`)
+                    sendUserMail({ email: details?.user.email || formMail }, `Payment successful for ${data.forms.formName}`, `[Update]: Payment Successful ${data.forms.formName}`)
                 }
             }).catch(err => {
                 return useHttpEnd(event, {
@@ -506,7 +506,7 @@ router.post('/invite/:formUlid', defineEventHandler(async event => {
 
             const message = "Hello, you have been invited to participate in the following survery. This is a paid link that is unique to you, and can only be used once. Follow it to submit your details: "
             sendResponseInvites(data.invites, links, message)
-            sendUserMail({ email: creator?.email }, `New group payment for form: Group ${data.group_name} has paid for form: ${form.forms.formName} was processesed successfully`, `Group Paid on form: ${form.forms.formName}`)
+            sendUserMail({ email: creator?.email }, `Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`, `[Payment]: Group ${form.forms.formName}`)
         })
     } else {
         const links = (await generateFormLinkTokens({

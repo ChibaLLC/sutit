@@ -1,7 +1,7 @@
 /**
  * This function sets the auth cookie
  *
- * @param token the string value of the token
+ * @param token the string value of the token34
  * @param expiry the expiry time in seconds
  * @example
  * setAuthCookie("token", 3600)

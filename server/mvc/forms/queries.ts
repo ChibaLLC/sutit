@@ -268,7 +268,7 @@ export async function updateFormWithdrawnFunds(formUlid: string, amount: number)
 }
 
 export function insertPrepaidLinkData(data: Drizzle.PrepaidForms.insert[]) {
-    return db.insert(prepaidForms).values(data)
+    return db.insert(prepaidForms).values(data).execute()
 }
 
 export async function getPrepaidFormLink(token: string) {
@@ -279,5 +279,5 @@ export async function getPrepaidFormLink(token: string) {
 export async function invalidatePrepaidFormLink(token: string) {
     return db.update(prepaidForms).set({
         isValid: false
-    }).where(eq(prepaidForms.token, token))
+    }).where(eq(prepaidForms.token, token)).execute()
 }

@@ -26,7 +26,7 @@ function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): 
 export async function ResolveMpesaPayment(response: APIResponse, data: ServerForm, realtime: RealTime, loading: Ref, rerender: Ref, complete?: Ref) {
     if(!realtime) return consola.warn("RealTime not passed")
     if (response.statusCode <= 299) {
-        if (!hasPrice(data.forms)) {
+        if (!hasPrice(data.forms) || useRoute().query?.token) {
             loading.value = true
             rerender.value = false
             window.alertSuccess('Form submitted successfully', { timeout: 'never' })

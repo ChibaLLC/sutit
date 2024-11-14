@@ -80,8 +80,6 @@ export class Clients extends Map<string, Client> {
 }
 
 export class Channels extends Map<string, Channel> {
-    backpressure: Map<string, SocketTemplate[]> = new Map()
-
     constructor() {
         super()
     }
@@ -125,13 +123,6 @@ export class Channels extends Map<string, Channel> {
             chan = new Channel(channel)
             chan.add(client)
         }
-        const hist = this.backpressure.get(channel)
-        if (hist) {
-            hist.forEach(datum => {
-                chan.send(datum)
-            })
-            this.backpressure.delete(channel)
-        }
     }
 
     publish(channel: string, data: SocketTemplate) {
@@ -140,12 +131,7 @@ export class Channels extends Map<string, Channel> {
             chan.send(data)
         } else {
             console.warn("Channel not found", channel)
-            const hist = this.backpressure.get(channel)
-            if (hist) {
-                hist.push(data)
-            } else {
-                this.backpressure.set(channel, [data])
-            }
+            global.clients?.broadcast(data)
         }
     }
 
