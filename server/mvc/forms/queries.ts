@@ -1,29 +1,44 @@
-import { formPayments, forms, payments, formResponses, storeResponses, stores } from "~~/server/db/drizzle/schema";
+import { formPayments, forms, payments, formResponses, storeResponses, stores, prepaidForms } from "~~/server/db/drizzle/schema";
 import db from "../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
-import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 
-export async function createForm(name: string, description: string, price: number, userUlid: string, pages: Forms, allowGroups: boolean): Promise<string> {
-    const _form = {
-        pages: pages,
+export async function createForm(data: {
+    name: string,
+    description?: string,
+    price: {
+        individual: number,
+        group?: {
+            amount?: number,
+            limit?: number
+        }
+    },
+    userUlid: string,
+    pages: Forms,
+    allowGroups: boolean
+}) {
+    const form = {
+        formName: data.name,
+        pages: data.pages,
         ulid: ulid(),
-        formName: name,
-        formDescription: description,
-        userUlid: userUlid,
-        price: price,
-        allowGroups: allowGroups
+        formDescription: data.description,
+        userUlid: data.userUlid,
+        allowGroups: data.allowGroups,
+        price_group_amount: data.price.group?.amount,
+        price_group_count: data.price.group?.limit,
+        price_individual: data.price.individual
     } satisfies Drizzle.Form.insert
-    await db.insert(forms).values(_form)
-    return _form.ulid
+    await db.insert(forms).values(form)
+    return form.ulid
 }
 
 export async function updateForm(formUlid: string, name: string, description: string, price: number, pages: Forms) {
     await db.update(forms).set({
         formName: name,
         formDescription: description,
-        price: price,
+        price_individual: price,
         pages: pages
     }).where(eq(forms.ulid, formUlid))
 }
@@ -203,17 +218,37 @@ export async function getResponsesCount(userUlid: string) {
     }, 0)
 }
 
-
-export async function assessForm(formUlid: string, phone: string, submitPrice?: number): Promise<[{ forms: Drizzle.Form.select, store?: Drizzle.Store.select }, boolean]> {
-    const form = await getFormByUlid(formUlid)
-    if (!form) {
-        throw new Error("Form Does Not Exist")
+type Form = { forms: Drizzle.Form.select, stores?: Drizzle.Store.select }
+export async function neeedsPay(Form: Form | string, type: "group" | "individual", submitPrice?: number): Promise<[Form, boolean]> {
+    let form: Form
+    if (typeof Form === 'string') {
+        const _form = await getFormByUlid(Form)
+        if (_form) {
+            form = _form
+        } else {
+            throw new Error(`Form ${_form} not found`)
+        }
+    } else {
+        form = Form
     }
-    if (form?.forms.price <= 0 && (!submitPrice || submitPrice <= 0)) return [form, true]
-    const _payments = await db.select().from(payments)
-        .where(eq(payments.phoneNumber, `254${phone.slice(-9)}`))
-        .innerJoin(formPayments, and(eq(formPayments.paymentUlid, payments.ulid), eq(formPayments.formUlid, formUlid)))
-    return [form, _payments.length > 0]
+    let price;
+    if (type === 'individual') {
+        price = form.forms.price_individual
+    } else {
+        price = form.forms.price_group_count || 0
+    }
+
+    if (price <= 0 && (!submitPrice || submitPrice <= 0)) return [form, false]
+    return [form, true]
+}
+
+
+export function needsIndividualPayment(Form: Form | string, submitPrice?: number) {
+    return neeedsPay(Form, 'individual', submitPrice)
+}
+
+export async function needsGroupPayment(Form: Form | string, submitPrice?: number) {
+    return neeedsPay(Form, 'group', submitPrice)
 }
 
 
@@ -230,4 +265,19 @@ export async function updateFormWithdrawnFunds(formUlid: string, amount: number)
     await db.update(forms).set({
         withDrawnFunds: Number((form?.forms.withDrawnFunds || 0)) + amount
     }).where(eq(forms.ulid, formUlid))
+}
+
+export function insertPrepaidLinkData(data: Drizzle.PrepaidForms.insert[]) {
+    return db.insert(prepaidForms).values(data)
+}
+
+export async function getPrepaidFormLink(token: string) {
+    const data = await db.select().from(prepaidForms).where(eq(prepaidForms.token, token))
+    return data.at(0)
+}
+
+export async function invalidatePrepaidFormLink(token: string) {
+    return db.update(prepaidForms).set({
+        isValid: false
+    }).where(eq(prepaidForms.token, token))
 }

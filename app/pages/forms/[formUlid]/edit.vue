@@ -36,7 +36,7 @@ const submitData = reactive({
         stores: response?.stores.store || {} as Stores,
     },
     payment: {
-        amount: response?.forms.price || 0
+        amount: response?.forms.price_individual || 0
     },
 })
 

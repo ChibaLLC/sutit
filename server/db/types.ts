@@ -1,4 +1,4 @@
-import {users, forms, formResponses, storeResponses, sessions, formPayments, payments, stores, storePayments, withDrawals} from "./drizzle/schema"
+import { users, forms, formResponses, storeResponses, sessions, formPayments, payments, stores, storePayments, withDrawals, prepaidForms } from "./drizzle/schema"
 
 export namespace Drizzle {
     export namespace User {
@@ -49,5 +49,10 @@ export namespace Drizzle {
     export namespace WithDrawals {
         export type insert = typeof withDrawals.$inferInsert
         export type select = typeof withDrawals.$inferSelect
+    }
+
+    export namespace PrepaidForms {
+        export type insert = typeof prepaidForms.$inferInsert
+        export type select = typeof prepaidForms.$inferSelect
     }
 }

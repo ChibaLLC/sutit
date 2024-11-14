@@ -68,8 +68,9 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
                 useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
             })
             try {
-                funcall?.()
+                funcall?.(ulid)
             } catch (e) {
+                log.error(e)
                 log.warn("Error on callback", funcall)
             }
         } else {

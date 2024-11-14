@@ -9,21 +9,24 @@ import {
     getFormByUlid,
     getFormCount,
     getFormPaymentsSum,
+    getPrepaidFormLink,
     getResponsesCount,
+    insertPrepaidLinkData,
     updateFormWithdrawnFunds
 } from "../../mvc/forms/queries";
+import { v4 } from "uuid";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
         form: Drizzle.Form.select,
-        callback?: (...args: any[]) => any
+        callback?: (paymentUlid: string) => any
     }>
 }
 
 export async function processFormPayments(form: Drizzle.Form.select, details: {
     phone: string;
     amount: number
-}, accountNumber: string, callback?: (...args: any[]) => any) {
+}, accountNumber: string, callback?: (paymentUlid: string) => any) {
     details.phone = `254${details.phone.slice(-9)}`
     const result = await makeSTKPush(details.phone, form.formName, details.amount, accountNumber)
     const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID)
@@ -97,7 +100,7 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     if (forms instanceof Error) return workbook.xlsx
 
     const form = forms!.forms
-    const hasPayment = form.price !== 0 || Object.values(forms?.stores.store || {}).some(store => (store as Array<any>).some((item: any) => item.price !== 0))
+    const hasPayment = form.price_individual !== 0 || Object.values(forms?.stores.store || {}).some(store => (store as Array<any>).some((item: any) => item.price !== 0)) || form.price_group_amount !== 0
     const worksheet = workbook.addWorksheet(form.formName)
 
     const titles: string[] = getFields(form.pages as Record<string, FormElementData[]>).map(field => field.label)
@@ -209,4 +212,55 @@ export async function deleteUserForm(userUlid: string, formUlid: string) {
     if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
     if (form.forms.userUlid !== userUlid) throw new Error(`Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`);
     return deleteForm(formUlid)
+}
+
+type Form = { forms: Drizzle.Form.select, stores?: Drizzle.Store.select }
+export async function generateFormLinkTokens(data: {
+    form: string | Form,
+    formPaymentulid?: string,
+}, limit: number = 1): Promise<string[]> {
+    let form: Form
+    if (typeof data.form === 'string') {
+        const _form = await getFormByUlid(data.form)
+        if (_form) {
+            form = _form
+        } else {
+            throw new Error(`Form ${_form} not found`)
+        }
+    } else {
+        form = data.form
+    }
+
+    const linkData: Drizzle.PrepaidForms.insert[] = []
+    for (let i = 0; i <= limit; i++) {
+        linkData.push({
+            formUlid: form.forms.ulid,
+            paymentUlid: data.formPaymentulid,
+            token: v4()
+        })
+    }
+
+    insertPrepaidLinkData(linkData)
+
+    return linkData.map((linkDatum) => linkDatum.token)
+}
+
+
+export async function validateFormLinkToken(token: string) {
+    const linkData = await getPrepaidFormLink(token)
+    if (!linkData) return false
+    return linkData
+}
+
+export async function sendResponseInvites(invites: Array<{ email: string } | { phone: string }>, links: string[], baseMessage: string) {
+    invites.forEach((invite, idx) => {
+        const link = links[idx]
+        if ((invite as { phone: string }).phone) {
+            log.info((invite as { phone: string }).phone)
+        } else {
+            sendUserMail({
+                email: (invite as { email: string }).email
+            }, baseMessage + link, "[Action Needed] Information Request")
+        }
+    })
 }

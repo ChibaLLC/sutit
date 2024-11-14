@@ -50,7 +50,9 @@ export const forms = pgTable("forms", {
 	formName: varchar("form_name", { length: 255 }).notNull(),
 	formDescription: text("form_description"),
 	pages: jsonb("pages").notNull(),
-	price: integer("price").notNull(),
+	price_individual: integer("price_individual").default(0).notNull(),
+	price_group_amount: integer("price_group_amount").default(0).notNull(),
+	price_group_count: integer("price_group_count").default(0),
 	withDrawnFunds: integer("withdrawn_funds").default(0).notNull(),
 	allowGroups: boolean("allow_groups").default(false),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),
@@ -60,9 +62,10 @@ export const forms = pgTable("forms", {
 
 export const prepaidForms = pgTable("prepaid_forms", {
 	id: serial("id").primaryKey(),
-	formUlid: varchar("form_ulid", { length: 255 }),
+	formUlid: varchar("form_ulid", { length: 255 }).notNull(),
 	paymentUlid: varchar("payment_ulid", { length: 255 }),
-	token: varchar("token", { length: 255 })
+	token: varchar("token", { length: 255 }).notNull(),
+	isValid: boolean("is_valid").default(true)
 })
 
 export const stores = pgTable("stores", {

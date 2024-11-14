@@ -1,5 +1,5 @@
 import {
-    assessForm,
+    needsIndividualPayment,
     createForm,
     createStore,
     getFormByUlid,
@@ -8,11 +8,13 @@ import {
     getFormsByUser,
     insertData,
     updateForm,
-    updateStore
+    updateStore,
+    invalidatePrepaidFormLink
 } from "../../mvc/forms/queries";
 import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
-import { constructExcel, deleteUserForm, getStats, processFormPayments, sendUserMail, withdrawFunds } from "./methods";
+import { constructExcel, deleteUserForm, generateFormLinkTokens, getStats, processFormPayments, sendResponseInvites, sendUserMail, validateFormLinkToken, withdrawFunds } from "./methods";
 import { getUserByUlId } from "../users/queries";
+import { z } from 'zod'
 
 const router = createRouter()
 
@@ -40,31 +42,6 @@ router.get('/:formUlid', defineEventHandler(async event => {
     return response
 }))
 
-router.get('/:formUlid/prepaid', defineEventHandler(async event => {
-    const formUuid = getRouterParam(event, "formUlid")
-    if (!formUuid) return createError({
-        statusCode: Status.badRequest,
-        message: "No form ID provided"
-    })
-
-    const form = await getFormByUlid(formUuid).catch(err => err as Error)
-    if (form instanceof Error) return createError({
-        statusCode: Status.internalServerError,
-        message: form?.message || "Unknown error while getting form"
-    })
-    if (!form) return createError({
-        statusCode: Status.notFound,
-        message: "Form not found"
-    })
-
-    if(!form.forms.allowGroups){
-        return createError({
-            statusCode: 403,
-            message: "This form is not eligible for that action"
-        })
-    }
-}))
-
 router.post('/create', defineEventHandler(async event => {
     const [details, error] = await useAuth(event)
     if (error || !details) return useHttpEnd(event, {
@@ -75,14 +52,16 @@ router.post('/create', defineEventHandler(async event => {
     const form = await readBody(event) as {
         name: string,
         description: string,
+        allowGroups: boolean
         payment: {
             amount: number,
+            group_amount?: number,
+            group_limit?: number
         },
         formData: {
             pages: Forms,
             stores: Stores,
         },
-        allowGroups: boolean
     }
     if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
         return useHttpEnd(event, {
@@ -91,7 +70,20 @@ router.post('/create', defineEventHandler(async event => {
         }, Status.badRequest)
     }
 
-    const formUlid = await createForm(form.name, form.description, form.payment.amount, details.user.ulid, form.formData.pages, form.allowGroups).catch(err => err as Error)
+    const formUlid = await createForm({
+        name: form.name,
+        description: form.description,
+        pages: form.formData.pages,
+        price: {
+            individual: form.payment.amount,
+            group: {
+                amount: form.payment.group_amount,
+                limit: form.payment.group_limit
+            }
+        },
+        userUlid: details.user.ulid,
+        allowGroups: form.allowGroups
+    }).catch(err => err as Error)
     if (formUlid instanceof Error) {
         return useHttpEnd(event, {
             statusCode: Status.internalServerError,
@@ -348,14 +340,15 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
     const _data = await readBody(event) as {
         forms: Drizzle.Form.select & { pages: Forms },
         stores: Stores,
-        phone: string
+        phone: string,
+        token: string
     }
     if (!_data) return useHttpEnd(event, {
         statusCode: Status.badRequest,
         body: "No data provided"
     }, Status.badRequest)
 
-    const [data, hasPaid] = await assessForm(formUlid, _data.phone, _data.forms.price).catch(err => [err as Error, false] as [Error, boolean])
+    const [data, needsPay] = await needsIndividualPayment(formUlid, _data.forms.price_individual).catch(err => [err as Error, false] as [Error, boolean])
     if (data instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: data.message || "Unknown error while getting form"
@@ -365,35 +358,65 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if (!_data.phone && !hasPaid) return useHttpEnd(event, {
+    if (needsPay && (!_data.phone && !_data.token)) return useHttpEnd(event, {
         statusCode: Status.badRequest,
-        body: "Need a phone number"
+        body: "Need a phone number or a payment token"
     })
+
     const creator = await getUserByUlId(data.forms.userUlid).catch(err => err as Error)
+    if (!creator) return useHttpEnd(event, {
+        statusCode: Status.internalServerError,
+        body: "Form Creaator Not Found"
+    } as APIResponse<string>, Status.internalServerError)
     if (creator instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: creator.message || "Unknown error while getting form creator"
     } as APIResponse<string>, Status.internalServerError)
 
-    const [details, error] = await useAuth(event)
+    async function insert(creator: Drizzle.User.select, data: {
+        forms: Drizzle.Form.select;
+        stores?: Drizzle.Store.select;
+    }) {
+        let formMail;
+        for (const key in _data.forms.pages) {
+            for (const field of _data.forms.pages[key] || []) {
+                if (field.type === "email") {
+                    formMail = field.value as string | undefined
+                    break
+                }
+            }
+        }
+        await insertData(formUlid!, _data)
+        sendUserMail({ email: creator?.email || formMail }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+        if (details?.user) {
+            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+        }
 
-    if (!hasPaid) {
-        if (_data.forms.price < data.forms.price) {
+        const response = {} as APIResponse<string>
+        response.statusCode = Status.success
+        response.body = "Form submitted"
+
+        return response
+    }
+
+    const [details, error] = await useAuth(event)
+    if (needsPay && !_data.token) {
+        if (_data.forms.price_individual < data.forms.price_individual) {
             return useHttpEnd(event, {
                 statusCode: 400,
                 body: "Passed price is less than the allowed minimum for this form"
             })
         }
         return await processFormPayments(data.forms,
-            { phone: _data.phone, amount: _data.forms.price },
+            { phone: _data.phone, amount: _data.forms.price_individual },
             creator?.email || creator?.name || "Unknown", () => {
-                insertData(formUlid, _data, _data.forms.price).catch(log.error)
-                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
+                insertData(formUlid, _data, _data.forms.price_individual).catch(log.error)
+                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
                 let formMail;
-                for (const key in _data.forms.pages){
-                    for(const field of _data.forms.pages[key] || []){
-                        if(field.type === "email"){
-                            formMail = field.value as string  | undefined
+                for (const key in _data.forms.pages) {
+                    for (const field of _data.forms.pages[key] || []) {
+                        if (field.type === "email") {
+                            formMail = field.value as string | undefined
                             break
                         }
                     }
@@ -407,22 +430,93 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
                     body: err.message || "Unknown error while processing payment"
                 } as APIResponse<string>, Status.internalServerError)
             })
-    } else {
-        await insertData(formUlid, _data).catch(err => {
-            useHttpEnd(event, {
-                statusCode: Status.internalServerError,
-                body: err.message || "Unknown error while submitting form"
-            } as APIResponse<string>, Status.internalServerError)
-        })
-        sendUserMail({ email: creator?.email }, `New response on form ${data.forms.formName}`, `Update on form: ${data.forms.formName}`)
-        if (details?.user) {
-            sendUserMail({ email: details.user.email }, `Form submission successful for ${data.forms.formName}`, `You have successfully submitted form: ${data.forms.formName}`)
+    } else if (needsPay && _data.token) {
+        const token = await validateFormLinkToken(_data.token).catch(e => e as Error)
+        if (!token || token instanceof Error) {
+            return useHttpEnd(event, {
+                statusCode: 403,
+                body: "The provided token is not valid"
+            })
         }
-        const response = {} as APIResponse<string>
-        response.statusCode = Status.success
-        response.body = "Form submitted"
 
-        return response
+        invalidatePrepaidFormLink(token.token)
+        return insert(creator, data)
+    } else {
+        return insert(creator, data)
+    }
+}))
+
+router.post('/invite/:formUlid', defineEventHandler(async event => {
+    const formUlid = event.context.params?.formUlid
+    if (!formUlid) {
+        return createError({
+            message: "No form ulid provided",
+            status: 400
+        })
+    }
+
+    const schema = z.object({
+        invites: z.array(z.union([
+            z.object({ email: z.string() }),
+            z.object({ phone: z.string() })
+        ])),
+        phone: z.string(),
+        origin: z.string(),
+        group_name: z.string()
+    })
+
+    const { data, error } = await readValidatedBody(event, schema.safeParse)
+    if (!data || error) {
+        return createError({
+            data: error,
+            status: 400,
+            message: error.message || "An unknown body parse error"
+        })
+    }
+
+    const db_form = await getFormByUlid(formUlid).catch(e => e as Error)
+    if (!db_form || db_form instanceof Error) {
+        return createError({
+            status: 404,
+            message: "Form Not Found"
+        })
+    }
+
+    if (db_form.forms.price_group_count && data.invites.length > db_form.forms.price_group_count) {
+        return createError({
+            status: 403,
+            message: "Sorry, these group members are more than the allowed number"
+        })
+    }
+
+    const amount = db_form.forms.price_group_amount ? db_form.forms.price_group_amount : db_form.forms.price_individual * data.invites.length
+    const [form, needsPay] = await needsIndividualPayment(db_form, amount)
+    if (needsPay) {
+        const creator = await getUserByUlId(db_form.forms.userUlid).catch(err => err as Error)
+        if (creator instanceof Error) return createError({
+            status: 404,
+            message: "Form creator not found"
+        })
+        return await processFormPayments(db_form.forms, { phone: data.phone, amount: amount }, creator?.email || creator?.name || "Unknown", async (payment) => {
+            const links = (await generateFormLinkTokens({
+                form: form,
+                formPaymentulid: payment
+            }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
+
+            const message = "Hello, you have been invited to participate in the following survery. This is a paid link that is unique to you, and can only be used once. Follow it to submit your details: "
+            sendResponseInvites(data.invites, links, message)
+            sendUserMail({ email: creator?.email }, `New group payment for form: Group ${data.group_name} has paid for form: ${form.forms.formName} was processesed successfully`, `Group Paid on form: ${form.forms.formName}`)
+        })
+    } else {
+        const links = (await generateFormLinkTokens({
+            form: form
+        }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}/${form.forms.ulid}?token=${bud}`)
+        const message = "Hello, you have been invited to participate in the following survery. Follow the link to submit your details: "
+        sendResponseInvites(data.invites, links, message)
+        return {
+            statusCode: 204,
+            body: "OK"
+        }
     }
 }))
 

@@ -2,17 +2,10 @@
 import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
 import { RealTime } from "#imports";
 
-type ServerForm = {
-  forms: Omit<Drizzle.Form.select, 'pages'> & {
-    pages: Forms
-  },
-  stores: Omit<Drizzle.Store.select, 'store'> & {
-    store: Stores
-  }
-}
-
 const loading = ref(false)
-const ulid = useRoute().params?.formUlid
+const route = useRoute()
+const token = route.query?.prepaid
+const ulid = route.params?.formUlid
 const rerender = ref(false)
 const complete = ref(false)
 
@@ -25,20 +18,26 @@ const res = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
 const data = res?.data.value?.body || {} as ServerForm
 const paymentModal = ref(false)
 const payment_details = ref({
-  phone: ''
+  phone: '',
+  token: token?.toString().trim()
 })
 
 function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): boolean {
-  return form.price > 0
+  return form.price_individual > 0
 }
 
 function hasPhone() {
-  return payment_details.value.phone.length >= 10
+  return payment_details.value.token || payment_details.value.phone.length >= 10
 }
 
 async function processForm() {
   loading.value = true
   paymentModal.value = false
+
+  if (data?.forms?.allowGroups && !group.self) {
+    return processInvites()
+  }
+
   if (
     hasPrice(data.forms) &&
     !hasPhone()
@@ -63,6 +62,7 @@ onMounted(() => {
   realtime.value = new RealTime()
 })
 
+
 async function submit() {
   loading.value = true
   const response = await $fetch(`/api/v1/forms/submit/${ulid}`, {
@@ -73,80 +73,22 @@ async function submit() {
     body: {
       forms: data.forms,
       stores: data.stores,
-      phone: payment_details.value.phone
+      phone: payment_details.value.phone,
+      token: payment_details.value.token
     },
     onResponseError({ response }) {
       log.error(response)
     }
   })
-  if (response.statusCode <= 299) {
-    if (!hasPrice(data.forms)) {
-      loading.value = true
-      rerender.value = false
-      window.alertSuccess('Form submitted successfully', {timeout: 'never'})
-      setTimeout(() => {
-        navigateTo(`/`)
-      })
-      return
-    }
 
-    const channelName = createChannelName(response.body.checkoutRequestID, response.body.merchantRequestID)
-    realtime.value!.subscribe(channelName)
-    alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
-    realtime.value!.on('error', (error) => {
-      console.error(error)
-    })
-
-    realtime.value?.on("data", (_data: any) => {
-      const { data } = parseData(_data)
-      if (data?.channel !== channelName) return console.warn('Invalid channel', data)
-      switch (data.type) {
-        case TYPE.SUCCESS:
-          loading.value = true
-          rerender.value = false
-          window.alertSuccess('Form submitted successfully', {timeout: 'never'})
-          setTimeout(() => {
-            navigateTo(`/`)
-          }, 1000)
-          break
-        case TYPE.ERROR:
-          switch (data.statusCode) {
-            case Status.badRequest:
-              log.error(data.body)
-              rerender.value = true
-              loading.value = false
-              complete.value = false
-              break
-            case Status.internalServerError:
-              log.error(data)
-              rerender.value = true
-              loading.value = false
-              complete.value = false
-              break
-            case Status.unprocessableEntity:
-              window.alertError(data.body)
-              rerender.value = true
-              loading.value = false
-              complete.value = false
-              break
-          }
-        default:
-          rerender.value = true
-          loading.value = false
-          complete.value = false
-      }
-    })
-  } else {
-    window.alertError('Form submission failed: ' + response.body)
-    rerender.value = true
-  }
+  ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
 }
 
 function addCharge(amount: number) {
-  if (data.forms.price) {
-    data.forms.price += amount
+  if (data.forms.price_individual) {
+    data.forms.price_individual += amount
   } else {
-    data.forms.price = amount
+    data.forms.price_individual = amount
   }
 }
 
@@ -238,6 +180,10 @@ const group = reactive({
   count: member_count,
   name: ""
 })
+if (token) {
+  group.chosen = true
+  group.self = true
+}
 
 
 function chooseSelfOrGroup(e: Event) {
@@ -279,7 +225,6 @@ function addPhoneOrEmail() {
   clearText()
 }
 
-
 const invitesInput = ref()
 const hidePlaceholder = ref(false)
 function clearText() {
@@ -314,39 +259,22 @@ function addText() {
 }
 
 const invitesForm = ref<HTMLFormElement | null>(null)
-function processInvites(){
+async function processInvites() {
   loading.value = true
-  console.log(group)
-}
-
-const loadingShare = ref(false)
-function copyInviteLink() {
-  if (!invitesForm.value) return log.warn("Invite Form Not Found")
-  if (validateForm(invitesForm.value)) {
-    loadingShare.value = true
+  if (!hasPhone()) {
+    paymentModal.value = true
+    return
   }
-  // $fetch("/api/auth/onboard/invite/link", {
-  //   headers: {
-  //     Authorization: `Bearer ${getAuthToken()}`
-  //   },
-  //   method: "POST",
-  //   async onResponse({ response }) {
-  //     loadingShare.value = false
-  //     if (!response.ok) return
-
-  //     const { link } = response
-  //     navigator.clipboard.writeText(link)
-  //     navigator.share?.({ title: 'Paid Details Link', text: link, url: link })
-  //   }
-  // })
-}
-
-function validateForm(form: HTMLFormElement){
-  if(!form.checkValidity()){
-    form.reportValidity()
-    return false
-  }
-  return true
+  const response = await $fetch<APIResponse>(`/api/v1/forms/invite/${ulid}/`, {
+    method: 'POST',
+    body: {
+      invites: Array.from(invites.value),
+      phone: payment_details.value.phone,
+      origin: window.location.origin,
+      group_name: group.name
+    }
+  })
+  ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
 }
 </script>
 
@@ -372,9 +300,9 @@ function validateForm(form: HTMLFormElement){
         <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           @back="goBack2" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
-          <small class="text-gray-500 w-fit" v-if="data.forms.price > 0">
+          <small class="text-gray-500 w-fit" v-if="data.forms.price_individual > 0">
             This form requires payment for submission of <br>
-            <span class="text-red-400">Amount Due: {{ data.forms.price }}</span> KES
+            <span class="text-red-400">Amount Due: {{ data.forms.price_individual }}</span> KES
           </small>
           <div>
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
@@ -426,7 +354,8 @@ function validateForm(form: HTMLFormElement){
               class="block w-full text-sm text-gray-900 bg-gray-50 rounded border border-gray-300 focus:outline-none focus:ring-navy focus:border-navy textarea has-placeholder"
               ref="invitesInput" @focusin="hidePlaceholder = true" @focusout="showPlaceholder" @input="addText">
               <span class="placeholder" v-if="!hidePlaceholder">
-                Example: allan@gmail.com, 0712345678, +254712345678, boni@mail.com, etc.
+                Example: allan@gmail.com, 0712345678, +254712345678, boni@mail.com, etc. <br>
+                Don't forget yourself. 😀
               </span>
               <br v-if="invites.size > 0">
               <div v-for="invite in invites" class="bg-navy text-white rounded p-0.5 invite mt-1" :key="invite.email">
@@ -458,28 +387,13 @@ function validateForm(form: HTMLFormElement){
         </div>
         <div class="flex flex-col mt-4">
           <label for="group_number" class="font-semibold">Member count</label>
-          <input id="group_number" type="number" required
+          <input id="group_number" type="number" required disabled
             class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none" title="Change as needed"
             v-model="group.count" />
         </div>
         <div class="mt-4 flex w-full justify-between">
           <button type="button" @click="group.chosen = false" class="px-4 py-2 bg-gray-200 rounded">Back</button>
-          <button class="bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-300" type="button" @click="copyInviteLink">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"
-              v-if="!loadingShare">
-              <path
-                d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z">
-              </path>
-            </svg>
-            <span :class="{ 'animate-spin': loadingShare }" class="w-full grid place-items-center" v-else>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                <path
-                  d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z">
-                </path>
-              </svg>
-            </span>
-          </button>
-          <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded" @click="processInvites">
+          <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded disabled:cursor-not-allowed" @click="processInvites" :disabled="loading">
             <span v-if="!loading">
               Next
             </span>
@@ -492,11 +406,18 @@ function validateForm(form: HTMLFormElement){
             </span>
           </button>
         </div>
+        <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
+          <small class="text-gray-500 w-fit" v-if="data.forms.price_group_amount > 0">
+            This form requires payment for submission of <br>
+            <span class="text-red-400">Amount Due: {{ data.forms.price_group_amount }}</span> KES
+          </small>
+        </div>
       </form>
-      <Modal :show="paymentModal" name="Please provide your MPESA phone number" @confirm="processForm()"
+      <Modal :show="paymentModal" title="Your MPESA phone number" @confirm="processForm()"
         @cancel="payment_details = { phone: '' }; paymentModal = false; loading = false">
         <div class="flex flex-col">
-          <input type="tel" class="input focus:outline-none focus:ring-1" placeholder="MPESA Phone Number" v-model="payment_details.phone" />
+          <input type="tel" class="input focus:outline-none focus:ring-1" placeholder="MPESA Phone Number"
+            v-model="payment_details.phone" />
         </div>
       </Modal>
     </div>

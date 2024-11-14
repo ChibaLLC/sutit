@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type {Forms, Stores, FormStoreData} from "@chiballc/nuxt-form-builder";
+import type { Forms, Stores, FormStoreData } from "@chiballc/nuxt-form-builder";
 
 definePageMeta({
   middleware: ["auth"],
@@ -20,7 +20,9 @@ const submitData = reactive({
     stores: {} as Stores,
   },
   payment: {
-    amount: 0
+    amount: 0,
+    group_amount: 0,
+    group_limit: 0
   },
 })
 
@@ -69,7 +71,7 @@ function closeFormDetailsModal() {
 
 <template>
   <Title>Build Form</Title>
-  <LazyFormBuilder :styles="{height: '100vh'}" @submit="submit">
+  <LazyFormBuilder :styles="{ height: '100vh' }" @submit="submit">
     <template #footer>
       <LazyFormBuilderFooterItem>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7"
@@ -81,16 +83,29 @@ function closeFormDetailsModal() {
       </LazyFormBuilderFooterItem>
     </template>
   </LazyFormBuilder>
-  <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false" name="Add Charge">
+  <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false" title="Charge for a submission">
     <div>
-      <label for="payment-amount">Amount</label>
+      <label for="payment-amount">Submission Amount Payable</label>
       <input type="number" id="payment-amount"
         class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2"
         placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
     </div>
+    <div v-if="submitData.allowGroups" class="mt-4">
+      <label for="group-payment-amount">Group Amount Payable
+        <input type="number" id="group-payment-amount"
+          class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full my-2"
+          placeholder="Amount to charge a group for the form" v-model="submitData.payment.group_amount">
+      </label>
+      <label for="group-member-limit">
+        Group Member Number Limit
+        <input type="number" v-model="submitData.payment.group_limit" id="group-member-limit"
+          class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2">
+        <small class="text-gray-700">Restrict the maximum number of people that could be in a group. Zero means unrestricted</small>
+      </label>
+    </div>
   </Modal>
   <Modal :show="showFormNameModal" @cancel="closeFormDetailsModal" @confirm="closeFormDetailsModal"
-    name="New Form Details">
+    title="New Form Details">
     <div>
       <label for="form-name">Name</label>
       <input type="text" id="form-name"
@@ -114,6 +129,4 @@ function closeFormDetailsModal() {
   </Modal>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
