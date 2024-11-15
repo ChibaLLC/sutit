@@ -80,7 +80,6 @@ async function submit() {
       log.error(response)
     }
   })
-  console.log(response)
   ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
 }
 
@@ -272,6 +271,11 @@ async function processInvites() {
       phone: payment_details.value.phone,
       origin: window.location.origin,
       group_name: group.name
+    },
+    onResponseError({ response }){
+      const data = response._data
+      log.error(realtime)
+      window.alertError(data)
     }
   })
   ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
