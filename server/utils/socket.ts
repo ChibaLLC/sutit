@@ -92,6 +92,10 @@ export class Channels extends Map<string, Channel> {
         return this.get(channel)
     }
 
+    deleteChannel(channel: string){
+        return this.delete(channel)
+    }
+
     getUserClients(user_id: string) {
         return this.get(user_id)?.clients
     }
@@ -174,6 +178,10 @@ export class Channel {
         return this._clients
     }
 
+    terminate(){
+        this.clients.forEach(client => { client?.close() })
+        global.channels?.deleteChannel(this.name)
+    }
 }
 
 export class Client {

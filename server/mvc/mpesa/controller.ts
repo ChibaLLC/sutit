@@ -44,7 +44,7 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
         if (!transactionCode || !amount || !date || !phoneNumber) {
             log.error(`Failed to process payment: ${callback.ResultDesc}`)
             global.channels?.publish(channelName, { statusCode: Status.unprocessableEntity, body: "Unable to process M-Pesa request", type: TYPE.ERROR, channel: channelName })
-            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+            global.channels!.getChannel(channelName)?.terminate()
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
@@ -52,7 +52,7 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
         if (ulid instanceof Error) {
             log.error(`Failed to insert payment: ${ulid.message} \t code: ${transactionCode}`)
             global.channels?.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
-            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+            global.channels!.getChannel(channelName)?.terminate()
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
@@ -65,6 +65,7 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
                 log.error(`Failed to insert form payment: ${e.message}`)
                 global.channels!.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
                 global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+                global.channels?.deleteChannel(channelName)
                 useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
             })
             try {
@@ -76,17 +77,17 @@ router.use('/forms/callback/stk', defineEventHandler(async event => {
         } else {
             log.warn(`No form found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`)
             global.channels?.publish(channelName, { statusCode: Status.notFound, body: "Form not found", type: TYPE.ERROR, channel: channelName })
-            global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+            global.channels!.getChannel(channelName)?.terminate()
         }
     } else {
         log.error(`Failed to process payment: ${callback.ResultDesc}`)
         global.channels?.publish(channelName, { statusCode: Status.unprocessableEntity, body: `Failed to process payment: ${callback.ResultDesc}`, type: TYPE.ERROR, channel: channelName })
-        global.channels!.getChannel(channelName)?.clients.forEach(client => { client.close() })
+        global.channels!.getChannel(channelName)?.terminate()
         return useHttpEnd(event, null, 204)
     }
 
     global.channels?.publish(channelName, { statusCode: Status.success, body: "OK", type: TYPE.SUCCESS, channel: channelName })
-    global.channels?.getChannel(channelName)?.clients.forEach(client => { client.close() })
+    global.channels!.getChannel(channelName)?.terminate()
     log.success("Payment processed successfully Ref: " + callback.CallbackMetadata.Item.find(item => item.Name === "MpesaReceiptNumber")?.Value)
     return useHttpEnd(event, { statusCode: Status.success, body: "OK" })
 }))
