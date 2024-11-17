@@ -9,7 +9,8 @@ import {
     insertData,
     updateForm,
     updateStore,
-    invalidatePrepaidFormLink
+    invalidatePrepaidFormLink,
+    insertGroupFormResponse
 } from "../../mvc/forms/queries";
 import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 import { constructExcel, deleteUserForm, generateFormLinkTokens, getStats, processFormPayments, sendResponseInvites, sendUserMail, validateFormLinkToken, withdrawFunds } from "./methods";
@@ -463,7 +464,8 @@ router.post('/invite/:formUlid', defineEventHandler(async event => {
         ])),
         phone: z.string(),
         origin: z.string(),
-        group_name: z.string()
+        group_name: z.string(),
+        message: z.string()
     })
 
     const { data, error } = await readValidatedBody(event, schema.safeParse)
@@ -503,8 +505,13 @@ router.post('/invite/:formUlid', defineEventHandler(async event => {
                 form: form,
                 formPaymentulid: payment
             }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
-
-            const message = "Hello, you have been invited to participate in the following survery. This is a paid link that is unique to you, and can only be used once. Follow it to submit your details: "
+            insertGroupFormResponse({
+                formUlid: db_form.forms.ulid,
+                groupName: data.group_name,
+                invites: data.invites,
+                paymentUlid: payment
+            })
+            const message = data.message.padEnd(1, " ")
             sendResponseInvites(data.invites, links, message)
             sendUserMail({ email: creator?.email }, `Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`, `[Payment]: Group ${form.forms.formName}`)
         })
@@ -512,7 +519,7 @@ router.post('/invite/:formUlid', defineEventHandler(async event => {
         const links = (await generateFormLinkTokens({
             form: form
         }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
-        const message = "Hello, you have been invited to participate in the following survery. Follow the link to submit your details: "
+        const message = data.message.padEnd(1, " ")
         sendResponseInvites(data.invites, links, message)
         return {
             statusCode: 204,

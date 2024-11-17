@@ -68,6 +68,14 @@ export const prepaidForms = pgTable("prepaid_forms", {
 	isValid: boolean("is_valid").default(true)
 })
 
+export const groupFormResponses = pgTable("group_form_responses", {
+	id: serial("id").primaryKey(),
+	groupName: varchar("group_name", { length: 255 }).notNull(),
+	invites: jsonb("invites"),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).references(() => payments.ulid, { onDelete: "no action" }).notNull(),
+	formUlid: varchar("form_ulid", { length: 255 }).references(() => forms.ulid, { onDelete: "no action" }).notNull()
+})
+
 export const stores = pgTable("stores", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
 	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" }),
@@ -84,8 +92,8 @@ export const sysLogs = pgTable("sys_logs", {
 });
 
 export const formPayments = pgTable("form_payments", {
-	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "cascade" }),
-	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" }),
+	formUlid: varchar("form_ulid", { length: 255 }).notNull().references(() => forms.ulid, { onDelete: "no action" }),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "no action" }),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 },
@@ -96,8 +104,8 @@ export const formPayments = pgTable("form_payments", {
 	});
 
 export const storePayments = pgTable("store_payments", {
-	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "cascade" }),
-	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "cascade" }),
+	storeUlid: varchar("store_ulid", { length: 255 }).notNull().references(() => stores.ulid, { onDelete: "no action" }),
+	paymentUlid: varchar("payment_ulid", { length: 255 }).notNull().references(() => payments.ulid, { onDelete: "no action" }),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 },

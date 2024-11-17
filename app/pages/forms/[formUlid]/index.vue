@@ -26,6 +26,10 @@ function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): 
   return form.price_individual > 0
 }
 
+function hasGroupPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }){
+  return form.price_group_amount > 0
+}
+
 function hasPhone() {
   return payment_details.value.token || payment_details.value.phone.length >= 10
 }
@@ -177,7 +181,8 @@ const group = reactive({
   self: false,
   invites: invites,
   count: member_count,
-  name: ""
+  name: "",
+  message: hasGroupPrice(data.forms) ? "Hello, you have been invited to participate in the following survey. This is a paid link that is unique to you, and can only be used once. Follow it to submit your details:" : "Hello, you have been invited to participate in the following survery. Follow the link to submit your details:"
 })
 if (token) {
   group.chosen = true
@@ -270,7 +275,8 @@ async function processInvites() {
       invites: Array.from(invites.value),
       phone: payment_details.value.phone,
       origin: window.location.origin,
-      group_name: group.name
+      group_name: group.name,
+      message: group.message
     },
     onResponseError({ response }){
       const data = response._data
@@ -395,9 +401,16 @@ async function processInvites() {
             class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none" title="Change as needed"
             v-model="group.count" />
         </div>
+        <div class="flex flex-col mt-4">
+          <label for="group_message" class="font-semibold">Invite message</label>
+          <textarea id="group_message" required class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none"
+            title="Change as needed" v-model="group.message">
+          </textarea>
+        </div>
         <div class="mt-4 flex w-full justify-between">
           <button type="button" @click="group.chosen = false" class="px-4 py-2 bg-gray-200 rounded">Back</button>
-          <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded disabled:cursor-not-allowed" @click="processInvites" :disabled="loading">
+          <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded disabled:cursor-not-allowed"
+            @click="processInvites" :disabled="loading">
             <span v-if="!loading">
               Next
             </span>
