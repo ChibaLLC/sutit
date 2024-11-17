@@ -64,6 +64,20 @@
       "when": 1731600624729,
       "tag": "0008_eager_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1731858720029,
+      "tag": "0009_striped_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1731858860686,
+      "tag": "0010_thin_annihilus",
+      "breakpoints": true
     }
   ]
 }

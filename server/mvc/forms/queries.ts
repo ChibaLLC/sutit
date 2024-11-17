@@ -1,4 +1,4 @@
-import { formPayments, forms, payments, formResponses, storeResponses, stores, prepaidForms } from "~~/server/db/drizzle/schema";
+import { formPayments, forms, payments, formResponses, storeResponses, stores, prepaidForms, groupFormResponses } from "~~/server/db/drizzle/schema";
 import db from "../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
@@ -280,4 +280,13 @@ export async function invalidatePrepaidFormLink(token: string) {
     return db.update(prepaidForms).set({
         isValid: false
     }).where(eq(prepaidForms.token, token)).execute()
+}
+
+export async function insertGroupFormResponse(data: {formUlid: string, groupName: string, invites: Array<{ [key: string]: string }>, paymentUlid: string}) {
+    return db.insert(groupFormResponses).values({
+        formUlid: data.formUlid,
+        groupName: data.groupName,
+        invites: data.invites,
+        paymentUlid: data.paymentUlid
+    }).execute()
 }
