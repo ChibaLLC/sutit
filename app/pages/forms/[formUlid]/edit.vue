@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
-
-type ServerForm = {
-    forms: Omit<Drizzle.Form.select, 'pages'> & {
-        pages: Forms
-    },
-    stores: Omit<Drizzle.Store.select, 'store'> & {
-        store: Stores
-    }
-}
+import type { Forms, Stores, FormStoreData } from "@chiballc/nuxt-form-builder";
 
 definePageMeta({
     middleware: ["auth"],
     layout: 'novbar'
 })
+
+
+const showPriceModal = ref(false)
+const showFormNameModal = ref(false)
+const helpText = ref(false)
 const ulid = useRoute().params?.formUlid
 const response = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
     onResponseError({ response }) {
@@ -27,22 +23,25 @@ const formStoreData = computed(() => {
     } satisfies FormStoreData
 })
 
-const showPriceModal = ref(false)
 const submitData = reactive({
     name: response?.forms.formName,
     description: response?.forms.formDescription,
+    allowGroups: response?.forms.allowGroups,
     formData: {
-        pages: response?.forms.pages || {} as Forms,
-        stores: response?.stores.store || {} as Stores,
+        pages: formStoreData.value.forms,
+        stores: formStoreData.value.stores,
     },
     payment: {
-        amount: response?.forms.price_individual || 0
+        amount: response?.forms.price_individual,
+        group_amount: response?.forms.price_group_amount,
+        group_limit: response?.forms.price_group_count
     },
 })
 
 function addPaymentOption() {
     showPriceModal.value = true
 }
+
 async function submit(data: FormStoreData) {
     submitData.formData = {
         pages: data.forms,
@@ -52,7 +51,7 @@ async function submit(data: FormStoreData) {
         alert('Please add a form or a store')
     }
 
-    const res = await $fetch<APIResponse<any>>(`/api/v1/forms/update/${response?.forms.ulid}`, {
+    const res = await $fetch<APIResponse<any>>('/api/v1/forms/create', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -62,14 +61,13 @@ async function submit(data: FormStoreData) {
     })
 
     if (res.statusCode < 299) {
-        alert('Form edit successful')
+        alert('Form created successfully')
         await navigateTo('/forms')
     } else {
         alert(res.body)
     }
 }
-const showFormNameModal = ref(false)
-const helpText = ref(false)
+
 onMounted(() => {
     showFormNameModal.value = true
 })
@@ -84,9 +82,8 @@ function closeFormDetailsModal() {
 </script>
 
 <template>
-    <Title>Form | {{ response?.forms.formName }}</Title>
-    <Title>Edit Form</Title>
-    <LazyFormBuilder :styles="{ height: '100vh' }" style="margin-top: -1rem" @submit="submit" :starter="formStoreData">
+    <Title>Build Form</Title>
+    <LazyFormBuilder :styles="{ height: '100vh' }" @submit="submit" :starter="formStoreData">
         <template #footer>
             <LazyFormBuilderFooterItem>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7"
@@ -98,21 +95,36 @@ function closeFormDetailsModal() {
             </LazyFormBuilderFooterItem>
         </template>
     </LazyFormBuilder>
-    <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false" name="Add Charge">
+    <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false"
+        title="Charge for a submission">
         <div>
-            <label for="payment-amount">Amount</label>
+            <label for="payment-amount">Submission Amount Payable</label>
             <input type="number" id="payment-amount"
                 class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2"
                 placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
         </div>
+        <div v-if="submitData.allowGroups" class="mt-4">
+            <label for="group-payment-amount">Group Amount Payable
+                <input type="number" id="group-payment-amount"
+                    class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full my-2"
+                    placeholder="Amount to charge a group for the form" v-model="submitData.payment.group_amount">
+            </label>
+            <label for="group-member-limit">
+                Group Member Number Limit
+                <input type="number" v-model="submitData.payment.group_limit" id="group-member-limit"
+                    class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2">
+                <small class="text-gray-700">Restrict the maximum number of people that could be in a group. Zero means
+                    unrestricted</small>
+            </label>
+        </div>
     </Modal>
     <Modal :show="showFormNameModal" @cancel="closeFormDetailsModal" @confirm="closeFormDetailsModal"
-        name="Edit Details">
+        title="New Form Details">
         <div>
             <label for="form-name">Name</label>
             <input type="text" id="form-name"
                 class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
-                placeholder="Name of the form" v-model="submitData.name">
+                placeholder="Name of the form (Required)" v-model="submitData.name">
             <small class="text-gray-500">This will be the title of the form</small>
         </div>
         <div class="mt-4">
@@ -121,8 +133,14 @@ function closeFormDetailsModal() {
                 class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-1"
                 placeholder="Description of the form" v-model="submitData.description"></textarea>
         </div>
+        <div class="mt-2 flex gap-3 cursor-pointer flex-row-reverse justify-end">
+            <label for="groups">Allow grouped responses</label>
+            <input type="checkbox" id="groups" v-model="submitData.allowGroups">
+        </div>
         <div v-if="helpText">
             <p class="text-red-500 text-sm">Please provide a name for the form</p>
         </div>
     </Modal>
 </template>
+
+<style scoped></style>
