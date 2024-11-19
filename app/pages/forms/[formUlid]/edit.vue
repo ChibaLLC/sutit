@@ -51,7 +51,7 @@ async function submit(data: FormStoreData) {
         alert('Please add a form or a store')
     }
 
-    const res = await $fetch<APIResponse<any>>('/api/v1/forms/create', {
+    const res = await $fetch<APIResponse<any>>(`/api/v1/forms/update/${response?.forms.ulid}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
