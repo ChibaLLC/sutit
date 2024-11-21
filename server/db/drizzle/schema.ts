@@ -50,6 +50,7 @@ export const forms = pgTable("forms", {
 	formName: varchar("form_name", { length: 255 }).notNull(),
 	formDescription: text("form_description"),
 	pages: jsonb("pages").notNull(),
+	requireMerch: boolean("require_merch").default(false),
 	price_individual: integer("price_individual").default(0).notNull(),
 	price_group_amount: integer("price_group_amount").default(0).notNull(),
 	price_group_count: integer("price_group_count").default(0),

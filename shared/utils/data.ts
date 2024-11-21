@@ -1,3 +1,5 @@
+import type { Stores } from "@chiballc/nuxt-form-builder"
+
 export function Boolish(val: any) {
     if (typeof val !== "string") return val
     switch (true) {
@@ -66,4 +68,14 @@ export function createChannelName(...args: string[]) {
 
 function isSocketTemplate(data: any): data is SocketTemplate {
     return hasOwnProperties<SocketTemplate>(data, ["type"])
+}
+
+export function hasBoughtMerch(stores?: Stores) {
+    if (!stores) return false
+    for (const key in stores) {
+        for (const item of stores[key] || []) {
+            if (item.carted) return true
+        }
+    }
+    return false
 }

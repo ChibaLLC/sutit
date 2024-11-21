@@ -63,6 +63,7 @@ router.post('/create', defineEventHandler(async event => {
             pages: Forms,
             stores: Stores,
         },
+        requireMerch: boolean
     }
     if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
         return useHttpEnd(event, {
@@ -82,6 +83,7 @@ router.post('/create', defineEventHandler(async event => {
                 limit: form.payment.group_limit
             }
         },
+        requireMerch: form.requireMerch,
         userUlid: details.user.ulid,
         allowGroups: form.allowGroups
     }).catch(err => err as Error)
@@ -124,13 +126,17 @@ router.post("/update/:formUlid", defineEventHandler(async event => {
     const form = await readBody(event) as {
         name: string,
         description: string,
+        allowGroups: boolean
         payment: {
             amount: number,
+            group_amount?: number,
+            group_limit?: number
         },
         formData: {
             pages: Forms,
             stores: Stores,
-        }
+        },
+        requireMerch: boolean
     }
 
     if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
@@ -140,7 +146,21 @@ router.post("/update/:formUlid", defineEventHandler(async event => {
         }, Status.badRequest)
     }
 
-    const err = await updateForm(formUlid, form.name, form.description, form.payment.amount, form.formData.pages).catch(err => err as Error)
+    const err = await updateForm(formUlid, {
+        name: form.name,
+        description: form.description,
+        pages: form.formData.pages,
+        price: {
+            individual: form.payment.amount,
+            group: {
+                amount: form.payment.group_amount,
+                limit: form.payment.group_limit
+            }
+        },
+        requireMerch: form.requireMerch,
+        userUlid: details.user.ulid,
+        allowGroups: form.allowGroups
+    }).catch(err => err as Error)
     if (err instanceof Error) {
         return useHttpEnd(event, {
             statusCode: Status.internalServerError,
@@ -340,7 +360,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
     }, Status.badRequest)
     const _data = await readBody(event) as {
         forms: Drizzle.Form.select & { pages: Forms },
-        stores: Stores,
+        stores: Drizzle.Store.select & { store: Stores },
         phone: string,
         token: string
     }
@@ -364,6 +384,13 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: "Need a phone number or a payment token"
     })
 
+    if (data.forms.requireMerch && !hasBoughtMerch(_data.stores.store)){
+        return useHttpEnd(event, {
+            statusCode: Status.badRequest,
+            body: "You need to buy(like) something from the store section of the form"
+        } as APIResponse<string>, Status.internalServerError)
+    }
+
     const creator = await getUserByUlId(data.forms.userUlid).catch(err => err as Error)
     if (!creator) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
@@ -374,6 +401,7 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         body: creator.message || "Unknown error while getting form creator"
     } as APIResponse<string>, Status.internalServerError)
 
+    const [details, error] = await useAuth(event)
     async function insert(creator: Drizzle.User.select, data: {
         forms: Drizzle.Form.select;
         stores?: Drizzle.Store.select;
@@ -400,7 +428,6 @@ router.post('/submit/:formUlid', defineEventHandler(async event => {
         return response
     }
 
-    const [details, error] = await useAuth(event)
     if (needsPay && !_data.token) {
         if (_data.forms.price_individual < data.forms.price_individual) {
             return useHttpEnd(event, {
