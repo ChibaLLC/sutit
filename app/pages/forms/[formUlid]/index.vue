@@ -37,7 +37,10 @@ function hasPhone() {
 async function processForm() {
   loading.value = true
   paymentModal.value = false
-
+  if(data.forms.requireMerch && !hasBoughtMerch(data.stores.store)) {
+    loading.value = false
+    return window.alertError("You need to get something from the store section of this form!")
+  }
   if (data?.forms?.allowGroups && !group.self) {
     return processInvites()
   }
@@ -82,6 +85,7 @@ async function submit() {
     },
     onResponseError({ response }) {
       log.error(response)
+      window.alertError(response._data?.body || "An unknown error has occurred Please try again later")
     }
   })
   ResolveMpesaPayment(response, data, realtime.value as any, loading, rerender, complete)
@@ -112,8 +116,10 @@ function goBack2() {
   if (data?.forms?.allowGroups && group.chosen) {
     group.chosen = false
     group.self = false
+    rerender.value = true
+    complete.value = false
   } else {
-    window.history.back()
+    goBack()
   }
 }
 
@@ -308,13 +314,13 @@ async function processInvites() {
       </div>
       <form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.forms?.allowGroups || group.self">
         <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
-          @back="goBack2" :show-spinner="loading" />
+          @back="goBack2()" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="(data.forms.price_individual > 0) && !token">
             This form requires payment for submission of <br>
             <span class="text-red-400">Amount Due: {{ data.forms.price_individual }}</span> KES
           </small>
-          <div v-if="complete && !rerender">
+          <div v-if="complete">
             <button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
               Back
             </button>
@@ -326,7 +332,7 @@ async function processInvites() {
       </form>
       <form @submit.prevent v-if="data?.forms?.allowGroups && !group.chosen" class="w-full grid place-items-center">
         <div class="flex flex-wrap">
-          <label for="for_me"
+          <label for="for_me" @click="group.self = true; group.chosen = true;"
             class="flex text-xl font-bold items-center m-2 gap-2 px-4 py-2 hover:bg-gray-200 cursor-pointer rounded">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
               <path
@@ -336,7 +342,7 @@ async function processInvites() {
             Continue For Me
             <input type="radio" id="for_me" name="fill_for" class="hidden" @change="chooseSelfOrGroup" />
           </label>
-          <label for="for_group"
+          <label for="for_group" @click="group.self = false; group.chosen = true;"
             class="flex text-xl font-bold items-center m-2 gap-2 px-4 py-2 hover:bg-gray-200 rounded cursor-pointer">
             <input type="radio" id="for_group" name="fill_for" class="hidden" @change="chooseSelfOrGroup" />
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">

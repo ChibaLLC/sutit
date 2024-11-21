@@ -15,6 +15,7 @@ const submitData = reactive({
   name: '',
   description: '',
   allowGroups: false,
+  requireMerch: false,
   formData: {
     pages: {} as Forms,
     stores: {} as Stores,
@@ -83,12 +84,26 @@ function closeFormDetailsModal() {
       </LazyFormBuilderFooterItem>
     </template>
   </LazyFormBuilder>
-  <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false" title="Charge for a submission">
+  <Modal :show="showPriceModal" @confirm="showPriceModal = false" @cancel="showPriceModal = false"
+    title="Charge for a submission">
     <div>
       <label for="payment-amount">Submission Amount Payable</label>
       <input type="number" id="payment-amount"
         class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2"
         placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
+    </div>
+    <div class="mt-4">
+      <div class="mt-2 flex gap-3 cursor-pointer flex-row-reverse justify-end -mb-2">
+        <label for="groups">Require Merch?</label>
+        <input type="checkbox" id="groups" v-model="submitData.requireMerch">
+      </div>
+      <div class="flex flex-col justify-start mt-2">
+        <small class="font-mulish">Require users to get something from the store before submitting?</small>
+        <small class="text-red-500 font-mulish -mt-2"
+          v-if="submitData.requireMerch && !Object.values(submitData.formData.stores).at(0)?.length">Be sure to add
+          an
+          item to the store section or form submission won't work</small>
+      </div>
     </div>
     <div v-if="submitData.allowGroups" class="mt-4">
       <label for="group-payment-amount">Group Amount Payable
@@ -100,7 +115,8 @@ function closeFormDetailsModal() {
         Group Member Number Limit
         <input type="number" v-model="submitData.payment.group_limit" id="group-member-limit"
           class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2">
-        <small class="text-gray-700">Restrict the maximum number of people that could be in a group. Zero means unrestricted</small>
+        <small class="text-gray-700 font-mulish">Restrict the maximum number of people that could be in a group. Zero means
+          unrestricted</small>
       </label>
     </div>
   </Modal>

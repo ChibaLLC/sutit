@@ -17,7 +17,8 @@ export async function createForm(data: {
     },
     userUlid: string,
     pages: Forms,
-    allowGroups: boolean
+    allowGroups: boolean,
+    requireMerch: boolean
 }) {
     const form = {
         formName: data.name,
@@ -26,6 +27,7 @@ export async function createForm(data: {
         formDescription: data.description,
         userUlid: data.userUlid,
         allowGroups: data.allowGroups,
+        requireMerch: data.requireMerch,
         price_group_amount: data.price.group?.amount,
         price_group_count: data.price.group?.limit,
         price_individual: data.price.individual
@@ -34,13 +36,34 @@ export async function createForm(data: {
     return form.ulid
 }
 
-export async function updateForm(formUlid: string, name: string, description: string, price: number, pages: Forms) {
-    await db.update(forms).set({
-        formName: name,
-        formDescription: description,
-        price_individual: price,
-        pages: pages
-    }).where(eq(forms.ulid, formUlid))
+export async function updateForm(formUlid: string, data: {
+    name: string,
+    description?: string,
+    price: {
+        individual: number,
+        group?: {
+            amount?: number,
+            limit?: number
+        }
+    },
+    userUlid: string,
+    pages: Forms,
+    allowGroups: boolean,
+    requireMerch: boolean
+}) {
+    const form = {
+        formName: data.name,
+        pages: data.pages,
+        formDescription: data.description,
+        userUlid: data.userUlid,
+        allowGroups: data.allowGroups,
+        requireMerch: data.requireMerch,
+        price_group_amount: data.price.group?.amount,
+        price_group_count: data.price.group?.limit,
+        price_individual: data.price.individual,
+        ulid: formUlid
+    } satisfies Drizzle.Form.insert
+    await db.update(forms).set(form).where(eq(forms.ulid, formUlid))
 }
 
 export function deleteForm(formUlid: string) {

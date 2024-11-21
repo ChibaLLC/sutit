@@ -36,6 +36,7 @@ const submitData = reactive({
         group_amount: response?.forms.price_group_amount,
         group_limit: response?.forms.price_group_count
     },
+    requireMerch: response?.forms.requireMerch || false
 })
 
 function addPaymentOption() {
@@ -57,11 +58,14 @@ async function submit(data: FormStoreData) {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + getAuthToken()
         },
-        body: submitData
+        body: submitData,
+        onResponseError({error}){
+            window.alertError(error?.message || "Unknow Error Occured When Trying To Update The Form")
+        }
     })
 
-    if (res.statusCode < 299) {
-        alert('Form created successfully')
+    if (res?.statusCode < 299) {
+        alert('Form updated successfully')
         await navigateTo('/forms')
     } else {
         alert(res.body)
@@ -103,6 +107,20 @@ function closeFormDetailsModal() {
                 class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2"
                 placeholder="Amount to charge for the form" v-model="submitData.payment.amount">
         </div>
+        <div class="mt-4">
+            <div class="mt-2 flex gap-3 cursor-pointer flex-row-reverse justify-end -mb-2">
+                <label for="groups">Require Merch?</label>
+                <input type="checkbox" id="groups" v-model="submitData.requireMerch">
+            </div>
+            <div class="flex flex-col justify-start mt-2">
+                <small class="font-mulish">Require users to get something from the store before submitting?</small>
+                <small class="text-red-500 font-mulish -mt-2"
+                    v-if="submitData.requireMerch && !Object.values(submitData.formData.stores).at(0)?.length">Be sure
+                    to add
+                    an
+                    item to the store section or form submission won't work</small>
+            </div>
+        </div>
         <div v-if="submitData.allowGroups" class="mt-4">
             <label for="group-payment-amount">Group Amount Payable
                 <input type="number" id="group-payment-amount"
@@ -113,7 +131,7 @@ function closeFormDetailsModal() {
                 Group Member Number Limit
                 <input type="number" v-model="submitData.payment.group_limit" id="group-member-limit"
                     class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2">
-                <small class="text-gray-700">Restrict the maximum number of people that could be in a group. Zero means
+                <small class="text-gray-700 font-mulish">Restrict the maximum number of people that could be in a group. Zero means
                     unrestricted</small>
             </label>
         </div>
