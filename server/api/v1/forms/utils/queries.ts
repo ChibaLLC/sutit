@@ -1,5 +1,5 @@
 import { formPayments, forms, payments, formResponses, storeResponses, stores, prepaidForms, groupFormResponses } from "~~/server/db/drizzle/schema";
-import db from "../../db";
+import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
@@ -108,12 +108,7 @@ export async function insertData(formUlid: string, data: { forms: { pages: Forms
     }
 }
 
-export async function getFormResponses(formUlId: string) {
-    return db.select().from(formResponses)
-        .where(eq(formResponses.formUlid, formUlId))
-        .leftJoin(stores, eq(stores.formUlid, formResponses.formUlid))
-        .orderBy(desc(formResponses.createdAt))
-}
+
 
 export async function getFormsByUser(userUlid: string) {
     return db.select()

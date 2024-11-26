@@ -68,10 +68,10 @@ function clickGoogleBtn() {
   (googleButton.value.querySelector("[role='button']") as HTMLDivElement).click()
 }
 
-function onSignIn(googleCrdential: GoogleCredential) {
-  $fetch<APIResponse>("/api/v1/auth/google/callback", {
+function onSignIn(googleCredential: GoogleCredential) {
+  $fetch<APIResponse>("/api/v1/auth/callbacks/google", {
     method: "POST",
-    body: googleCrdential,
+    body: googleCredential,
     async onResponse({ response }) {
       const res = response._data
       if (res.statusCode === 200) {

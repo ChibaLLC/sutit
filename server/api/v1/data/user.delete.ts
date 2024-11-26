@@ -1,6 +1,4 @@
-const router = createRouter()
-
-router.delete('/user', defineEventHandler(async event => {
+export default defineEventHandler(async event => {
     const details = await useAuth(event).catch(e => e as Error)
     if (details instanceof Error) {
         return useHttpEnd(event, {
@@ -15,6 +13,4 @@ router.delete('/user', defineEventHandler(async event => {
     return {
         statusCode: Status.success
     } as APIResponse
-}))
-
-export default useController('data', router)
+})

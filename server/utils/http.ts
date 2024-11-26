@@ -97,3 +97,19 @@ export function createResponse({ statusCode = 200, data, headers, statusMessage 
         headers: new Headers({ ...headers, ...inferred })
     })
 }
+
+export function safeEventHandler(func: (event: H3Event) => any){
+    const safe = (event: H3Event) => {
+        try {
+            return func(event)
+        } catch (error: any) {
+            log.error(error)
+            return createError({
+                statusCode: 500,
+                data: error,
+                message: error?.message ||  "Unknown Internal Server Error"
+            })
+        }
+    }
+    return defineEventHandler(safe)
+}

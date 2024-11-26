@@ -1,9 +1,9 @@
 import { eq, and } from "drizzle-orm";
-import db from '../../db';
+import db from '../../../../db';
 import { sessions } from "~~/server/db/drizzle/schema";
 import { v4 } from "uuid";
 import type { Drizzle } from "~~/server/db/types";
-import { getUserByEmail } from "../../mvc/users/queries";
+import { getUserByEmail } from "../../../../mvc/users/queries";
 import { users } from "~~/server/db/drizzle/schema";
 
 
