@@ -1,5 +1,5 @@
 import {revokeAuthToken} from "~~/server/api/v1/auth/utils";
-import {createUser} from "~~/server/mvc/users/queries";
+import {createUser} from "~~/server/api/v1/forms/users/utils/queries";
 import {authenticate} from "~~/server/api/v1/auth/utils/queries";
 
 export default defineEventHandler(async event => {

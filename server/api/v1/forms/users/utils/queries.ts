@@ -1,9 +1,9 @@
 import type {Drizzle} from "~~/server/db/types";
-import db from "../../db";
+import db from "../../../../../db";
 import {sessions, users} from "~~/server/db/drizzle/schema";
 import {and, eq} from "drizzle-orm";
 import {ulid} from "ulid";
-import { getRecentForms as _getRecentForms } from "../../api/v1/forms/utils/queries";
+import { getRecentForms as _getRecentForms } from "../../utils/queries";
 
 export async function getUserByToken(token: string): Promise<Drizzle.User.select | null> {
     if (!token) return null

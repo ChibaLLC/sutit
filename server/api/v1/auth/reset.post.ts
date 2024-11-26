@@ -1,4 +1,4 @@
-import {getUserByEmail} from "~~/server/mvc/users/queries";
+import {getUserByEmail} from "~~/server/api/v1/forms/users/utils/queries";
 import {resetPassword} from "~~/server/api/v1/auth/utils";
 import {authenticate} from "~~/server/api/v1/auth/utils/queries";
 

@@ -1,5 +1,5 @@
 import {insertData, invalidatePrepaidFormLink, needsIndividualPayment} from "../utils/queries";
-import {getUserByUlId} from "~~/server/mvc/users/queries";
+import {getUserByUlId} from "~~/server/api/v1/forms/users/utils/queries";
 import {processFormPayments, sendUserMail, validateFormLinkToken} from "../utils";
 import type {Forms, Stores} from "@chiballc/nuxt-form-builder";
 
