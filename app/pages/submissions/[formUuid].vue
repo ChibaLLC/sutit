@@ -74,7 +74,7 @@ const {data: form} = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ul
     console.log(error)
   }
 }).then(({data}) => ({data: data.value?.body}))
-const {data: response} = await useFetch<APIResponse<FormEntries>>(`/api/v1/forms/submissions/${ulid}`, {
+const {data: response} = await useFetch<APIResponse<FormEntries>>(`/api/v1/forms/${ulid}/submissions`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
@@ -129,7 +129,7 @@ function getData(pile: {
 let _hasPayment: boolean | undefined
 function hasPayment() {
   if (_hasPayment !== undefined) return _hasPayment
-  _hasPayment = form?.forms.price !== 0 || Object.values(form?.stores.store).some(store => store.some(item => item.price !== 0))
+  _hasPayment = form?.forms.price_individual !== 0 || Object.values(form?.stores.store).some(store => store.some(item => item.price !== 0))
   return _hasPayment
 }
 
@@ -137,7 +137,7 @@ const fields = computed(() => getFields(form?.forms.pages || {}))
 const loadingExcel = ref(false)
 async function downloadExcel() {
   loadingExcel.value = true
-  const res = await $fetch(`/api/v1/forms/submissions/${ulid}/excel`, {
+  const res = await $fetch<Blob>(`/api/v1/forms/${ulid}/submissions/excel`, {
     headers: {
       Authorization: `Bearer ${getAuthToken()}`,
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -156,8 +156,9 @@ async function downloadExcel() {
     console.log(err)
     alert('Failed to download excel file')
     loadingExcel.value = false
+    return undefined
   })
-
+  if(!res) return window.alertError("Unable to get excel document")
   const url = URL.createObjectURL(res)
   const a = document.createElement('a')
   a.href = url
@@ -168,7 +169,7 @@ async function downloadExcel() {
   a.remove()
 }
 
-const total = await useFetch<APIResponse<number>>(`/api/v1/forms/submissions/${ulid}/total`, {
+const total = await useFetch<APIResponse<number>>(`/api/v1/forms/${ulid}/submissions/total`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
@@ -188,7 +189,7 @@ const checkoutMethod = ref<CreditMethod | null>(null)
 async function credit() {
   loadingCheckout.value = true
   showCreditMethodsModal.value = false
-  const res = await $fetch<APIResponse>(`/api/v1/forms/credit/${ulid}`, {
+  const res = await $fetch<APIResponse>(`/api/v1/forms/${ulid}/credit`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAuthToken()}`,

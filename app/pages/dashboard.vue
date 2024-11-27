@@ -196,7 +196,7 @@ const stats = await useFetch<APIResponse<{ forms: number, responses: number, ear
 formCount.value = stats?.forms || 0;
 moneyCount.value = stats?.earnings || 0;
 reachCount.value = stats?.responses || 0;
-const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(`/api/v1/users/${getAuthToken()}/recents`, {
+const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(`/api/v1/forms/me/recents`, {
     headers: {
         "Authorization": `Bearer ${getAuthToken()}`
     },

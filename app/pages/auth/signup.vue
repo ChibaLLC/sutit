@@ -9,7 +9,7 @@ const details = reactive({
 })
 
 const mismatch = computed(() => {
-  return !!(details.email && details.password1 && details.password1 !== details.password2);
+  return (details.email && details.password1 && details.password1 !== details.password2);
 })
 
 async function submit() {

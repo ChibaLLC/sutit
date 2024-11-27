@@ -33,7 +33,6 @@ function submit() {
                 await navigateTo('/')
 
                 if (redirect) {
-                    if (typeof redirect !== 'string') throw new Error("Redirect Error")
                     await navigateTo(redirect)
                 } else {
                     await navigateTo('/')

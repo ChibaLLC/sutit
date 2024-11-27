@@ -44,7 +44,7 @@ function navigateIfTarget(event: MouseEvent, location: string) {
 }
 
 function deleteForm(ulid: string) {
-  $fetch(`/api/v1/forms/delete/${ulid}`, {
+  $fetch(`/api/v1/forms/${ulid}/delete`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${getAuthToken()}`
