@@ -52,7 +52,7 @@ async function submit(data: FormStoreData) {
         alert('Please add a form or a store')
     }
 
-    const res = await $fetch<APIResponse<any>>(`/api/v1/forms/update/${response?.forms.ulid}`, {
+    const res = await $fetch<APIResponse<any>>(`/api/v1/forms/${response?.forms.ulid}/update`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ async function submit(data: FormStoreData) {
         },
         body: submitData,
         onResponseError({error}){
-            window.alertError(error?.message || "Unknow Error Occured When Trying To Update The Form")
+            window.alertError(error?.message || "Unknown Error Occurred When Trying To Update The Form")
         }
     })
 

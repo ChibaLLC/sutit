@@ -1,5 +1,5 @@
 import type {H3Event} from "h3";
-import {getUserByToken} from "~~/server/api/v1/forms/users/utils/queries";
+import {getUserByToken} from "~~/server/api/v1/users/utils/queries";
 
 export async function useAuth(event: H3Event): Promise<[{
     token: string,

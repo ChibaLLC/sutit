@@ -1,4 +1,4 @@
-import {deleteUser} from "~~/server/api/v1/forms/users/utils/queries";
+import {deleteUser} from "~~/server/api/v1/users/utils/queries";
 
 export default defineEventHandler(async event => {
     const response = {} as APIResponse

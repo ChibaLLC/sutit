@@ -17,7 +17,7 @@ const res = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
 
 const data = res?.data.value?.body || {} as ServerForm
 const paymentModal = ref(false)
-const payment_details = ref({
+const payment_details = ref<{phone: string, token?: string}>({
   phone: '',
   token: token?.toString().trim()
 })
@@ -72,7 +72,7 @@ onMounted(() => {
 
 async function submit() {
   loading.value = true
-  const response = await $fetch(`/api/v1/forms/submit/${ulid}`, {
+  const response = await $fetch(`/api/v1/forms/${ulid}/submit`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${getAuthToken()}`

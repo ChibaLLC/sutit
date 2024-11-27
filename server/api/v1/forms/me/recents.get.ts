@@ -1,6 +1,6 @@
-import {getRecentForms} from "~~/server/api/v1/forms/users/utils/queries";
+import {getRecentForms} from "~~/server/api/v1/users/utils/queries";
 
-defineEventHandler(async event => {
+export default defineEventHandler(async event => {
     const response = {} as APIResponse
     const [details, error] = await useAuth(event)
     if (!details || error) {

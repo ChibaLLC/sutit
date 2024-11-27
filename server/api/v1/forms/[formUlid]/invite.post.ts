@@ -1,6 +1,6 @@
 import {z} from "zod";
 import {getFormByUlid, insertGroupFormResponse, needsIndividualPayment} from "../utils/queries";
-import {getUserByUlId} from "../users/utils/queries";
+import {getUserByUlId} from "~~/server/api/v1/users/utils/queries";
 import {
     generateFormLinkTokens,
     processFormPayments,

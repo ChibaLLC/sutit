@@ -1,6 +1,6 @@
 import type { Drizzle } from "~~/server/db/types";
 import { call_b2b, call_b2c, call_stk } from "~~/server/api/v1/mpesa/methods";
-import { getUserByUlId } from "~~/server/api/v1/forms/users/utils/queries";
+import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
 import excel from "exceljs";
 import type { FormElementData } from "@chiballc/nuxt-form-builder";
 import {

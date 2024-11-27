@@ -7,7 +7,7 @@ function announcer() {
             time_start = performance.now()
         },
         onBeforeResponse(context: H3Event) {
-            if (!isVercel) log.info(`[${context.node.req.method}]\t${context.node.req.url} - ${(performance.now() - time_start).toLocaleString()}ms`)
+            if (!isVercel) log.info(`[${context.node.req.method}]   ${context.node.req.url} :: [${context.node.res.statusCode}] - ${(performance.now() - time_start).toLocaleString()}ms`)
         }
     }
 }

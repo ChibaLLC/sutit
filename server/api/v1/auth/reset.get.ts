@@ -1,7 +1,7 @@
-import {getUserByEmail} from "~~/server/api/v1/forms/users/utils/queries";
+import {getUserByEmail} from "~~/server/api/v1/users/utils/queries";
 import {createToken} from "~~/server/api/v1/auth/utils/queries";
 
-defineEventHandler(async event => {
+export default defineEventHandler(async event => {
     const response = {} as APIResponse
     const { email, origin, redirect } = getQuery(event)
     if (!email || !origin) {
