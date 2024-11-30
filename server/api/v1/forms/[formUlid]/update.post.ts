@@ -21,7 +21,8 @@ export default defineEventHandler(async event => {
         payment: {
             amount: number,
             group_amount?: number,
-            group_limit?: number
+            group_limit?: number,
+            group_message: string
         },
         formData: {
             pages: Forms,
@@ -45,7 +46,8 @@ export default defineEventHandler(async event => {
             individual: form.payment.amount,
             group: {
                 amount: form.payment.group_amount,
-                limit: form.payment.group_limit
+                limit: form.payment.group_limit,
+                message: form.payment.group_message,
             }
         },
         requireMerch: form.requireMerch,

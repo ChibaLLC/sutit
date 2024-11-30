@@ -12,7 +12,8 @@ export async function createForm(data: {
         individual: number,
         group?: {
             amount?: number,
-            limit?: number
+            limit?: number,
+            message: string
         }
     },
     userUlid: string,
@@ -30,7 +31,8 @@ export async function createForm(data: {
         requireMerch: data.requireMerch,
         price_group_amount: data.price.group?.amount,
         price_group_count: data.price.group?.limit,
-        price_individual: data.price.individual
+        price_individual: data.price.individual,
+        price_group_message: data.price.group?.message
     } satisfies Drizzle.Form.insert
     await db.insert(forms).values(form)
     return form.ulid
@@ -43,7 +45,8 @@ export async function updateForm(formUlid: string, data: {
         individual: number,
         group?: {
             amount?: number,
-            limit?: number
+            limit?: number,
+            message?: string
         }
     },
     userUlid: string,
@@ -61,6 +64,7 @@ export async function updateForm(formUlid: string, data: {
         price_group_amount: data.price.group?.amount,
         price_group_count: data.price.group?.limit,
         price_individual: data.price.individual,
+        price_group_message: data.price.group?.message,
         ulid: formUlid
     } satisfies Drizzle.Form.insert
     await db.update(forms).set(form).where(eq(forms.ulid, formUlid))

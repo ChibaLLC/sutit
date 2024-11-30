@@ -175,7 +175,8 @@ export async function validateFormLinkToken(token: string) {
     return linkData
 }
 
-export async function sendResponseInvites(invites: Array<{ email: string } | { phone: string }>, links: string[], baseMessage: string) {
+export async function sendResponseInvites(invites: Array<{ email: string } | { phone: string }>, links: string[], baseMessage?: string) {
+    if (!baseMessage) baseMessage = "You have been invited to respond the the following form"
     invites.forEach((invite, idx) => {
         const link = links[idx]
         if ((invite as { phone: string }).phone) {

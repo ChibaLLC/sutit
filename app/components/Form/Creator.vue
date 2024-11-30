@@ -1,42 +1,59 @@
 <script setup lang="ts">
 import type { Forms, Stores, FormStoreData } from "@chiballc/nuxt-form-builder";
 
-definePageMeta({
-    middleware: ["auth"],
-    layout: 'novbar'
+const emits = defineEmits<{
+    submit: [typeof initial]
+}>()
+const props = defineProps({
+    starter: {
+        type: Object as PropType<typeof initial>,
+        required: false
+    }
 })
-
 
 const showPriceModal = ref(false)
 const showFormNameModal = ref(false)
 const helpText = ref(false)
-const ulid = useRoute().params?.formUlid
-const response = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
-    onResponseError({ response }) {
-        console.log(response)
-    }
-}).then(({ data }) => data.value?.body)
-const formStoreData = computed(() => {
-    return {
-        forms: response?.forms.pages || {},
-        stores: response?.stores.store || {}
-    } satisfies FormStoreData
-})
 
-const submitData = reactive({
-    name: response?.forms.formName,
-    description: response?.forms.formDescription,
-    allowGroups: response?.forms.allowGroups,
+const defaultGroupMessage = () => {
+    if (Boolish(submitData.payment.group_amount)) {
+        return "Hello, you have been invited to participate in the following survey. " +
+            "This is a paid link that is unique to you, and can only be used once. " +
+            "Follow it to submit your details:"
+    } else {
+        return "Hello, you have been invited to participate in the following survery. " +
+            "Follow the link to submit your details:"
+    }
+}
+const initial = {
+    name: '',
+    description: '' as string | null | undefined,
+    allowGroups: false,
+    requireMerch: false,
     formData: {
-        pages: formStoreData.value.forms,
-        stores: formStoreData.value.stores,
+        pages: {} as Forms,
+        stores: {} as Stores,
     },
     payment: {
-        amount: response?.forms.price_individual,
-        group_amount: response?.forms.price_group_amount,
-        group_limit: response?.forms.price_group_count
+        amount: 0 as number | null | undefined,
+        group_amount: 0 as number | null | undefined,
+        group_limit: 0 as number | null | undefined,
+        group_message: ""
     },
-    requireMerch: response?.forms.requireMerch || false
+}
+const submitData = reactive(props.starter || initial)
+const groupMessage = computed({
+    get() {
+        submitData.payment.group_message = defaultGroupMessage()
+        return submitData.payment.group_message
+    },
+    set(val) {
+        if (val) {
+            submitData.payment.group_message = val
+        } else {
+            submitData.payment.group_message = defaultGroupMessage()
+        }
+    }
 })
 
 function addPaymentOption() {
@@ -52,24 +69,7 @@ async function submit(data: FormStoreData) {
         alert('Please add a form or a store')
     }
 
-    const res = await $fetch<APIResponse<any>>(`/api/v1/forms/${response?.forms.ulid}/update`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + getAuthToken()
-        },
-        body: submitData,
-        onResponseError({error}){
-            window.alertError(error?.message || "Unknown Error Occurred When Trying To Update The Form")
-        }
-    })
-
-    if (res?.statusCode < 299) {
-        alert('Form updated successfully')
-        await navigateTo('/forms')
-    } else {
-        alert(res.body)
-    }
+    emits("submit", submitData)
 }
 
 onMounted(() => {
@@ -77,17 +77,27 @@ onMounted(() => {
 })
 
 function closeFormDetailsModal() {
-    if (submitData.name?.trim() === '') {
+    if (submitData.name.trim() === '') {
         helpText.value = true
     } else {
         showFormNameModal.value = false
     }
 }
+
+const starter = computed(() => {
+    if (props.starter) {
+        return {
+            forms: props.starter.formData.pages,
+            stores: props.starter.formData.stores
+        }
+    }
+    return undefined
+})
 </script>
 
 <template>
     <Title>Build Form</Title>
-    <LazyFormBuilder :styles="{ height: '100vh' }" @submit="submit" :starter="formStoreData">
+    <LazyFormBuilder :styles="{ height: '100vh' }" @submit="submit" :starter="starter">
         <template #footer>
             <LazyFormBuilderFooterItem>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7"
@@ -116,7 +126,8 @@ function closeFormDetailsModal() {
                 <small class="font-mulish">Require users to get something from the store before submitting?</small>
                 <small class="text-red-500 font-mulish -mt-2"
                     v-if="submitData.requireMerch && !Object.values(submitData.formData.stores).at(0)?.length">Be sure
-                    to add
+                    to
+                    add
                     an
                     item to the store section or form submission won't work</small>
             </div>
@@ -131,8 +142,18 @@ function closeFormDetailsModal() {
                 Group Member Number Limit
                 <input type="number" v-model="submitData.payment.group_limit" id="group-member-limit"
                     class="border-1 border-solid px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full mt-2">
-                <small class="text-gray-700 font-mulish">Restrict the maximum number of people that could be in a group. Zero means
+                <small class="text-gray-700 font-mulish">Restrict the maximum number of people that could be in a group.
+                    Zero
+                    means
                     unrestricted</small>
+            </label>
+            <label for="group_message" class="flex flex-col">
+                Information Prompt Message
+                <textarea id="group_message" class="p-2 mt-1 bg-white rounded focus:ring-2 focus:outline-none font-sans"
+                    title="Change as needed" v-model="groupMessage">
+            </textarea>
+                <small class="text-gray-700 font-mulish">The individial message to be sent to a member after the group
+                    representative has filled in their details</small>
             </label>
         </div>
     </Modal>

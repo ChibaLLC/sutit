@@ -61,17 +61,21 @@ function deleteForm(ulid: string) {
 </script>
 <template>
   <Title>Forms</Title>
-  <div class="flex min-h-screen w-full -mt-3">
-    <Pill />
+  <div class="flex min-h-screen w-full">
     <main class="w-full max-w-[1200px] mx-auto flex flex-col items-center">
       <div class="w-full px-8 mt-5 relative overflow-x-auto rounded-t">
-        <span class="font-bold text-left text-xl uppercase">All your forms so far</span>
-        <table class="w-full text-sm text-left rtl:text-righ rounded bg-[#262626] text-white mt-1"
+        <div class="py-2 flex justify-between items-center">
+          <span class="font-bold text-left text-lg capitalize">All your forms so far</span>
+          <NuxtLink to="/forms/create"
+            class="p-2 text-center bg-emerald-700 text-white rounded hover:bg-emerald-600 transition-colors w-40 font-semibold uppercase">
+            Create A Form</NuxtLink>
+        </div>
+        <table class="w-full text-sm text-left rtl:text-righ rounded bg-gradient-to-br from-white to-slate-100 text-slate-900 mt-1"
           v-if="formsStores.length > 0">
-          <thead class="text-xs uppercase rounded-t">
-            <tr class="text-left border-b border-gray-100">
-              <th class="px-6 py-3 w-5 border-r border-gray-100">
-                No.
+          <thead class="text-xs uppercase rounded-t bg-slate-200">
+            <tr class="text-left border-b border-gray-200">
+              <th class="px-6 py-3 w-5">
+                #
               </th>
               <th class="px-6 py-3">
                 Name
@@ -90,10 +94,10 @@ function deleteForm(ulid: string) {
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-900 border-b">
+          <tbody class="divide-y divide-gray-200 border-b">
             <tr v-for="(formStore, index) in formsStores" :key="formStore.forms.ulid"
-              class="text-sm cursor-pointer hover:bg-[#333]"
-              @click="navigateIfTarget($event, `/submissions/${formStore.forms.ulid}`)">
+              class="text-sm cursor-pointer hover:bg-slate-200"
+              @click="navigateIfTarget($event, `/forms/${formStore.forms.ulid}/submissions`)">
               <td class="px-6 py-4 border-r border-gray-100">
                 {{ index + 1 }}
               </td>
@@ -110,7 +114,7 @@ function deleteForm(ulid: string) {
                 {{ formStore.forms.price ? 'Yes' : 'No' }}
               </td>
               <td class="px-6 py-4">
-                <div class="flex justify-center gap-1 items-cente h-full">
+                <div class="flex justify-center gap-1 items-center h-full">
                   <NuxtLink :to="`/forms/${formStore.forms.ulid}`" title="view">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                       class="w-5 h-5 hover:text-blue-500 transition-colors" fill="currentColor">

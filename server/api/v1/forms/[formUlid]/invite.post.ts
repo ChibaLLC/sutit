@@ -24,8 +24,7 @@ export default defineEventHandler(async event => {
         ])),
         phone: z.string(),
         origin: z.string(),
-        group_name: z.string(),
-        message: z.string()
+        group_name: z.string()
     })
 
     const {data, error} = await readValidatedBody(event, schema.safeParse)
@@ -74,7 +73,7 @@ export default defineEventHandler(async event => {
                 invites: data.invites,
                 paymentUlid: payment
             })
-            const message = data.message.padEnd(1, " ")
+            const message = form.forms.price_group_message?.padEnd(1, " ")
             sendResponseInvites(data.invites, links, message)
             sendUserMail({email: creator?.email}, `Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`, `[Payment]: Group ${form.forms.formName}`)
         })
@@ -82,7 +81,7 @@ export default defineEventHandler(async event => {
         const links = (await generateFormLinkTokens({
             form: form
         }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
-        const message = data.message.padEnd(1, " ")
+        const message = form.forms.price_group_message?.padEnd(1, " ")
         sendResponseInvites(data.invites, links, message)
         return {
             statusCode: 204,

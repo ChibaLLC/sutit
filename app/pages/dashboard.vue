@@ -145,7 +145,7 @@
                                 </path>
                             </svg>
                         </NuxtLink>
-                        <NuxtLink :to="`/submissions/${item.ulid}`">
+                        <NuxtLink :to="`/forms/${item.ulid}/submissions`">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-6 h-6 hover:text-emerald-500 text-gray-500 transition-colors">
                                 <path

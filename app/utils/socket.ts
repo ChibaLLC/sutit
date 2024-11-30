@@ -343,6 +343,10 @@ export class RealTime {
             consola.success("RealTime connection established via", rt.type)
         })
         rt.on("close", () => {
+            if (this.status === SocketStatus.SHUTDOWN) {
+                consola.info("The close method was called which SHUTDOWN the RealTime, if this was unintended, set the _RealTime.status to CLOSED and try again")
+                return
+            }
             this.status = SocketStatus.CLOSED
             this.retry()
         })
@@ -351,7 +355,7 @@ export class RealTime {
             this.handleError(error)
         })
         rt.on("data", (_data: any) => {
-            const {data, type} = parseData(_data)
+            const { data, type } = parseData(_data)
             switch (type) {
                 case TYPE.IDENTITY:
                     useCookie("X-Request-Id", data.body)
@@ -433,6 +437,7 @@ export class RealTime {
     }
 
     close() {
+        this.status = SocketStatus.SHUTDOWN
         this.current?.value.close()
     }
 }

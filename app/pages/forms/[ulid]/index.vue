@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Stores, Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
+import type { Forms, FormStoreData } from "@chiballc/nuxt-form-builder";
 import { RealTime } from "#imports";
 
 const loading = ref(false)
 const route = useRoute()
 const token = route.query?.token
-const ulid = route.params?.formUlid
+const ulid = route.params?.ulid
 const rerender = ref(false)
 const complete = ref(false)
 
@@ -24,10 +24,6 @@ const payment_details = ref<{phone: string, token?: string}>({
 
 function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): boolean {
   return form.price_individual > 0
-}
-
-function hasGroupPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }){
-  return form.price_group_amount > 0
 }
 
 function hasPhone() {
@@ -187,8 +183,7 @@ const group = reactive({
   self: false,
   invites: invites,
   count: member_count,
-  name: "",
-  message: hasGroupPrice(data.forms) ? "Hello, you have been invited to participate in the following survey. This is a paid link that is unique to you, and can only be used once. Follow it to submit your details:" : "Hello, you have been invited to participate in the following survery. Follow the link to submit your details:"
+  name: ""
 })
 if (token) {
   group.chosen = true
@@ -281,8 +276,7 @@ async function processInvites() {
       invites: Array.from(invites.value),
       phone: payment_details.value.phone,
       origin: window.location.origin,
-      group_name: group.name,
-      message: group.message
+      group_name: group.name
     },
     onResponseError({ response }){
       const data = response._data
@@ -295,7 +289,7 @@ async function processInvites() {
 </script>
 
 <template>
-  <Title>Form | {{ data.forms.formName }}</Title>
+  <Title>Form | {{ data.forms?.formName }}</Title>
   <div class="flex min-h-screen">
     <div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
       <div class="header">
@@ -306,14 +300,14 @@ async function processInvites() {
             <path d="M21 12.1H3"></path>
             <path d="M15.1 18H3"></path>
           </svg>
-          <span class="ml-2">{{ data.forms.formName }}</span>
+          <span class="ml-2">{{ data.forms?.formName }}</span>
         </h1>
-        <p class="bg-slate-700 w-full px-4 py-2 pl-12 rounded" v-if="data.forms.formDescription">
-          {{ data.forms.formDescription }}
+        <p class="bg-slate-700 w-full px-4 py-2 pl-12 rounded" v-if="data.forms?.formDescription">
+          {{ data.forms?.formDescription }}
         </p>
       </div>
       <form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.forms?.allowGroups || group.self">
-        <LazyFormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
+        <FormViewer :data="formStoreData" @submit="completeForm" :re-render="rerender" @price="addCharge"
           @back="goBack2()" :show-spinner="loading" />
         <div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
           <small class="text-gray-500 w-fit" v-if="(data.forms.price_individual > 0) && !token">
@@ -406,12 +400,6 @@ async function processInvites() {
           <input id="group_number" type="number" required disabled
             class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none" title="Change as needed"
             v-model="group.count" />
-        </div>
-        <div class="flex flex-col mt-4">
-          <label for="group_message" class="font-semibold">Invite message</label>
-          <textarea id="group_message" required class="p-2 mt-1 ring-1 rounded focus:ring-2 focus:outline-none"
-            title="Change as needed" v-model="group.message">
-          </textarea>
         </div>
         <div class="mt-4 flex w-full justify-between">
           <button type="button" @click="group.chosen = false" class="px-4 py-2 bg-gray-200 rounded">Back</button>
