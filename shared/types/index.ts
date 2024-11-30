@@ -15,7 +15,8 @@ export enum SocketStatus {
     OPEN = "OPEN",
     CLOSED = "CLOSED",
     UNKNOWN = "UNKNOWN",
-    CONNECTING = "CONNECTING"
+    CONNECTING = "CONNECTING",
+    SHUTDOWN = "SHUTDOWN"
 }
 
 export enum Status {

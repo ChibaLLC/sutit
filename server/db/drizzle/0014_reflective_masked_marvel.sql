@@ -1,0 +1,1 @@
+ALTER TABLE "forms" ADD COLUMN "price_group_message" text;
