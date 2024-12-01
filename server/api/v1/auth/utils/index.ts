@@ -44,7 +44,13 @@ export async function googleAuth(data: GoogleCredential) {
 
 
 export async function githubAuth(code: string) {
-    const response = await $fetch<Blob>(`https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${code}`)
+    const response = await $fetch<Blob>(`https://github.com/login/oauth/access_token`, {
+        query: {
+            client_id: process.env.GITHUB_CLIENT_ID,
+            client_secret: process.env.GITHUB_CLIENT_SECRET,
+            code: code
+        }
+    })
     const data = new URLSearchParams(await response.text())
     const token = data.get('access_token')
     if (!token) throw new Error('Invalid token')
