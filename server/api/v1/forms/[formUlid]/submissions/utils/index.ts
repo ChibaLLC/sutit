@@ -70,7 +70,15 @@ export async function constructExcel(data: Entries[], user: Drizzle.User.select)
     }
 
     responses(data).forEach(response => {
-        const values: string[] = getFields(response.response as Record<string, FormElementData[]>).map(field => field.value)
+        const values: string[] = getFields(response.response as Record<string, FormElementData[]>)
+        .map(field => {
+            if (field.type === "checkbox") {
+                field.value = Object.values(field.value || {})
+                .map(d => useCapitalize(d as string))
+                .join(", ")
+            }
+            return field.value
+        })
         if (hasPayment) {
             // @ts-ignore
             values.push(response.meta?.price?.toString() || "UNRECORDED")
