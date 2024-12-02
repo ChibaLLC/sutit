@@ -10,7 +10,7 @@ export default defineNitroPlugin(app => {
     global.channels = new Channels()
 
     global.clients!.on("end", (data, client) => {
-        console.log(client.id, "Disconnected")
+        console.log("Client with id:", client.id, "disconnected")
     })
 
     global.clients!.on("error", (error, client) => {

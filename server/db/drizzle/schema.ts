@@ -54,6 +54,7 @@ export const forms = pgTable("forms", {
 	price_individual: integer("price_individual").default(0).notNull(),
 	price_group_amount: integer("price_group_amount").default(0).notNull(),
 	price_group_count: integer("price_group_count").default(0),
+	price_group_message: text("price_group_message"),
 	withDrawnFunds: integer("withdrawn_funds").default(0).notNull(),
 	allowGroups: boolean("allow_groups").default(false),
 	userUlid: varchar("user_ulid", { length: 255 }).notNull().references(() => users.ulid, { onDelete: "cascade" }),

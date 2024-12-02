@@ -145,7 +145,7 @@
                                 </path>
                             </svg>
                         </NuxtLink>
-                        <NuxtLink :to="`/submissions/${item.ulid}`">
+                        <NuxtLink :to="`/forms/${item.ulid}/submissions`">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                                 class="w-6 h-6 hover:text-emerald-500 text-gray-500 transition-colors">
                                 <path
@@ -196,7 +196,7 @@ const stats = await useFetch<APIResponse<{ forms: number, responses: number, ear
 formCount.value = stats?.forms || 0;
 moneyCount.value = stats?.earnings || 0;
 reachCount.value = stats?.responses || 0;
-const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(`/api/v1/users/${getAuthToken()}/recents`, {
+const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(`/api/v1/forms/me/recents`, {
     headers: {
         "Authorization": `Bearer ${getAuthToken()}`
     },
