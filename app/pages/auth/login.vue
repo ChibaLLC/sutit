@@ -78,7 +78,7 @@ function clickGoogleBtn() {
 }
 
 function onSignIn(googleCrdential: GoogleCredential) {
-  $fetch<APIResponse>("/api/v1/auth/google/callback", {
+  $fetch<APIResponse>("/api/v1/auth/callbacks/google", {
     method: "POST",
     body: googleCrdential,
     async onResponse({ response }) {
