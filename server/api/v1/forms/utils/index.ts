@@ -161,7 +161,7 @@ export const sendPaymentMailReceipt = async (user: { userUlid?: string, email?: 
     }
     if (!email) return log.warn("User has no email")
     if(!name) return log.warn("User has no name")
-    let subject = "Receipt"
+    let subject = "[Payment]: Payment Receipt for " + name
 
     return sendMail({
         to: email,
