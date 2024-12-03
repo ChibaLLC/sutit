@@ -1,6 +1,6 @@
 import {insertData, invalidatePrepaidFormLink, needsIndividualPayment} from "../utils/queries";
 import {getUserByUlId} from "~~/server/api/v1/users/utils/queries";
-import {processFormPayments, sendUserMail, validateFormLinkToken} from "../utils";
+import {processFormPayments, sendPaymentMailReceipt, sendUserMail, validateFormLinkToken} from "../utils";
 import type {Forms, Stores} from "@chiballc/nuxt-form-builder";
 
 export default defineEventHandler(async event => {
@@ -92,6 +92,7 @@ export default defineEventHandler(async event => {
             creator?.email || creator?.name || "Unknown", () => {
                 insertData(formUlid, _data, _data.forms.price_individual).catch(log.error)
                 sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `[Payment]: Confirmed payment on ${data.forms.formName}`)
+                sendPaymentMailReceipt({ email: creator?.email }, _data.forms.price_individual, (new Date).toDateString())
                 let formMail;
                 for (const key in _data.forms.pages) {
                     for (const field of _data.forms.pages[key] || []) {
