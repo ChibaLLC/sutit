@@ -26,6 +26,9 @@ importers:
       google-auth-library:
         specifier: ^9.13.0
         version: 9.14.2
+      lucide-vue-next:
+        specifier: ^0.464.0
+        version: 0.464.0(vue@3.5.12(typescript@5.6.3))
       nodemailer:
         specifier: ^6.9.14
         version: 6.9.16
@@ -3012,6 +3015,11 @@ packages:
 
   lru-queue@0.1.0:
     resolution: {integrity: sha512-BpdYkt9EvGl8OfWHDQPISVpcl5xZthb+XPsbELj5AQXxIC8IriDZIQYjBJPEm5rS420sjZ0TLEzRcq5KdBhYrQ==}
+
+  lucide-vue-next@0.464.0:
+    resolution: {integrity: sha512-8chMNSm3FxJort5FEuGyolucYe/kcanNU5QFSaZdMhZlpszGQwYE6trMd54+1QkiYLk4OKQclUtxqaDPCcVD3w==}
+    peerDependencies:
+      vue: '>=3.0.1'
 
   magic-string-ast@0.6.2:
     resolution: {integrity: sha512-oN3Bcd7ZVt+0VGEs7402qR/tjgjbM7kPlH/z7ufJnzTLVBzXJITRHOJiwMmmYMgZfdoWQsfQcY+iKlxiBppnMA==}
@@ -7765,6 +7773,10 @@ snapshots:
   lru-queue@0.1.0:
     dependencies:
       es5-ext: 0.10.64
+
+  lucide-vue-next@0.464.0(vue@3.5.12(typescript@5.6.3)):
+    dependencies:
+      vue: 3.5.12(typescript@5.6.3)
 
   magic-string-ast@0.6.2:
     dependencies:
