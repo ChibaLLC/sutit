@@ -84,7 +84,7 @@ const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(
         style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #F3F3F3 25.3%, #E0FBFC 100%)"
         class="p-6 ring-1 ring-sky rounded shadow" />
       <div class="h-1 w-full bg-transparent rounded -mt-1">
-        <div class="h-1 bg-sky rounded" :style="{ width: `${((stats?.forms || 0) / 10) * 100}%` }" />
+        <div class="h-1 bg-sky rounded max-w-full" :style="{ width: `${((stats?.forms || 0) / 10) * 100}%` }" />
       </div>
     </NuxtLink>
     <NuxtLink to="/finance"
@@ -93,17 +93,17 @@ const recents = await useFetch<APIResponse<{ forms: Drizzle.Form.select[] }>>(
         :description="`You have earned ${stats?.earnings || 0} KES so far`" class="p-6 ring-1 ring-sky rounded shadow"
         style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #F3F3F3 25.3%, #E0FBFC 100%)" />
       <div class="h-1 w-full bg-transparent rounded -mt-1">
-        <div class="h-1 bg-sky rounded" :style="{ width: `${((stats?.earnings || 0) / 10) * 100}%` }" />
+        <div class="h-1 bg-sky rounded max-w-full" :style="{ width: `${((stats?.earnings || 0) / 10) * 100}%` }" />
       </div>
     </NuxtLink>
     <NuxtLink to="/marketplace"
       class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300">
       <Card title="reach" :icon="GitGraphIcon" :count="stats.responses"
-        :description="`You have reached ${stats?.responses || 0} people so far`"
+        :description="`You have reached ${stats?.responses || 0} people`"
         class="p-6 ring-1 ring-sky rounded shadow"
         style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #F3F3F3 25.3%, #E0FBFC 100%)" />
       <div class="h-1 w-full bg-transparent rounded -mt-1">
-        <div class="h-1 bg-sky rounded" :style="{ width: `${((stats?.responses || 0) / 10) * 100}%` }" />
+        <div class="h-1 bg-sky rounded max-w-full" :style="{ width: `${((stats?.responses || 0) / 10) * 100}%` }" />
       </div>
     </NuxtLink>
   </div>
