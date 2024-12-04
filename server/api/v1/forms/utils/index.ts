@@ -57,10 +57,124 @@ export async function sendUserMail(user: { userUlid?: string, email?: string }, 
     return sendMail({
         to: email,
         text: message,
-        subject: subject
+        subject: subject,
     })
 }
 
+const PAYMENT_RECEIPT_HTML = (details: { user: { name: string, email: string }, amount: number | string, time: string, receiptNumber?: string }) => {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .receipt {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .items {
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .total {
+            margin-top: 10px;
+            text-align: right;
+        }
+        .total .line {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .total .line.final {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="header">
+            <h1>SUTIT ORG</h1>            
+            <h1>Name: ${details.user.name}</h1>
+<p>Email: ${details.user.email}</p>
+            <p>Date: ${details.time}</p>
+            <p>Receipt #: ${details?.receiptNumber}</p>
+        </div>
+        <div class="items">
+            <div class="item">
+                <span>Payment </span>
+                <span>KES ${details.amount}</span>
+            </div>
+        </div>
+        <div class="total">            
+            <div class="line final">
+                <span>Total:</span>
+                <span>KES ${details.amount}</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+`
+}
+
+export const sendPaymentMailReceipt = async (user: { userUlid?: string, email?: string }, amount: number | string, time: string, receiptNumber?: string) => {
+    let email = user.email
+    let name;
+    if (!email) {
+        const _user = await getUserByUlId(user.userUlid!)
+        email = _user?.email
+        name = _user?.name
+    }
+    if (!email) return log.warn("User has no email")
+    if(!name) return log.warn("User has no name")
+    let subject = "[Payment]: Payment Receipt for " + name
+
+    return sendMail({
+        to: email,
+        subject: subject,
+        html: PAYMENT_RECEIPT_HTML({
+            user: { name: name, email: email },
+            amount: amount,
+            time: time,
+            receiptNumber: receiptNumber
+        })
+    })
+
+}
 
 
 function isPhoneCreditMethod(creditMethod: CreditMethod): creditMethod is PhoneCreditMethod {
@@ -188,3 +302,5 @@ export async function sendResponseInvites(invites: Array<{ email: string } | { p
         }
     })
 }
+
+

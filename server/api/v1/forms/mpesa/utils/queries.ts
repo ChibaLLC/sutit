@@ -1,5 +1,5 @@
 import { withDrawals } from "~~/server/db/drizzle/schema";
-import db from "../../../../../db";
+import db from "~~/server/db";
 import type { Drizzle } from "~~/server/db/types";
 
 export async function insertWithdrawal(amount: number, transactionCode: string) {
@@ -7,5 +7,5 @@ export async function insertWithdrawal(amount: number, transactionCode: string) 
     return db.insert(withDrawals).values({
         amount,
         transactionCode
-    } satisfies Drizzle.WithDrawals.insert)
+    } satisfies Drizzle.WithDrawals.insert).execute()
 }
