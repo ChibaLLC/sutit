@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {getFormByUlid, insertGroupFormResponse, needsIndividualPayment} from "../utils/queries";
+import {getFormByUlid, insertGroupFormResponse, needsGroupPayment, needsIndividualPayment} from "../utils/queries";
 import {getUserByUlId} from "~~/server/api/v1/users/utils/queries";
 import {
     generateFormLinkTokens,
@@ -52,7 +52,7 @@ export default defineEventHandler(async event => {
     }
 
     const amount = db_form.forms.price_group_amount ? db_form.forms.price_group_amount : db_form.forms.price_individual * data.invites.length
-    const [form, needsPay] = await needsIndividualPayment(db_form, amount)
+    const [form, needsPay] = await needsGroupPayment(db_form, amount)
     if (needsPay) {
         const creator = await getUserByUlId(db_form.forms.userUlid).catch(err => err as Error)
         if (creator instanceof Error) return createError({

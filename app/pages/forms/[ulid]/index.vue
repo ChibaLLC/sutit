@@ -37,7 +37,7 @@ function hasPhone() {
 async function processForm() {
   loading.value = true;
   paymentModal.value = false;
-  if (data.forms.requireMerch && !hasBoughtMerch(data.stores.store)) {
+  if (group.self && data.forms.requireMerch && !hasBoughtMerch(data.stores.store)) {
     loading.value = false;
     return window.alertError(
       "You need to get something from the store section of this form!",
@@ -293,7 +293,7 @@ async function processInvites() {
     paymentModal.value = true;
     return;
   }
-  const response = await $fetch<APIResponse>(`/api/v1/forms/invite/${ulid}/`, {
+  const response = await $fetch<APIResponse>(`/api/v1/forms/${ulid}/invite`, {
     method: "POST",
     body: {
       invites: Array.from(invites.value),
@@ -303,8 +303,7 @@ async function processInvites() {
     },
     onResponseError({ response }) {
       const data = response._data;
-      log.error(realtime);
-      window.alertError(data);
+      window.alertError(unWrapFetchError(data));
     },
   });
   ResolveMpesaPayment(
