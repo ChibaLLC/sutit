@@ -15,6 +15,9 @@ import {
     updateFormWithdrawnFunds
 } from "./queries";
 import { v4 } from "uuid";
+import db from "~~/server/db";
+import { payments } from "~~/server/db/drizzle/schema";
+import { eq } from "drizzle-orm";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -46,9 +49,11 @@ async function makeSTKPush(phone: string, pay_for: string, amount: number, accou
 }
 
 
-export async function sendUserMail(user: { userUlid?: string, email?: string }, message: string, subject: string) {
+export async function sendUserMail(user: { userUlid: string} | { email: string }, message: string, subject: string) {
+    // @ts-expect-error
     let email = user.email
     if (!email) {
+        // @ts-expect-error
         const _user = await getUserByUlId(user.userUlid!)
         email = _user?.email
     }
@@ -151,7 +156,15 @@ const PAYMENT_RECEIPT_HTML = (details: { user: { name: string, email: string }, 
 `
 }
 
-export const sendPaymentMailReceipt = async (user: { userUlid?: string, email?: string }, amount: number | string, time: string, receiptNumber?: string) => {
+export function generateReceiptNumber(paymentUlid: string){
+    const number = v4()
+    db.update(payments).set({
+        receiptNumber: number
+    }).where(eq(payments.ulid, paymentUlid)).execute()
+    return number
+}
+
+export const sendPaymentMailReceipt = async (user: { userUlid?: string, email?: string }, amount: number | string, receiptNumber: string) => {
     let email = user.email
     let name;
     if (!email) {
@@ -169,11 +182,10 @@ export const sendPaymentMailReceipt = async (user: { userUlid?: string, email?: 
         html: PAYMENT_RECEIPT_HTML({
             user: { name: name, email: email },
             amount: amount,
-            time: time,
-            receiptNumber: receiptNumber
+            time: new Date().toLocaleDateString(),
+            receiptNumber 
         })
     })
-
 }
 
 
@@ -255,7 +267,7 @@ type Form = { forms: Drizzle.Form.select, stores?: Drizzle.Store.select }
 export async function generateFormLinkTokens(data: {
     form: string | Form,
     formPaymentulid?: string,
-}, limit: number = 1): Promise<string[]> {
+}, invites: Array<{email: string} | {phone: string}>, paidGroupFormResponse?: Drizzle.GroupFormResponses.select): Promise<string[]> {
     let form: Form
     if (typeof data.form === 'string') {
         const _form = await getFormByUlid(data.form)
@@ -269,11 +281,13 @@ export async function generateFormLinkTokens(data: {
     }
 
     const linkData: Drizzle.PrepaidForms.insert[] = []
-    for (let i = 0; i < limit; i++) {
+    for (const invite of invites) {
         linkData.push({
             formUlid: form.forms.ulid,
             paymentUlid: data.formPaymentulid,
-            token: v4()
+            token: v4(),
+            user: invite,
+            groupFormResponseId: paidGroupFormResponse?.id
         })
     }
 

@@ -1,7 +1,7 @@
-import {insertData, invalidatePrepaidFormLink, needsIndividualPayment} from "../utils/queries";
-import {getUserByUlId} from "~~/server/api/v1/users/utils/queries";
-import {processFormPayments, sendPaymentMailReceipt, sendUserMail, validateFormLinkToken} from "../utils";
-import type {Forms, Stores} from "@chiballc/nuxt-form-builder";
+import { insertData, invalidatePrepaidFormLink, needsIndividualPayment } from "../utils/queries";
+import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
+import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail, validateFormLinkToken } from "../utils";
+import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
 
 export default defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid
@@ -57,25 +57,27 @@ export default defineEventHandler(async event => {
     async function insert(creator: Drizzle.User.select, data: {
         forms: Drizzle.Form.select;
         stores?: Drizzle.Store.select;
-    }) {
-        let formMail;
-        for (const key in _data.forms.pages) {
-            for (const field of _data.forms.pages[key] || []) {
-                if (field.type === "email") {
-                    formMail = field.value as string | undefined
-                    break
+    }, user?: { email: string } | { phone: string }) {
+        let formMail: string | undefined = (user as { email: string })?.email || details?.user.email;
+        if (!formMail) {
+            for (const key in _data.forms.pages) {
+                for (const field of _data.forms.pages[key] || []) {
+                    if (field.type === "email") {
+                        formMail = field.value as string | undefined
+                        break
+                    }
                 }
             }
         }
-        await insertData(formUlid!, _data)
-        sendUserMail({email: creator?.email || formMail}, `New response on form ${data.forms.formName}`, `[Update] Submission ${data.forms.formName}`)
-        if (details?.user) {
-            sendUserMail({email: details.user.email}, `Form submission successful for ${data.forms.formName}`, `[Update] Successful form submission ${data.forms.formName}`)
+        const formResponse = await insertData(formUlid!, _data)
+        sendUserMail({ email: creator!.email }, `New response on form ${data.forms.formName}`, `[Update] Submission ${data.forms.formName}`)
+        if (formMail) {
+            sendUserMail({ email: formMail }, `Form submission successful for ${data.forms.formName}`, `[Update] Successful form submission ${data.forms.formName}`)
         }
 
-        const response = {} as APIResponse<string>
+        const response = {} as APIResponse<number>
         response.statusCode = Status.success
-        response.body = "Form submitted"
+        response.body = formResponse?.id as number
 
         return response
     }
@@ -88,29 +90,33 @@ export default defineEventHandler(async event => {
             })
         }
         return await processFormPayments(data.forms,
-            {phone: _data.phone, amount: _data.forms.price_individual},
-            creator?.email || creator?.name || "Unknown", () => {
+            { phone: _data.phone, amount: _data.forms.price_individual },
+            creator?.email || creator?.name || "Unknown", (paymentUlid: string) => {
                 insertData(formUlid, _data, _data.forms.price_individual).catch(log.error)
-                sendUserMail({email: creator?.email}, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `[Payment]: Confirmed payment on ${data.forms.formName}`)
-                sendPaymentMailReceipt({ email: creator?.email }, _data.forms.price_individual, (new Date).toDateString())
-                let formMail;
-                for (const key in _data.forms.pages) {
-                    for (const field of _data.forms.pages[key] || []) {
-                        if (field.type === "email") {
-                            formMail = field.value as string | undefined
-                            break
+                sendUserMail({ email: creator?.email }, `${_data.phone} has paid KES: ${_data.forms.price_individual}.00 for your form ${data.forms.formName}`, `[Payment]: Confirmed payment on ${data.forms.formName}`)
+                const receiptNumber = generateReceiptNumber(paymentUlid)
+
+                let formMail: string | undefined = details?.user.email;
+                if (!formMail) {
+                    for (const key in _data.forms.pages) {
+                        for (const field of _data.forms.pages[key] || []) {
+                            if (field.type === "email") {
+                                formMail = field.value as string | undefined
+                                break
+                            }
                         }
                     }
                 }
-                if (details?.user || formMail) {
-                    sendUserMail({email: details?.user.email || formMail}, `Payment successful for ${data.forms.formName}`, `[Update]: Payment Successful ${data.forms.formName}`)
+                if (formMail) {
+                    sendPaymentMailReceipt({ email: formMail }, _data.forms.price_individual, receiptNumber)
+                    sendUserMail({ email: formMail }, `Payment successful for ${data.forms.formName}`, `[Update]: Payment Successful ${data.forms.formName}`)
                 }
             }).catch(err => {
-            return useHttpEnd(event, {
-                statusCode: Status.internalServerError,
-                body: err.message || "Unknown error while processing payment"
-            } as APIResponse<string>, Status.internalServerError)
-        })
+                return useHttpEnd(event, {
+                    statusCode: Status.internalServerError,
+                    body: err.message || "Unknown error while processing payment"
+                } as APIResponse<string>, Status.internalServerError)
+            })
     } else if (needsPay && _data.token) {
         const token = await validateFormLinkToken(_data.token).catch(e => e as Error)
         if (!token || token instanceof Error) {
@@ -121,9 +127,15 @@ export default defineEventHandler(async event => {
             })
         }
 
-        invalidatePrepaidFormLink(token.token)
+        const result = await insert(creator, data, token.user as any)
+        invalidatePrepaidFormLink(token.token, result.body!)
+        return result
+    } else if (!needsPay) {
         return insert(creator, data)
     } else {
-        return insert(creator, data)
+        return useHttpEnd(event, {
+            statusCode: 400,
+            body: "Bad Request"
+        })
     }
 })
