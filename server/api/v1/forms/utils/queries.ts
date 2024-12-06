@@ -95,21 +95,23 @@ export async function getFormByUlid(formUlid: string) {
 }
 
 export async function insertData(formUlid: string, data: { forms: { pages: Forms }, stores: Stores }, price?: string | number) {
-    await db.insert(formResponses).values({
+    const formResponse = await db.insert(formResponses).values({
         formUlid: formUlid,
         response: data.forms.pages,
         price: price ? +price : 0
-    } satisfies Drizzle.FormResponses.insert)
+    } satisfies Drizzle.FormResponses.insert).returning()
 
     const _stores = await db.select().from(stores).where(eq(stores.formUlid, formUlid))
     const storeUlid = (_stores && _stores.length > 0) ? _stores.at(0)?.ulid : null
 
     if (storeUlid) {
-        await db.insert(storeResponses).values({
+        db.insert(storeResponses).values({
             storeUlid: storeUlid,
             response: data.stores,
         } satisfies Drizzle.StoreResponses.insert)
     }
+
+    return formResponse.at(0)
 }
 
 
@@ -298,17 +300,15 @@ export async function getPrepaidFormLink(token: string) {
     return data.at(0)
 }
 
-export async function invalidatePrepaidFormLink(token: string) {
+export async function invalidatePrepaidFormLink(token: string, responseId: number) {
     return db.update(prepaidForms).set({
-        isValid: false
+        isValid: false,
+        formResponseId: responseId
     }).where(eq(prepaidForms.token, token)).execute()
 }
 
 export async function insertGroupFormResponse(data: {formUlid: string, groupName: string, invites: Array<{ [key: string]: string }>, paymentUlid: string}) {
-    return db.insert(groupFormResponses).values({
-        formUlid: data.formUlid,
-        groupName: data.groupName,
-        invites: data.invites,
-        paymentUlid: data.paymentUlid
-    }).execute()
+    await db.insert(groupFormResponses).values(data)
+    const result = await db.select().from(groupFormResponses).where(and(eq(groupFormResponses.formUlid, data.formUlid), eq(groupFormResponses.groupName, data.groupName), eq(groupFormResponses.paymentUlid, data.paymentUlid)))
+    return result.at(0)
 }

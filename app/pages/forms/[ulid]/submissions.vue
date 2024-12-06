@@ -20,14 +20,7 @@ interface Response {
   [key: string]: any;
 }
 
-interface FormResponse {
-  id: number;
-  formUlid: string;
-  response: Response | Record<string, FormElementData[]>;
-  price: number;
-  createdAt: string;
-  updatedAt: string;
-}
+type FormResponse = Omit<Drizzle.FormResponses.select, "response"> & { response: Response | Record<string, FormElementData[]>; }
 
 interface Store {
   ulid: string;
@@ -52,8 +45,6 @@ type ServerForm = {
 }
 
 
-type FormEntries = FormEntry[];
-
 const ulid = useRoute().params.ulid
 if (!ulid) navigateTo('/forms')
 
@@ -65,7 +56,7 @@ const { data: form } = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${
     console.log(error)
   }
 }).then(({ data }) => ({ data: data.value?.body }))
-const { data: response } = await useFetch<APIResponse<FormEntries>>(`/api/v1/forms/${ulid}/submissions`, {
+const { data: response } = await useFetch(`/api/v1/forms/${ulid}/submissions`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`
   },
@@ -74,20 +65,31 @@ const { data: response } = await useFetch<APIResponse<FormEntries>>(`/api/v1/for
   }
 }).then(({ data }) => ({ data: data.value?.body }))
 
+
+function bubblePrice(check: FormResponse) {
+  const group = response?.group_responses.find(group_response => group_response.prepaid_forms.formResponseId === check.id)
+  if (group) {
+    return `Via group ${group.group_form_responses?.groupName}`
+  } else {
+    return check.price
+  }
+}
+
 const responses = computed(() => {
   if (!response) return {} as {
     meta: FormResponse;
     response: Record<string, FormElementData[]> | undefined;
   }[]
-  return response.map(entry => {
+  return response.form_responses.map(entry => {
     if (isFormElementData(entry.form_responses.response)) {
       return {
-        meta: entry.form_responses,
+        meta: {...entry.form_responses, price: bubblePrice(entry.form_responses)},
         response: entry.form_responses.response
       }
     } else {
       return {
-        meta: entry.form_responses,
+        meta: { ...entry.form_responses, price: bubblePrice(entry.form_responses) },
+        // @ts-expect-error
         response: entry.form_responses.response.pages
       }
     }
@@ -104,7 +106,7 @@ function getFields(pages: Record<string, FormElementData[]>): FormElementData[] 
   }, [])
 }
 
-function getData(pile: {
+function getData(pile?: {
   meta: FormResponse;
   response: Record<string, FormElementData[]> | undefined;
 }[] | undefined) {
@@ -354,26 +356,26 @@ watch([phone, con_phone], () => {
         @cancel="showCreditMethodsModal = false">
         <div class="flex flex-col gap-2">
           <button @click="showPhoneModal = true"
-            class="flex items-center justify-between space-x-2 gap-2 px-3 py-1 bg-[#262626] rounded text-white">
+            class="flex items-center justify-between space-x-2 gap-2 px-3 py-1 bg-navy rounded text-white">
             <span>Your Phone Number</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
               <path
                 d="M7 4V20H17V4H7ZM6 2H18C18.5523 2 19 2.44772 19 3V21C19 21.5523 18.5523 22 18 22H6C5.44772 22 5 21.5523 5 21V3C5 2.44772 5.44772 2 6 2ZM12 17C12.5523 17 13 17.4477 13 18C13 18.5523 12.5523 19 12 19C11.4477 19 11 18.5523 11 18C11 17.4477 11.4477 17 12 17Z">
               </path>
             </svg>
           </button>
           <button @click="showBuyGoodsModal = true"
-            class="flex items-center justify-between space-x-2 gap-2 px-3 py-1 bg-[#262626] rounded text-white">
+            class="flex items-center justify-between space-x-2 gap-2 px-3 py-1 bg-navy rounded text-white">
             <span>Your Till Number</span>
-            <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
+            <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8">
               <path fill-rule="evenodd"
                 d="M16,6 L20,6 C21.1045695,6 22,6.8954305 22,8 L22,16 C22,17.1045695 21.1045695,18 20,18 L16,18 L16,19.9411765 C16,21.0658573 15.1177541,22 14,22 L4,22 C2.88224586,22 2,21.0658573 2,19.9411765 L2,4.05882353 C2,2.93414267 2.88224586,2 4,2 L14,2 C15.1177541,2 16,2.93414267 16,4.05882353 L16,6 Z M20,11 L16,11 L16,16 L20,16 L20,11 Z M14,19.9411765 L14,4.05882353 C14,4.01396021 13.9868154,4 14,4 L4,4 C4.01318464,4 4,4.01396021 4,4.05882353 L4,19.9411765 C4,19.9860398 4.01318464,20 4,20 L14,20 C13.9868154,20 14,19.9860398 14,19.9411765 Z M5,19 L5,17 L7,17 L7,19 L5,19 Z M8,19 L8,17 L10,17 L10,19 L8,19 Z M11,19 L11,17 L13,17 L13,19 L11,19 Z M5,16 L5,14 L7,14 L7,16 L5,16 Z M8,16 L8,14 L10,14 L10,16 L8,16 Z M11,16 L11,14 L13,14 L13,16 L11,16 Z M13,5 L13,13 L5,13 L5,5 L13,5 Z M7,7 L7,11 L11,11 L11,7 L7,7 Z M20,9 L20,8 L16,8 L16,9 L20,9 Z" />
             </svg>
           </button>
           <button @click="showPaybillModal = true"
-            class="flex items-center space-x-2 justify-between gap-2 px-3 py-1 bg-[#262626] rounded text-white">
+            class="flex items-center space-x-2 justify-between gap-2 px-3 py-1 bg-navy rounded text-white">
             <span>Send To Paybill</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
               <path
                 d="M20 9V5H4V9H20ZM20 11H4V19H20V11ZM3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3ZM5 12H8V17H5V12ZM5 6H7V8H5V6ZM9 6H11V8H9V6Z">
               </path>
@@ -382,7 +384,7 @@ watch([phone, con_phone], () => {
         </div>
       </Modal>
 
-      <LazyModal title="Enter Phone Number" @close="addPhone()" @cancel="showPhoneModal = false" :open="showPhoneModal">
+      <Modal title="Enter Phone Number" @close="addPhone" @cancel="showPhoneModal = false" :show="showPhoneModal">
         <div>
           <label for="phone">Phone Number</label>
           <input type="tel" id="phone"
@@ -403,10 +405,10 @@ watch([phone, con_phone], () => {
         <div v-if="noMatch">
           <p class="text-red-500 text-sm">Phone numbers do not match</p>
         </div>
-      </LazyModal>
+      </Modal>
 
-      <LazyModal title="Enter Till Number" @close="addBuyGoods()" @cancel="showBuyGoodsModal = false"
-        :open="showBuyGoodsModal">
+      <Modal title="Enter Till Number" @close="addBuyGoods()" @cancel="showBuyGoodsModal = false"
+        :show="showBuyGoodsModal">
         <div>
           <label for="till_no">Till Number</label>
           <input type="tel" id="till_no"
@@ -424,10 +426,10 @@ watch([phone, con_phone], () => {
         <div v-if="helpText">
           <p class="text-red-500 text-sm">Please provide a till number</p>
         </div>
-      </LazyModal>
+      </Modal>
 
-      <LazyModal title="Enter Paybill Details" @close="addPayBill()" @cancel="showPaybillModal = false"
-        :open="showPaybillModal">
+      <Modal title="Enter Paybill Details" @close="addPayBill()" @cancel="showPaybillModal = false"
+        :show="showPaybillModal">
         <div>
           <label for="paybill_no">Paybill Number</label>
           <input type="tel" id="paybill_no"
@@ -445,7 +447,7 @@ watch([phone, con_phone], () => {
         <div v-if="helpText">
           <p class="text-red-500 text-sm">Please provide a paybill number</p>
         </div>
-      </LazyModal>
+      </Modal>
     </main>
   </div>
 </template>
