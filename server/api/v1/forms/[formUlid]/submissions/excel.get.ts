@@ -20,7 +20,7 @@ export default  defineEventHandler(async event => {
         body: submissions.message || "Unknown error while getting form submissions"
     }, Status.internalServerError)
 
-    const excel = await constructExcel(submissions as any, details.user).catch(err => err as Error)
+    const excel = await constructExcel(submissions, details.user).catch(err => err as Error)
     if (excel instanceof Error) return useHttpEnd(event, {
         statusCode: Status.internalServerError,
         body: excel.message || "Unknown error while constructing excel"

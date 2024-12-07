@@ -83,7 +83,7 @@ const responses = computed(() => {
   return response.form_responses.map(entry => {
     if (isFormElementData(entry.form_responses.response)) {
       return {
-        meta: {...entry.form_responses, price: bubblePrice(entry.form_responses)},
+        meta: { ...entry.form_responses, price: bubblePrice(entry.form_responses) },
         response: entry.form_responses.response
       }
     } else {
@@ -141,22 +141,13 @@ async function downloadExcel() {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     },
     onResponseError({ response }) {
-      console.log(response)
-      alert('Failed to download excel file')
+      console.error(response)
+      window.alertError(unWrapFetchError(response))
       loadingExcel.value = false
     },
-    onRequestError({ error }) {
-      console.log(error)
-      alert('Failed to download excel file')
-      loadingExcel.value = false
-    }
-  }).catch(err => {
-    console.log(err)
-    alert('Failed to download excel file')
-    loadingExcel.value = false
-    return undefined
   })
-  if (!res) return window.alertError("Unable to get excel document")
+  
+  if (!res) return
   const url = URL.createObjectURL(res)
   const a = document.createElement('a')
   a.href = url
