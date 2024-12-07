@@ -1,8 +1,11 @@
 import db from "~~/server/db";
-import { formResponses, stores, groupFormResponses, prepaidForms } from "~~/server/db/drizzle/schema";
+import { formResponses, stores, groupFormResponses, prepaidForms, forms } from "~~/server/db/drizzle/schema";
 import { desc, eq } from "drizzle-orm";
+import { getFormByUlid } from "../../../utils/queries";
 
 export async function getFormResponses(formUlId: string) {
+    const form = await getFormByUlid(formUlId)
+    if (!form) throw new Error("Form Not Found")
     const form_responses = await db.select().from(formResponses)
         .where(eq(formResponses.formUlid, formUlId))
         .leftJoin(stores, eq(stores.formUlid, formResponses.formUlid))
@@ -13,6 +16,7 @@ export async function getFormResponses(formUlId: string) {
         .leftJoin(groupFormResponses, eq(prepaidForms.groupFormResponseId, groupFormResponses.id))
     return {
         form_responses,
-        group_responses
+        group_responses,
+        form
     }
 }
