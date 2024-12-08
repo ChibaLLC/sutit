@@ -1,4 +1,5 @@
 import { pgTable, unique, varchar, boolean, timestamp, index, integer, text, jsonb, serial, primaryKey } from "drizzle-orm/pg-core"
+import { v4 } from "uuid";
 
 export const users = pgTable("users", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().notNull(),
@@ -36,6 +37,7 @@ export const payments = pgTable("payments", {
 	referenceCode: varchar("reference_code", { length: 30 }).notNull(),
 	phoneNumber: varchar("phone_number", { length: 30 }).notNull(),
 	amount: integer("amount").notNull(),
+	receiptNumber: varchar("receipt_number", { length: 255 }).$defaultFn(v4),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 },
@@ -62,20 +64,23 @@ export const forms = pgTable("forms", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
 });
 
-export const prepaidForms = pgTable("prepaid_forms", {
-	id: serial("id").primaryKey(),
-	formUlid: varchar("form_ulid", { length: 255 }).notNull(),
-	paymentUlid: varchar("payment_ulid", { length: 255 }),
-	token: varchar("token", { length: 255 }).notNull(),
-	isValid: boolean("is_valid").default(true)
-})
-
 export const groupFormResponses = pgTable("group_form_responses", {
 	id: serial("id").primaryKey(),
 	groupName: varchar("group_name", { length: 255 }).notNull(),
 	invites: jsonb("invites"),
-	paymentUlid: varchar("payment_ulid", { length: 255 }).references(() => payments.ulid, { onDelete: "no action" }).notNull(),
-	formUlid: varchar("form_ulid", { length: 255 }).references(() => forms.ulid, { onDelete: "no action" }).notNull()
+	paymentUlid: varchar("payment_ulid", { length: 255 }),
+	formUlid: varchar("form_ulid", { length: 255 })
+})
+
+export const prepaidForms = pgTable("prepaid_forms", {
+	id: serial("id").primaryKey(),
+	formUlid: varchar("form_ulid", { length: 255 }).notNull(),
+	paymentUlid: varchar("payment_ulid", { length: 255 }),
+	groupFormResponseId: integer("group_form_response_id"),
+	formResponseId: integer("form_response_id"),
+	user: jsonb("user"),
+	token: varchar("token", { length: 255 }).notNull(),
+	isValid: boolean("is_valid").default(true)
 })
 
 export const stores = pgTable("stores", {

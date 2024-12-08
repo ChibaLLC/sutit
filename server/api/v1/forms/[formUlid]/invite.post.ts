@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {getFormByUlid, insertGroupFormResponse, needsIndividualPayment} from "../utils/queries";
+import {getFormByUlid, insertGroupFormResponse, needsGroupPayment} from "../utils/queries";
 import {getUserByUlId} from "~~/server/api/v1/users/utils/queries";
 import {
     generateFormLinkTokens,
@@ -52,7 +52,7 @@ export default defineEventHandler(async event => {
     }
 
     const amount = db_form.forms.price_group_amount ? db_form.forms.price_group_amount : db_form.forms.price_individual * data.invites.length
-    const [form, needsPay] = await needsIndividualPayment(db_form, amount)
+    const [form, needsPay] = await needsGroupPayment(db_form, amount)
     if (needsPay) {
         const creator = await getUserByUlId(db_form.forms.userUlid).catch(err => err as Error)
         if (creator instanceof Error) return createError({
@@ -63,24 +63,24 @@ export default defineEventHandler(async event => {
             phone: data.phone,
             amount: amount
         }, creator?.email || creator?.name || "Unknown", async (payment) => {
-            const links = (await generateFormLinkTokens({
-                form: form,
-                formPaymentulid: payment
-            }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
-            insertGroupFormResponse({
+            const gr = await insertGroupFormResponse({
                 formUlid: db_form.forms.ulid,
                 groupName: data.group_name,
                 invites: data.invites,
                 paymentUlid: payment
             })
+            const links = (await generateFormLinkTokens({
+                form: form,
+                formPaymentulid: payment
+            }, data.invites, gr)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
             const message = form.forms.price_group_message?.padEnd(1, " ")
             sendResponseInvites(data.invites, links, message)
-            sendUserMail({email: creator?.email}, `Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`, `[Payment]: Group ${form.forms.formName}`)
+            sendUserMail({email: creator!.email}, `Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`, `[Payment]: Group ${form.forms.formName}`)
         })
     } else {
         const links = (await generateFormLinkTokens({
             form: form
-        }, data.invites.length)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
+        }, data.invites)).map(bud => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`)
         const message = form.forms.price_group_message?.padEnd(1, " ")
         sendResponseInvites(data.invites, links, message)
         return {

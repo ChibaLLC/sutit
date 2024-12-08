@@ -34,16 +34,25 @@ export const useAsyncState = async <T>(key: string, fn: () => Promise<T>, option
     return _new as Ref<T>
 }
 
-export function useRedirect(): string | null {
+export function useRedirect(target: string, base?: string): string;
+export function useRedirect(): string | null;
+export function useRedirect(target?: string, base?: string) {
     const route = useRoute()
-    let redirect = route.query?.redirect
-
-    if (!redirect) return null
-
-    if (Array.isArray(redirect)) {
-        redirect = redirect.filter(Boolean)
-        return redirect.at(-1) as string
-    } else {
-        return redirect
+    if (!target) {
+        let redirect = route.query?.redirect
+        if (!redirect) return null
+        if (Array.isArray(redirect)) {
+            redirect = redirect.filter(Boolean)
+            return redirect.at(-1)?.toString()
+        } else {
+            return redirect
+        }
     }
+
+    if (!base) base = route.path
+
+    if (base.endsWith("/")) base = base.slice(0, -1)
+    if (!target.startsWith("/")) target = `/${target}`
+
+    return base + target
 }

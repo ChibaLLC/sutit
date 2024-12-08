@@ -17,9 +17,9 @@ export default defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    const response = {} as APIResponse<{ forms: Drizzle.Form.select, stores: Drizzle.Store.select }>
+    const response = {} as APIResponse<typeof form>
     response.statusCode = Status.success
-    response.body = form as any
+    response.body = form
 
     return response
 })
