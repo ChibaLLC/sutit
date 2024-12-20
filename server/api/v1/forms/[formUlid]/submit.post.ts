@@ -1,7 +1,7 @@
 import { insertData, invalidatePrepaidFormLink, needsIndividualPayment } from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail, validateFormLinkToken } from "../utils";
-import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { Form, Stores } from "@chiballc/nuxt-form-builder";
 
 export default defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid
@@ -10,7 +10,7 @@ export default defineEventHandler(async event => {
         body: "No form ID provided"
     }, Status.badRequest)
     const _data = await readBody(event) as {
-        forms: Drizzle.Form.select & { pages: Forms },
+        forms: Drizzle.Form.select & { pages: Form },
         stores: Drizzle.Store.select & { store: Stores },
         phone: string,
         token: string

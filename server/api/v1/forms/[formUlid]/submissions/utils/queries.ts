@@ -1,5 +1,11 @@
 import db from "~~/server/db";
-import { formResponses, stores, groupFormResponses, prepaidForms, forms } from "~~/server/db/drizzle/schema";
+import {
+	formResponses,
+	stores,
+	groupFormResponses,
+	prepaidForms,
+	forms,
+} from "~~/server/db/schema/schema";
 import { desc, eq } from "drizzle-orm";
 import { getFormByUlid } from "../../../utils/queries";
 

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chiballc/nuxt-form-builder':
-        specifier: 0.0.46
-        version: 0.0.46(magicast@0.3.5)(rollup@4.25.0)
+        specifier: 0.0.48
+        version: 0.0.48
       crossws:
         specifier: ^0.2.4
         version: 0.2.4
@@ -48,8 +48,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       '@nuxtjs/tailwindcss':
         specifier: ^6.12.1
@@ -245,8 +245,8 @@ packages:
     resolution: {integrity: sha512-Z/yiTPj+lDVnF7lWeKCIJzaIkI0vYO87dMpZ4bg4TDrFe4XXLFWL1TbXU27gBP3QccxV9mZICCrnjnYlJjXHOA==}
     engines: {node: '>=6.9.0'}
 
-  '@chiballc/nuxt-form-builder@0.0.46':
-    resolution: {integrity: sha512-QcqPhGfPOqjrMn5cWF7lueOl8ro7yyhALx2n4r3Feaq7g3dpRkTCR+qq98YXGhgo2o4Hi9M9skQi6T+DVLdMtA==}
+  '@chiballc/nuxt-form-builder@0.0.48':
+    resolution: {integrity: sha512-z+OjbkOUA88aRWdX9yDU0QYpUSaQKTMQvbcmLQ7FdT4uQTggnSvCxTEA+r8cTOzeiWW/s3rMqYD8vSMzERkSlw==}
 
   '@cloudflare/kv-asset-handler@0.3.4':
     resolution: {integrity: sha512-YLPHc8yASwjNkmcDMQMY35yiWjoKAKnhUbPRszBRS0YgH+IXtsMp61j+yTcnCE3oO2DgP0U3iejLC8FTtKDC8Q==}
@@ -4592,8 +4592,8 @@ packages:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
 
@@ -4801,14 +4801,9 @@ snapshots:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
 
-  '@chiballc/nuxt-form-builder@0.0.46(magicast@0.3.5)(rollup@4.25.0)':
+  '@chiballc/nuxt-form-builder@0.0.48':
     dependencies:
-      '@nuxt/kit': 3.14.159(magicast@0.3.5)(rollup@4.25.0)
-    transitivePeerDependencies:
-      - magicast
-      - rollup
-      - supports-color
-      - webpack-sources
+      zod: 3.24.1
 
   '@cloudflare/kv-asset-handler@0.3.4':
     dependencies:
@@ -5131,10 +5126,10 @@ snapshots:
     dependencies:
       hono: 4.6.9
 
-  '@hono/zod-validator@0.2.2(hono@4.6.9)(zod@3.23.8)':
+  '@hono/zod-validator@0.2.2(hono@4.6.9)(zod@3.24.1)':
     dependencies:
       hono: 4.6.9
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@ioredis/commands@1.2.0': {}
 
@@ -6659,7 +6654,7 @@ snapshots:
     dependencies:
       '@esbuild-kit/esm-loader': 2.6.5
       '@hono/node-server': 1.13.5(hono@4.6.9)
-      '@hono/zod-validator': 0.2.2(hono@4.6.9)(zod@3.23.8)
+      '@hono/zod-validator': 0.2.2(hono@4.6.9)(zod@3.24.1)
       camelcase: 7.0.1
       chalk: 5.3.0
       commander: 9.5.0
@@ -6673,7 +6668,7 @@ snapshots:
       minimatch: 7.4.6
       semver: 7.6.3
       superjson: 2.2.1
-      zod: 3.23.8
+      zod: 3.24.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9588,4 +9583,4 @@ snapshots:
       compress-commons: 6.0.2
       readable-stream: 4.5.2
 
-  zod@3.23.8: {}
+  zod@3.24.1: {}

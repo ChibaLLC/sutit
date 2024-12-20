@@ -21,7 +21,7 @@ export const useUser = () => useAsyncState<UserState>('user', async () => {
 // At some point this will fail with nuxt instance not found.
 // There are known issues with composables.
 export const useAsyncState = async <T>(key: string, fn: () => Promise<T>, options?: {
-    errors: Ref<Array<any>>
+    errors?: Ref<Array<any>> | Array<any>
 }) => {
     const { data: initial } = useNuxtData(key)
     if (initial.value) return Promise.resolve(initial as Ref<T>)
@@ -29,7 +29,13 @@ export const useAsyncState = async <T>(key: string, fn: () => Promise<T>, option
     if (error && options?.errors) {
         log.error("An error occurred while fetching data for", key)
         log.error(error)
-        options.errors.value.push(error)
+        if (options?.errors) {
+            if (isRef(options.errors)) {
+                options.errors.value.push(error)
+            } else {
+                options.errors.push(error)
+            }
+        }
     }
     return _new as Ref<T>
 }

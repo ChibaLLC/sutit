@@ -1,10 +1,10 @@
 import { eq, and } from "drizzle-orm";
 import db from '~~/server/db';
-import { sessions } from "~~/server/db/drizzle/schema";
+import { sessions } from "~~/server/db/schema/schema";
 import { v4 } from "uuid";
 import type { Drizzle } from "~~/server/db/types";
 import { getUserByEmail } from "~~/server/api/v1/users/utils/queries";
-import { users } from "~~/server/db/drizzle/schema";
+import { users } from "~~/server/db/schema/schema";
 
 
 export async function createToken(user: { userUlid?: string, email?: string }): Promise<string> {

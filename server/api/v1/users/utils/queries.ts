@@ -1,6 +1,6 @@
 import type {Drizzle} from "~~/server/db/types";
 import db from "~~/server/db";
-import {sessions, users} from "~~/server/db/drizzle/schema";
+import { sessions, users } from "~~/server/db/schema/schema";
 import {and, eq} from "drizzle-orm";
 import {ulid} from "ulid";
 import { getRecentForms as _getRecentForms } from "../../forms/utils/queries";

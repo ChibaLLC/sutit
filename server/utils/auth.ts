@@ -1,19 +1,42 @@
 import type {H3Event} from "h3";
 import {getUserByToken} from "~~/server/api/v1/users/utils/queries";
 
-export async function useAuth(event: H3Event): Promise<[{
+export type AuthData = {
     token: string,
     user: Drizzle.User.select
-} | null, string | null]> {
+}
+export async function useAuth(event: H3Event, throwError?: false): Promise<AuthData>;
+export async function useAuth(event: H3Event, throwError: true): Promise<[AuthData, null] | [null, string]>;
+export async function useAuth(event: H3Event, throwError: boolean = true) {
     const token = readAuthToken(event)
-    if (!token) return [null, "No bearer token provided"]
-    const user = await getUserByToken(token).catch((e) => e as Error)
+    if (!token) {
+        if (throwError) {
+            throw createError({
+                status: 401,
+                message: "Bad Authentication",
+                data: token
+            })
+        } else {
+            return [null, "Unable to get auth token"]
+        }
+    }
 
+    const user = await getUserByToken(token).catch((e) => e as Error)
     if (!user || user instanceof Error) {
+        if (throwError) throw createError({
+            status: 500,
+            message: "Internal Server Error: Reading user from db",
+            data: user || "User not found"
+        })
         return [null, user?.message || "Unknown error while verifying token"]
     }
 
-    return [{token: token as string, user: user as Drizzle.User.select}, null]
+    const data = {token, user}
+    if (throwError) {
+        return [data, null]
+    } else {
+        return data
+    }
 }
 
 export function readAuthToken(event: H3Event) {

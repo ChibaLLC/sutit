@@ -1,5 +1,5 @@
 import {updateForm, updateStore} from "../utils/queries";
-import type {Forms, Stores} from "@chiballc/nuxt-form-builder"
+import type {Form, Stores} from "@chiballc/nuxt-form-builder"
 
 export default defineEventHandler(async event => {
     const formUlid = event.context.params?.formUlid
@@ -25,13 +25,13 @@ export default defineEventHandler(async event => {
             group_message: string
         },
         formData: {
-            pages: Forms,
+            form: Form,
             stores: Stores,
         },
         requireMerch: boolean
     }
 
-    if (!form || (Object.entries(form.formData.pages).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
+    if (!form || (Object.entries(form.formData.form).length <= 0 && Object.entries(form.formData.stores).length <= 0)) {
         return useHttpEnd(event, {
             statusCode: Status.badRequest,
             body: "No form data or store data provided"
@@ -41,7 +41,7 @@ export default defineEventHandler(async event => {
     const err = await updateForm(formUlid, {
         name: form.name,
         description: form.description,
-        pages: form.formData.pages,
+        pages: form.formData.form,
         price: {
             individual: form.payment.amount,
             group: {

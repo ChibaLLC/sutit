@@ -28,7 +28,7 @@ export async function constructExcel(data: Awaited<ReturnType<typeof getFormResp
             .some((item: any) => item.price !== 0)) || data.form.forms.price_group_amount !== 0
     const worksheet = workbook.addWorksheet(replaceSpecialChars(data.form.forms.formName))
 
-    const titles: string[] = getFields(data.form.forms.pages as Record<string, FormElementData[]>).map(field => field.label)
+    const titles: string[] = getFields(data.form.forms.pages as Record<string, FormElementData[]>).map(field => field.label as string)
     if (hasPayment) titles.push("Price")
     worksheet.addRow(titles).font = { bold: true }
 

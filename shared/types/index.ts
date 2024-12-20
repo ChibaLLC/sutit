@@ -1,4 +1,4 @@
-export type {Drizzle} from "~~/server/db/types"
+export type {Drizzle} from "~~/server/db"
 
 export interface Response {
     statusCode: number;
@@ -9,7 +9,6 @@ export type APIResponse<T = any> = {
     statusCode: number;
     body?: T;
 }
-
 
 export enum SocketStatus {
     OPEN = "OPEN",

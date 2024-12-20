@@ -37,6 +37,5 @@
             "password": ""
         }
     ],
-    "dotenv.enableAutocloaking": false,
-    "a-file-icon-vscode.arrowTheme": "none"
+    "dotenv.enableAutocloaking": false
 }

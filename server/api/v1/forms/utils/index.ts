@@ -16,8 +16,9 @@ import {
 } from "./queries";
 import { v4 } from "uuid";
 import db from "~~/server/db";
-import { payments } from "~~/server/db/drizzle/schema";
+import { payments } from "~~/server/db/schema/schema";
 import { eq } from "drizzle-orm";
+import {z} from "zod";
 
 declare global {
     var formPaymentProcessingQueue: Map<string, {
@@ -318,3 +319,16 @@ export async function sendResponseInvites(invites: Array<{ email: string } | { p
 }
 
 
+export const formCreateSchema = z.object({
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    allowGroups: z.boolean(),
+    requireMerch: z.boolean(),
+    form: FormSchema,
+    payment: z.object({
+        amount: z.number().nullable().optional(),
+        group_amount: z.number().nullable().optional(),
+        group_limit: z.number().nullable().optional(),
+        group_message: z.string(),
+    }),
+});
