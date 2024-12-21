@@ -264,71 +264,65 @@ export async function deleteUserForm(userUlid: string, formUlid: string) {
     return deleteForm(formUlid)
 }
 
-type Form = { forms: Drizzle.Form.select, stores?: Drizzle.Store.select }
-export async function generateFormLinkTokens(data: {
-    form: string | Form,
-    formPaymentulid?: string,
-}, invites: Array<{email: string} | {phone: string}>, paidGroupFormResponse?: Drizzle.GroupFormResponses.select): Promise<string[]> {
-    let form: Form
-    if (typeof data.form === 'string') {
-        const _form = await getFormByUlid(data.form)
-        if (_form) {
-            form = _form
-        } else {
-            throw new Error(`Form ${_form} not found`)
-        }
-    } else {
-        form = data.form
-    }
+type Form = { forms: Drizzle.Form.select; stores?: Drizzle.Store.select };
+export async function generateFormLinkTokens(
+	data: {
+		form: string | Form;
+		formPaymentulid?: string;
+	},
+	invites: Array<{ email: string } | { phone: string }>,
+	paidGroupFormResponse?: Drizzle.FormGroupResponses.select
+): Promise<string[]> {
+	let form: Form;
+	if (typeof data.form === "string") {
+		const _form = await getFormByUlid(data.form);
+		if (_form) {
+			form = _form;
+		} else {
+			throw new Error(`Form ${_form} not found`);
+		}
+	} else {
+		form = data.form;
+	}
 
-    const linkData: Drizzle.PrepaidForms.insert[] = []
-    for (const invite of invites) {
-        linkData.push({
-            formUlid: form.forms.ulid,
-            paymentUlid: data.formPaymentulid,
-            token: v4(),
-            user: invite,
-            groupFormResponseId: paidGroupFormResponse?.id
-        })
-    }
+	const linkData: Drizzle.FormGroups.insert[] = [];
+	for (const invite of invites) {
+		linkData.push({
+			formUlid: form.forms.ulid,
+			paymentUlid: data.formPaymentulid,
+			token: v4(),
+		});
+	}
 
-    insertPrepaidLinkData(linkData)
+	insertPrepaidLinkData(linkData);
 
-    return linkData.map((linkDatum) => linkDatum.token)
+	return linkData.map((linkDatum) => linkDatum.token);
 }
-
 
 export async function validateFormLinkToken(token: string) {
-    const linkData = await getPrepaidFormLink(token)
-    if (!linkData || !linkData.isValid) return false
-    return linkData
+	const linkData = await getPrepaidFormLink(token);
+	if (!linkData || !linkData.isValid) return false;
+	return linkData;
 }
 
-export async function sendResponseInvites(invites: Array<{ email: string } | { phone: string }>, links: string[], baseMessage?: string) {
-    if (!baseMessage) baseMessage = "You have been invited to respond the the following form"
-    invites.forEach((invite, idx) => {
-        const link = links[idx]
-        if ((invite as { phone: string }).phone) {
-            log.info((invite as { phone: string }).phone, invite)
-        } else {
-            sendUserMail({
-                email: (invite as { email: string }).email
-            }, baseMessage + link, "[Action Needed] Information Request")
-        }
-    })
+export async function sendResponseInvites(
+	invites: Array<{ email: string } | { phone: string }>,
+	links: string[],
+	baseMessage?: string
+) {
+	if (!baseMessage) baseMessage = "You have been invited to respond the the following form";
+	invites.forEach((invite, idx) => {
+		const link = links[idx];
+		if ((invite as { phone: string }).phone) {
+			log.info((invite as { phone: string }).phone, invite);
+		} else {
+			sendUserMail(
+				{
+					email: (invite as { email: string }).email,
+				},
+				baseMessage + link,
+				"[Action Needed] Information Request"
+			);
+		}
+	});
 }
-
-
-export const formCreateSchema = z.object({
-    name: z.string(),
-    description: z.string().nullable().optional(),
-    allowGroups: z.boolean(),
-    requireMerch: z.boolean(),
-    form: FormSchema,
-    payment: z.object({
-        amount: z.number().nullable().optional(),
-        group_amount: z.number().nullable().optional(),
-        group_limit: z.number().nullable().optional(),
-        group_message: z.string(),
-    }),
-});

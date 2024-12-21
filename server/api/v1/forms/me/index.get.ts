@@ -1,7 +1,7 @@
 import {getFormsByUser} from "../utils/queries";
 
 export default defineEventHandler(async event => {
-    const response = {} as APIResponse<Array<{ forms: Drizzle.Form.select, stores: Drizzle.Store.select }>>
+    const response = {} as APIResponse<Array<{ forms: Drizzle.Form.select; stores: Drizzle.Store.select }>>;
     const [details, error] = await useAuth(event)
     if (!details) return useHttpEnd(event, {
         statusCode: Status.unauthorized,

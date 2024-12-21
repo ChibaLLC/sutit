@@ -1,8 +1,7 @@
 import {
 	formPayments,
 	formResponses,
-	formFields,
-	forms,
+	formPages,
 	payments,
 	sessions,
 	storePayments,
@@ -12,18 +11,16 @@ import {
 	withdrawals,
 	formGroupResponses,
 	formGroups,
-	storeItems
+	storeItems,
+	formFields,
+	sutitForms,
 } from "./schema";
+import type { Column, InferModelFromColumns } from "drizzle-orm";
 
 export namespace Drizzle {
 	export namespace User {
 		export type insert = typeof users.$inferInsert;
 		export type select = typeof users.$inferSelect;
-	}
-
-	export namespace Form {
-		export type insert = typeof forms.$inferInsert;
-		export type select = typeof forms.$inferSelect;
 	}
 
 	export namespace FormResponses {
@@ -79,7 +76,17 @@ export namespace Drizzle {
 		export type insert = typeof formFields.$inferInsert;
 		export type select = typeof formFields.$inferInsert;
 	}
-	export namespace StoreItems {
+
+	type Infer<T> = T extends Record<string, Column> ? InferModelFromColumns<T, "select"> : never;
+	export type SutitForm<T = typeof sutitForms> = {
+		[K in keyof T]: Infer<T[K]>;
+	};
+
+	export namespace FormPages {
+		export type insert = typeof formPages.$inferInsert;
+		export type select = typeof formPages.$inferSelect;
+	}
+	export namespace StoreItem {
 		export type insert = typeof storeItems.$inferInsert;
 		export type select = typeof storeItems.$inferInsert;
 	}

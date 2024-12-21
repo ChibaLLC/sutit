@@ -11,13 +11,13 @@ export function isAPIResponse(data: any): data is APIResponse {
 
 
 export type ServerForm = {
-    forms: Omit<Drizzle.Form.select, 'pages'> & {
-        pages: Forms
-    },
-    stores: Omit<Drizzle.Store.select, 'store'> & {
-        store: Stores
-    }
-}
+	forms: Omit<Drizzle.Form.select, "pages"> & {
+		pages: Forms;
+	};
+	stores: Omit<Drizzle.Store.select, "store"> & {
+		store: Stores;
+	};
+};
 
 function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): boolean {
     return form.price_individual > 0

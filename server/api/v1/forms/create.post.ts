@@ -1,5 +1,5 @@
-import {createForm, createStore} from "./utils/queries"
-import {formCreateSchema} from "~~/server/api/v1/forms/utils";
+import {createForm} from "./utils/queries"
+import { formCreateSchema } from "./utils/zod"
 
 export default defineEventHandler(async event => {
     const details = await useAuth(event)

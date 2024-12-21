@@ -1,7 +1,7 @@
 import {pgTable, primaryKey, timestamp, varchar} from "drizzle-orm/pg-core";
 import {stores} from "~~/server/db/schema/forms/stores";
 import {payments} from "~~/server/db/schema/mpesa/payments";
-import {forms} from "~~/server/db/schema/forms/forms";
+import {formMeta} from "~~/server/db/schema/forms/forms";
 
 export const storePayments = pgTable(
     "store_payments",
@@ -29,7 +29,7 @@ export const formPayments = pgTable(
     {
         formUlid: varchar("form_ulid", { length: 255 })
             .notNull()
-            .references(() => forms.ulid, { onDelete: "no action" }),
+            .references(() => formMeta.ulid, { onDelete: "no action" }),
         paymentUlid: varchar("payment_ulid", { length: 255 })
             .notNull()
             .references(() => payments.ulid, { onDelete: "no action" }),
