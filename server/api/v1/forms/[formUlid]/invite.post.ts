@@ -1,14 +1,15 @@
-import {z} from "zod";
+import { z } from "zod";
 import { getFormByUlid, createFormGroup, needsGroupPayment } from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
-import { generateFormLinkTokens, processFormPayments, sendResponseInvites, sendUserMail } from "../utils";
+import { processFormPayments, sendResponseInvites, sendUserMail } from "../utils";
 
 export default defineEventHandler(async (event) => {
-	const formUlid = event.context.params?.formUlid;
+	const { data: formUlid, error: _error } = z.string().safeParse(event.context.params?.formUlid);
 	if (!formUlid) {
-		return createError({
-			message: "No form ulid provided",
+		throw createError({
 			status: 400,
+			message: "Form Ulid not provided",
+			data: _error,
 		});
 	}
 
@@ -18,7 +19,6 @@ export default defineEventHandler(async (event) => {
 		origin: z.string(),
 		group_name: z.string(),
 	});
-
 	const { data, error } = await readValidatedBody(event, schema.safeParse);
 	if (!data || error) {
 		return createError({
@@ -28,76 +28,70 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	const db_form = await getFormByUlid(formUlid).catch((e) => e as Error);
-	if (!db_form || db_form instanceof Error) {
+	const form = await getFormByUlid(formUlid).catch((e) => e as Error);
+	if (!form || form instanceof Error) {
 		return createError({
 			status: 404,
 			message: "Form Not Found",
 		});
 	}
-
-	if (db_form.forms.price_group_count && data.invites.length > db_form.forms.price_group_count) {
-		return createError({
-			status: 403,
-			message: "Sorry, these group members are more than the allowed number",
-		});
+	if (form.form_meta.price_group && form.form_meta.group_member_count) {
+		if (data.invites.length > form.form_meta.group_member_count)
+			return createError({
+				status: 403,
+				message: "Sorry, these group members are more than the allowed number",
+			});
 	}
 
-	const amount = db_form.forms.price_group_amount
-		? db_form.forms.price_group_amount
-		: db_form.forms.price_individual * data.invites.length;
-	const [form, needsPay] = await needsGroupPayment(db_form, amount);
+	const amount = form.form_meta.price_group
+		? form.form_meta.price_group
+		: form.form_meta.price_individual * data.invites.length;
+
+	const [_, needsPay] = await needsGroupPayment(form, amount);
+	const message = form.form_meta.group_invite_message?.padEnd(1, " ");
+	const links = (group: Awaited<ReturnType<typeof createFormGroup>>) => {
+		return group.invites?.map((invite) => `${data.origin}/forms/${form.form_meta.ulid}?token=${invite.token}`) || [];
+	};
+
 	if (needsPay) {
-		const creator = await getUserByUlId(db_form.forms.userUlid).catch((err) => err as Error);
+		const creator = await getUserByUlId(form.form_meta.userUlid);
 		if (creator instanceof Error)
 			return createError({
 				status: 404,
 				message: "Form creator not found",
 			});
+
+		const accountNumber = creator?.email || creator?.name || "Unknown";
 		return await processFormPayments(
-			db_form.forms,
+			form,
 			{
+				accountNumber,
 				phone: data.phone,
 				amount: amount,
 			},
-			creator?.email || creator?.name || "Unknown",
-			async (payment) => {
-				const gr = await createFormGroup({
-					formUlid: db_form.forms.ulid,
+			async (paymentUlid) => {
+				const group = await createFormGroup({
+					formUlid: form.form_meta.ulid,
 					groupName: data.group_name,
 					invites: data.invites,
-					paymentUlid: payment,
+					paymentUlid: paymentUlid,
 				});
-				const links = (
-					await generateFormLinkTokens(
-						{
-							form: form,
-							formPaymentulid: payment,
-						},
-						data.invites,
-						gr
-					)
-				).map((bud) => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`);
-				const message = form.forms.price_group_message?.padEnd(1, " ");
-				sendResponseInvites(data.invites, links, message);
+				sendResponseInvites(data.invites, links(group), message);
 				sendUserMail(
 					{ email: creator!.email },
-					`Group ${data.group_name} has paid for form ${form.forms.formName} and was processesed successfully`,
-					`[Payment]: Group ${form.forms.formName}`
+					`Group ${data.group_name} has paid for form ${form.form_meta.formName} and was processesed successfully`,
+					`[Payment]: Group ${form.form_meta.formName}`
 				);
 			}
 		);
 	} else {
-		const links = (
-			await generateFormLinkTokens(
-				{
-					form: form,
-				},
-				data.invites
-			)
-		).map((bud) => `${data.origin}/forms/${form.forms.ulid}?token=${bud}`);
-		const message = form.forms.price_group_message?.padEnd(1, " ");
-		sendResponseInvites(data.invites, links, message);
+		const group = await createFormGroup({
+			formUlid: form.form_meta.ulid,
+			groupName: data.group_name,
+			invites: data.invites,
+			paymentUlid: null,
+		});
+		sendResponseInvites(data.invites, links(group), message);
 		return {
 			statusCode: 204,
 			body: "OK",

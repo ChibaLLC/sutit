@@ -5,15 +5,14 @@ import {
 	storeResponses,
 	stores,
 	formGroups,
-	formGroupResponses,
 	formMeta,
 	formPages,
 	storeItems,
 	formFields,
 	sutitForms,
+	type FormGroupInvite,
 	type PhoneInvite,
 	type EmailInvite,
-	type FormGroupInvite,
 } from "~~/server/db/schema";
 import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -141,7 +140,7 @@ export function deleteForm(formUlid: string) {
 
 export async function getFormByUlid(formUlid: string) {
 	const results = await db.select().from(sutitForms).where(eq(sutitForms.form_meta.ulid, formUlid));
-	return results.at(0);
+	return results.at(0) as Drizzle.SutitForm;
 }
 
 export async function insertData(
@@ -345,7 +344,12 @@ export async function needsGroupPayment(form: Drizzle.SutitForm | string, submit
 }
 
 export async function getRecentForms(userUlid: string) {
-	return db.select().from(sutitForms).where(eq(sutitForms.form_meta.userUlid, userUlid)).limit(5).orderBy(desc(sutitForms.form_meta.updatedAt));
+	return db
+		.select()
+		.from(sutitForms)
+		.where(eq(sutitForms.form_meta.userUlid, userUlid))
+		.limit(5)
+		.orderBy(desc(sutitForms.form_meta.updatedAt));
 }
 
 export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {
@@ -358,16 +362,12 @@ export async function updateFormWithdrawnFunds(formUlid: string, amount: number)
 		.where(eq(formMeta.ulid, formUlid));
 }
 
-export function insertPrepaidLinkData(data: Drizzle.FormGroups.insert[]) {
-	return db.insert(formGroups).values(data).execute();
-}
-
 export async function getPrepaidFormLink(formUlid: string, groupName: string, token: string) {
 	const group = await getFirstOr404(
 		formGroups,
 		and(eq(formGroups.formUlid, formUlid), eq(formGroups.groupName, groupName))
 	);
-	return group.invites?.find(invite => invite.token === token)
+	return group.invites?.find((invite) => invite.token === token);
 }
 
 export async function invalidateFormGroupLink(formUlid: string, groupName: string, token: string) {
@@ -387,18 +387,28 @@ export async function invalidateFormGroupLink(formUlid: string, groupName: strin
 export async function createFormGroup(data: {
 	formUlid: string;
 	groupName: string;
-	invites: FormGroupInvite;
-	paymentUlid: string;
+	invites: Array<PhoneInvite | EmailInvite>;
+	paymentUlid: string | null;
 }) {
-	return (
-		await db
+	return (await db
 			.insert(formGroups)
 			.values({
 				groupName: data.groupName,
 				formUlid: data.formUlid,
 				paymentUlid: data.paymentUlid,
-				invites: data.invites,
+				invites: data.invites.map(invite => ({
+					token: ulid(),
+					isValid: true,
+					...invite
+				})),
 			})
 			.returning()
-	).at(0);
+			.then(data => {
+				if(data.length === 0) throw createError({
+					status: 404,
+					message: "Unable to create from group"
+				})
+				return data
+			})
+	).at(0)!;
 }
