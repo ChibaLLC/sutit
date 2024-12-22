@@ -26,10 +26,15 @@ export default defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if (form.form_meta?.userUlid !== user.ulid) return useHttpEnd(event, {
-        statusCode: Status.forbidden,
-        body: "Unauthorized"
-    }, Status.forbidden)
+    if (form.meta?.userUlid !== user.ulid)
+		return useHttpEnd(
+			event,
+			{
+				statusCode: Status.forbidden,
+				body: "Unauthorized",
+			},
+			Status.forbidden
+		);
 
     const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: user.ulid }).catch(err => err as Error)
     if (result instanceof Error) {

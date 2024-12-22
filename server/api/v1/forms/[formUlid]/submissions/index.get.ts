@@ -9,20 +9,15 @@ export default defineEventHandler(async (event) => {
 		});
 
 	const { user } = await useAuth(event);
-	const submissions = await getFormResponses(formUlid).catch((err) => err as Error);
-	if (submissions instanceof Error)
-		return useHttpEnd(
-			event,
-			{
-				statusCode: Status.internalServerError,
-				body: submissions.message || "Unknown error while getting form submissions",
-			},
-			Status.internalServerError
-		);
-
-	const response = {} as APIResponse<typeof submissions>;
-	response.statusCode = Status.success;
-	response.body = submissions;
-
-	return response;
+	const { form, ...rest } = await getFormResponses(formUlid);
+	if (form.meta.userUlid !== user.ulid) {
+		throw createError({
+			statusCode: 403,
+			message: "You are not authorised to vie these submissions",
+		});
+	}
+	return {
+		form,
+		...rest,
+	};
 });

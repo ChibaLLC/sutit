@@ -339,7 +339,7 @@ export type NotificationOptions = {
 export type DbPage = (FormElementData & { fieldUlid: string })[];
 export type DbStore = (Item & { itemUlid: string })[];
 export type ReconstructedDbForm = {
-	form_meta: Drizzle.SutitForm[number]["form_meta"];
+	meta: Drizzle.SutitForm[number]["form_meta"];
 	pages: Record<number, DbPage>;
 	stores: Record<number, DbStore>;
 };

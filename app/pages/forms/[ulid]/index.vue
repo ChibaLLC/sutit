@@ -22,7 +22,7 @@ const payment_details = ref<{ phone: string; token?: string }>({
 });
 
 function hasPrice(form: ReconstructedDbForm): boolean {
-	return !!form.form_meta.price_individual;
+	return !!form.meta.price_individual;
 }
 
 function hasPhone() {
@@ -32,11 +32,11 @@ function hasPhone() {
 async function processForm() {
 	loading.value = true;
 	paymentModal.value = false;
-	if (group.self && data.form_meta && !hasBoughtMerch(data.stores)) {
+	if (group.self && data.meta && !hasBoughtMerch(data.stores)) {
 		loading.value = false;
 		return window.alertError("You need to get something from the store section of this form!");
 	}
-	if (data?.form_meta?.allowGroups && !group.self) {
+	if (data?.meta?.allowGroups && !group.self) {
 		return processInvites();
 	}
 
@@ -79,10 +79,10 @@ async function submit() {
 }
 
 function addCharge(amount: number) {
-	if (data.form_meta.price_individual) {
-		data.form_meta.price_individual += amount;
+	if (data.meta.price_individual) {
+		data.meta.price_individual += amount;
 	} else {
-		data.form_meta.price_individual = amount;
+		data.meta.price_individual = amount;
 	}
 }
 
@@ -93,7 +93,7 @@ function goBack() {
 }
 
 function goBack2() {
-	if (data?.form_meta?.allowGroups && group.chosen) {
+	if (data?.meta?.allowGroups && group.chosen) {
 		group.chosen = false;
 		group.self = false;
 		rerender.value = true;
@@ -272,7 +272,7 @@ async function processInvites() {
 </script>
 
 <template>
-	<Title>Form | {{ data.form_meta?.formName }}</Title>
+	<Title>Form | {{ data.meta?.formName }}</Title>
 	<div class="flex min-h-screen">
 		<div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
 			<div class="header">
@@ -293,13 +293,13 @@ async function processInvites() {
 						<path d="M21 12.1H3"></path>
 						<path d="M15.1 18H3"></path>
 					</svg>
-					<span class="ml-2">{{ data.form_meta.formName }}</span>
+					<span class="ml-2">{{ data.meta.formName }}</span>
 				</h1>
-				<p class="bg-slate-700 w-full px-4 py-2 pl-12 rounded" v-if="data.form_meta.formDescription">
-					{{ data.form_meta.formDescription }}
+				<p class="bg-slate-700 w-full px-4 py-2 pl-12 rounded" v-if="data.meta.formDescription">
+					{{ data.meta.formDescription }}
 				</p>
 			</div>
-			<form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.form_meta?.allowGroups || group.self">
+			<form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.meta?.allowGroups || group.self">
 				<FormViewer
 					:data="data"
 					@submit="completeForm"
@@ -309,9 +309,9 @@ async function processInvites() {
 					:show-spinner="loading"
 				/>
 				<div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
-					<small class="text-gray-500 w-fit" v-if="data.form_meta.price_individual > 0 && !token">
+					<small class="text-gray-500 w-fit" v-if="data.meta.price_individual > 0 && !token">
 						This form requires payment for submission of <br />
-						<span class="text-red-400">Amount Due: {{ data.form_meta.price_individual }}</span>
+						<span class="text-red-400">Amount Due: {{ data.meta.price_individual }}</span>
 						KES
 					</small>
 					<div v-if="complete">
@@ -330,7 +330,7 @@ async function processInvites() {
 			</form>
 			<form
 				@submit.prevent
-				v-if="data?.form_meta?.allowGroups && !group.chosen"
+				v-if="data?.meta?.allowGroups && !group.chosen"
 				class="w-full grid place-items-center"
 			>
 				<div class="flex flex-wrap">
@@ -488,9 +488,9 @@ async function processInvites() {
 					</button>
 				</div>
 				<div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
-					<small class="text-gray-500 w-fit" v-if="data.form_meta.price_group > 0">
+					<small class="text-gray-500 w-fit" v-if="data.meta.price_group > 0">
 						This form requires payment for submission of <br />
-						<span class="text-red-400">Amount Due: {{ data.form_meta.price_group }}</span>
+						<span class="text-red-400">Amount Due: {{ data.meta.price_group }}</span>
 						KES
 					</small>
 				</div>

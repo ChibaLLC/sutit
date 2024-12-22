@@ -1,11 +1,11 @@
 import {
 	formPayments,
-	formResponses,
+	formFieldResponses,
 	formPages,
 	payments,
 	sessions,
 	storePayments,
-	storeResponses,
+	itemResponses,
 	stores,
 	users,
 	withdrawals,
@@ -24,13 +24,13 @@ export namespace Drizzle {
 	}
 
 	export namespace FormResponses {
-		export type insert = typeof formResponses.$inferInsert;
-		export type select = typeof formResponses.$inferSelect;
+		export type insert = typeof formFieldResponses.$inferInsert;
+		export type select = typeof formFieldResponses.$inferSelect;
 	}
 
 	export namespace StoreResponses {
-		export type insert = typeof storeResponses.$inferInsert;
-		export type select = typeof storeResponses.$inferSelect;
+		export type insert = typeof itemResponses.$inferInsert;
+		export type select = typeof itemResponses.$inferSelect;
 	}
 
 	export namespace Session {

@@ -279,7 +279,7 @@ export async function getStats(userUlid: string) {
 export async function deleteUserForm(userUlid: string, formUlid: string) {
 	const form = await getFormByUlid(formUlid);
 	if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
-	if (form.form_meta.userUlid !== userUlid)
+	if (form.meta.userUlid !== userUlid)
 		throw new Error(`Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`);
 	return deleteForm(formUlid);
 }

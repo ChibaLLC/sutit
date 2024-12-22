@@ -1,5 +1,5 @@
 import db from "~~/server/db";
-import { formGroupResponses, formResponsesView, storeResponsesView } from "~~/server/db/schema";
+import { formGroupResponses, formGroups, formResponsesView, storeResponsesView } from "~~/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getFormByUlid } from "../../../utils/queries";
 
@@ -22,9 +22,18 @@ export async function getFormResponses(formUlId: string) {
 		.where(eq(storeResponsesView.formUlid, formUlId))
 		.orderBy(desc(storeResponsesView.date));
 	const group_responses_promise = db
-		.select()
+		.select({
+			responseUlid: formGroupResponses.responseUlid,
+			groupName: formGroups.groupName,
+			invites: formGroups.invites,
+			paymentUlid: formGroups.paymentUlid,
+			formGroupUlid: formGroups.ulid
+		})
 		.from(formGroupResponses)
-		.where(eq(formGroupResponses.formUlid, formUlId));
+		.where(eq(formGroupResponses.formUlid, formUlId))
+		.innerJoin(formGroups, eq(formGroupResponses.formGroupUlid, formGroups.ulid));
+	const form_payments_promise 
+
 	const [form_responses, store_response, group_responses] = await Promise.all([
 		form_responses_promise,
 		store_response_promise,

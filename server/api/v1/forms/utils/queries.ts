@@ -1,8 +1,8 @@
 import {
 	formPayments,
 	payments,
-	formResponses,
-	storeResponses,
+	formFieldResponses,
+	itemResponses,
 	stores,
 	formGroups,
 	formMeta,
@@ -187,7 +187,7 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 	);
 
 	return {
-		form_meta,
+		meta: form_meta,
 		pages: Object.fromEntries(pages.entries()),
 		stores: Object.fromEntries(stores.entries()),
 	};
@@ -202,7 +202,7 @@ export async function getFormByUlid(formUlid: string) {
 	}
 }
 
-export async function insertData(formUlid: string, data: ReconstructedDbForm) {
+export async function insertData(formUlid: string, data: ReconstructedDbForm, price_paid?: number) {
 	const formResponseInsertList: Drizzle.FormResponses.insert[] = [];
 	for (const key in data.pages) {
 		const page = data.pages[key];
@@ -213,7 +213,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm) {
 			});
 		}
 	}
-	const formResponse = await db.insert(formResponses).values(formResponseInsertList).returning();
+	const formResponse = await db.insert(formFieldResponses).values(formResponseInsertList).returning();
 	await db
 		.select()
 		.from(stores)
@@ -234,7 +234,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm) {
 				}
 			}
 
-			db.insert(storeResponses).values(storeResponseInsertList);
+			db.insert(itemResponses).values(storeResponseInsertList);
 		});
 
 	return formResponse.at(0)!;
@@ -324,7 +324,7 @@ export async function getFormPaymentsSum(formUlid: string) {
 		return acc + +total;
 	}, 0);
 
-	return total - (form.form_meta.withdrawnFunds || 0);
+	return total - (form.meta.withdrawnFunds || 0);
 }
 
 export async function getAllFormPayments(userUlid: string) {
@@ -368,7 +368,7 @@ export async function getResponsesCount(userUlid: string) {
 		.select({ count: count(sutitForms.form_meta.ulid) })
 		.from(formResponsesView)
 		.innerJoin(sutitForms, eq(formResponsesView.formUlid, sutitForms.form_meta.ulid))
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
+		.where(eq(sutitForms.form_meta.userUlid, userUlid));
 	return result.reduce((acc, curr) => {
 		const { count } = curr;
 		if (!count) return acc;
@@ -403,9 +403,9 @@ export async function neeedsPay(
 
 	let price = 0;
 	if (type === "individual") {
-		price = form.form_meta.price_individual;
+		price = form.meta.price_individual;
 	} else {
-		price = form.form_meta.price_group || 0;
+		price = form.meta.price_group || 0;
 	}
 
 	if (price <= 0 && (!submitPrice || submitPrice <= 0)) return [form, false];
@@ -434,7 +434,7 @@ export async function updateFormWithdrawnFunds(formUlid: string, amount: number)
 	await db
 		.update(formMeta)
 		.set({
-			withdrawnFunds: Number(form?.form_meta.withdrawnFunds || 0) + amount,
+			withdrawnFunds: Number(form?.meta.withdrawnFunds || 0) + amount,
 		})
 		.where(eq(formMeta.ulid, formUlid));
 }

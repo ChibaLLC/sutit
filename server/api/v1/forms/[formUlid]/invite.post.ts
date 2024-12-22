@@ -35,28 +35,24 @@ export default defineEventHandler(async (event) => {
 			message: "Form Not Found",
 		});
 	}
-	if (form.form_meta.price_group && form.form_meta.group_member_count) {
-		if (data.invites.length > form.form_meta.group_member_count)
+	if (form.meta.price_group && form.meta.group_member_count) {
+		if (data.invites.length > form.meta.group_member_count)
 			return createError({
 				status: 403,
 				message: "Sorry, these group members are more than the allowed number",
 			});
 	}
 
-	const amount = form.form_meta.price_group
-		? form.form_meta.price_group
-		: form.form_meta.price_individual * data.invites.length;
+	const amount = form.meta.price_group ? form.meta.price_group : form.meta.price_individual * data.invites.length;
 
 	const [_, needsPay] = await needsGroupPayment(form, amount);
-	const message = form.form_meta.group_invite_message?.padEnd(1, " ");
+	const message = form.meta.group_invite_message?.padEnd(1, " ");
 	const links = (group: Awaited<ReturnType<typeof createFormGroup>>) => {
-		return (
-			group.invites?.map((invite) => `${data.origin}/forms/${form.form_meta.ulid}?token=${invite.token}`) || []
-		);
+		return group.invites?.map((invite) => `${data.origin}/forms/${form.meta.ulid}?token=${invite.token}`) || [];
 	};
 
 	if (needsPay) {
-		const creator = await getUserByUlId(form.form_meta.userUlid);
+		const creator = await getUserByUlId(form.meta.userUlid);
 		if (creator instanceof Error) {
 			throw createError({
 				status: 404,
@@ -66,7 +62,7 @@ export default defineEventHandler(async (event) => {
 
 		const accountNumber = creator?.email || creator?.name || "Unknown";
 		return await processFormPayments(
-			form.form_meta,
+			form.meta,
 			{
 				accountNumber,
 				phone: data.phone,
@@ -74,7 +70,7 @@ export default defineEventHandler(async (event) => {
 			},
 			async (payment) => {
 				const group = await createFormGroup({
-					formUlid: form.form_meta.ulid,
+					formUlid: form.meta.ulid,
 					groupName: data.group_name,
 					invites: data.invites,
 					paymentUlid: payment.ulid,
@@ -82,14 +78,14 @@ export default defineEventHandler(async (event) => {
 				sendResponseInvites(data.invites, links(group), message);
 				sendUserMail(
 					{ email: creator!.email },
-					`Group ${data.group_name} has paid for form ${form.form_meta.formName} and was processesed successfully`,
-					`[Payment]: Group ${form.form_meta.formName}`
+					`Group ${data.group_name} has paid for form ${form.meta.formName} and was processesed successfully`,
+					`[Payment]: Group ${form.meta.formName}`
 				);
 			}
 		);
 	} else {
 		const group = await createFormGroup({
-			formUlid: form.form_meta.ulid,
+			formUlid: form.meta.ulid,
 			groupName: data.group_name,
 			invites: data.invites,
 			paymentUlid: null,

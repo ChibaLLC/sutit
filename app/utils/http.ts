@@ -9,7 +9,7 @@ export function isAPIResponse(data: any): data is APIResponse {
 }
 
 function hasPrice(form: ReconstructedDbForm): boolean {
-	return form.form_meta.price_individual > 0;
+	return form.meta.price_individual > 0;
 }
 
 export async function ResolveMpesaPayment(
