@@ -54,7 +54,7 @@ export default defineEventHandler(async event => {
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
-        const { form, callback: funcall } = global.formPaymentProcessingQueue?.get(channelName) || {}
+        const { form_meta: form, callback: funcall } = global.formPaymentProcessingQueue?.get(channelName) || {};
         if (form) {
             await insertFormPayment({
                 formUlid: form.ulid,

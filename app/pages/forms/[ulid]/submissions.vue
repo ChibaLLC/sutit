@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormElementData, Forms, Stores } from "@chiballc/nuxt-form-builder";
+import type { FormElementData } from "@chiballc/nuxt-form-builder";
 import { capitalize } from "vue";
 
 
@@ -22,40 +22,18 @@ interface Response {
 
 type FormResponse = Omit<Drizzle.FormResponses.select, "response"> & { response: Response | Record<string, FormElementData[]>; }
 
-interface Store {
-  ulid: string;
-  formUlid: string;
-  store: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface FormEntry {
-  form_responses: FormResponse;
-  stores: Store;
-}
-
-type ServerForm = {
-  forms: Omit<Drizzle.Form.select, 'pages'> & {
-    pages: Forms
-  },
-  stores: Omit<Drizzle.Store.select, 'store'> & {
-    store: Stores
-  }
-}
-
 
 const ulid = useRoute().params.ulid
 if (!ulid) navigateTo('/forms')
 
-const { data: form } = await useFetch<APIResponse<ServerForm>>(`/api/v1/forms/${ulid}`, {
-  onResponseError({ response }) {
-    console.log(response)
-  },
-  onRequestError({ error }) {
-    console.log(error)
-  }
-}).then(({ data }) => ({ data: data.value?.body }))
+// const { data: form } = await useFetch<APIResponse<ReconstructedDbForm>>(`/api/v1/forms/${ulid}`, {
+//   onResponseError({ response }) {
+//     console.log(response)
+//   },
+//   onRequestError({ error }) {
+//     console.log(error)
+//   }
+// }).then(({ data }) => ({ data: data.value?.body }))
 const { data: response } = await useFetch(`/api/v1/forms/${ulid}/submissions`, {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`

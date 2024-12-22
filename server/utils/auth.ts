@@ -5,8 +5,8 @@ export type AuthData = {
     token: string,
     user: Drizzle.User.select
 }
-export async function useAuth(event: H3Event, throwError?: false): Promise<AuthData>;
-export async function useAuth(event: H3Event, throwError: true): Promise<[AuthData, null] | [null, string]>;
+export async function useAuth(event: H3Event, throwError?: true): Promise<AuthData>;
+export async function useAuth(event: H3Event, throwError: false): Promise<[AuthData, null] | [null, string]>;
 export async function useAuth(event: H3Event, throwError: boolean = true) {
     const token = readAuthToken(event)
     if (!token) {

@@ -19,7 +19,6 @@ import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
 import { z } from "zod";
-import type { FormElementData, Item, Page, Pages, Store, Stores } from "@chiballc/nuxt-form-builder";
 import { formCreateSchema, formUpdateSchema } from "./zod";
 
 function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
@@ -38,7 +37,7 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 				index: field.index,
 				inputType: field.inputType as any,
 				label: field.label || "Unlabeled",
-				page: page_ulid,
+				pageUlid: page_ulid,
 				accept: field.accept,
 				description: field.description,
 				options: field.options,
@@ -152,14 +151,13 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 				...curr.form_element,
 				accept: curr.form_element.accept || undefined,
 				placeholder: curr.form_element.placeholder || undefined,
-				description: curr.form_element.description || undefined				
-			} satisfies FormElementData
+				description: curr.form_element.description || undefined,
+			};
 			if (pages) {
 				pages.push(page_element);
 			} else {
 				acc.pages.set(curr.form_element.page_index, [page_element]);
 			}
-
 
 			const stores = acc.stores.get(curr.form_item.store_index);
 			const form_item = {
@@ -167,7 +165,7 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 				carted: false,
 				liked: false,
 				store: curr.form_item.store_index,
-			} satisfies Item;
+			};
 			if (stores) {
 				stores.push(form_item);
 			} else {
@@ -176,15 +174,15 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 			return acc;
 		},
 		{ pages: new Map(), stores: new Map() } as {
-			pages: Map<string, Page>;
-			stores: Map<number, Store>;
+			pages: Map<string, DbPage>;
+			stores: Map<number, DbStore>;
 		}
 	);
 
 	return {
 		form_meta,
-		pages: Object.fromEntries(pages.entries()) satisfies Pages,
-		stores: Object.fromEntries(stores.entries()) satisfies Stores,
+		pages: Object.fromEntries(pages.entries()),
+		stores: Object.fromEntries(stores.entries()),
 	};
 }
 
@@ -197,31 +195,38 @@ export async function getFormByUlid(formUlid: string) {
 	}
 }
 
-export async function insertData(
-	formUlid: string,
-	data: { forms: { pages: Pages }; stores: Stores },
-	price?: string | number
-) {
-	const formResponse = await db
-		.insert(formResponses)
-		.values({
-			formUlid: formUlid,
-			response: data.forms.pages,
-			price: price ? +price : 0,
-		} satisfies Drizzle.FormResponses.insert)
-		.returning();
-
-	const _stores = await db.select().from(stores).where(eq(stores.formUlid, formUlid));
-	const storeUlid = _stores && _stores.length > 0 ? _stores.at(0)?.ulid : null;
-
-	if (storeUlid) {
-		db.insert(storeResponses).values({
-			storeUlid: storeUlid,
-			response: data.stores,
-		} satisfies Drizzle.StoreResponses.insert);
+export async function insertData(formUlid: string, data: ReconstructedDbForm) {
+	const formResponseInsertList: Drizzle.FormResponses.insert[] = [];
+	for (const key in data.pages) {
+		const page = data.pages[key];
+		for (const element of page || []) {
+			formResponseInsertList.push({
+				value: element.value,
+				fieldUlid: element.fieldUlid,
+			});
+		}
 	}
+	const formResponse = await db.insert(formResponses).values(formResponseInsertList).returning();
+	await db.select().from(stores).where(eq(stores.formUlid, formUlid)).then(stores => {
+		if(!stores.length) return
 
-	return formResponse.at(0);
+		const storeResponseInsertList: Drizzle.StoreResponses.insert[] = []
+		for (const key in data.stores) {
+			const store = data.stores[key];
+			for (const item of store || []) {
+				storeResponseInsertList.push({
+					value: item.name,
+					liked: item.liked,
+					carted: item.carted,
+					itemUlid: item.itemUlid
+				});
+			}
+		}
+
+		db.insert(storeResponses).values(storeResponseInsertList);
+	});
+
+	return formResponse.at(0)!;
 }
 
 export async function getFormsByUser(userUlid: string) {
@@ -378,6 +383,13 @@ export async function neeedsPay(
 		form = data;
 	}
 
+	if (!form) {
+		throw createError({
+			statusCode: 404,
+			message: "Form not found",
+		});
+	}
+
 	let price = 0;
 	if (type === "individual") {
 		price = form.form_meta.price_individual;
@@ -416,19 +428,29 @@ export async function updateFormWithdrawnFunds(formUlid: string, amount: number)
 		.where(eq(formMeta.ulid, formUlid));
 }
 
-export async function getPrepaidFormLink(formUlid: string, groupName: string, token: string) {
-	const group = await getFirstOr404(
-		formGroups,
-		and(eq(formGroups.formUlid, formUlid), eq(formGroups.groupName, groupName))
+export async function getInviteFormGroup(formUlid: string, token: string) {
+	// TODO: perf improve
+	const groups = await db.select().from(formGroups).where(eq(formGroups.formUlid, formUlid));
+	let invite: FormGroupInvite[number] | undefined;
+	const group = groups.find((group) =>
+		group.invites?.some((inv) => {
+			if (inv.token === token) {
+				invite = inv;
+				return true;
+			} else {
+				return false;
+			}
+		})
 	);
-	return group.invites?.find((invite) => invite.token === token);
+	return {
+		invite,
+		group,
+	};
 }
 
-export async function invalidateFormGroupLink(formUlid: string, groupName: string, token: string) {
-	const group = await getFirstOr404(
-		formGroups,
-		and(eq(formGroups.formUlid, formUlid), eq(formGroups.groupName, groupName))
-	);
+export async function invalidateFormGroupLink(formUlid: string, token: string) {
+	const { group } = await getInviteFormGroup(formUlid, token);
+	if (!group) return Promise.resolve(undefined);
 	return db
 		.update(formGroups)
 		.set({

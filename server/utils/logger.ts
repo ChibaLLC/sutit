@@ -11,7 +11,7 @@ import path from "node:path";
 import {createInterface} from "node:readline";
 import {consola, createConsola, type LogObject, type LogType} from "consola";
 import {execSync} from "node:child_process";
-import type {Nitro} from "nitropack";
+import type {NitroApp} from "nitropack/types"
 
 
 export class Logger {
@@ -34,7 +34,7 @@ export class Logger {
         this.streams = this.makeStreams()
     }
 
-    constructor(app?: Nitro) {
+    constructor(app?: NitroApp) {
         app?.hooks.hookOnce('close', () => {
             this.dispose()
         })
@@ -79,7 +79,7 @@ export class Logger {
     }
 
     public async log(logObj: LogObject): Promise<void> {
-        if (!process.server) return consola[logObj.type](logObj.args)
+        if (!import.meta.client) return consola[logObj.type](logObj.args)
 
         try {
             this.streams.master?.write(this.stringifyLogObject(logObj))
@@ -276,10 +276,16 @@ export class Logger {
                 },
                 {
                     log: (logObj: LogObject) => {
-                        consola[logObj.type](logObj.args.join(' '))
+                        const {type, ...rest} = logObj
+                        const initial = consola.level
+                        consola.level = rest.level
+                        const log = rest.message ? [rest.message, ...rest.args] : rest.args
+                        // @ts-ignore
+                        consola[type](...log)
+                        consola.level = initial
                     }
                 },
-                // TODO: add a reporter that sends logs to a remote server, and another that emails fatal logs to the developer
+                // TODO: add a reporter that sends logs to a remote server or another safe place, and another that emails fatal logs to the developer
             ]
         })
     }

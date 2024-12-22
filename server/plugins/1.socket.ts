@@ -5,7 +5,7 @@ declare global {
     var channels: Channels | undefined;
 }
 
-export default defineNitroPlugin(app => {
+export default defineNitroPlugin(() => {
     global.clients = new Clients()
     global.channels = new Channels()
 

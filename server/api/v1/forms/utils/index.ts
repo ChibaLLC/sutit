@@ -7,7 +7,6 @@ import {
 	getFormByUlid,
 	getFormCount,
 	getFormPaymentsSum,
-	getPrepaidFormLink,
 	getResponsesCount,
 	updateFormWithdrawnFunds,
 } from "./queries";
@@ -15,33 +14,31 @@ import { v4 } from "uuid";
 import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
-import type { EmailInvite, FormGroupInvite, PhoneInvite } from "~~/server/db/schema";
 
 declare global {
 	var formPaymentProcessingQueue: Map<
 		string,
 		{
-			form: Drizzle.SutitForm;
-			callback?: (paymentUlid: string) => any;
+			form_meta: Drizzle.SutitForm[number]["form_meta"];
+			callback?: (paymentUlid: Drizzle.Payment.select) => any;
 		}
 	>;
 }
 
 export async function processFormPayments(
-	form: Drizzle.SutitForm,
+	form_meta: Drizzle.SutitForm[number]["form_meta"],
 	details: {
-        accountNumber: string,
-        phone: string;
+		accountNumber: string;
+		phone: string;
 		amount: number;
 	},
-	callback?: (paymentUlid: string) => any
+	callback?: (payment: Drizzle.Payment.select) => any
 ) {
 	details.phone = `254${details.phone.slice(-9)}`;
-	const result = await makeSTKPush(details.phone, form.form_meta.formName, details.amount, details.accountNumber);
+	const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
 	const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID);
 	if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
-	global.formPaymentProcessingQueue.set(channel, { form, callback });
+	global.formPaymentProcessingQueue.set(channel, { form_meta, callback });
 	return {
 		statusCode: 201,
 		body: {
@@ -58,7 +55,9 @@ async function makeSTKPush(phone: string, pay_for: string, amount: number, accou
 export async function sendUserMail(user: { userUlid: string } | { email: string }, message: string, subject: string) {
 	let email: string | undefined = (user as { email: string }).email;
 	if (!email) {
-		await getUserByUlId((user as { userUlid: string }).userUlid).then(data => {email = data?.email});
+		await getUserByUlId((user as { userUlid: string }).userUlid).then((data) => {
+			email = data?.email;
+		});
 	}
 
 	if (!email) return log.warn("User has no email");
@@ -164,13 +163,17 @@ const PAYMENT_RECEIPT_HTML = (details: {
 `;
 };
 
-export function generateReceiptNumber(paymentUlid: string) {
+export function generateReceiptNumber(payment: string | Drizzle.Payment.select) {
+	if (typeof payment === "object") {
+		payment = payment.ulid;
+	}
+	
 	const number = v4();
 	db.update(payments)
 		.set({
 			receiptNumber: number,
 		})
-		.where(eq(payments.ulid, paymentUlid))
+		.where(eq(payments.ulid, payment))
 		.execute();
 	return number;
 }
@@ -279,12 +282,6 @@ export async function deleteUserForm(userUlid: string, formUlid: string) {
 	if (form.form_meta.userUlid !== userUlid)
 		throw new Error(`Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`);
 	return deleteForm(formUlid);
-}
-
-export async function validateFormLinkToken(formUlid: string, groupName: string, token: string) {
-	const linkData = await getPrepaidFormLink(formUlid, groupName, token);
-	if (!linkData || !linkData.isValid) return false;
-	return linkData;
 }
 
 export async function sendResponseInvites(

@@ -40,7 +40,7 @@ export const formFields = pgTable("form_fields", {
 	options: jsonb("options"),
 	accept: varchar("accept", { length: 255 }),
 	type: varchar("type"),
-	page: varchar("page", { length: 255 }).references(() => formPages.ulid, {
+	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
 	}),
 });
@@ -70,6 +70,7 @@ export const sutitForms = pgView("sutit_forms").as(
 		.innerJoin(
 			qb
 				.select({
+					fieldUlid: formFields.ulid,
 					formUlid: formPages.ulid,
 					label: formFields.label,
 					inputType: formFields.inputType,
@@ -82,7 +83,7 @@ export const sutitForms = pgView("sutit_forms").as(
 					page_index: formPages.index,
 				})
 				.from(formPages)
-				.innerJoin(formFields, eq(formFields.page, formPages.ulid))
+				.innerJoin(formFields, eq(formFields.pageUlid, formPages.ulid))
 				.groupBy(formPages.index)
 				.as("form_element"),
 			sql`${formMeta.ulid} = form_element.form_ulid`
@@ -90,6 +91,7 @@ export const sutitForms = pgView("sutit_forms").as(
 		.innerJoin(
 			qb
 				.select({
+					itemUlid: storeItems.ulid,
 					storeUlid: stores.ulid,
 					formUlid: stores.formUlid,
 					index: storeItems.index,
