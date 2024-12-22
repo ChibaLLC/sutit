@@ -13,6 +13,7 @@ import {
 	type FormGroupInvite,
 	type PhoneInvite,
 	type EmailInvite,
+	formResponsesView,
 } from "~~/server/db/schema";
 import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -108,7 +109,7 @@ export async function createForm(data: z.infer<typeof formCreateSchema>, { user 
 	return form;
 }
 
-export async function updateForm(data: z.infer<typeof formUpdateSchema>) {
+export async function updateForm(data: z.infer<typeof formUpdateSchema>, user: Drizzle.User.select) {
 	const form = (
 		await db
 			.update(formMeta)
@@ -127,8 +128,14 @@ export async function updateForm(data: z.infer<typeof formUpdateSchema>) {
 	).at(0);
 
 	if (!form) throw new Error("Unable to create form");
-	insertFormFields(data);
+	if (user.ulid !== form.userUlid) {
+		throw createError({
+			status: 403,
+			message: "You are not allowed to make these changes to the form",
+		});
+	}
 
+	insertFormFields(data);
 	return form;
 }
 
@@ -207,24 +214,28 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm) {
 		}
 	}
 	const formResponse = await db.insert(formResponses).values(formResponseInsertList).returning();
-	await db.select().from(stores).where(eq(stores.formUlid, formUlid)).then(stores => {
-		if(!stores.length) return
+	await db
+		.select()
+		.from(stores)
+		.where(eq(stores.formUlid, formUlid))
+		.then((stores) => {
+			if (!stores.length) return;
 
-		const storeResponseInsertList: Drizzle.StoreResponses.insert[] = []
-		for (const key in data.stores) {
-			const store = data.stores[key];
-			for (const item of store || []) {
-				storeResponseInsertList.push({
-					value: item.name,
-					liked: item.liked,
-					carted: item.carted,
-					itemUlid: item.itemUlid
-				});
+			const storeResponseInsertList: Drizzle.StoreResponses.insert[] = [];
+			for (const key in data.stores) {
+				const store = data.stores[key];
+				for (const item of store || []) {
+					storeResponseInsertList.push({
+						value: item.name,
+						liked: item.liked,
+						carted: item.carted,
+						itemUlid: item.itemUlid,
+					});
+				}
 			}
-		}
 
-		db.insert(storeResponses).values(storeResponseInsertList);
-	});
+			db.insert(storeResponses).values(storeResponseInsertList);
+		});
 
 	return formResponse.at(0)!;
 }
@@ -355,9 +366,9 @@ export async function getFormCount(userUlid: string) {
 export async function getResponsesCount(userUlid: string) {
 	const result = await db
 		.select({ count: count(sutitForms.form_meta.ulid) })
-		.from(sutitForms)
+		.from(formResponsesView)
+		.innerJoin(sutitForms, eq(formResponsesView.formUlid, sutitForms.form_meta.ulid))
 		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.innerJoin(formResponses, eq(formResponses.formUlid, sutitForms.form_meta.ulid));
 	return result.reduce((acc, curr) => {
 		const { count } = curr;
 		if (!count) return acc;

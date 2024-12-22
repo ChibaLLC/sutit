@@ -14,11 +14,7 @@ export default defineEventHandler(async event => {
         body: "No phone number provided"
     }, Status.badRequest)
 
-    const [details, error] = await useAuth(event)
-    if (error || !details) return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Unauthorized"
-    })
+    const {user} = await useAuth(event)
 
     const form = await getFormByUlid(formUlid).catch(err => err as Error)
     if (form instanceof Error) return useHttpEnd(event, {
@@ -30,12 +26,12 @@ export default defineEventHandler(async event => {
         body: "Form not found"
     }, Status.notFound)
 
-    if (form.forms?.userUlid !== details.user.ulid) return useHttpEnd(event, {
+    if (form.form_meta?.userUlid !== user.ulid) return useHttpEnd(event, {
         statusCode: Status.forbidden,
         body: "Unauthorized"
     }, Status.forbidden)
 
-    const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: details.user.ulid }).catch(err => err as Error)
+    const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: user.ulid }).catch(err => err as Error)
     if (result instanceof Error) {
         console.error(result)
         console.trace(result)

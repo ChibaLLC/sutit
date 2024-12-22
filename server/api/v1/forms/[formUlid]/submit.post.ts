@@ -2,7 +2,6 @@ import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividua
 import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
-import type { Pages, Stores } from "@chiballc/nuxt-form-builder";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
 
 export default defineEventHandler(async (event) => {

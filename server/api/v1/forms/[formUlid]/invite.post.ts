@@ -50,31 +50,34 @@ export default defineEventHandler(async (event) => {
 	const [_, needsPay] = await needsGroupPayment(form, amount);
 	const message = form.form_meta.group_invite_message?.padEnd(1, " ");
 	const links = (group: Awaited<ReturnType<typeof createFormGroup>>) => {
-		return group.invites?.map((invite) => `${data.origin}/forms/${form.form_meta.ulid}?token=${invite.token}`) || [];
+		return (
+			group.invites?.map((invite) => `${data.origin}/forms/${form.form_meta.ulid}?token=${invite.token}`) || []
+		);
 	};
 
 	if (needsPay) {
 		const creator = await getUserByUlId(form.form_meta.userUlid);
-		if (creator instanceof Error)
-			return createError({
+		if (creator instanceof Error) {
+			throw createError({
 				status: 404,
 				message: "Form creator not found",
 			});
+		}
 
 		const accountNumber = creator?.email || creator?.name || "Unknown";
 		return await processFormPayments(
-			form,
+			form.form_meta,
 			{
 				accountNumber,
 				phone: data.phone,
 				amount: amount,
 			},
-			async (paymentUlid) => {
+			async (payment) => {
 				const group = await createFormGroup({
 					formUlid: form.form_meta.ulid,
 					groupName: data.group_name,
 					invites: data.invites,
-					paymentUlid: paymentUlid,
+					paymentUlid: payment.ulid,
 				});
 				sendResponseInvites(data.invites, links(group), message);
 				sendUserMail(
