@@ -78,9 +78,9 @@ export namespace Drizzle {
 	}
 
 	type Infer<T> = T extends Record<string, Column> ? InferModelFromColumns<T, "select"> : never;
-	export type SutitForm<T = typeof sutitForms> = {
+	export type SutitForm<T = typeof sutitForms._.selectedFields> = Array<{
 		[K in keyof T]: Infer<T[K]>;
-	};
+	}>;
 
 	export namespace FormPages {
 		export type insert = typeof formPages.$inferInsert;

@@ -16,6 +16,7 @@ export const formMeta = pgTable("form_meta", {
 	group_member_count: integer("price_group_count").default(0),
 	group_invite_message: text("price_group_message"),
 	allowGroups: boolean("allow_groups").default(false),
+	requireMerch: boolean("require_merch").default(false),
 	withdrawnFunds: integer("price_group_count").default(0),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
@@ -26,7 +27,7 @@ export const formPages = pgTable("form_pages", {
 	formUlid: varchar("form_ulid").references(() => formMeta.ulid, {
 		onDelete: "cascade",
 	}),
-	index: varchar("index", { length: 255 }),
+	index: varchar("index", { length: 255 }).notNull(),
 });
 
 export const formFields = pgTable("form_fields", {
@@ -83,18 +84,17 @@ export const sutitForms = pgView("sutit_forms").as(
 				.from(formPages)
 				.innerJoin(formFields, eq(formFields.page, formPages.ulid))
 				.groupBy(formPages.index)
-				.as("form_pages"),
-			sql`${formMeta.ulid} = form_pages.form_ulid`
+				.as("form_element"),
+			sql`${formMeta.ulid} = form_element.form_ulid`
 		)
 		.innerJoin(
 			qb
 				.select({
 					storeUlid: stores.ulid,
 					formUlid: stores.formUlid,
-					store: stores.index,
 					index: storeItems.index,
 					name: storeItems.name,
-					quantity: storeItems.quantity,
+					qtty: storeItems.qtty,
 					price: storeItems.price,
 					likes: storeItems.likes,
 					images: storeItems.images,
@@ -104,8 +104,8 @@ export const sutitForms = pgView("sutit_forms").as(
 				.where(eq(stores.formUlid, formMeta.ulid))
 				.innerJoin(storeItems, eq(stores.ulid, storeItems.storeUlid))
 				.groupBy(stores.index)
-				.as("form_stores"),
-			sql`${formMeta.ulid} = form_stores.form_ulid`
+				.as("form_item"),
+			sql`${formMeta.ulid} = form_item.form_ulid`
 		)
 		.groupBy(formMeta.userUlid)
 );

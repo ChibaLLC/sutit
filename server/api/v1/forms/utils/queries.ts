@@ -19,7 +19,7 @@ import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
 import { z } from "zod";
-import type { Pages, Stores } from "@chiballc/nuxt-form-builder";
+import type { FormElementData, Item, Page, Pages, Store, Stores } from "@chiballc/nuxt-form-builder";
 import { formCreateSchema, formUpdateSchema } from "./zod";
 
 function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
@@ -62,7 +62,7 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 		const store_ulid = ulid();
 		storeData.push({
 			formUlid: data.ulid,
-			index: key,
+			index: +key,
 			ulid: store_ulid,
 		});
 		store?.forEach((item) => {
@@ -70,9 +70,8 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 				name: item.name,
 				price: item.price,
 				images: item.images,
-				quantity: item.qtty,
+				qtty: item.qtty,
 				index: item.index,
-				store: store_ulid,
 				storeUlid: store_ulid,
 			});
 		});
@@ -138,9 +137,64 @@ export function deleteForm(formUlid: string) {
 	return db.delete(formMeta).where(eq(formMeta.ulid, formUlid));
 }
 
+export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbForm {
+	const form_meta = results.at(0)?.form_meta;
+	if (!form_meta) {
+		throw createError({
+			status: 500,
+			message: "Unable to find the form's meta data",
+		});
+	}
+	const { pages, stores } = results.reduce(
+		(acc, curr) => {
+			const pages = acc.pages.get(curr.form_element.page_index);
+			const page_element = {
+				...curr.form_element,
+				accept: curr.form_element.accept || undefined,
+				placeholder: curr.form_element.placeholder || undefined,
+				description: curr.form_element.description || undefined				
+			} satisfies FormElementData
+			if (pages) {
+				pages.push(page_element);
+			} else {
+				acc.pages.set(curr.form_element.page_index, [page_element]);
+			}
+
+
+			const stores = acc.stores.get(curr.form_item.store_index);
+			const form_item = {
+				...curr.form_item,
+				carted: false,
+				liked: false,
+				store: curr.form_item.store_index,
+			} satisfies Item;
+			if (stores) {
+				stores.push(form_item);
+			} else {
+				acc.stores.set(form_item.store, [form_item]);
+			}
+			return acc;
+		},
+		{ pages: new Map(), stores: new Map() } as {
+			pages: Map<string, Page>;
+			stores: Map<number, Store>;
+		}
+	);
+
+	return {
+		form_meta,
+		pages: Object.fromEntries(pages.entries()) satisfies Pages,
+		stores: Object.fromEntries(stores.entries()) satisfies Stores,
+	};
+}
+
 export async function getFormByUlid(formUlid: string) {
 	const results = await db.select().from(sutitForms).where(eq(sutitForms.form_meta.ulid, formUlid));
-	return results.at(0) as Drizzle.SutitForm;
+	if (results.length) {
+		return reconstructDbForm(results);
+	} else {
+		return null;
+	}
 }
 
 export async function insertData(
@@ -307,10 +361,10 @@ export async function getResponsesCount(userUlid: string) {
 }
 
 export async function neeedsPay(
-	form: Drizzle.SutitForm | string,
+	form: ReconstructedDbForm | string,
 	type: "group" | "individual",
 	submitPrice?: number
-): Promise<[Drizzle.SutitForm, boolean]> {
+): Promise<[ReconstructedDbForm, boolean]> {
 	if (typeof form === "string") {
 		const data = await getFormByUlid(form).then((data) => {
 			if (!data) {
@@ -321,7 +375,7 @@ export async function neeedsPay(
 			}
 			return data;
 		});
-		form = data as object as Drizzle.SutitForm;
+		form = data;
 	}
 
 	let price = 0;
@@ -335,11 +389,11 @@ export async function neeedsPay(
 	return [form, true];
 }
 
-export function needsIndividualPayment(form: Drizzle.SutitForm | string, submitPrice?: number) {
+export function needsIndividualPayment(form: ReconstructedDbForm | string, submitPrice?: number) {
 	return neeedsPay(form, "individual", submitPrice);
 }
 
-export async function needsGroupPayment(form: Drizzle.SutitForm | string, submitPrice?: number) {
+export async function needsGroupPayment(form: ReconstructedDbForm | string, submitPrice?: number) {
 	return neeedsPay(form, "group", submitPrice);
 }
 
@@ -390,25 +444,27 @@ export async function createFormGroup(data: {
 	invites: Array<PhoneInvite | EmailInvite>;
 	paymentUlid: string | null;
 }) {
-	return (await db
+	return (
+		await db
 			.insert(formGroups)
 			.values({
 				groupName: data.groupName,
 				formUlid: data.formUlid,
 				paymentUlid: data.paymentUlid,
-				invites: data.invites.map(invite => ({
+				invites: data.invites.map((invite) => ({
 					token: ulid(),
 					isValid: true,
-					...invite
+					...invite,
 				})),
 			})
 			.returning()
-			.then(data => {
-				if(data.length === 0) throw createError({
-					status: 404,
-					message: "Unable to create from group"
-				})
-				return data
+			.then((data) => {
+				if (data.length === 0)
+					throw createError({
+						status: 404,
+						message: "Unable to create from group",
+					});
+				return data;
 			})
 	).at(0)!;
 }

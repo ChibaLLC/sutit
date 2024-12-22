@@ -1,4 +1,3 @@
-import type { Forms, Stores } from "@chiballc/nuxt-form-builder"
 import { RealTime } from "./socket"
 import consola from "consola"
 
@@ -9,51 +8,51 @@ export function isAPIResponse(data: any): data is APIResponse {
     return data?.statusCode || (data?.statusCode && data?.body)
 }
 
-
-export type ServerForm = {
-	forms: Omit<Drizzle.Form.select, "pages"> & {
-		pages: Forms;
-	};
-	stores: Omit<Drizzle.Store.select, "store"> & {
-		store: Stores;
-	};
-};
-
-function hasPrice(form: Omit<Drizzle.Form.select, 'pages'> & { pages: Forms }): boolean {
-    return form.price_individual > 0
+function hasPrice(form: ReconstructedDbForm): boolean {
+	return form.form_meta.price_individual > 0;
 }
 
-export async function ResolveMpesaPayment(response: APIResponse, data: ServerForm, realtime: RealTime, loading: Ref, rerender: Ref, complete?: Ref) {
-    if(!realtime) return consola.warn("RealTime not passed")
-    if (response.statusCode <= 299) {
-        if (!hasPrice(data.forms) || useRoute().query?.token) {
-            loading.value = true
-            rerender.value = false
-            window.alertSuccess('Form submitted successfully', { timeout: 'never' })
-            realtime?.close()
-            setTimeout(() => {
-                navigateTo(`/`)
-            })
-            return
-        }
+export async function ResolveMpesaPayment(
+	response: APIResponse,
+	data: ReconstructedDbForm,
+	loading: Ref,
+	rerender: Ref,
+	complete?: Ref
+) {
+	const realtime = new RealTime();
+	if (response.statusCode <= 299) {
+		if (!hasPrice(data) || useRoute().query?.token) {
+			loading.value = true;
+			rerender.value = false;
+			window.alertSuccess("Form submitted successfully", { timeout: "never" });
+			realtime?.close();
+			setTimeout(() => {
+				navigateTo(`/`);
+			});
+			return;
+		}
 
-        const channelName = createChannelName(response.body.checkoutRequestID, response.body.merchantRequestID)
-        realtime!.subscribe(channelName)
-        alert('Form submitted for processing.' + hasPrice(data.forms) ? 'Please complete payment via the pop up on your phone' : '')
-        realtime!.on('error', (error) => {
-            console.error(error)
-        })
+		const channelName = createChannelName(response.body.checkoutRequestID, response.body.merchantRequestID);
+		realtime!.subscribe(channelName);
+		alert(
+			"Form submitted for processing." + hasPrice(data)
+				? "Please complete payment via the pop up on your phone"
+				: ""
+		);
+		realtime!.on("error", (error) => {
+			console.error(error);
+		});
 
-        realtime?.on("data", async (_data: any) => {
-            const { data } = parseData(_data)
-            if (data?.channel !== channelName) return console.warn('Invalid channel', data)
-            const result = ParseRealTimePaymentData(data, loading, rerender, complete)
-            if(result !== 'not done') realtime?.close()
-        })
-    } else {
-        window.alertError('Form submission failed: ' + response.body)
-        rerender.value = true
-    }
+		realtime?.on("data", async (_data: any) => {
+			const { data } = parseData(_data);
+			if (data?.channel !== channelName) return console.warn("Invalid channel", data);
+			const result = ParseRealTimePaymentData(data, loading, rerender, complete);
+			if (result !== "not done") realtime?.close();
+		});
+	} else {
+		window.alertError("Form submission failed: " + response.body);
+		rerender.value = true;
+	}
 }
 
 
