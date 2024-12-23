@@ -46,9 +46,9 @@ export default defineEventHandler(async event => {
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
         }
 
-        const ulid = await insertPayment(+amount, transactionCode.toString(), phoneNumber.toString()).catch(e => e as Error)
-        if (ulid instanceof Error) {
-            log.error(`Failed to insert payment: ${ulid.message} \t code: ${transactionCode}`)
+        const payment = await insertPayment(+amount, transactionCode.toString(), phoneNumber.toString()).catch(e => e as Error)
+        if (!payment || payment instanceof Error) {
+            log.error(`Failed to insert payment: ${payment?.message} \t code: ${transactionCode}`)
             global.channels?.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
             global.channels!.getChannel(channelName)?.terminate()
             return useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
@@ -58,7 +58,7 @@ export default defineEventHandler(async event => {
         if (form) {
             await insertFormPayment({
                 formUlid: form.ulid,
-                paymentUlid: ulid
+                paymentUlid: payment.ulid
             }).catch(e => {
                 log.error(`Failed to insert form payment: ${e.message}`)
                 global.channels!.publish(channelName, { statusCode: Status.internalServerError, body: "Failed to process payment", type: TYPE.ERROR, channel: channelName })
@@ -67,7 +67,7 @@ export default defineEventHandler(async event => {
                 useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500)
             })
             try {
-                funcall?.(ulid)
+                funcall?.(payment)
             } catch (e) {
                 log.error(e)
                 log.warn("Error on callback", funcall)

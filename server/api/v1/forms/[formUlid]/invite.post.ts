@@ -91,9 +91,6 @@ export default defineEventHandler(async (event) => {
 			paymentUlid: null,
 		});
 		sendResponseInvites(data.invites, links(group), message);
-		return {
-			statusCode: 204,
-			body: "OK",
-		};
+		return "OK";
 	}
 });

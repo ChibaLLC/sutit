@@ -20,7 +20,7 @@ declare global {
 		string,
 		{
 			form_meta: Drizzle.SutitForm[number]["form_meta"];
-			callback?: (paymentUlid: Drizzle.Payment.select) => any;
+			callback?: (payment: Drizzle.Payment.select) => any;
 		}
 	>;
 }
@@ -40,11 +40,8 @@ export async function processFormPayments(
 	if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
 	global.formPaymentProcessingQueue.set(channel, { form_meta, callback });
 	return {
-		statusCode: 201,
-		body: {
-			merchantRequestID: result.MerchantRequestID,
-			checkoutRequestID: result.CheckoutRequestID,
-		},
+		merchantRequestID: result.MerchantRequestID,
+		checkoutRequestID: result.CheckoutRequestID,
 	};
 }
 

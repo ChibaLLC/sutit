@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import type { FormElementData, InputElementData } from "@chiballc/nuxt-form-builder";
-import { capitalize } from "vue";
-import { routeLocationKey } from "vue-router";
-
 definePageMeta({
 	middleware: "auth",
 });

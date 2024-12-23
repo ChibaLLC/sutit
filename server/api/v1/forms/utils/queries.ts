@@ -285,7 +285,7 @@ export async function getFormsByUser(userUlid: string) {
 export async function insertFormPayment(details: { formUlid: string; paymentUlid: string }) {
 	const processed = await isProcessedFormPayment(details);
 	if (processed) return;
-	await db
+	return db
 		.insert(formPayments)
 		.values({
 			formUlid: details.formUlid,
@@ -310,23 +310,17 @@ export async function insertPayment(amount: number, reference_code: string, phon
 	const processed = await isProcessedPayment(reference_code);
 	if (processed) {
 		log.warn("Attempt to re-process payment", reference_code);
-		return processed.ulid;
+		return processed;
 	}
-
-	const _ulid = ulid();
-	await db
+	const results = await db
 		.insert(payments)
 		.values({
-			ulid: _ulid,
 			amount: amount,
 			referenceCode: reference_code,
 			phoneNumber: phone_number.slice(-9),
 		} satisfies Drizzle.Payment.insert)
-		.catch((e) => {
-			console.error(e);
-			throw e;
-		});
-	return _ulid;
+		.returning();
+	return results.at(0);
 }
 
 export async function isProcessedPayment(ref_code: string) {
@@ -416,16 +410,7 @@ export async function neeedsPay(
 	submitPrice?: number
 ): Promise<[ReconstructedDbForm, boolean]> {
 	if (typeof form === "string") {
-		const data = await getFormByUlid(form).then((data) => {
-			if (!data) {
-				throw createError({
-					statusCode: 404,
-					message: "Form not found",
-				});
-			}
-			return data;
-		});
-		form = data;
+		form = (await getFormByUlid(form))!;
 	}
 
 	if (!form) {
