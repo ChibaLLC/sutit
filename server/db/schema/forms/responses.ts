@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { pgTable, timestamp, varchar, text, pgView, QueryBuilder, integer, boolean } from "drizzle-orm/pg-core";
 import { ulid } from "ulid";
-import { formFields, formGroups, formPages, sutitForms } from "./forms";
+import { formFields, formGroups, formMeta, formPages } from "./forms";
 import { storeItems, stores as _stores } from "./stores";
 
 export const formResponses = pgTable("form_responses", {
@@ -16,7 +16,9 @@ export const formFieldResponses = pgTable("form_field_responses", {
 		.notNull()
 		.references(() => formFields.ulid, { onDelete: "cascade" }),
 	value: text("value"),
-	formResponseUlid: varchar("form_response_ulid").references(() => formResponses.ulid, { onDelete: "cascade" }).notNull(),
+	formResponseUlid: varchar("form_response_ulid")
+		.references(() => formResponses.ulid, { onDelete: "cascade" })
+		.notNull(),
 });
 
 export const formGroupResponses = pgTable("form_group_responses", {
@@ -25,7 +27,7 @@ export const formGroupResponses = pgTable("form_group_responses", {
 	formGroupUlid: varchar("form_group_ulid")
 		.references(() => formGroups.ulid, { onDelete: "no action" })
 		.notNull(),
-	responseUlid: varchar("response_ulid", { length: 255 }).references(() => formFieldResponses.ulid, {
+	responseUlid: varchar("response_ulid", { length: 255 }).references(() => formResponses.ulid, {
 		onDelete: "no action",
 	}),
 });
@@ -60,7 +62,7 @@ const form_elements = qb
 	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
 	.groupBy(formPages.formUlid, formFields.pageUlid)
 	.as("form_elements");
-const stores_items = qb
+const store_items = qb
 	.select({
 		formUlid: _stores.formUlid,
 		itemUlid: storeItems.ulid,
@@ -71,29 +73,52 @@ const stores_items = qb
 	.groupBy(_stores.formUlid, storeItems.storeUlid)
 	.as("store_items");
 
+const form_field_responses = qb
+	.select({
+		formResponseUlid: formFieldResponses.formResponseUlid,
+		fieldUlid: form_elements.fieldUlid,
+		value: formFieldResponses.value,
+		
+		formUlid: form_elements.formUlid,
+	})
+	.from(formFieldResponses)
+	.innerJoin(form_elements, eq(formFieldResponses.fieldUlid, form_elements.fieldUlid))
+	.as("form_field_responses");
+
 export const formResponsesView = pgView("form_responses_view").as(
 	qb
 		.select({
-			responseUlid: formFieldResponses.ulid,
-			fieldUlid: form_elements.fieldUlid,
-			formUlid: form_elements.formUlid,
-			value: formFieldResponses.value,
+			responseUlid: formResponses.ulid,
+			fieldUlid: form_field_responses.fieldUlid,
+			formUlid: form_field_responses.formUlid,
+			value: form_field_responses.value,
+			pricePaid: formResponses.pricePaid,
+			date: formResponses.createdAt
 		})
 		.from(formResponses)
-		.innerJoin(form_elements, eq(formResponses.ulid, form_elements))
+		.innerJoin(form_field_responses, eq(formResponses.ulid, form_field_responses.formResponseUlid))
 );
 
+const store_items_responses = qb
+	.select({
+		storeResponseUlid: itemResponses.storeResponseUlid,
+		itemUlid: store_items.itemUlid,
+		value: itemResponses.value,
+		formUlid: store_items.formUlid,
+	})
+	.from(itemResponses)
+	.innerJoin(store_items, eq(itemResponses.itemUlid, store_items.itemUlid))
+	.as("store_items_responses");
 export const storeResponsesView = pgView("store_responses_view").as(
 	qb
 		.select({
-			responseUlid: itemResponses.ulid,
-			itemUlid: stores_items.itemUlid,
-			formUlid: stores_items.formUlid,
-			value: itemResponses.value,
-			date: itemResponses.createdAt,
-			liked: itemResponses.liked,
-			carted: itemResponses.carted,
+			responseUlid: storeResponses.ulid,
+			itemUlid: store_items_responses.itemUlid,
+			formUlid: store_items_responses.formUlid,
+			value: store_items_responses.value,
+			pricePaid: storeResponses.pricePaid,
+			date: storeResponses.createdAt
 		})
-		.from(itemResponses)
-		.innerJoin(stores_items, eq(itemResponses.itemUlid, stores_items.formUlid))
+		.from(storeResponses)
+		.innerJoin(store_items_responses, eq(storeResponses.ulid, store_items_responses.storeResponseUlid))
 );

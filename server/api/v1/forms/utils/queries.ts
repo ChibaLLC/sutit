@@ -14,6 +14,8 @@ import {
 	type PhoneInvite,
 	type EmailInvite,
 	formResponsesView,
+	formResponses,
+	storeResponses,
 } from "~~/server/db/schema";
 import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -203,28 +205,43 @@ export async function getFormByUlid(formUlid: string) {
 }
 
 export async function insertData(formUlid: string, data: ReconstructedDbForm, price_paid?: number) {
-	const formResponseInsertList: Drizzle.FormResponses.insert[] = [];
+	const formResponse = (
+		await db
+			.insert(formResponses)
+			.values({
+				pricePaid: price_paid,
+			})
+			.returning()
+	).at(0);
+	if (!formResponse) {
+		throw createError({
+			statusCode: 500,
+			message: "Unable to create a form response",
+		});
+	}
+	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
 	for (const key in data.pages) {
 		const page = data.pages[key];
 		for (const element of page || []) {
-			formResponseInsertList.push({
+			formfieldResponseInsertList.push({
 				value: element.value,
 				fieldUlid: element.fieldUlid,
+				formResponseUlid: formResponse.ulid,
 			});
 		}
 	}
-	const formResponse = await db.insert(formFieldResponses).values(formResponseInsertList).returning();
-	await db
-		.select()
+	db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
+	db.select()
 		.from(stores)
 		.where(eq(stores.formUlid, formUlid))
-		.then((stores) => {
+		.then(async (stores) => {
 			if (!stores.length) return;
 
-			const storeResponseInsertList: Drizzle.StoreResponses.insert[] = [];
+			const storeResponseInsertList: Omit<Drizzle.StoreItemResponse.insert, "storeResponseUlid">[] = [];
 			for (const key in data.stores) {
 				const store = data.stores[key];
 				for (const item of store || []) {
+					if (!(item.carted || item.liked)) continue;
 					storeResponseInsertList.push({
 						value: item.name,
 						liked: item.liked,
@@ -234,10 +251,27 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm, pr
 				}
 			}
 
-			db.insert(itemResponses).values(storeResponseInsertList);
+			if (storeResponseInsertList.length) {
+				const storeResponse = (
+					await db
+						.insert(storeResponses)
+						.values({
+							pricePaid: price_paid,
+						})
+						.returning()
+				).at(0);
+				if (!storeResponse) {
+					throw createError({
+						message: "Unable to create a store response",
+					});
+				}
+				db.insert(itemResponses).values(
+					storeResponseInsertList.map((item) => ({ ...item, storeResponseUlid: storeResponse.ulid }))
+				);
+			}
 		});
 
-	return formResponse.at(0)!;
+	return formResponse;
 }
 
 export async function getFormsByUser(userUlid: string) {

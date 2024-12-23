@@ -32,7 +32,6 @@ export async function getFormResponses(formUlId: string) {
 		.from(formGroupResponses)
 		.where(eq(formGroupResponses.formUlid, formUlId))
 		.innerJoin(formGroups, eq(formGroupResponses.formGroupUlid, formGroups.ulid));
-	const form_payments_promise 
 
 	const [form_responses, store_response, group_responses] = await Promise.all([
 		form_responses_promise,

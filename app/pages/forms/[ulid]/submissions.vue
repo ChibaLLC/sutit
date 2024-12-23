@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FormElementData, InputElementData } from "@chiballc/nuxt-form-builder";
 import { capitalize } from "vue";
+import { routeLocationKey } from "vue-router";
 
 definePageMeta({
 	middleware: "auth",
@@ -19,37 +20,40 @@ const { form, form_responses, group_responses, store_response } = await useFetch
 }).then(({ data }) => data.value!);
 
 function bubblePrice(response: (typeof form_responses)[number]) {
-  const group = group_responses.find(group_response => group_response.responseUlid === response.responseUlid)
-  if (group) {
-    return `Via group ${group.groupName}`
-  } else {
-    return form.meta.price_individual ?? 0
-  }
+	const group = group_responses.find((group_response) => group_response.responseUlid === response.responseUlid);
+	if (group) {
+		return `Via group ${group.groupName}`;
+	} else {
+		return response.pricePaid;
+	}
 }
 
-function collectFields(pages: Record<string, FormElementData[]>) {
-	return Object.values(pages || {}).reduce((acc, page) => {
-		return acc.concat(page);
-	}, []);
-}
-
-function* getData() {
-	if (!form_responses) return [];
+function collectFields() {
+	const map = new Map<string, (typeof form.pages)[number][number]>();
 	for (const key in form.pages) {
 		const page = form.pages[key];
-		if (!page) continue;
-		for (const response of form_responses) {
-			const field = page.find((response) => response.fieldUlid === response.fieldUlid) as InputElementData;
-			if (!field) {
-				log.warn("Field for response not found. Skipping...", response, fields);
-				continue;
-			}
-			yield {
-				...field,
-				value: response.value
-			};
+		if (page) {
+			page.forEach((element) => {
+				map.set(element.fieldUlid, element);
+			});
 		}
 	}
+
+	return map;
+}
+
+function getData() {
+	if (!form_responses) return [];
+	const rows = new Map<string, (typeof form_responses)[number][]>();
+	form_responses.forEach((response) => {
+		const row = rows.get(response.responseUlid);
+		if (row) {
+			row.push(response);
+		} else {
+			rows.set(response.responseUlid, [response]);
+		}
+	});
+	return rows;
 }
 
 const hasPayment = computed(() => {
@@ -59,8 +63,8 @@ const hasPayment = computed(() => {
 	);
 });
 
-const fields = computed(() => collectFields((form?.pages as Record<number, DbPage>) || {}));
-const loadingExcel = ref(false)
+const fields = collectFields();
+const loadingExcel = ref(false);
 async function downloadExcel() {
 	loadingExcel.value = true;
 	const res = await $fetch<Blob>(`/api/v1/forms/${ulid}/submissions/excel`, {
@@ -184,6 +188,22 @@ function addBuyGoods() {
 watch([phone, con_phone], () => {
 	noMatch.value = !!(con_phone.value && con_phone.value !== phone.value);
 });
+
+function* getFields(data: typeof form_responses) {
+	for (const datum of data) {
+		const field = fields.get(datum.fieldUlid);
+		let result = {};
+		if (field) {
+			result = {
+				...datum,
+				...field,
+			};
+		} else {
+			console.warn(datum.fieldUlid, "Reply with this fieldUlid not found in the created form fields");
+		}
+		yield result as typeof field & typeof datum;
+	}
+}
 </script>
 
 <template>
@@ -284,26 +304,29 @@ watch([phone, con_phone], () => {
 					<thead class="text-xs text-slate-900 uppercase bg-gray-5 rounded-t">
 						<tr class="text-left border-b bg-slate-200 border-slate-200">
 							<th class="px-6 py-4">#</th>
-							<th v-for="field in fields" class="px-6 py-3">
-								{{ field.label }}
+							<th v-for="[_, field] of fields" class="px-6 py-3">
+								{{
+									// @ts-expect-error
+									field.label
+								}}
 							</th>
 							<th v-if="hasPayment" class="px-6 py-3">Payment</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-200 text-white border-b">
 						<tr
-							v-for="(data, index) in getData()"
+							v-for="([_, row], index) of getData()"
 							class="text-sm text-slate-700 cursor-pointer hover:bg-slate-200"
 						>
 							<td class="px-6 py-4">{{ index + 1 }}</td>
-							<td v-for="column of data" class="max-w-[30px]">
+							<td v-for="field of getFields(row)" class="max-w-[30px]">
 								<div
 									v-html="
-										Array.isArray(column.value)
-											? `<div class='text-ellipsis self-start hover:max-h-fit'>${column.value.join(
+										Array.isArray(field.value)
+											? `<div class='text-ellipsis self-start hover:max-h-fit'>${field.value.join(
 													'<br>'
 											  )}</div>`
-											: column.value
+											: field.value
 									"
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"
 								></div>
