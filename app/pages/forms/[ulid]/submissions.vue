@@ -19,7 +19,8 @@ const { form, form_responses, group_responses, store_response } = await useFetch
 	},
 }).then(({ data }) => data.value!);
 
-function bubblePrice(response: (typeof form_responses)[number]) {
+function bubblePrice(response?: (typeof form_responses)[number]) {
+	if (!response) return "UNKNOWN";
 	const group = group_responses.find((group_response) => group_response.responseUlid === response.responseUlid);
 	if (group) {
 		return `Via group ${group.groupName}`;
@@ -331,7 +332,7 @@ function* getFields(data: typeof form_responses) {
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"
 								></div>
 							</td>
-							<td v-if="hasPayment" class="px-6 py-4">KES {{ form.meta.price_individual }}</td>
+							<td v-if="hasPayment" class="px-6 py-4">KES {{ bubblePrice(row.at(0)) ?? 0 }}</td>
 						</tr>
 					</tbody>
 				</table>
