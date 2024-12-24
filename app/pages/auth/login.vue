@@ -40,6 +40,7 @@ async function submit() {
 	} else {
 		await navigateTo("/");
 	}
+	loading.value = false
 }
 
 const loadingGithub = ref(false);
