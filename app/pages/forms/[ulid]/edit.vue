@@ -1,35 +1,40 @@
 <script setup lang="ts">
+import type { Pages, Stores } from "@chiballc/nuxt-form-builder";
+
 definePageMeta({
 	middleware: ["auth"],
 	layout: "novbar",
 });
 
 const ulid = useRoute().params?.ulid;
-const response = await useFetch<APIResponse<ReconstructedDbForm>>(`/api/v1/forms/${ulid}`, {
+const { data: response } = await useFetch<ReconstructedDbForm>(`/api/v1/forms/${ulid}`, {
 	onResponseError({ response }) {
 		console.log(response);
 	},
-}).then(({ data }) => data.value?.body);
+});
 
-const submitData = reactive({
-	name: response!.meta.formName,
-	description: response?.meta.formDescription,
-	allowGroups: response?.meta.allowGroups || false,
-	form: {
-		pages: response?.pages || {},
-		stores: response?.stores || {},
-	},
-	payment: {
-		amount: response?.meta.price_individual,
-		group_amount: response?.meta.price_group,
-		group_limit: response?.meta.group_member_count,
-		group_message: response?.meta.group_invite_message || "",
-	},
-	requireMerch: response?.meta.requireMerch || false,
+const submitData = computed(() => {
+	if (!response.value) return undefined;
+	return {
+		name: response.value.meta.formName,
+		description: response.value.meta.formDescription,
+		allowGroups: response.value.meta.allowGroups || false,
+		form: {
+			pages: response.value.pages as Pages,
+			stores: response.value.stores as Stores,
+		},
+		payment: {
+			amount: response.value.meta.price_individual,
+			group_amount: response.value.meta.price_group,
+			group_limit: response.value.meta.group_member_count,
+			group_message: response.value.meta.group_invite_message,
+		},
+		requireMerch: response.value.meta.requireMerch || false,
+	};
 });
 
 async function submit(data: any) {
-	const res = await $fetch<APIResponse>(`/api/v1/forms/${response?.meta.ulid}/update`, {
+	const res = await $fetch(`/api/v1/forms/${response.value?.meta.ulid}/update`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -41,11 +46,9 @@ async function submit(data: any) {
 		},
 	});
 
-	if (res?.statusCode < 299) {
+	if (res) {
 		alert("Form updated successfully");
 		await navigateTo("/forms");
-	} else {
-		alert(res.body);
 	}
 }
 </script>

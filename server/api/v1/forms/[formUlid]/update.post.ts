@@ -3,15 +3,12 @@ import { formUpdateSchema } from "../utils/zod";
 
 export default defineEventHandler(async (event) => {
 	const formUlid = event.context.params?.formUlid;
-	if (!formUlid)
-		return useHttpEnd(
-			event,
-			{
-				statusCode: Status.badRequest,
-				body: "No form ID provided",
-			},
-			Status.badRequest
-		);
+	if (!formUlid) {
+		throw createError({
+			statusCode: 400,
+			message: "No form ID provided",
+		});
+	}
 
 	const { user } = await useAuth(event);
 	const { data, error } = await readValidatedBody(event, formUpdateSchema.safeParse);
@@ -20,15 +17,8 @@ export default defineEventHandler(async (event) => {
 			statusCode: 400,
 			data: error,
 		});
-	}    
+	}
 
-	const form_meta = await updateForm(data, user).catch((err) => {
-		log.error(err);
-		throw createError({
-			message: err.message || "Unknown error occurred while updating the form",
-			statusCode: Status.internalServerError,
-		});
-	});
-
+	const form_meta = await updateForm(data, user);
 	return form_meta;
 });

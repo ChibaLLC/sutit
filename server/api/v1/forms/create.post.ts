@@ -14,7 +14,7 @@ export default defineEventHandler(async event => {
         log.error(err)
         throw createError({
             message: err.message || "Unknown error occurred while creating the form",
-            statusCode: Status.internalServerError
+            statusCode: 500
         })
     })
 

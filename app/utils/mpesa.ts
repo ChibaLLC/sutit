@@ -45,19 +45,19 @@ function ParseRealTimePaymentData(data: SocketTemplate, loading: Ref, rerender: 
 			return "done";
 		case TYPE.ERROR:
 			switch (data.statusCode) {
-				case Status.badRequest:
+				case 400:
 					log.error(data.body);
 					rerender.value = true;
 					loading.value = false;
 					if (complete) complete.value = false;
 					return "error";
-				case Status.internalServerError:
+				case 500:
 					log.error(data);
 					rerender.value = true;
 					loading.value = false;
 					if (complete) complete.value = false;
 					return "error";
-				case Status.unprocessableEntity:
+				case 422:
 					window.alertError(data.body);
 					rerender.value = true;
 					loading.value = false;

@@ -38,7 +38,7 @@ export async function readStream<T>(
 
 type Events = "data" | "text" | "end"
 class Emitter {
-    private readonly _events: Record<Events, Array<(data: APIResponse) => void>>;
+    private readonly _events: Record<Events, Array<(data: any) => void>>;
     private _backpressure: Record<Events, any>
 
     constructor() {
@@ -54,7 +54,7 @@ class Emitter {
         }
     }
 
-    on(event: Events, callback: (data: APIResponse) => void) {
+    on(event: Events, callback: (data: any) => void) {
         this._backpressure[event].forEach(callback)
         this._events[event].push(callback)
     }
@@ -107,7 +107,7 @@ export async function useStream(url: NitroFetchRequest, options?: NitroFetchOpti
     if (response instanceof ReadableStream) {
         const e = new Emitter()
         // DO NOT await
-        readStream(response.getReader(), (data: APIResponse) => {
+        readStream(response.getReader(), (data: any) => {
             e.emit("data", data)
         }, (text: string) => {
             e.emit("text", text)

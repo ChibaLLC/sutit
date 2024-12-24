@@ -6,21 +6,20 @@ const ulid = route.params?.ulid;
 const rerender = ref(false);
 const complete = ref(false);
 
-const res = await useFetch<APIResponse<ReconstructedDbForm>>(`/api/v1/forms/${ulid}`, {
+const { data } = await useFetch<ReconstructedDbForm>(`/api/v1/forms/${ulid}`, {
 	onResponseError({ response }) {
 		console.log(response);
 	},
-}).catch(console.error);
+});
 
-const data = res?.data.value?.body || ({} as ReconstructedDbForm);
 const paymentModal = ref(false);
 const payment_details = ref<{ phone: string; token?: string }>({
 	phone: "",
 	token: token?.toString().trim(),
 });
 
-function hasPrice(form: ReconstructedDbForm): boolean {
-	return !!form.meta.price_individual;
+function hasPrice(form?: ReconstructedDbForm): boolean {
+	return !!form?.meta.price_individual;
 }
 
 function hasPhone() {
@@ -30,20 +29,20 @@ function hasPhone() {
 async function processForm() {
 	loading.value = true;
 	paymentModal.value = false;
-	if (group.self && data.meta && !hasBoughtMerch(data.stores)) {
+	if (group.self && data.value?.meta && !hasBoughtMerch(data.value.stores)) {
 		loading.value = false;
 		return window.alertError("You need to get something from the store section of this form!");
 	}
-	if (data?.meta?.allowGroups && !group.self) {
+	if (data.value?.meta?.allowGroups && !group.self) {
 		return processInvites();
 	}
 
-	if (hasPrice(data) && !hasPhone()) {
+	if (hasPrice(data.value) && !hasPhone()) {
 		paymentModal.value = true;
-	} else if (hasPrice(data) && hasPhone()) {
+	} else if (hasPrice(data.value) && hasPhone()) {
 		console.log("Submitting paid form", data);
 		await submit();
-	} else if (!hasPrice(data)) {
+	} else if (!hasPrice(data.value)) {
 		console.log("Submitting unpaid form", data);
 		await submit();
 	}
@@ -78,10 +77,11 @@ async function submit() {
 }
 
 function addCharge(amount: number) {
-	if (data.meta.price_individual) {
-		data.meta.price_individual += amount;
+	if (!data.value) return;
+	if (data.value.meta.price_individual) {
+		data.value.meta.price_individual += amount;
 	} else {
-		data.meta.price_individual = amount;
+		data.value.meta.price_individual = amount;
 	}
 }
 
@@ -92,7 +92,7 @@ function goBack() {
 }
 
 function goBack2() {
-	if (data?.meta?.allowGroups && group.chosen) {
+	if (data.value?.meta?.allowGroups && group.chosen) {
 		group.chosen = false;
 		group.self = false;
 		rerender.value = true;
@@ -223,8 +223,8 @@ async function processInvites() {
 </script>
 
 <template>
-	<Title>Form | {{ data.meta?.formName }}</Title>
-	<div class="flex min-h-screen">
+	<div class="flex min-h-screen" v-if="data">
+		<Title>Form | {{ data.meta?.formName }}</Title>
 		<div class="flex flex-col p-2 w-full max-w-[820px] ml-auto mr-auto shadow-2xl h-fit mt-4 rounded-md">
 			<div class="header">
 				<h1 class="text-2xl p-2 font-bold flex items-center content-center">

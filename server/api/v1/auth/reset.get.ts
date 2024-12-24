@@ -1,35 +1,31 @@
-import {getUserByEmail} from "~~/server/api/v1/users/utils/queries";
-import {createToken} from "~~/server/api/v1/auth/utils/queries";
+import { getUserByEmail } from "~~/server/api/v1/users/utils/queries";
+import { createToken } from "~~/server/api/v1/auth/utils/queries";
+import { z } from "zod";
 
-export default defineEventHandler(async event => {
-    const response = {} as APIResponse
-    const { email, origin, redirect } = getQuery(event)
-    if (!email || !origin) {
-        response.statusCode = Status.badRequest
-        response.body = "Email and Origin are required"
-        return response
-    }
-    const user = await getUserByEmail(email.toString()).catch(err => err as Error)
-    if (user instanceof Error) {
-        response.statusCode = Status.notFound
-        response.body = user.message
-        return response
-    }
-    if (!user) {
-        response.statusCode = Status.notFound
-        response.body = "User not found"
-        return response
-    }
+export default defineEventHandler(async (event) => {
+	const qSchema = z.object({
+		email: z.string(),
+		origin: z.string(),
+		redirect: z.string().optional(),
+	});
+	const { data, error } = await getValidatedQuery(event, qSchema.safeParse);
+	if (error) {
+		throw createError({
+			statusCode: 400,
+			message: error.message,
+			data: error,
+		});
+	}
 
-    const token = await createToken({ userUlid: user.ulid, email: user.email }).catch(err => err as Error)
-    if (token instanceof Error) {
-        response.statusCode = Status.internalServerError
-        response.body = token.message
-        return response
-    }
-
-    await mailResetPasswordLink(email.toString(), origin.toString(), token, redirect?.toString())
-    response.statusCode = Status.success
-    response.body = "Reset link sent"
-    return response
-})
+	const { email, origin, redirect } = data;
+	const user = await getUserByEmail(email);
+	if (!user) {
+		throw createError({
+			statusCode: 404,
+			message: "User not found",
+		});
+	}
+	const token = await createToken({ userUlid: user.ulid, email: user.email });
+	mailResetPasswordLink(email, origin, token, redirect);
+	return "OK";
+});

@@ -8,18 +8,8 @@ export default defineEventHandler(async (event) => {
 			message: "No formUlid provided",
 		});
 	}
-
 	const { user } = await useAuth(event);
-
-	const result = await deleteUserForm(user.ulid, formUlid).catch((e: Error) => e);
-	if (result instanceof Error) {
-		return createError({
-			status: 500,
-			data: result,
-			message: result.message,
-		});
-	}
-
+	await deleteUserForm(user.ulid, formUlid)
 	return createResponse({
 		statusCode: 200,
 		statusMessage: "OK",

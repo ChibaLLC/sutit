@@ -1,4 +1,4 @@
-import type { FormElementData, Item, Page, Pages, Store, Stores } from "@chiballc/nuxt-form-builder";
+import type { FormElementData, Item } from "@chiballc/nuxt-form-builder";
 
 export type { Drizzle } from "~~/server/db";
 
@@ -7,40 +7,12 @@ export interface Response {
 	body?: any;
 }
 
-export type APIResponse<T = any> = {
-	statusCode: number;
-	body?: T;
-};
-
 export enum SocketStatus {
 	OPEN = "OPEN",
 	CLOSED = "CLOSED",
 	UNKNOWN = "UNKNOWN",
 	CONNECTING = "CONNECTING",
 	SHUTDOWN = "SHUTDOWN",
-}
-
-export enum Status {
-	success = 200,
-	created = 201,
-	accepted = 202,
-	noContent = 204,
-	whatsappWebQR = 203,
-	whatsappWebReady = 220,
-	whatsappWebMessage = 206,
-	SSEStart = 207,
-	badRequest = 400,
-	unauthorized = 401,
-	forbidden = 403,
-	notFound = 404,
-	conflict = 409,
-	unprocessableEntity = 422,
-	notPaid = 429,
-	internalServerError = 500,
-	notImplemented = 501,
-	badGateway = 502,
-	serviceUnavailable = 503,
-	gatewayTimeout = 504,
 }
 
 export type CloudAPI = {

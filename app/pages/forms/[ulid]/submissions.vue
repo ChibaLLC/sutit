@@ -87,14 +87,14 @@ async function downloadExcel() {
 	a.remove();
 }
 
-const total = await useFetch<APIResponse<number>>(`/api/v1/forms/${ulid}/submissions/total`, {
+const {data: total} = await useFetch(`/api/v1/forms/${ulid}/submissions/total`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
 	onResponseError({ response }) {
 		console.log(response);
 	},
-}).then(({ data }) => data.value?.body);
+});
 
 const loadingCheckout = ref(false);
 const phone = ref("");
@@ -107,7 +107,7 @@ const checkoutMethod = ref<CreditMethod | null>(null);
 async function credit() {
 	loadingCheckout.value = true;
 	showCreditMethodsModal.value = false;
-	const res = await $fetch<APIResponse>(`/api/v1/forms/${ulid}/credit`, {
+	await $fetch(`/api/v1/forms/${ulid}/credit`, {
 		method: "POST",
 		headers: {
 			Authorization: `Bearer ${getAuthToken()}`,
@@ -121,15 +121,7 @@ async function credit() {
 			console.log(error);
 			loadingCheckout.value = false;
 		},
-	}).catch((err) => {
-		console.log(err);
-		loadingCheckout.value = false;
-		alert("Failed to credit, an error occurred");
-	});
-
-	if (res?.statusCode === Status.success) {
-		alert("Credited successfully");
-	}
+	})
 	loadingCheckout.value = false;
 }
 

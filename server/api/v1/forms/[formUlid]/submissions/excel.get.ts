@@ -1,35 +1,25 @@
-import {getFormResponses} from "./utils/queries";
-import {constructExcel} from "./utils";
+import { getFormResponses } from "./utils/queries";
+import { constructExcel } from "./utils";
 
-export default  defineEventHandler(async event => {
-    const formUlid = event.context.params?.formUlid
-    if (!formUlid) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form ID provided"
-    }, Status.badRequest)
+export default defineEventHandler(async (event) => {
+	const formUlid = event.context.params?.formUlid;
+	if (!formUlid) {
+		throw createError({
+			statusCode: 400,
+			message: "No form ID provided",
+		});
+	}
 
-    const [details, error] = await useAuth(event)
-    if (error || !details) return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Unauthorized"
-    })
+	const { user } = await useAuth(event);
 
-    const submissions = await getFormResponses(formUlid).catch(err => err as Error)
-    if (submissions instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: submissions.message || "Unknown error while getting form submissions"
-    }, Status.internalServerError)
+	const submissions = await getFormResponses(formUlid);
 
-    const excel = await constructExcel(submissions, details.user).catch(err => err as Error)
-    if (excel instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: excel.message || "Unknown error while constructing excel"
-    }, Status.internalServerError)
+	const excel = await constructExcel(submissions, user);
 
-    return new Response(await excel.writeBuffer(), {
-        headers: {
-            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition': `attachment; filename=${formUlid}.xlsx`
-        }
-    })
-})
+	return new Response(await excel.writeBuffer(), {
+		headers: {
+			"Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			"Content-Disposition": `attachment; filename=${formUlid}.xlsx`,
+		},
+	});
+});

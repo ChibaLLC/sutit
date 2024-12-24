@@ -10,5 +10,6 @@ export async function insertWithdrawal(amount: number, transactionCode: string) 
 			amount,
 			transactionCode,
 		} satisfies Drizzle.Withdrawals.insert)
+		.returning()
 		.execute();
 }
