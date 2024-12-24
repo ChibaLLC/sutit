@@ -19,7 +19,7 @@ type FormData = {
 };
 
 const emits = defineEmits<{
-	submit: [Form];
+	submit: [FormData];
 }>();
 const props = defineProps({
 	starter: {
@@ -89,7 +89,7 @@ async function submit(form: Form) {
 		alert("Please add a form or a store");
 	}
 
-	emits("submit", form);
+	emits("submit", data.value);
 }
 
 onMounted(() => {

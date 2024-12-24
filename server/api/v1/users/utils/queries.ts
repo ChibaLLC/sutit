@@ -42,13 +42,15 @@ export async function createUser(data: { name?: string; email: string; password:
 		ulid: ulid(),
 	} satisfies Drizzle.User.insert;
 
-	return db
-		.insert(users)
-		.values(values)
-		.catch((err) => {
-			log.error(err.message || err, { type: err?.code === "23505" ? "error" : "fatal" });
-			return Promise.reject(err);
+	const user = await getUserByEmail(data.email);
+	if (user) {
+		throw createError({
+			statusCode: 409,
+			message: "This user already exists",
 		});
+	}
+
+	return db.insert(users).values(values);
 }
 
 export async function deleteUser(ulid: string) {

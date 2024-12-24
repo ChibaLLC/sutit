@@ -13,7 +13,7 @@ async function submit() {
 	if (loading.value) return;
 	loading.value = true;
 
-	await $fetch("/api/v1/auth/login", {
+	const token = await $fetch("/api/v1/auth/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -22,29 +22,24 @@ async function submit() {
 			email: details.email,
 			password: details.password,
 		},
-		async onResponse({ response }) {
-			const res = response._data;
-			loading.value = false;
-
-			if (res.statusCode === 200) {
-				setAuthCookie(res.body);
-				if (!remember.value) {
-					window.addEventListener("beforeunload", () => {
-						setAuthCookie(undefined);
-					});
-				}
-				(await useUser()).value!.token = res.body;
-				if (redirect) {
-					if (typeof redirect !== "string") throw new Error("Redirect Error");
-					await navigateTo(redirect);
-				} else {
-					await navigateTo("/");
-				}
-			} else {
-				window.alertError(res.body || "An unknown error occurred");
-			}
+		async onResponseError({ error }) {
+			window.alertError(unWrapFetchError(error));
 		},
 	});
+
+	setAuthCookie(token);
+	if (!remember.value) {
+		window.addEventListener("beforeunload", () => {
+			setAuthCookie(undefined);
+		});
+	}
+	(await useUser()).value!.token = token;
+	if (redirect) {
+		if (typeof redirect !== "string") throw new Error("Redirect Error");
+		await navigateTo(redirect);
+	} else {
+		await navigateTo("/");
+	}
 }
 
 const loadingGithub = ref(false);
@@ -77,7 +72,7 @@ function clickGoogleBtn() {
 }
 
 async function onSignIn(googleCrdential: GoogleCredential) {
-	const response = await $fetch("/api/v1/auth/callbacks/google", {
+	const token = await $fetch("/api/v1/auth/callbacks/google", {
 		method: "POST",
 		body: googleCrdential,
 		async onResponse({ response }) {
@@ -88,14 +83,14 @@ async function onSignIn(googleCrdential: GoogleCredential) {
 			}
 		},
 	});
-	if (response) {
-		setAuthCookie(response);
+	if (token) {
+		setAuthCookie(token);
 		if (!remember.value) {
 			window.addEventListener("beforeunload", () => {
 				setAuthCookie(undefined);
 			});
 		}
-		(await useUser()).value!.token = response;
+		(await useUser()).value!.token = token;
 		navigateTo("/");
 	}
 	loadingGoogle.value = false;

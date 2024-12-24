@@ -1,39 +1,15 @@
 import { defineConfig } from "drizzle-kit";
+import { assertEnv } from "./shared/utils/data";
 
-const configHasNullValues = (config: any) => {
-	return Object.keys(config).some((key) => config[key] == undefined);
-};
-
-const dbUrlString: string | undefined = process.env.DATABASE_URL;
-let dbUrl: URL | undefined = undefined;
-try {
-	dbUrl = new URL(dbUrlString || "");
-} catch (_) {}
-
-const config = {
-	host: dbUrl?.hostname || process.env.DB_HOST,
-	port: parseInt(dbUrl?.port || "0") || parseInt(process.env.DB_PORT || "0"),
-	user: dbUrl?.username || process.env.DB_USER,
-	password: dbUrl?.password || process.env.DB_PASSWORD,
-	database: dbUrl?.pathname.replace("/", "") || process.env.DB_DATABASE,
-};
-
-if (configHasNullValues(config)) {
-	throw new Error("Missing database credentials. Please check your .env file.");
-}
-
-export const credentials = config;
+var url = new URL(assertEnv(process.env.DATABASE_URL, "DATABASE_URL"));
+export const credentials = url;
 export default defineConfig({
 	schema: "./server/db/schema/index.ts",
-	driver: "pg",
 	dbCredentials: {
-		host: config.host!,
-		port: config.port,
-		user: config.user,
-		password: config.password,
-		database: config.database!,
+		url: url.href,
 	},
 	verbose: true,
 	strict: false,
 	out: "./server/db/drizzle",
+	dialect: "postgresql",
 });

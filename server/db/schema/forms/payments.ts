@@ -1,7 +1,7 @@
 import {pgTable, primaryKey, timestamp, varchar} from "drizzle-orm/pg-core";
-import {stores} from "~~/server/db/schema/forms/stores";
-import {payments} from "~~/server/db/schema/mpesa/payments";
-import {formMeta} from "~~/server/db/schema/forms/forms";
+import {stores} from "./stores";
+import {payments} from "../mpesa/payments";
+import {formMeta} from "./forms";
 
 export const storePayments = pgTable(
     "store_payments",

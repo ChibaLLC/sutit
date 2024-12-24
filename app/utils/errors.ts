@@ -65,6 +65,10 @@ function formatErrorMessage(message: any) {
 
 export function unWrapFetchError(response: (Response & { _data: any }) | any, html?: true | "none") {
 	let message = "Unknown error occurred";
+	if (!response) return message;
+	if (response.response) {
+		return unWrapFetchError(response.response);
+	}
 	if (response?._data) {
 		if (response._data?.message || response?._data?.body) {
 			message = formatErrorMessage(

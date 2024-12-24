@@ -220,12 +220,16 @@ export function deleteArrayItems<T>(
 	return arr;
 }
 
-export function assert<T>(value: T, message?: string): value is T {
+export function assert<T>(value: T, message?: string): NonNullable<T> {
 	if (!value) {
 		throw createError({
 			statusCode: 400,
 			message: message || "Expected a value but nullish found",
 		});
 	}
-	return true;
+	return value;
+}
+
+export function assertEnv<T>(value: T, name: string){
+	return assert(value, `Env variable ${name} not found. Please include it with a non-empty value`)
 }

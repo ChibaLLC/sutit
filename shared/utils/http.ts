@@ -77,13 +77,13 @@ class Emitter {
  * stream.on("data", (data) => {
  *      console.log(data)
  *      // do something with the data
- *      // data will be normalised to an APIResponse object
+ *      // data will be normalised to a JSON object
  * })
  *
  * stream.on("text", (text) => {
  *      console.log(text)
  *      // do something with the text
- *      // text will be a string, which can not be normalised to an APIResponse object
+ *      // text will be a string, which can not be normalised to a JSON object
  * })
  * stream.on("end", () => {
  *      console.log("Stream ended")

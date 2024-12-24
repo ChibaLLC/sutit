@@ -1,5 +1,4 @@
 import {test, expect} from "vitest";
-import type {APIResponse} from "../shared/types";
 
 test('Testing for authentication', async () => {
     const response = await fetch('http://localhost:3000/api/v1/auth/login', {
@@ -13,6 +12,6 @@ test('Testing for authentication', async () => {
         })
     })
     expect(response.status).toBe(403)
-    const res = await response.json() as APIResponse
-    expect(res.body).toBe('key')
+    const res = await response.json()
+    expect(res).toBe('key')
 })

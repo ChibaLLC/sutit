@@ -50,12 +50,15 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 		});
 	}
 
-	db.insert(formPages)
-		.values(pagesData)
-		.execute()
-		.then(() => {
-			db.insert(formFields).values(fieldsData).execute;
-		});
+	if (pagesData.length) {
+		db.insert(formPages)
+			.values(pagesData)
+			.execute()
+			.then(() => {
+				if (!fieldsData.length) return;
+				db.insert(formFields).values(fieldsData).execute;
+			});
+	}
 
 	const storeData: Drizzle.Store.insert[] = [];
 	const itemsData: Drizzle.StoreItem.insert[] = [];
@@ -79,12 +82,15 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 		});
 	}
 
-	db.insert(stores)
-		.values(storeData)
-		.execute()
-		.then(() => {
-			db.insert(storeItems).values(itemsData).execute();
-		});
+	if (storeData.length) {
+		db.insert(stores)
+			.values(storeData)
+			.execute()
+			.then(() => {
+				if (!itemsData.length) return;
+				db.insert(storeItems).values(itemsData).execute();
+			});
+	}
 }
 
 export async function createForm(data: z.infer<typeof formCreateSchema>, { user }: AuthData) {
@@ -445,7 +451,7 @@ export async function getRecentForms(userUlid: string) {
 		.from(sutitForms)
 		.where(eq(sutitForms.form_meta.userUlid, userUlid))
 		.limit(5)
-		.orderBy(desc(sutitForms.form_meta.updatedAt));
+		.orderBy(desc(sutitForms.form_meta.createdAt));
 }
 
 export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {
