@@ -79,8 +79,10 @@ async function submit() {
 					formResponse: string;
 				}, ["formMail"])
 			) {
-				// @ts-expect-error
-				message += " An confirmation email has been sent to " + response.formMail;
+				message += " An confirmation email has been sent to " + (response as {
+					formMail: string;
+					formResponse: string;
+				}).formMail;
 			}
 			window.alertSuccess(message, { timeout: "never" });
 			await navigateTo("/");

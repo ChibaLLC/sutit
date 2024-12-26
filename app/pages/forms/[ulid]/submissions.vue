@@ -137,7 +137,7 @@ const hasPay = hasPayment(form as ReconstructedDbForm)
 </script>
 
 <template>
-	<Title>Submissions | {{ ulid }}</Title>
+	<Title>Submissions | {{ form.meta.formName }}</Title>
 	<div class="flex min-h-screen w-full">
 		<main class="w-full flex flex-col items-center max-w-[1200px] mx-auto">
 			<div class="mt-4 w-full flex justify-between items-center px-10">

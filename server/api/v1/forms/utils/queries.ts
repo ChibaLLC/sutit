@@ -19,78 +19,120 @@ import {
 } from "~~/server/db/schema";
 import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
-import { and, eq, desc, sum, count } from "drizzle-orm";
+import { and, eq, desc, sum, count, inArray } from "drizzle-orm";
 import { ulid } from "ulid";
 import { z } from "zod";
 import { formBodyData } from "./zod";
+import { updateConflictedColumns } from "~~/server/utils/db";
+import type { Form, Page, Store } from "@chiballc/nuxt-form-builder";
 
-function insertFormFields(data: z.infer<typeof formBodyData> & {ulid: string}) {
-	const fieldsData: Drizzle.FormFields.insert[] = [];
-	const pagesData: Drizzle.FormPages.insert[] = [];
+async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
+	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
+	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
 	for (const index in data.form.pages) {
-		const page = data.form.pages[index];
-		const page_ulid = ulid();
-		pagesData.push({
+		const page = data.form.pages[index] as DbPage & Page;
+		const pageUlid = page.at(0)?.pageUlid || ulid();
+		pagesData.set(pageUlid, {
 			formUlid: data.ulid,
 			index: index,
-			ulid: page_ulid,
+			ulid: pageUlid,
 		});
 		page?.forEach((field) => {
-			fieldsData.push({
-				index: field.index,
-				inputType: field.inputType,
+			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) return;
+			const fieldUlid = field.fieldUlid || ulid();
+			fieldsData.set(fieldUlid, {
+				index: field.index!,
+				inputType: field.inputType!,
 				label: field.label || "Unlabelled",
-				pageUlid: page_ulid,
+				pageUlid: pageUlid,
 				accept: field.accept,
 				description: field.description,
 				options: field.options,
 				placeholder: field.placeholder,
 				type: field.type,
+				ulid: fieldUlid,
 			});
 		});
 	}
 
-	if (pagesData.length) {
-		db.insert(formPages)
-			.values(pagesData)
+	if (pagesData.size) {
+		await db
+			.insert(formPages)
+			.values(Array.from(pagesData.values()))
+			.onConflictDoNothing()
 			.execute()
-			.then(() => {
-				if (!fieldsData.length) return;
-				db.insert(formFields).values(fieldsData).execute();
+			.then(async () => {
+				if (!fieldsData.size) return;
+				await db
+					.insert(formFields)
+					.values(Array.from(fieldsData.values()))
+					.onConflictDoUpdate({
+						target: formFields.ulid,
+						set: updateConflictedColumns(formFields, [
+							"accept",
+							"description",
+							"index",
+							"inputType",
+							"type",
+							"label",
+							"options",
+							"placeholder",
+						]),
+					})
+					.execute();
 			});
 	}
 
-	const storeData: Drizzle.Store.insert[] = [];
-	const itemsData: Drizzle.StoreItem.insert[] = [];
+	const storesData: Map<string, Drizzle.Store.insert> = new Map();
+	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 	for (const key in data.form.stores) {
-		const store = data.form.stores[key];
-		const store_ulid = ulid();
-		storeData.push({
+		const store = data.form.stores[key] as unknown as DbStore & Store;
+		const store_ulid = store?.at(0)?.storeUlid || ulid();
+		storesData.set(store_ulid, {
 			formUlid: data.ulid,
 			index: +key,
 			ulid: store_ulid,
 		});
 		store?.forEach((item) => {
-			itemsData.push({
-				name: item.name,
-				price: item.price,
-				images: item.images,
-				stock: item.stock,
-				index: item.index,
+			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
+			const itemUlid = item.itemUlid || ulid();
+			itemsData.set(itemUlid, {
+				name: item.name!,
+				price: item.price!,
+				images: item.images!,
+				stock: item.stock!,
+				index: item.index!,
 				storeUlid: store_ulid,
+				ulid: item.itemUlid!,
 			});
 		});
 	}
 
-	if (storeData.length) {
-		db.insert(stores)
-			.values(storeData)
+	if (storesData.size) {
+		await db
+			.insert(stores)
+			.values(Array.from(storesData.values()))
+			.onConflictDoNothing()
 			.execute()
-			.then(() => {
-				if (!itemsData.length) return;
-				db.insert(storeItems).values(itemsData).execute();
+			.then(async () => {
+				if (!itemsData.size) return;
+				await db
+					.insert(storeItems)
+					.values(Array.from(itemsData.values()))
+					.onConflictDoUpdate({
+						target: storeItems.ulid,
+						set: updateConflictedColumns(storeItems, ["images", "index", "name", "price", "stock"]),
+					})
+					.execute();
 			});
 	}
+
+	return {
+		storesData,
+		itemsData,
+		pagesData,
+		fieldsData,
+	};
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
@@ -117,19 +159,68 @@ export async function createForm(data: z.infer<typeof formBodyData>, { user }: A
 	return form;
 }
 
-export async function updateForm(formUlid:string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
-	const form = await deleteForm(formUlid);
-	if (!form) throw new Error("Unable to find the initial form");
+export async function updateForm(formUlid: string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
+	const form = await getFormByUlid(formUlid);
+	if (!form) throw new Error("Unable to find the initial form to edit");
 
-	if (user.ulid !== form.userUlid) {
+	if (user.ulid !== form.meta.userUlid) {
 		throw createError({
 			status: 403,
 			message: "You are not allowed to make these changes to the form",
 		});
 	}
 
-	insertFormFields({...data, ulid: formUlid});
-	return form;
+	const { storesData, itemsData, pagesData, fieldsData } = await insertFormFields({ ...data, ulid: formUlid });
+	const existing_stores = Object.entries(form.stores);
+	const removedStores: number[] = [];
+	existing_stores.forEach(([index, _]) => {
+		if (storesData.values().find((std) => std.index.toString() === index.toString())) {
+			return;
+		} else {
+			removedStores.push(+index);
+		}
+	});
+	const removedItems: string[] = [];
+	for (const [_, store] of existing_stores) {
+		for (const item of store) {
+			if (item.itemUlid && itemsData.has(item.itemUlid)) {
+				continue;
+			} else if (item.itemUlid) {
+				removedItems.push(item.itemUlid);
+			}
+		}
+	}
+	db.delete(stores)
+		.where(and(eq(stores.formUlid, formUlid), inArray(stores.index, removedStores)))
+		.execute()
+		.catch(console.error);
+	db.delete(storeItems).where(inArray(stores.ulid, removedItems)).execute().catch(console.error);
+
+	const existing_pages = Object.entries(form.pages);
+	const removedPages: string[] = [];
+	existing_pages.forEach(([index, _]) => {
+		if (Array.from(pagesData.values()).find((page) => `${page.index}` === index.toString())) {
+			return;
+		} else {
+			removedPages.push(index);
+		}
+	});
+	const removedFields: string[] = [];
+	for (const [_, page] of existing_pages) {
+		for (const field of page) {
+			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) {
+				continue;
+			} else if (field.fieldUlid) {
+				removedFields.push(field.fieldUlid);
+			}
+		}
+	}
+	db.delete(formPages)
+		.where(and(eq(formPages.formUlid, formUlid), inArray(formPages.index, removedPages)))
+		.execute()
+		.catch(console.error);
+	db.delete(formFields).where(inArray(formFields.ulid, removedFields)).execute().catch(console.error);
+	return form.meta;
 }
 
 export async function deleteForm(formUlid: string) {
@@ -148,7 +239,7 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 		(acc, curr) => {
 			if (curr.form_elements.page_index) {
 				const pages = acc.pages.get(curr.form_elements.page_index);
-				const page_element = curr.form_elements as any;
+				const page_element = curr.form_elements;
 				if (pages) {
 					pages.push(page_element);
 				} else {
@@ -162,12 +253,11 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 					...curr.store_items,
 					carted: false,
 					liked: false,
-					store: curr.store_items.store_index,
-				} as any;
+				};
 				if (stores) {
 					stores.push(form_item);
 				} else {
-					acc.stores.set(form_item.store, [form_item] as any);
+					acc.stores.set(curr.store_items.store_index, [form_item]);
 				}
 			}
 			return acc;
@@ -194,7 +284,7 @@ export async function getFormByUlid(formUlid: string) {
 	}
 }
 
-export async function insertData(formUlid: string, data: ReconstructedDbForm, price_paid?: number) {
+export async function insertData(formUlid: string, data: Form, price_paid?: number) {
 	const formResponse = (
 		await db
 			.insert(formResponses)
@@ -215,7 +305,8 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm, pr
 		for (const element of page || []) {
 			formfieldResponseInsertList.push({
 				value: element.value,
-				fieldUlid: element.fieldUlid,
+				// @ts-expect-error
+				fieldUlid: element?.fieldUlid,
 				formResponseUlid: formResponse.ulid,
 			});
 		}
@@ -236,7 +327,8 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm, pr
 						value: item.name,
 						liked: item.liked,
 						carted: item.carted,
-						itemUlid: item.itemUlid,
+						// @ts-expect-error
+						itemUlid: item?.itemUlid,
 					});
 				}
 			}

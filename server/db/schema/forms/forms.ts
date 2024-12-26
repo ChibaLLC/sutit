@@ -76,6 +76,7 @@ const qb = new QueryBuilder();
 const form_elements = qb
 	.select({
 		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid") as unknown as typeof formFields.ulid,
+		pageUlid: sql<string>`${formFields.pageUlid}`.as("form_pages_page_ulid") as unknown as typeof formFields.pageUlid,
 		formUlid: sql<string>`${formPages.formUlid}`.as("form_pages_formUlid") as unknown as typeof formPages.index,
 		label: formFields.label,
 		inputType: formFields.inputType,
