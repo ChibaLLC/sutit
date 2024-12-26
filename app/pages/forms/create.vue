@@ -7,8 +7,7 @@ definePageMeta({
 	layout: "novbar",
 });
 
-async function submit(data: any) {
-	console.log(data)
+async function submit(data: any) {	
 	const res = await $fetch("/api/v1/forms/create", {
 		method: "POST",
 		headers: {

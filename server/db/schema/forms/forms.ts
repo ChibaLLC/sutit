@@ -75,33 +75,33 @@ export const formGroups = pgTable(
 const qb = new QueryBuilder();
 const form_elements = qb
 	.select({
-		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid"),
-		formUlid: sql<string>`${formPages.ulid}`.as("form_pages_ulid"),
+		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid") as unknown as typeof formFields.ulid,
+		formUlid: sql<string>`${formPages.formUlid}`.as("form_pages_formUlid") as unknown as typeof formPages.index,
 		label: formFields.label,
 		inputType: formFields.inputType,
-		index: sql<number>`${formFields.index}`.as("form_fields_index"),
+		index: sql<number>`${formFields.index}`.as("form_fields_index") as unknown as typeof formFields.index,
 		description: formFields.description,
 		placeholder: formFields.placeholder,
 		options: formFields.options,
 		accept: formFields.accept,
 		type: formFields.type,
-		page_index: sql`${formPages.index}`.as("form_pages_index"),
+		page_index: sql<string>`${formPages.index}`.as("form_pages_index") as unknown as typeof formPages.index,
 	})
 	.from(formPages)
-	.innerJoin(formFields, eq(formFields.pageUlid, formPages.ulid))
+	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
 	.as("form_elements");
 const store_items = qb
 	.select({
-		itemUlid: sql<string>`store_items.ulid`.as("item_ulid"),
-		storeUlid: sql<string>`stores.ulid`.as("stores_ulid"),
+		itemUlid: sql<string>`${storeItems.ulid}`.as("item_ulid") as unknown as typeof storeItems.ulid,
+		storeUlid: sql<string>`${stores.ulid}`.as("stores_ulid") as unknown as typeof stores.ulid,
 		formUlid: stores.formUlid,
-		index: sql<number>`${storeItems.index}`.as("store_items_index"),
+		index: sql<number>`${storeItems.index}`.as("store_items_index") as unknown as typeof storeItems.index,
 		name: storeItems.name,
-		qtty: storeItems.qtty,
+		stock: storeItems.stock,
 		price: storeItems.price,
 		likes: storeItems.likes,
 		images: storeItems.images,
-		store_index: sql`${stores.index}`.as("stores_index"),
+		store_index: sql<string>`${stores.index}`.as("stores_index") as unknown as typeof stores.index,
 	})
 	.from(stores)
 	.innerJoin(storeItems, eq(stores.ulid, storeItems.storeUlid))
@@ -111,6 +111,6 @@ export const sutitForms = pgView("sutit_forms").as(
 	qb
 		.select()
 		.from(formMeta)
-		.innerJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
-		.innerJoin(store_items, eq(formMeta.ulid, store_items.formUlid))
+		.leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
+		.leftJoin(store_items, eq(formMeta.ulid, store_items.formUlid))
 );

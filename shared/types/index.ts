@@ -1,4 +1,4 @@
-import type { FormElementData, Item } from "@chiballc/nuxt-form-builder";
+import type { _ElementData, FormElementData, Item } from "@chiballc/nuxt-form-builder";
 
 export type { Drizzle } from "~~/server/db";
 
@@ -308,7 +308,7 @@ export type NotificationOptions = {
 	intensity?: "info" | "success" | "error";
 };
 
-export type DbPage = (FormElementData & { fieldUlid: string })[];
+export type DbPage = (_ElementData & { fieldUlid: string })[];
 export type DbStore = (Item & { itemUlid: string })[];
 export type ReconstructedDbForm = {
 	meta: Drizzle.SutitForm[number]["form_meta"];

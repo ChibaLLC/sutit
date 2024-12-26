@@ -17,7 +17,7 @@ import {
 	storeResponses,
 	sutitForms
 } from "./schema";
-import type { Column, InferModelFromColumns } from "drizzle-orm";
+import type { Column, InferModelFromColumns, InferSelectModel } from "drizzle-orm";
 
 export namespace Drizzle {
 	export namespace User {
@@ -89,7 +89,7 @@ export namespace Drizzle {
 		export type select = typeof formFields.$inferInsert;
 	}
 
-	type Infer<T> = T extends Record<string, Column> ? InferModelFromColumns<T, "select"> : never;
+	type Infer<T> = T extends Record<string, any> ? InferModelFromColumns<T, "select"> : never;
 	export type SutitForm<T = typeof sutitForms._.selectedFields> = Array<{
 		[K in keyof T]: Infer<T[K]>;
 	}>;

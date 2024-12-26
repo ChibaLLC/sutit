@@ -1,19 +1,16 @@
+import type { Form } from "@chiballc/nuxt-form-builder";
 import { z } from "zod";
 
-export const formCreateSchema = z.object({
+export const formBodyData = z.object({
 	name: z.string(),
 	description: z.string().nullable().optional(),
 	allowGroups: z.boolean(),
 	requireMerch: z.boolean(),
-	form: FormSchema,
+	form: z.custom<Form>((data) => data && typeof data === "object"),
 	payment: z.object({
 		amount: z.number().nullable().optional(),
 		group_amount: z.number().nullable().optional(),
 		group_limit: z.number().nullable().optional(),
 		group_message: z.string(),
 	}),
-});
-
-export const formUpdateSchema = formCreateSchema.extend({
-	ulid: z.string(),
 });

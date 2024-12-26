@@ -1,4 +1,4 @@
-import { type TableConfig, type SQL, type Table, and, eq, or } from "drizzle-orm";
+import { type TableConfig, type SQL, type Table } from "drizzle-orm";
 import db from "../db";
 
 type TypeFromLiteral<T> = T extends "string"
@@ -34,10 +34,6 @@ type TypeFromLiteral<T> = T extends "string"
 	: T extends "object"
 	? Record<string, any>
 	: never;
-
-type TableWithFields<T extends TableConfig> = {
-	[Key in keyof T["columns"]]: TypeFromLiteral<T["columns"][Key]["dataType"]> | null;
-};
 
 type TableWithColumns<T extends TableConfig> = Table<T> & {
 	[Key in keyof T["columns"]]: T["columns"][Key];

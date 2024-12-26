@@ -22,9 +22,9 @@ import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count } from "drizzle-orm";
 import { ulid } from "ulid";
 import { z } from "zod";
-import { formCreateSchema, formUpdateSchema } from "./zod";
+import { formBodyData } from "./zod";
 
-function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
+function insertFormFields(data: z.infer<typeof formBodyData> & {ulid: string}) {
 	const fieldsData: Drizzle.FormFields.insert[] = [];
 	const pagesData: Drizzle.FormPages.insert[] = [];
 	for (const index in data.form.pages) {
@@ -38,8 +38,8 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 		page?.forEach((field) => {
 			fieldsData.push({
 				index: field.index,
-				inputType: field.inputType as any,
-				label: field.label || "Unlabeled",
+				inputType: field.inputType,
+				label: field.label || "Unlabelled",
 				pageUlid: page_ulid,
 				accept: field.accept,
 				description: field.description,
@@ -56,7 +56,7 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 			.execute()
 			.then(() => {
 				if (!fieldsData.length) return;
-				db.insert(formFields).values(fieldsData).execute;
+				db.insert(formFields).values(fieldsData).execute();
 			});
 	}
 
@@ -75,7 +75,7 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 				name: item.name,
 				price: item.price,
 				images: item.images,
-				qtty: item.qtty,
+				stock: item.stock,
 				index: item.index,
 				storeUlid: store_ulid,
 			});
@@ -93,7 +93,7 @@ function insertFormFields(data: z.infer<typeof formUpdateSchema>) {
 	}
 }
 
-export async function createForm(data: z.infer<typeof formCreateSchema>, { user }: AuthData) {
+export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
 	const form = (
 		await db
 			.insert(formMeta)
@@ -117,25 +117,10 @@ export async function createForm(data: z.infer<typeof formCreateSchema>, { user 
 	return form;
 }
 
-export async function updateForm(data: z.infer<typeof formUpdateSchema>, user: Drizzle.User.select) {
-	const form = (
-		await db
-			.update(formMeta)
-			.set({
-				allowGroups: data.allowGroups,
-				group_invite_message: data.payment.group_message,
-				group_member_count: data.payment.group_limit,
-				price_group: data.payment.group_amount || undefined,
-				price_individual: data.payment.amount || undefined,
-				formName: data.name,
-				ulid: ulid(),
-				formDescription: data.description,
-			})
-			.where(eq(formMeta.ulid, data.ulid))
-			.returning()
-	).at(0);
+export async function updateForm(formUlid:string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
+	const form = await deleteForm(formUlid);
+	if (!form) throw new Error("Unable to find the initial form");
 
-	if (!form) throw new Error("Unable to create form");
 	if (user.ulid !== form.userUlid) {
 		throw createError({
 			status: 403,
@@ -143,12 +128,12 @@ export async function updateForm(data: z.infer<typeof formUpdateSchema>, user: D
 		});
 	}
 
-	insertFormFields(data);
+	insertFormFields({...data, ulid: formUlid});
 	return form;
 }
 
-export function deleteForm(formUlid: string) {
-	return db.delete(formMeta).where(eq(formMeta.ulid, formUlid));
+export async function deleteForm(formUlid: string) {
+	return (await db.delete(formMeta).where(eq(formMeta.ulid, formUlid)).returning()).at(0);
 }
 
 export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbForm {
@@ -161,30 +146,29 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 	}
 	const { pages, stores } = results.reduce(
 		(acc, curr) => {
-			const pages = acc.pages.get(curr.form_element.page_index);
-			const page_element = {
-				...curr.form_element,
-				accept: curr.form_element.accept || undefined,
-				placeholder: curr.form_element.placeholder || undefined,
-				description: curr.form_element.description || undefined,
-			};
-			if (pages) {
-				pages.push(page_element);
-			} else {
-				acc.pages.set(curr.form_element.page_index, [page_element]);
+			if (curr.form_elements.page_index) {
+				const pages = acc.pages.get(curr.form_elements.page_index);
+				const page_element = curr.form_elements as any;
+				if (pages) {
+					pages.push(page_element);
+				} else {
+					acc.pages.set(curr.form_elements.page_index, [page_element]);
+				}
 			}
 
-			const stores = acc.stores.get(curr.form_item.store_index);
-			const form_item = {
-				...curr.form_item,
-				carted: false,
-				liked: false,
-				store: curr.form_item.store_index,
-			};
-			if (stores) {
-				stores.push(form_item);
-			} else {
-				acc.stores.set(form_item.store, [form_item]);
+			if (curr.store_items.store_index) {
+				const stores = acc.stores.get(curr.store_items.store_index);
+				const form_item = {
+					...curr.store_items,
+					carted: false,
+					liked: false,
+					store: curr.store_items.store_index,
+				} as any;
+				if (stores) {
+					stores.push(form_item);
+				} else {
+					acc.stores.set(form_item.store, [form_item] as any);
+				}
 			}
 			return acc;
 		},
@@ -281,11 +265,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm, pr
 }
 
 export async function getFormsByUser(userUlid: string) {
-	return db
-		.select()
-		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.orderBy(desc(sutitForms.form_meta.createdAt));
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).orderBy(desc(formMeta.createdAt));
 }
 
 export async function insertFormPayment(details: { formUlid: string; paymentUlid: string }) {
@@ -372,9 +352,9 @@ export async function getAllFormPayments(userUlid: string) {
 export async function getAllFormPaymentsSum(userUlid: string) {
 	const _sum = await db
 		.select({ total: sum(payments.amount) })
-		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.form_meta.ulid))
+		.from(formMeta)
+		.where(eq(formMeta.userUlid, userUlid))
+		.innerJoin(formPayments, eq(formPayments.formUlid, formMeta.ulid))
 		.innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid));
 
 	return _sum.reduce((acc, curr) => {
@@ -387,8 +367,8 @@ export async function getAllFormPaymentsSum(userUlid: string) {
 export async function getFormCount(userUlid: string) {
 	const result = await db
 		.select({ count: count(sutitForms.form_meta.ulid) })
-		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid));
+		.from(formMeta)
+		.where(eq(formMeta.userUlid, userUlid));
 
 	return result.reduce((acc, curr) => {
 		const { count } = curr;
@@ -446,12 +426,7 @@ export async function needsGroupPayment(form: ReconstructedDbForm | string, subm
 }
 
 export async function getRecentForms(userUlid: string) {
-	return db
-		.select()
-		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.limit(5)
-		.orderBy(desc(sutitForms.form_meta.createdAt));
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).limit(5).orderBy(desc(formMeta.createdAt));
 }
 
 export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {

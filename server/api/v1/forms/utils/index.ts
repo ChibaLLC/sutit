@@ -14,6 +14,7 @@ import { v4 } from "uuid";
 import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
+import type { getFormResponses } from "../[formUlid]/submissions/utils/queries";
 
 declare global {
 	var formPaymentProcessingQueue: Map<
@@ -164,7 +165,7 @@ export function generateReceiptNumber(payment: string | Drizzle.Payment.select) 
 	if (typeof payment === "object") {
 		payment = payment.ulid;
 	}
-	
+
 	const number = v4();
 	db.update(payments)
 		.set({

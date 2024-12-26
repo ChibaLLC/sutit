@@ -31,6 +31,14 @@ export async function ResolveMpesaPayment(
 		const result = ParseRealTimePaymentData(data, loading, rerender, complete);
 		if (result !== "not done") realtime?.close();
 	});
+	setTimeout(() => {
+		if(realtime.status === SocketStatus.CLOSED){
+			return
+		} else {
+			console.warn("Closing realtime connection")
+			realtime.close()
+		}
+	}, 1000 * 60 * 5)
 }
 
 function ParseRealTimePaymentData(data: SocketTemplate, loading: Ref, rerender: Ref, complete?: Ref) {

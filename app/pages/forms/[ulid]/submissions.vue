@@ -15,52 +15,6 @@ const { form, form_responses, group_responses, store_response } = await useFetch
 	},
 }).then(({ data }) => data.value!);
 
-function bubblePrice(response?: (typeof form_responses)[number]) {
-	if (!response) return "UNKNOWN";
-	const group = group_responses.find((group_response) => group_response.responseUlid === response.responseUlid);
-	if (group) {
-		return `Via group ${group.groupName}`;
-	} else {
-		return response.pricePaid;
-	}
-}
-
-function collectFields() {
-	const map = new Map<string, (typeof form.pages)[number][number]>();
-	for (const key in form.pages) {
-		const page = form.pages[key];
-		if (page) {
-			page.forEach((element) => {
-				map.set(element.fieldUlid, element);
-			});
-		}
-	}
-
-	return map;
-}
-
-function getData() {
-	if (!form_responses) return [];
-	const rows = new Map<string, (typeof form_responses)[number][]>();
-	form_responses.forEach((response) => {
-		const row = rows.get(response.responseUlid);
-		if (row) {
-			row.push(response);
-		} else {
-			rows.set(response.responseUlid, [response]);
-		}
-	});
-	return rows;
-}
-
-const hasPayment = computed(() => {
-	return (
-		form?.meta.price_individual !== 0 ||
-		Object.values(form?.stores || {}).some((store) => store.some((item) => item.price !== 0))
-	);
-});
-
-const fields = collectFields();
 const loadingExcel = ref(false);
 async function downloadExcel() {
 	loadingExcel.value = true;
@@ -87,7 +41,7 @@ async function downloadExcel() {
 	a.remove();
 }
 
-const {data: total} = await useFetch(`/api/v1/forms/${ulid}/submissions/total`, {
+const { data: total } = await useFetch(`/api/v1/forms/${ulid}/submissions/total`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
@@ -121,7 +75,7 @@ async function credit() {
 			console.log(error);
 			loadingCheckout.value = false;
 		},
-	})
+	});
 	loadingCheckout.value = false;
 }
 
@@ -178,21 +132,8 @@ watch([phone, con_phone], () => {
 	noMatch.value = !!(con_phone.value && con_phone.value !== phone.value);
 });
 
-function* getFields(data: typeof form_responses) {
-	for (const datum of data) {
-		const field = fields.get(datum.fieldUlid);
-		let result = {};
-		if (field) {
-			result = {
-				...datum,
-				...field,
-			};
-		} else {
-			console.warn(datum.fieldUlid, "Reply with this fieldUlid not found in the created form fields");
-		}
-		yield result as typeof field & typeof datum;
-	}
-}
+const fields = collectFields(form as ReconstructedDbForm)
+const hasPay = hasPayment(form as ReconstructedDbForm)
 </script>
 
 <template>
@@ -238,7 +179,7 @@ function* getFields(data: typeof form_responses) {
 					</button>
 					<button
 						class="flex items-center space-x-2 gap-2 px-3 py-1 bg-slate-900 rounded text-white :hover:bg-gray-20 transition-colors"
-						v-if="hasPayment"
+						v-if="hasPay"
 						@click="showCreditMethodsModal = true"
 						:class="{ 'cursor-not-allowed': loadingCheckout }"
 						:disabled="loadingCheckout"
@@ -279,7 +220,7 @@ function* getFields(data: typeof form_responses) {
 							</svg>
 						</span>
 					</button>
-					<span class="flex items-center space-x-2 px-3 py-1 rounded text-[#262626]" v-if="hasPayment">
+					<span class="flex items-center space-x-2 px-3 py-1 rounded text-[#262626]" v-if="hasPay">
 						<span class="text-[#262626]">Total:</span>
 						<span class="text-[#262626] font-bold font-mono">KES {{ total }}</span>
 					</span>
@@ -294,21 +235,18 @@ function* getFields(data: typeof form_responses) {
 						<tr class="text-left border-b bg-slate-200 border-slate-200">
 							<th class="px-6 py-4">#</th>
 							<th v-for="[_, field] of fields" class="px-6 py-3">
-								{{
-									// @ts-expect-error
-									field.label
-								}}
+								{{ field.label }}
 							</th>
-							<th v-if="hasPayment" class="px-6 py-3">Payment</th>
+							<th v-if="hasPay" class="px-6 py-3">Payment</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-200 text-white border-b">
 						<tr
-							v-for="([_, row], index) of getData()"
+							v-for="([_, row], index) of getData(form_responses)"
 							class="text-sm text-slate-700 cursor-pointer hover:bg-slate-200"
 						>
 							<td class="px-6 py-4">{{ index + 1 }}</td>
-							<td v-for="field of getFields(row)" class="max-w-[30px]">
+							<td v-for="field of getResponseFields(row, fields)" class="max-w-[30px]">
 								<div
 									v-html="
 										Array.isArray(field.value)
@@ -320,7 +258,7 @@ function* getFields(data: typeof form_responses) {
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"
 								></div>
 							</td>
-							<td v-if="hasPayment" class="px-6 py-4">KES {{ bubblePrice(row.at(0)) ?? 0 }}</td>
+							<td v-if="hasPay" class="px-6 py-4">KES {{ bubblePrice(group_responses, row.at(0)) }}</td>
 						</tr>
 					</tbody>
 				</table>

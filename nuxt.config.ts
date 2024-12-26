@@ -30,8 +30,9 @@ export default defineNuxtConfig({
         '~/assets/scss/main.scss'
     ],
     modules: [
-        "@nuxtjs/tailwindcss",
-        "@chiballc/nuxt-form-builder"
+      "@nuxtjs/tailwindcss",
+      "@chiballc/nuxt-form-builder",
+      "@nuxt/scripts"
     ],
     runtimeConfig: {
         public: {

@@ -1,5 +1,5 @@
 import { updateForm } from "../utils/queries";
-import { formUpdateSchema } from "../utils/zod";
+import { formBodyData } from "../utils/zod";
 
 export default defineEventHandler(async (event) => {
 	const formUlid = event.context.params?.formUlid;
@@ -11,14 +11,14 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const { user } = await useAuth(event);
-	const { data, error } = await readValidatedBody(event, formUpdateSchema.safeParse);
-	if (!data || error) {
+	const { data, error } = await readValidatedBody(event, formBodyData.safeParse);
+	if (error) {
 		throw createError({
 			statusCode: 400,
-			data: error,
+			data: { error, data: await readBody(event) },
 		});
 	}
 
-	const form_meta = await updateForm(data, user);
+	const form_meta = await updateForm(formUlid, data, user);
 	return form_meta;
 });

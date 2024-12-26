@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Form } from "@chiballc/nuxt-form-builder";
+
 const loading = ref(false);
 const route = useRoute();
 const token = route.query?.token;
@@ -29,7 +31,7 @@ function hasPhone() {
 async function processForm() {
 	loading.value = true;
 	paymentModal.value = false;
-	if (group.self && data.value?.meta && !hasBoughtMerch(data.value.stores)) {
+	if (group.self && data.value?.meta.requireMerch && !hasBoughtMerch(data.value.stores)) {
 		loading.value = false;
 		return window.alertError("You need to get something from the store section of this form!");
 	}
@@ -40,14 +42,15 @@ async function processForm() {
 	if (hasPrice(data.value) && !hasPhone()) {
 		paymentModal.value = true;
 	} else if (hasPrice(data.value) && hasPhone()) {
-		console.log("Submitting paid form", data);
+		console.log("Submitting paid form", completedForm);
 		await submit();
 	} else if (!hasPrice(data.value)) {
-		console.log("Submitting unpaid form", data);
+		console.log("Submitting unpaid form", completedForm);
 		await submit();
 	}
 }
 
+let completedForm: Form | undefined = undefined;
 async function submit() {
 	try {
 		loading.value = true;
@@ -57,20 +60,33 @@ async function submit() {
 				Authorization: `Bearer ${getAuthToken()}`,
 			},
 			body: {
-				form: data,
+				form: data.value,
 				phone: payment_details.value.phone,
 				token: payment_details.value.token,
 			},
 			onResponseError({ response }) {
 				log.error(response);
-				window.alertError(response._data?.body || "An unknown error has occurred Please try again later");
+				window.alertError(unWrapFetchError(response));
 			},
 		});
 		if (hasChannelData(response)) {
 			ResolveMpesaPayment(response, loading, rerender, complete);
+		} else {
+			let message = "Form submitted successfully.";
+			if (
+				hasOwnProperties(response as {
+					formMail: string;
+					formResponse: string;
+				}, ["formMail"])
+			) {
+				// @ts-expect-error
+				message += " An confirmation email has been sent to " + response.formMail;
+			}
+			window.alertSuccess(message, { timeout: "never" });
+			await navigateTo("/");
 		}
-	} catch (e: any) {
-		console.log(e);
+	} catch (e) {
+		console.error(e);
 	} finally {
 		loading.value = false;
 	}
@@ -85,25 +101,24 @@ function addCharge(amount: number) {
 	}
 }
 
-function goBack() {
+function restart() {
 	loading.value = false;
-	rerender.value = true;
+	rerender.value = !rerender.value;
 	complete.value = false;
 }
 
-function goBack2() {
+function back() {
 	if (data.value?.meta?.allowGroups && group.chosen) {
 		group.chosen = false;
 		group.self = false;
 		rerender.value = true;
 		complete.value = false;
-	} else {
-		goBack();
 	}
 }
 
-function completeForm() {
+function completeForm(form: Form) {
 	complete.value = true;
+	completedForm = form;
 }
 
 class Invite<T extends { email: string } | { phone: string } = any> extends Set<T> {
@@ -180,23 +195,24 @@ function chooseSelfOrGroup(e: Event) {
 	group.chosen = true;
 }
 
-function addPhoneOrEmail(part: string) {
+function validator(part: string) {
 	let text = part.trim();
 	if (!text) return;
 	if (isEmail(text) || !isPhone(text)) {
 		if (!text.includes("@")) {
 			text = `${text}@gmail.com`;
 		}
-		invites.value.add({ email: text });
+		return text
 	} else if (isPhone(text)) {
 		// invites.value.add({ phone: text })
 		window.alertError("Sorry, SMS is not yet supported");
+		return undefined
 	} else {
 		console.warn("Illegal Text Input Found: ", text);
+		return undefined
 	}
 }
 
-const invitesForm = ref<HTMLFormElement | null>(null);
 async function processInvites() {
 	loading.value = true;
 	if (!hasPhone()) {
@@ -252,11 +268,16 @@ async function processInvites() {
 			</div>
 			<form class="pb-4 mt-2 min-h-max" @submit.prevent v-if="!data?.meta?.allowGroups || group.self">
 				<FormViewer
-					:data="data"
+					:data="
+						reactive({
+							pages: data.pages,
+							stores: data.stores,
+						})
+					"
 					@submit="completeForm"
 					:re-render="rerender"
 					@price="addCharge"
-					@back="goBack2"
+					@back="back"
 					:show-spinner="loading"
 				/>
 				<div class="flex w-full px-4 ml-0.5 relative justify-between flex-wrap gap-2 mt-2">
@@ -265,8 +286,8 @@ async function processInvites() {
 						<span class="text-red-400">Amount Due: {{ data.meta.price_individual }}</span>
 						KES
 					</small>
-					<div v-if="complete">
-						<button v-if="complete" @click="goBack" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
+					<div v-if="complete" class="flex justify-between w-full">
+						<button v-if="complete" @click="restart" class="bg-slate-700 text-white rounded px-4 py-2 mr-2">
 							Back
 						</button>
 						<button
@@ -319,7 +340,7 @@ async function processInvites() {
 					</label>
 				</div>
 			</form>
-			<form @submit.prevent v-if="group.chosen && !group.self" class="mt-6 px-4" ref="invitesForm">
+			<form @submit.prevent v-if="group.chosen && !group.self" class="mt-6 px-4">
 				<div class="flex flex-col">
 					<label for="group_name" class="font-semibold">Group Name</label>
 					<input
@@ -340,7 +361,9 @@ async function processInvites() {
 						:placeholder="`Example: allan@gmail.com, 0712345678, +254712345678, boni@mail.com, etc. <br /> Don't forget yourself. 😀`"
 						:delimiters="[',', 'Enter']"
 						:separator="','"
-						@part="addPhoneOrEmail"
+						:transformer="validator"
+						@part="invites.add({ email: $event });"
+						@delete="invites.delete($event)"
 					/>
 				</div>
 				<div class="flex flex-col mt-4">

@@ -26,7 +26,7 @@ const Card = defineComponent({
 		},
 		count: Number,
 		icon: {
-			type: Object as PropType<Component>,
+			type: Function as unknown as PropType<Component>,
 			required: true,
 		},
 		description: String,
@@ -144,16 +144,16 @@ const {data: recents} = await useFetch(`/api/v1/forms/me/recents`, {
 							class="text-[#262626] text-nowrap text-ellipsis overflow-clip h-full uppercase font-semibold mr-2 mt-auto w-[100px]"
 							style="font-size: 0.85rem"
 						>
-							{{ item.form_meta.formName }}
+							{{ item.formName }}
 						</h2>
 						<span
 							class="text-gray-500 text-nowrap text-ellipsis overflow-clip h-full flex-1 max-w-[200px]"
 							style="font-size: 0.85rem"
-							>{{ item.form_meta.formDescription }}</span
+							>{{ item.formDescription }}</span
 						>
 					</div>
 					<div class="inline-flex w-fit ml-auto">
-						<NuxtLink :to="`/forms/${item.form_meta.ulid}`">
+						<NuxtLink :to="`/forms/${item.ulid}`">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
@@ -165,7 +165,7 @@ const {data: recents} = await useFetch(`/api/v1/forms/me/recents`, {
 								></path>
 							</svg>
 						</NuxtLink>
-						<NuxtLink :to="`/forms/${item.form_meta.ulid}/edit`">
+						<NuxtLink :to="`/forms/${item.ulid}/edit`">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
@@ -177,7 +177,7 @@ const {data: recents} = await useFetch(`/api/v1/forms/me/recents`, {
 								></path>
 							</svg>
 						</NuxtLink>
-						<NuxtLink :to="`/forms/${item.form_meta.ulid}/submissions`">
+						<NuxtLink :to="`/forms/${item.ulid}/submissions`">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"

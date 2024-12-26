@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
 				sendResponseInvites(data.invites, links(group), message);
 				sendUserMail(
 					{ email: creator!.email },
-					`Group ${data.group_name} has paid for form ${form.meta.formName} and was processesed successfully`,
+					`Group ${data.group_name} has paid for form ${form.meta.formName} and the payment has been processesed successfully`,
 					`[Payment]: Group ${form.meta.formName}`
 				);
 			}

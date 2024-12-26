@@ -16,7 +16,7 @@ export const storeItems = pgTable("store_items", {
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
 	index: integer("index").notNull(),
 	name: varchar("store", { length: 255 }).notNull(),
-	qtty: integer("quantity").notNull(),
+	stock: integer("stock").notNull(),
 	price: integer("price").notNull(),
 	likes: integer("likes").default(0),
 	images: jsonb("images").notNull().$type<string[]>(),

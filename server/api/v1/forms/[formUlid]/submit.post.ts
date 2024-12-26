@@ -16,14 +16,28 @@ export default defineEventHandler(async (event) => {
 	const schema = z.object({
 		form: z.object({
 			meta: z.custom<Drizzle.SutitForm[number]["form_meta"]>(
-				(data: Drizzle.SutitForm[number]["form_meta"]) => !!data.ulid
+				(data: Drizzle.SutitForm[number]["form_meta"]) => !!data?.ulid
 			),
-			pages: z.custom<Record<number, DbPage>>((data: Record<number, DbPage>) => {
-				return Object.values(data).some((page) => page.some((element) => !!element.fieldUlid));
-			}),
-			stores: z.custom<Record<number, DbStore>>((data: Record<number, DbStore>) => {
-				return Object.values(data).some((store) => store.some((item) => !!item.itemUlid));
-			}),
+			pages: z
+				.custom<Record<number, DbPage>>((data: Record<number, DbPage>) => {
+					const values = Object.values(data);
+					if (!values.length) return true;
+					return values.some((page) => {
+						if (!page.length) return true;
+						return page.some((element) => !!element?.fieldUlid);
+					});
+				})
+				.optional().default({}),
+			stores: z
+				.custom<Record<number, DbStore>>((data: Record<number, DbStore>) => {
+					const values = Object.values(data);
+					if (!values.length) return true;
+					return values.some((store) => {
+						if (!store.length) return true;
+						return store.some((item) => !!item?.itemUlid);
+					});
+				})
+				.optional().default({}),
 		}),
 		phone: z.string().optional(),
 		token: z.string().optional(),
@@ -34,7 +48,7 @@ export default defineEventHandler(async (event) => {
 		throw createError({
 			statusCode: 400,
 			message: error?.message,
-			data: error,
+			data: {error, data: await readBody(event)},
 		});
 	}
 
@@ -94,9 +108,13 @@ export default defineEventHandler(async (event) => {
 
 	if (needsPay && !data.token && data.phone) {
 		if (data.form.meta.price_individual < data.form.meta.price_individual) {
-			return useHttpEnd(event, {
+			throw createError({
 				statusCode: 400,
-				body: "Passed price is less than the allowed minimum for this form",
+				message: "Passed price is less than the allowed minimum for this form",
+				data: {
+					form,
+					data,
+				},
 			});
 		}
 		return await processFormPayments(
@@ -111,11 +129,6 @@ export default defineEventHandler(async (event) => {
 				const { formMail } = await commit({ price_paid: payment.amount });
 				if (formMail) {
 					sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
-					sendUserMail(
-						{ email: formMail },
-						`Payment successful for ${form.meta.formName}`,
-						`[Update]: Payment Successful ${form.meta.formName}`
-					);
 				}
 			}
 		);

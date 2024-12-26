@@ -15,6 +15,7 @@
     "migrate": "drizzle-kit generate && drizzle-kit push"
   },
   "devDependencies": {
+    "@nuxt/scripts": "0.9.5",
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@types/nodemailer": "^6.4.15",
     "@types/uuid": "^9.0.8",
@@ -27,7 +28,7 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
-    "@chiballc/nuxt-form-builder": "0.1.1",
+    "@chiballc/nuxt-form-builder": "0.1.7",
     "crossws": "^0.2.4",
     "daraja.js": "github:kgarchie/daraja.js#42e371dedfabbbca6b73895f26bd62f64e77ac14",
     "drizzle-kit": "^0.30.1",
