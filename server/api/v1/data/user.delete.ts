@@ -1,16 +1,7 @@
 export default defineEventHandler(async event => {
-    const details = await useAuth(event).catch(e => e as Error)
-    if (details instanceof Error) {
-        return useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: details.message || "Error during user lookup"
-        }, Status.internalServerError)
-    }
-    if (!details) return useHttpEnd(event, null, Status.unauthorized)
+    const {user} = await useAuth(event)
 
     // TODO: Implement data deletion
 
-    return {
-        statusCode: Status.success
-    } as APIResponse
+    return "OK"
 })

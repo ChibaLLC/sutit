@@ -1,25 +1,21 @@
-import {getFormByUlid} from "~~/server/api/v1/forms/utils/queries";
+import { getFormByUlid } from "~~/server/api/v1/forms/utils/queries";
 
-export default defineEventHandler(async event => {
-    const formUuid = getRouterParam(event, "formUlid")
-    if (!formUuid) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form ID provided"
-    }, Status.badRequest)
+export default defineEventHandler(async (event) => {
+	const formUuid = getRouterParam(event, "formUlid");
+	if (!formUuid) {
+		throw createError({
+			statusCode: 400,
+			message: "No form ID provided",
+		});
+	}
 
-    const form = await getFormByUlid(formUuid).catch(err => err as Error)
-    if (form instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: form?.message || "Unknown error while getting form"
-    } as APIResponse<string>, Status.internalServerError)
-    if (!form) return useHttpEnd(event, {
-        statusCode: Status.notFound,
-        body: "Form not found"
-    }, Status.notFound)
+	const form = await getFormByUlid(formUuid);
+	if (!form) {
+		throw createError({
+			statusCode: 404,
+			message: "No form with the ID provided was found",
+		});
+	}
 
-    const response = {} as APIResponse<typeof form>
-    response.statusCode = Status.success
-    response.body = form
-
-    return response
-})
+	return form;
+});

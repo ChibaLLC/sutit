@@ -1,17 +1,9 @@
-export default defineEventHandler(async event => {
-    const response = {} as APIResponse
-    const [details, error] = await useAuth(event)
-    if (error) {
-        response.statusCode = Status.internalServerError
-        response.body = error
-        return useHttpEnd(event, response, Status.unauthorized)
-    }
-
-    response.statusCode = 200
-    response.body = {
-        email: details!.user.email,
-        name: details!.user.name
-    }
-
-    return response
-})
+export default defineEventHandler(async (event) => {
+	const { user, token } = await useAuth(event);
+	return {
+		email: user.email,
+		name: user.name,
+		token: token,
+		is_admin: false
+	};
+});

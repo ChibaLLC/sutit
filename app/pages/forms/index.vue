@@ -3,9 +3,7 @@ definePageMeta({
   middleware: ['auth']
 })
 
-const formsStores = ref<any[]>([])
-
-const { data } = await useFetch<APIResponse<any>>("/api/v1/forms/me", {
+const { data: meta } = await useFetch("/api/v1/forms/me", {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`,
   },
@@ -13,11 +11,6 @@ const { data } = await useFetch<APIResponse<any>>("/api/v1/forms/me", {
     console.error(response)
   }
 })
-
-const res = data.value as APIResponse<any>
-if (res?.statusCode === Status.success) {
-  formsStores.value = res.body
-}
 
 function getShareableLink(formUuid: string) {
   const link = `${window.location.origin}/forms/${formUuid}`
@@ -38,20 +31,21 @@ function getShareableLink(formUuid: string) {
 }
 
 function navigateIfTarget(event: MouseEvent, location: string) {
-  // @ts-ignore
-  if (event.target?.tagName?.toLowerCase() !== 'td') return
+  if ((event.target as HTMLElement)?.tagName?.toLowerCase() !== 'td') return
   navigateTo(location)
 }
 
 function deleteForm(ulid: string) {
+  const form = meta.value?.find((fs) => fs.ulid === ulid)
+  meta.value = meta.value?.filter((fs) => fs.ulid !== ulid)
   $fetch(`/api/v1/forms/${ulid}/delete`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${getAuthToken()}`
     },
     onResponse({ response }) {
-      if (!response.ok) return
-      formsStores.value = formsStores.value.filter((fs) => fs.forms.ulid !== ulid)
+      if (response.ok) return
+      meta.value?.push(form as any)
     },
     onResponseError({error}){
       log.error(error)
@@ -65,13 +59,13 @@ function deleteForm(ulid: string) {
     <main class="w-full max-w-[1200px] mx-auto flex flex-col items-center">
       <div class="w-full px-8 mt-5 relative overflow-x-auto rounded-t">
         <div class="py-2 flex justify-between items-center">
-          <span class="font-bold text-left text-lg capitalize">All your forms so far</span>
+          <span class="font-bold text-left text-lg">All your forms so far</span>
           <NuxtLink to="/forms/create"
             class="p-2 text-center bg-emerald-700 text-white rounded hover:bg-emerald-600 transition-colors w-40 font-semibold uppercase">
             Create A Form</NuxtLink>
         </div>
         <table class="w-full text-sm text-left rtl:text-righ rounded bg-gradient-to-br from-white to-slate-100 text-slate-900 mt-1"
-          v-if="formsStores.length > 0">
+          v-if="meta?.length">
           <thead class="text-xs uppercase rounded-t bg-slate-200">
             <tr class="text-left border-b border-gray-200">
               <th class="px-6 py-3 w-5">
@@ -95,27 +89,27 @@ function deleteForm(ulid: string) {
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 border-b">
-            <tr v-for="(formStore, index) in formsStores" :key="formStore.forms.ulid"
+            <tr v-for="(item, index) in meta" :key="item.ulid"
               class="text-sm cursor-pointer hover:bg-slate-200"
-              @click="navigateIfTarget($event, `/forms/${formStore.forms.ulid}/submissions`)">
+              @click="navigateIfTarget($event, `/forms/${item.ulid}/submissions`)">
               <td class="px-6 py-4 border-r border-gray-100">
                 {{ index + 1 }}
               </td>
               <td class="px-6 py-4">
-                {{ formStore.forms.formName }}
+                {{ item.formName }}
               </td>
               <td class="px-6 py-4">
-                {{ formStore.forms.formDescription }}
+                {{ item.formDescription }}
               </td>
               <td class="px-6 py-4">
-                {{ new Date(formStore.forms.createdAt).toLocaleString() }}
+                {{ new Date(item.createdAt).toLocaleString() }}
               </td>
               <td class="px-6 py-4">
-                {{ formStore.forms.price ? 'Yes' : 'No' }}
+                {{ item.price_individual || item.price_group ? 'Yes' : 'No' }}
               </td>
               <td class="px-6 py-4">
                 <div class="flex justify-center gap-1 items-center h-full">
-                  <NuxtLink :to="`/forms/${formStore.forms.ulid}`" title="view">
+                  <NuxtLink :to="`/forms/${item.ulid}`" title="view">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                       class="w-5 h-5 hover:text-blue-500 transition-colors" fill="currentColor">
                       <path
@@ -123,21 +117,21 @@ function deleteForm(ulid: string) {
                       </path>
                     </svg>
                   </NuxtLink>
-                  <span class="rounded" @click.prevent="getShareableLink(formStore.forms.ulid)" title="share">
+                  <span class="rounded" @click.prevent="getShareableLink(item.ulid)" title="share">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"
-                      :id="`copy_link_${formStore.forms.ulid}`">
+                      :id="`copy_link_${item.ulid}`">
                       <path
                         d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z">
                       </path>
                     </svg>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                      :id="`copy_success_${formStore.forms.ulid}`" class="w-5 h-5  hidden">
+                      :id="`copy_success_${item.ulid}`" class="w-5 h-5  hidden">
                       <path
                         d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z">
                       </path>
                     </svg>
                   </span>
-                  <NuxtLink :to="`/forms/${formStore.forms.ulid}/edit`" title="edit">
+                  <NuxtLink :to="`/forms/${item.ulid}/edit`" title="edit">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hover:text-orange-500 transition-colors"
                       viewBox="0 0 24 24" fill="currentColor">
                       <path
@@ -145,7 +139,7 @@ function deleteForm(ulid: string) {
                       </path>
                     </svg>
                   </NuxtLink>
-                  <span @click="deleteForm(formStore.forms.ulid)">
+                  <span @click="deleteForm(item.ulid)">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                       class="w-5 h-5 hover:text-red-500 transition-colors">
                       <path

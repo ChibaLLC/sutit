@@ -1,28 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&family=Mulish:ital,wght@0,200..1000;1,200..1000&display=swap");
 #notification-dock {
   position: fixed;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 1rem;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  top: 5rem;
+  justify-content: flex-start;
+  top: 5.5rem;
+  margin: auto;
+  bottom: 1.5rem;
+  @apply w-10/12;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 50;
+  isolation: isolate;
+  pointer-events: none;
+
+  > * {
+    pointer-events: all;
+  }
 
   .info {
     background-color: hsla(190, 59%, 90%, 0.8);
-    border: 2px solid #3681CB;
+    border: 2px solid #3681cb;
   }
 
   .success {
     background-color: hsla(122, 71%, 93%, 0.8);
-    border: 2px solid #4CAF50;
+    border: 2px solid #4caf50;
   }
 
   .error {
     background-color: hsla(0, 59%, 90%, 0.8);
-    border: 2px solid #FF0B0B;
+    border: 2px solid #ff0b0b;
   }
 
   .closing {
@@ -58,6 +68,6 @@
   }
 }
 
-.no-scrollbar::-webkit-scrollbar{
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }

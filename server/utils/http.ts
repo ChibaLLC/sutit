@@ -1,13 +1,5 @@
 import {defineEventHandler, H3Event} from "h3";
 
-export function useHttpEnd(event: H3Event, data: APIResponse | null, status?: number) {
-    if (data) return event.respondWith(new Response(JSON.stringify(data), {
-        status: status ?? 200,
-        headers: {'Content-Type': 'application/json'}
-    }))
-    return event.respondWith(new Response(null, {status: status ?? 200}))
-}
-
 export function createResponse({ statusCode = 200, data, headers, statusMessage }: {
     statusCode?: number;
     statusMessage?: string;

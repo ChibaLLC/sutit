@@ -1,314 +1,595 @@
-import { formPayments, forms, payments, formResponses, storeResponses, stores, prepaidForms, groupFormResponses } from "~~/server/db/drizzle/schema";
+import {
+	formPayments,
+	payments,
+	formFieldResponses,
+	itemResponses,
+	stores,
+	formGroups,
+	formMeta,
+	formPages,
+	storeItems,
+	formFields,
+	sutitForms,
+	type FormGroupInvite,
+	type PhoneInvite,
+	type EmailInvite,
+	formResponsesView,
+	formResponses,
+	storeResponses,
+} from "~~/server/db/schema";
 import db from "../../../../db";
 import { type Drizzle } from "~~/server/db/types";
-import { and, eq, desc, sum, count } from "drizzle-orm";
+import { and, eq, desc, sum, count, inArray } from "drizzle-orm";
 import { ulid } from "ulid";
-import type { Forms, Stores } from "@chiballc/nuxt-form-builder";
+import { z } from "zod";
+import { formBodyData } from "./zod";
+import { updateConflictedColumns } from "~~/server/utils/db";
+import type { Form, Page, Store } from "@chiballc/nuxt-form-builder";
 
-export async function createForm(data: {
-    name: string,
-    description?: string,
-    price: {
-        individual: number,
-        group?: {
-            amount?: number,
-            limit?: number,
-            message: string
-        }
-    },
-    userUlid: string,
-    pages: Forms,
-    allowGroups: boolean,
-    requireMerch: boolean
-}) {
-    const form = {
-        formName: data.name,
-        pages: data.pages,
-        ulid: ulid(),
-        formDescription: data.description,
-        userUlid: data.userUlid,
-        allowGroups: data.allowGroups,
-        requireMerch: data.requireMerch,
-        price_group_amount: data.price.group?.amount,
-        price_group_count: data.price.group?.limit,
-        price_individual: data.price.individual,
-        price_group_message: data.price.group?.message
-    } satisfies Drizzle.Form.insert
-    await db.insert(forms).values(form)
-    return form.ulid
+async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
+	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
+	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
+	for (const index in data.form.pages) {
+		const page = data.form.pages[index] as DbPage & Page;
+		const pageUlid = page.at(0)?.pageUlid || ulid();
+		pagesData.set(pageUlid, {
+			formUlid: data.ulid,
+			index: index,
+			ulid: pageUlid,
+		});
+		page?.forEach((field) => {
+			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) return;
+			const fieldUlid = field.fieldUlid || ulid();
+			fieldsData.set(fieldUlid, {
+				index: field.index!,
+				inputType: field.inputType!,
+				label: field.label || "Unlabelled",
+				pageUlid: pageUlid,
+				accept: field.accept,
+				description: field.description,
+				options: field.options,
+				placeholder: field.placeholder,
+				type: field.type,
+				ulid: fieldUlid,
+			});
+		});
+	}
+
+	if (pagesData.size) {
+		await db
+			.insert(formPages)
+			.values(Array.from(pagesData.values()))
+			.onConflictDoNothing()
+			.execute()
+			.then(async () => {
+				if (!fieldsData.size) return;
+				await db
+					.insert(formFields)
+					.values(Array.from(fieldsData.values()))
+					.onConflictDoUpdate({
+						target: formFields.ulid,
+						set: updateConflictedColumns(formFields, [
+							"accept",
+							"description",
+							"index",
+							"inputType",
+							"type",
+							"label",
+							"options",
+							"placeholder",
+						]),
+					})
+					.execute();
+			});
+	}
+
+	const storesData: Map<string, Drizzle.Store.insert> = new Map();
+	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
+	for (const key in data.form.stores) {
+		const store = data.form.stores[key] as unknown as DbStore & Store;
+		const store_ulid = store?.at(0)?.storeUlid || ulid();
+		storesData.set(store_ulid, {
+			formUlid: data.ulid,
+			index: +key,
+			ulid: store_ulid,
+		});
+		store?.forEach((item) => {
+			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
+			const itemUlid = item.itemUlid || ulid();
+			itemsData.set(itemUlid, {
+				name: item.name!,
+				price: item.price!,
+				images: item.images!,
+				stock: item.stock!,
+				index: item.index!,
+				storeUlid: store_ulid,
+				ulid: item.itemUlid!,
+			});
+		});
+	}
+
+	if (storesData.size) {
+		await db
+			.insert(stores)
+			.values(Array.from(storesData.values()))
+			.onConflictDoNothing()
+			.execute()
+			.then(async () => {
+				if (!itemsData.size) return;
+				await db
+					.insert(storeItems)
+					.values(Array.from(itemsData.values()))
+					.onConflictDoUpdate({
+						target: storeItems.ulid,
+						set: updateConflictedColumns(storeItems, ["images", "index", "name", "price", "stock"]),
+					})
+					.execute();
+			});
+	}
+
+	return {
+		storesData,
+		itemsData,
+		pagesData,
+		fieldsData,
+	};
 }
 
-export async function updateForm(formUlid: string, data: {
-    name: string,
-    description?: string,
-    price: {
-        individual: number,
-        group?: {
-            amount?: number,
-            limit?: number,
-            message?: string
-        }
-    },
-    userUlid: string,
-    pages: Forms,
-    allowGroups: boolean,
-    requireMerch: boolean
-}) {
-    const form = {
-        formName: data.name,
-        pages: data.pages,
-        formDescription: data.description,
-        userUlid: data.userUlid,
-        allowGroups: data.allowGroups,
-        requireMerch: data.requireMerch,
-        price_group_amount: data.price.group?.amount,
-        price_group_count: data.price.group?.limit,
-        price_individual: data.price.individual,
-        price_group_message: data.price.group?.message,
-        ulid: formUlid
-    } satisfies Drizzle.Form.insert
-    await db.update(forms).set(form).where(eq(forms.ulid, formUlid))
+export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
+	const form = (
+		await db
+			.insert(formMeta)
+			.values({
+				allowGroups: data.allowGroups,
+				group_invite_message: data.payment.group_message,
+				group_member_count: data.payment.group_limit,
+				price_group: data.payment.group_amount || undefined,
+				price_individual: data.payment.amount || undefined,
+				formName: data.name,
+				ulid: ulid(),
+				formDescription: data.description,
+				userUlid: user.ulid,
+			})
+			.returning()
+	).at(0);
+
+	if (!form) throw new Error("Unable to create form");
+	insertFormFields({ ...data, ulid: form.ulid });
+
+	return form;
 }
 
-export function deleteForm(formUlid: string) {
-    return db.delete(forms)
-        .where(eq(forms.ulid, formUlid))
+export async function updateForm(formUlid: string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
+	const form = await getFormByUlid(formUlid);
+	if (!form) throw new Error("Unable to find the initial form to edit");
+
+	if (user.ulid !== form.meta.userUlid) {
+		throw createError({
+			status: 403,
+			message: "You are not allowed to make these changes to the form",
+		});
+	}
+
+	const { storesData, itemsData, pagesData, fieldsData } = await insertFormFields({ ...data, ulid: formUlid });
+	const existing_stores = Object.entries(form.stores);
+	const removedStores: number[] = [];
+	existing_stores.forEach(([index, _]) => {
+		if (storesData.values().find((std) => std.index.toString() === index.toString())) {
+			return;
+		} else {
+			removedStores.push(+index);
+		}
+	});
+	const removedItems: string[] = [];
+	for (const [_, store] of existing_stores) {
+		for (const item of store) {
+			if (item.itemUlid && itemsData.has(item.itemUlid)) {
+				continue;
+			} else if (item.itemUlid) {
+				removedItems.push(item.itemUlid);
+			}
+		}
+	}
+	db.delete(stores)
+		.where(and(eq(stores.formUlid, formUlid), inArray(stores.index, removedStores)))
+		.execute()
+		.catch(console.error);
+	db.delete(storeItems).where(inArray(stores.ulid, removedItems)).execute().catch(console.error);
+
+	const existing_pages = Object.entries(form.pages);
+	const removedPages: string[] = [];
+	existing_pages.forEach(([index, _]) => {
+		if (Array.from(pagesData.values()).find((page) => `${page.index}` === index.toString())) {
+			return;
+		} else {
+			removedPages.push(index);
+		}
+	});
+	const removedFields: string[] = [];
+	for (const [_, page] of existing_pages) {
+		for (const field of page) {
+			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) {
+				continue;
+			} else if (field.fieldUlid) {
+				removedFields.push(field.fieldUlid);
+			}
+		}
+	}
+	db.delete(formPages)
+		.where(and(eq(formPages.formUlid, formUlid), inArray(formPages.index, removedPages)))
+		.execute()
+		.catch(console.error);
+	db.delete(formFields).where(inArray(formFields.ulid, removedFields)).execute().catch(console.error);
+	return form.meta;
 }
 
-export async function createStore(formUlid: string, store: Stores) {
-    await db.insert(stores).values({
-        ulid: ulid(),
-        formUlid: formUlid,
-        store: store
-    } satisfies Drizzle.Store.insert)
+export async function deleteForm(formUlid: string) {
+	return (await db.delete(formMeta).where(eq(formMeta.ulid, formUlid)).returning()).at(0);
 }
 
-export async function updateStore(formUlid: string, store: Stores) {
-    await db.update(stores).set({
-        store: store
-    }).where(eq(stores.formUlid, formUlid))
+export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbForm {
+	const form_meta = results.at(0)?.form_meta;
+	if (!form_meta) {
+		throw createError({
+			status: 500,
+			message: "Unable to find the form's meta data",
+		});
+	}
+	const { pages, stores } = results.reduce(
+		(acc, curr) => {
+			if (curr.form_elements.page_index) {
+				const pages = acc.pages.get(curr.form_elements.page_index);
+				const page_element = curr.form_elements;
+				if (pages) {
+					pages.push(page_element);
+				} else {
+					acc.pages.set(curr.form_elements.page_index, [page_element]);
+				}
+			}
+
+			if (curr.store_items.store_index) {
+				const stores = acc.stores.get(curr.store_items.store_index);
+				const form_item = {
+					...curr.store_items,
+					carted: false,
+					liked: false,
+				};
+				if (stores) {
+					stores.push(form_item);
+				} else {
+					acc.stores.set(curr.store_items.store_index, [form_item]);
+				}
+			}
+			return acc;
+		},
+		{ pages: new Map(), stores: new Map() } as {
+			pages: Map<string, DbPage>;
+			stores: Map<number, DbStore>;
+		}
+	);
+
+	return {
+		meta: form_meta,
+		pages: Object.fromEntries(pages.entries()),
+		stores: Object.fromEntries(stores.entries()),
+	};
 }
 
 export async function getFormByUlid(formUlid: string) {
-    const results = await db.select().from(forms).where(eq(forms.ulid, formUlid)).innerJoin(stores, eq(stores.formUlid, forms.ulid))
-    return results.at(0)
+	const results = await db.select().from(sutitForms).where(eq(sutitForms.form_meta.ulid, formUlid));
+	if (results.length) {
+		return reconstructDbForm(results);
+	} else {
+		return null;
+	}
 }
 
-export async function insertData(formUlid: string, data: { forms: { pages: Forms }, stores: Stores }, price?: string | number) {
-    const formResponse = await db.insert(formResponses).values({
-        formUlid: formUlid,
-        response: data.forms.pages,
-        price: price ? +price : 0
-    } satisfies Drizzle.FormResponses.insert).returning()
+export async function insertData(formUlid: string, data: Form, price_paid?: number) {
+	const formResponse = (
+		await db
+			.insert(formResponses)
+			.values({
+				pricePaid: price_paid,
+			})
+			.returning()
+	).at(0);
+	if (!formResponse) {
+		throw createError({
+			statusCode: 500,
+			message: "Unable to create a form response",
+		});
+	}
+	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
+	for (const key in data.pages) {
+		const page = data.pages[key];
+		for (const element of page || []) {
+			formfieldResponseInsertList.push({
+				value: element.value,
+				// @ts-expect-error
+				fieldUlid: element?.fieldUlid,
+				formResponseUlid: formResponse.ulid,
+			});
+		}
+	}
+	db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
+	db.select()
+		.from(stores)
+		.where(eq(stores.formUlid, formUlid))
+		.then(async (stores) => {
+			if (!stores.length) return;
 
-    const _stores = await db.select().from(stores).where(eq(stores.formUlid, formUlid))
-    const storeUlid = (_stores && _stores.length > 0) ? _stores.at(0)?.ulid : null
+			const storeResponseInsertList: Omit<Drizzle.StoreItemResponse.insert, "storeResponseUlid">[] = [];
+			for (const key in data.stores) {
+				const store = data.stores[key];
+				for (const item of store || []) {
+					if (!(item.carted || item.liked)) continue;
+					storeResponseInsertList.push({
+						value: item.name,
+						liked: item.liked,
+						carted: item.carted,
+						// @ts-expect-error
+						itemUlid: item?.itemUlid,
+					});
+				}
+			}
 
-    if (storeUlid) {
-        db.insert(storeResponses).values({
-            storeUlid: storeUlid,
-            response: data.stores,
-        } satisfies Drizzle.StoreResponses.insert)
-    }
+			if (storeResponseInsertList.length) {
+				const storeResponse = (
+					await db
+						.insert(storeResponses)
+						.values({
+							pricePaid: price_paid,
+						})
+						.returning()
+				).at(0);
+				if (!storeResponse) {
+					throw createError({
+						message: "Unable to create a store response",
+					});
+				}
+				db.insert(itemResponses).values(
+					storeResponseInsertList.map((item) => ({ ...item, storeResponseUlid: storeResponse.ulid }))
+				);
+			}
+		});
 
-    return formResponse.at(0)
+	return formResponse;
 }
-
-
 
 export async function getFormsByUser(userUlid: string) {
-    return db.select()
-        .from(forms)
-        .where(eq(forms.userUlid, userUlid))
-        .innerJoin(stores, eq(stores.formUlid, forms.ulid))
-        .orderBy(desc(forms.createdAt))
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).orderBy(desc(formMeta.createdAt));
 }
 
-export async function insertFormPayment(details: {
-    formUlid: string,
-    paymentUlid: string
-}) {
-    const processed = await isProcessedFormPayment(details)
-    if (processed) return
-    await db.insert(formPayments).values({
-        formUlid: details.formUlid,
-        paymentUlid: details.paymentUlid,
-    } satisfies Drizzle.FormPayment.insert).catch(e => {
-        console.error(e)
-        throw e
-    })
+export async function insertFormPayment(details: { formUlid: string; paymentUlid: string }) {
+	const processed = await isProcessedFormPayment(details);
+	if (processed) return;
+	return db
+		.insert(formPayments)
+		.values({
+			formUlid: details.formUlid,
+			paymentUlid: details.paymentUlid,
+		} satisfies Drizzle.FormPayment.insert)
+		.catch((e) => {
+			console.error(e);
+			throw e;
+		});
 }
 
-export async function isProcessedFormPayment(details: {
-    formUlid: string,
-    paymentUlid: string
-}) {
-    const payment = await db.select().from(formPayments).where(and(eq(formPayments.formUlid, details.formUlid), eq(formPayments.paymentUlid, details.paymentUlid)))
-    if (payment.length) return payment.at(0)
-    return false
+export async function isProcessedFormPayment(details: { formUlid: string; paymentUlid: string }) {
+	const payment = await db
+		.select()
+		.from(formPayments)
+		.where(and(eq(formPayments.formUlid, details.formUlid), eq(formPayments.paymentUlid, details.paymentUlid)));
+	if (payment.length) return payment.at(0);
+	return false;
 }
-
 
 export async function insertPayment(amount: number, reference_code: string, phone_number: string) {
-    const processed = await isProcessedPayment(reference_code)
-    if (processed) {
-        log.warn("Attempt to re-process payment", reference_code)
-        return processed.ulid
-    }
-
-    const _ulid = ulid()
-    await db.insert(payments).values({
-        ulid: _ulid,
-        amount: amount,
-        referenceCode: reference_code,
-        phoneNumber: phone_number.slice(-9),
-    } satisfies Drizzle.Payment.insert).catch(e => {
-        console.error(e)
-        throw e
-    })
-    return _ulid
+	const processed = await isProcessedPayment(reference_code);
+	if (processed) {
+		log.warn("Attempt to re-process payment", reference_code);
+		return processed;
+	}
+	const results = await db
+		.insert(payments)
+		.values({
+			amount: amount,
+			referenceCode: reference_code,
+			phoneNumber: phone_number.slice(-9),
+		} satisfies Drizzle.Payment.insert)
+		.returning();
+	return results.at(0);
 }
 
 export async function isProcessedPayment(ref_code: string) {
-    const payment = await db.select().from(payments).where(eq(payments.referenceCode, ref_code))
-    if (payment.length) return payment.at(0)
-    return false
+	const payment = await db.select().from(payments).where(eq(payments.referenceCode, ref_code));
+	if (payment.length) return payment.at(0);
+	return false;
 }
 
-
 export async function getPayment(referenceCode: string) {
-    return (await db.select().from(payments)
-        .where(eq(payments.referenceCode, referenceCode))).at(0)
+	return (await db.select().from(payments).where(eq(payments.referenceCode, referenceCode))).at(0);
 }
 
 export async function getFormPayments(formUulid: string) {
-    return db.select().from(formPayments).where(eq(formPayments.formUlid, formUulid))
+	return db.select().from(formPayments).where(eq(formPayments.formUlid, formUulid));
 }
 
-export async function getFormPaymentsSum(formUulid: string) {
-    const form = await getFormByUlid(formUulid)
-    if (!form) return 0
-    const result = await db.select({ total: sum(payments.amount) })
-        .from(formPayments)
-        .where(eq(formPayments.formUlid, formUulid))
-        .innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid))
+export async function getFormPaymentsSum(formUlid: string) {
+	const form = await getFormByUlid(formUlid);
+	if (!form) return 0;
+	const result = await db
+		.select({ total: sum(payments.amount) })
+		.from(formPayments)
+		.where(eq(formPayments.formUlid, formUlid))
+		.innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid));
 
-    const total = result.reduce((acc, curr) => {
-        const { total } = curr
-        if (!total) return acc
-        return acc + +total
-    }, 0)
+	const total = result.reduce((acc, curr) => {
+		const { total } = curr;
+		if (!total) return acc;
+		return acc + +total;
+	}, 0);
 
-    return total - (form.forms.withDrawnFunds || 0)
+	return total - (form.meta.withdrawnFunds || 0);
 }
-
 
 export async function getAllFormPayments(userUlid: string) {
-    return db.select().from(forms).where(eq(forms.userUlid, userUlid)).innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
+	return db
+		.select()
+		.from(sutitForms)
+		.where(eq(sutitForms.form_meta.userUlid, userUlid))
+		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.form_meta.ulid));
 }
 
 export async function getAllFormPaymentsSum(userUlid: string) {
-    const _sum = await db.select({ total: sum(payments.amount) })
-        .from(forms)
-        .where(eq(forms.userUlid, userUlid))
-        .innerJoin(formPayments, eq(formPayments.formUlid, forms.ulid))
-        .innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid))
+	const _sum = await db
+		.select({ total: sum(payments.amount) })
+		.from(formMeta)
+		.where(eq(formMeta.userUlid, userUlid))
+		.innerJoin(formPayments, eq(formPayments.formUlid, formMeta.ulid))
+		.innerJoin(payments, eq(formPayments.paymentUlid, payments.ulid));
 
-    return _sum.reduce((acc, curr) => {
-        const { total } = curr
-        if (!total) return acc
-        return acc + +total
-    }, 0)
+	return _sum.reduce((acc, curr) => {
+		const { total } = curr;
+		if (!total) return acc;
+		return acc + +total;
+	}, 0);
 }
 
 export async function getFormCount(userUlid: string) {
-    const result = await db.select({ count: count(forms.ulid) }).from(forms).where(eq(forms.userUlid, userUlid))
-    return result.reduce((acc, curr) => {
-        const { count } = curr
-        if (!count) return acc
-        return acc + +count
-    }, 0)
+	const result = await db
+		.select({ count: count(sutitForms.form_meta.ulid) })
+		.from(formMeta)
+		.where(eq(formMeta.userUlid, userUlid));
+
+	return result.reduce((acc, curr) => {
+		const { count } = curr;
+		if (!count) return acc;
+		return acc + +count;
+	}, 0);
 }
 
 export async function getResponsesCount(userUlid: string) {
-    const result = await db.select({ count: count(forms.ulid) })
-        .from(forms)
-        .where(eq(forms.userUlid, userUlid))
-        .innerJoin(formResponses, eq(formResponses.formUlid, forms.ulid))
-    return result.reduce((acc, curr) => {
-        const { count } = curr
-        if (!count) return acc
-        return acc + +count
-    }, 0)
+	const result = await db
+		.select({ count: count(sutitForms.form_meta.ulid) })
+		.from(formResponsesView)
+		.innerJoin(sutitForms, eq(formResponsesView.formUlid, sutitForms.form_meta.ulid))
+		.where(eq(sutitForms.form_meta.userUlid, userUlid));
+	return result.reduce((acc, curr) => {
+		const { count } = curr;
+		if (!count) return acc;
+		return acc + +count;
+	}, 0);
 }
 
-type Form = { forms: Drizzle.Form.select, stores?: Drizzle.Store.select }
-export async function neeedsPay(Form: Form | string, type: "group" | "individual", submitPrice?: number): Promise<[Form, boolean]> {
-    let form: Form
-    if (typeof Form === 'string') {
-        const _form = await getFormByUlid(Form)
-        if (_form) {
-            form = _form
-        } else {
-            throw new Error(`Form ${_form} not found`)
-        }
-    } else {
-        form = Form
-    }
-    let price;
-    if (type === 'individual') {
-        price = form.forms.price_individual
-    } else {
-        price = form.forms.price_group_count || 0
-    }
+export async function neeedsPay(
+	form: ReconstructedDbForm | string,
+	type: "group" | "individual",
+	submitPrice?: number
+): Promise<[ReconstructedDbForm, boolean]> {
+	if (typeof form === "string") {
+		form = (await getFormByUlid(form))!;
+	}
 
-    if (price <= 0 && (!submitPrice || submitPrice <= 0)) return [form, false]
-    return [form, true]
+	if (!form) {
+		throw createError({
+			statusCode: 404,
+			message: "Form not found",
+		});
+	}
+
+	let price = 0;
+	if (type === "individual") {
+		price = form.meta.price_individual;
+	} else {
+		price = form.meta.price_group || 0;
+	}
+
+	if (price <= 0 && (!submitPrice || submitPrice <= 0)) return [form, false];
+	return [form, true];
 }
 
-
-export function needsIndividualPayment(Form: Form | string, submitPrice?: number) {
-    return neeedsPay(Form, 'individual', submitPrice)
+export function needsIndividualPayment(form: ReconstructedDbForm | string, submitPrice?: number) {
+	return neeedsPay(form, "individual", submitPrice);
 }
 
-export async function needsGroupPayment(Form: Form | string, submitPrice?: number) {
-    return neeedsPay(Form, 'group', submitPrice)
+export async function needsGroupPayment(form: ReconstructedDbForm | string, submitPrice?: number) {
+	return neeedsPay(form, "group", submitPrice);
 }
-
 
 export async function getRecentForms(userUlid: string) {
-    return db.select().from(forms)
-        .where(eq(forms.userUlid, userUlid))
-        .limit(5)
-        .orderBy(desc(forms.updatedAt))
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).limit(5).orderBy(desc(formMeta.createdAt));
 }
-
 
 export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {
-    const form = await getFormByUlid(formUlid)
-    await db.update(forms).set({
-        withDrawnFunds: Number((form?.forms.withDrawnFunds || 0)) + amount
-    }).where(eq(forms.ulid, formUlid))
+	const form = await getFormByUlid(formUlid);
+	await db
+		.update(formMeta)
+		.set({
+			withdrawnFunds: Number(form?.meta.withdrawnFunds || 0) + amount,
+		})
+		.where(eq(formMeta.ulid, formUlid));
 }
 
-export function insertPrepaidLinkData(data: Drizzle.PrepaidForms.insert[]) {
-    return db.insert(prepaidForms).values(data).execute()
+export async function getInviteFormGroup(formUlid: string, token: string) {
+	// TODO: perf improve
+	const groups = await db.select().from(formGroups).where(eq(formGroups.formUlid, formUlid));
+	let invite: FormGroupInvite[number] | undefined;
+	const group = groups.find((group) =>
+		group.invites?.some((inv) => {
+			if (inv.token === token) {
+				invite = inv;
+				return true;
+			} else {
+				return false;
+			}
+		})
+	);
+	return {
+		invite,
+		group,
+	};
 }
 
-export async function getPrepaidFormLink(token: string) {
-    const data = await db.select().from(prepaidForms).where(eq(prepaidForms.token, token))
-    return data.at(0)
+export async function invalidateFormGroupLink(formUlid: string, token: string) {
+	const { group } = await getInviteFormGroup(formUlid, token);
+	if (!group) return Promise.resolve(undefined);
+	return db
+		.update(formGroups)
+		.set({
+			invites: group.invites?.filter((invite) => invite.token !== token),
+		})
+		.where(eq(formGroups.ulid, group.ulid))
+		.execute();
 }
 
-export async function invalidatePrepaidFormLink(token: string, responseId: number) {
-    return db.update(prepaidForms).set({
-        isValid: false,
-        formResponseId: responseId
-    }).where(eq(prepaidForms.token, token)).execute()
-}
-
-export async function insertGroupFormResponse(data: {formUlid: string, groupName: string, invites: Array<{ [key: string]: string }>, paymentUlid: string}) {
-    await db.insert(groupFormResponses).values(data)
-    const result = await db.select().from(groupFormResponses).where(and(eq(groupFormResponses.formUlid, data.formUlid), eq(groupFormResponses.groupName, data.groupName), eq(groupFormResponses.paymentUlid, data.paymentUlid)))
-    return result.at(0)
+export async function createFormGroup(data: {
+	formUlid: string;
+	groupName: string;
+	invites: Array<PhoneInvite | EmailInvite>;
+	paymentUlid: string | null;
+}) {
+	return (
+		await db
+			.insert(formGroups)
+			.values({
+				groupName: data.groupName,
+				formUlid: data.formUlid,
+				paymentUlid: data.paymentUlid,
+				invites: data.invites.map((invite) => ({
+					token: ulid(),
+					isValid: true,
+					...invite,
+				})),
+			})
+			.returning()
+			.then((data) => {
+				if (data.length === 0)
+					throw createError({
+						status: 404,
+						message: "Unable to create from group",
+					});
+				return data;
+			})
+	).at(0)!;
 }

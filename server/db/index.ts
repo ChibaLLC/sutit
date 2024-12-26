@@ -1,7 +1,16 @@
-import {credentials} from '../../drizzle.config'
-import postgres from 'postgres'
-import {drizzle} from "drizzle-orm/postgres-js"
+import { credentials } from "../../drizzle.config";
+import postgres from "postgres";
+import * as schema from "./schema";
+import { drizzle } from "drizzle-orm/postgres-js";
 
-const connection = postgres({...credentials, ssl: isDevelopment ? false : 'prefer'})
+export * from "./types";
 
-export default drizzle(connection)
+const connection = postgres({
+	ssl: isDevelopment ? false : "prefer",
+	host: credentials.host,
+	database: credentials.pathname.replace("/", ""),
+	password: credentials.password,
+	port: parseInt(credentials.port),
+    username: credentials.username
+});
+export default drizzle(connection, { schema });

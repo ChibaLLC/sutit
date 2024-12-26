@@ -1,11 +1,10 @@
 import {test, expect} from 'vitest'
-import type {APIResponse} from "../shared/types";
 
 test('Testing known api test route', async () => {
     const response = await fetch('http://localhost:3000/api/v1/status')
     expect(response.status).toBe(200)
-    const res = await response.json() as APIResponse
-    expect(res.body).toEqual('OK')
+    const res = await response.json()
+    expect(res).toEqual('OK')
 })
 
 test('Testing unknown api test route', async () => {

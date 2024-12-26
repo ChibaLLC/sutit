@@ -1,6 +1,6 @@
 <template>
     <div class="relative">
-        <div class="w-full overflow-x-scroll overflow-y-hidden max-sm:py-2 isolate relative max-sm:w-[95vw] m-auto"
+        <div class="w-full overflow-x-auto overflow-y-hidden max-sm:py-2 isolate relative max-sm:w-[95vw] m-auto"
             ref="carouselContainer">
             <div class="flex items-center w-10/12 justify-around mt-12 h-auto max-sm:mt-2 max-sm:gap-4 m-auto px-4 max-sm:mx-4 carousel -z-10 max-sm:w-fit"
                 id="carousel_items">

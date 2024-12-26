@@ -1,53 +1,59 @@
-import {getFormByUlid} from "../utils/queries";
-import {withdrawFunds} from "../utils";
+import { getFormByUlid } from "../utils/queries";
+import { withdrawFunds } from "../utils";
+import { z } from "zod";
 
-export default defineEventHandler(async event => {
-    const formUlid = event.context.params?.formUlid
-    if (!formUlid) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form ID provided"
-    }, Status.badRequest)
+export default defineEventHandler(async (event) => {
+	const formUlid = event.context.params?.formUlid;
+	if (!formUlid)
+		throw createError({
+			statusCode: 400,
+			message: "No form ID provided",
+		});
 
-    const sendToPayload = await readBody(event) as CreditMethod
-    if (!sendToPayload) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No phone number provided"
-    }, Status.badRequest)
+	const schema = z.union([
+		z.object({
+			paybill_no: z.string(),
+			account_no: z.string(),
+		}),
+		z.object({
+			till_no: z.string(),
+		}),
+		z.object({
+			phone: z.string(),
+		}),
+	]);
+	const { data, error } = await readValidatedBody(event, schema.safeParse);
+	if (error) {
+		throw createError({
+			statusCode: 400,
+			message: error.message,
+			data: error,
+		});
+	}
 
-    const [details, error] = await useAuth(event)
-    if (error || !details) return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Unauthorized"
-    })
+	const { user } = await useAuth(event);
 
-    const form = await getFormByUlid(formUlid).catch(err => err as Error)
-    if (form instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: form?.message || "Unknown error while getting form"
-    } as APIResponse<string>, Status.internalServerError)
-    if (!form) return useHttpEnd(event, {
-        statusCode: Status.notFound,
-        body: "Form not found"
-    }, Status.notFound)
+	const form = await getFormByUlid(formUlid);
+	if (!form) {
+		throw createError({
+			statusCode: 404,
+			message: "Form not found",
+		});
+	}
 
-    if (form.forms?.userUlid !== details.user.ulid) return useHttpEnd(event, {
-        statusCode: Status.forbidden,
-        body: "Unauthorized"
-    }, Status.forbidden)
+	if (form.meta?.userUlid !== user.ulid) {
+		throw createError({
+			statusCode: 403,
+			message: "This user did not create the form",
+		});
+	}
 
-    const result = await withdrawFunds({ formUlid, creditMethod: sendToPayload, reason: "User Initiated Form Withdrawal", requester: details.user.ulid }).catch(err => err as Error)
-    if (result instanceof Error) {
-        console.error(result)
-        console.trace(result)
-        return useHttpEnd(event, {
-            statusCode: Status.internalServerError,
-            body: result?.message || "Unknown error while withdrawing funds"
-        } as APIResponse<string>, Status.internalServerError)
-    }
+	const result = await withdrawFunds({
+		formUlid,
+		creditMethod: data,
+		reason: "User Initiated Form Withdrawal",
+		requester: user.ulid,
+	});
 
-    const response = {} as APIResponse<string>
-    response.statusCode = Status.success
-    response.body = "Funds withdrawn"
-
-    return response
-})
+	return "OK";
+});

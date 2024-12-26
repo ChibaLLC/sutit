@@ -1,52 +1,43 @@
-import {getUserByEmail} from "~~/server/api/v1/users/utils/queries";
-import {resetPassword} from "~~/server/api/v1/auth/utils";
-import {authenticate} from "~~/server/api/v1/auth/utils/queries";
+import { getUserByEmail } from "~~/server/api/v1/users/utils/queries";
+import { resetPassword } from "~~/server/api/v1/auth/utils";
+import { authenticate } from "~~/server/api/v1/auth/utils/queries";
+import { z } from "zod";
 
-export default defineEventHandler(async event => {
-    const query = getQuery(event)
-    const email = query.email?.toString()
-    const token = query.token?.toString()
-    const { password } = await readBody(event) as { password: string, origin: string }
-    const response = {} as APIResponse
+export default defineEventHandler(async (event) => {
+	const qSchema = z.object({
+		email: z.string(),
+		token: z.string(),
+	});
+	const { data: query, error: qError } = await getValidatedQuery(event, qSchema.safeParse);
+	if (qError) {
+		throw createError({
+			statusCode: 400,
+			message: qError.message,
+			data: qError,
+		});
+	}
+	const shema = z.object({
+		password: z.string(),
+		origin: z.string(),
+	});
+	const { data: body, error } = await readValidatedBody(event, shema.safeParse);
+	if (error) {
+		throw createError({
+			statusCode: 400,
+			message: error.message,
+			data: error,
+		});
+	}
 
-    if (!email || !token || !password) {
-        response.statusCode = Status.badRequest
-        response.body = "Email, token and password are required"
-        return response
-    }
+	const user = await getUserByEmail(query.email);
+	if (!user) {
+		throw createError({
+			statusCode: 404,
+			message: "User not found",
+		});
+	}
 
-    const user = await getUserByEmail(email).catch(err => err as Error)
-    if (user instanceof Error) {
-        response.statusCode = Status.notFound
-        response.body = user.message
-        return response
-    }
-    if (!user) {
-        response.statusCode = Status.notFound
-        response.body = "User not found"
-        return response
-    }
+	await resetPassword({ user, token: query.token, password: body.password });
 
-    const reset = await resetPassword({ user, token, password }).catch(err => err as Error)
-    if (reset instanceof Error) {
-        response.statusCode = Status.internalServerError
-        response.body = reset.message
-        return response
-    }
-
-    const _token = await authenticate({ email, password }).catch(err => err as Error)
-    if (_token instanceof Error) {
-        response.statusCode = Status.internalServerError
-        response.body = _token.message
-        return response
-    }
-    if (!_token) {
-        response.statusCode = Status.internalServerError
-        response.body = "Token not generated"
-        return response
-    }
-
-    response.statusCode = Status.success
-    response.body = _token
-    return response
-})
+	return authenticate({ email: user.email, password: body.password });
+});

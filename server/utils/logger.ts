@@ -1,286 +1,390 @@
 import {
-    createReadStream,
-    createWriteStream,
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    type WriteStream
+	createReadStream,
+	createWriteStream,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	type WriteStream,
 } from "node:fs";
 import path from "node:path";
-import {createInterface} from "node:readline";
-import {consola, createConsola, type LogObject, type LogType} from "consola";
-import {execSync} from "node:child_process";
-import type {Nitro} from "nitropack";
-
+import { createInterface } from "node:readline";
+import { consola, createConsola, type LogObject, type LogType } from "consola";
+import { execSync } from "node:child_process";
+import type { NitroApp } from "nitropack/types";
 
 export class Logger {
-    private logs = new Set<string>([
-        'log',
-        'info',
-        'success',
-        'warn',
-        'debug',
-        'error',
-        'fatal',
-        'master'
-    ])
-    private streams: {
-        [key: string]: WriteStream
-    };
+	private logs = new Set<string>(["log", "info", "success", "warn", "debug", "error", "fatal", "master"]);
+	private streams: {
+		[key: string]: WriteStream;
+	};
 
-    set addLog(log: string) {
-        this.logs.add(log)
-        this.streams = this.makeStreams()
-    }
+	set addLog(log: string) {
+		this.logs.add(log);
+		this.streams = this.makeStreams();
+	}
 
-    constructor(app?: Nitro) {
-        app?.hooks.hookOnce('close', () => {
-            this.dispose()
-        })
+	constructor(app?: NitroApp) {
+		app?.hooks.hookOnce("close", () => {
+			this.dispose();
+		});
 
-        if (isVercel) {
-            this.streams = {} as typeof this.streams
-            return
-        }
+		if (isVercel) {
+			this.streams = {} as typeof this.streams;
+			return;
+		}
 
-        this.loadLogFiles()
-        this.streams = this.makeStreams()
-    }
+		this.loadLogFiles();
+		this.streams = this.makeStreams();
+	}
 
-    private loadLogFiles() {
-        if (!existsSync(path.join('./logs'))) {
-            mkdirSync(path.join('./logs'))
-        }
-        const files = readdirSync(path.join('./logs'))
-        for (const file of files) {
-            const log = file.split('.')[0]
-            if (!log) continue
-            this.logs.add(log)
-        }
-    }
+	private loadLogFiles() {
+		if (!existsSync(path.join("./logs"))) {
+			mkdirSync(path.join("./logs"));
+		}
+		const files = readdirSync(path.join("./logs"));
+		for (const file of files) {
+			const log = file.split(".")[0];
+			if (!log) continue;
+			this.logs.add(log);
+		}
+	}
 
-    private makeStreams() {
-        const streams = {} as typeof this.streams
-        for (const log of this.logs) {
-            streams[log] = createWriteStream(path.join(`./logs/${log}.log`), {flags: 'a'})
-        }
-        return streams
-    }
+	private makeStreams() {
+		const streams = {} as typeof this.streams;
+		for (const log of this.logs) {
+			streams[log] = createWriteStream(path.join(`./logs/${log}.log`), { flags: "a" });
+		}
+		return streams;
+	}
 
-    public async logString(logString: string, log?: LogType): Promise<void> {
-        const logObject = {} as LogObject
-        logObject.date = new Date()
-        logObject.tag = 'Default'
-        logObject.type = log || 'log'
-        logObject.args = [logString]
-        logObject.message = undefined
-        return this.log(logObject)
-    }
+	public async logString(logString: string, log?: LogType): Promise<void> {
+		const logObject = {} as LogObject;
+		logObject.date = new Date();
+		logObject.tag = "Default";
+		logObject.type = log || "log";
+		logObject.args = [logString];
+		logObject.message = undefined;
+		return this.log(logObject);
+	}
 
-    public async log(logObj: LogObject): Promise<void> {
-        if (!process.server) return consola[logObj.type](logObj.args)
+	public async log(logObj: LogObject): Promise<void> {
+		if (import.meta.client) {
+            // @ts-expect-error
+            return consola[logObj.type](...logObj.args);
+        };
 
-        try {
-            this.streams.master?.write(this.stringifyLogObject(logObj))
-            return new Promise((resolve, reject) => {
-                this.streams[logObj.type]?.write(this.stringifyLogObject(logObj), (err) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve()
-                    }
-                })
-            })
-        } catch (e) {
-            console.error(e)
-            consola.box(this.stringifyLogObject(logObj))
-            throw e
-        }
-    }
+		try {
+			const string = this.stringifyLogObject(logObj);
+			this.streams.master?.write(string);
+			return new Promise((resolve, reject) => {
+				this.streams[logObj.type]?.write(string, (err) => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve();
+					}
+				});
+			});
+		} catch (e) {
+			console.error(e);
+		}
+	}
 
-    public stringifyLogObject(logObj: LogObject): string {
-        return `[${logObj.date.toISOString()}]\t` +
-            `(${`${logObj.tag.toLocaleLowerCase()} ${logObj.type}`.trim()})\t` +
-            `${logObj.args.map(arg => {
-                if (typeof arg === 'object') {
-                    return JSON.stringify(arg)
-                } else if(typeof arg === 'string'){
-                    arg.replace('\t', '\\t')
-                    return arg
-                }
-            }).join(' ')}\t` +
-            `${logObj?.message ? logObj.message : ""}\n`
-    }
+	public stringifyLogObject(logObj: LogObject): string {
+		const formatValue = (value: any): string => {
+			if (value === undefined) return "undefined";
+			if (value === null) return "null";
+			if (typeof value === "function") return value.toString();
+			if (typeof value === "object") {
+				try {
+					return JSON.stringify(value, null, 2)
+						.split("\n")
+						.map((line) => "  " + line) // Indent for readability
+						.join("\n");
+				} catch (e) {
+					return "[Circular Structure]";
+				}
+			}
+			return String(value);
+		};
 
-    private parseLogString(logString: string): LogObject {
-        try {
-            if (logString.trim().length === 0) return {} as LogObject
-            const logArray = logString.split('\t')
-            const logObject = {} as LogObject
-            const tag_type = logArray[1]?.replace('(', '').replace(')', '').split(' ')
-            logObject.date = new Date(logArray[0]?.replace('[', '').replace(']', '')!)
-            logObject.tag = tag_type?.[0] || "UNKNOWN"
-            logObject.type = tag_type?.[1] as LogType
-            try {
-                logObject.args = JSON.parse(logArray[2] || '{}')
-            } catch (e) {
-                logObject.args = logArray[2]?.replace('\\t', '\t').split(' ') || ["<empty>"]
-            }
-            logObject.message = logArray[3]
-            return logObject
-        } catch (e) {
-            consola.error(e)
-            return {} as LogObject
-        }
-    }
+		const timestamp = logObj.date.toISOString();
+		const tag = logObj.tag.toLowerCase();
+		const args = logObj.args.map(formatValue).join("\n");
+		const message = logObj.message || "";
 
-    public dispose() {
-        for (const stream of Object.values(this.streams)) {
-            stream.close()
-        }
-    }
+		return `[${timestamp}] ${tag}:${logObj.type}\n` + `Args:\n${args}\n` + `Message: ${message}\n` + `---\n`; // Separator for multiple logs
+	}
 
-    public async* read(log: LogType): AsyncGenerator<LogObject> {
-        if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
-        const stream = createReadStream(path.join(`./logs/${log}.log`))
-        const rl = createInterface({
-            input: stream,
-            crlfDelay: Infinity
-        })
+	public parseLogString(logString: string): LogObject {
+		try {
+			const parseValue = (value: string): any => {
+				if (value === "undefined") return undefined;
+				if (value === "null") return null;
+				try {
+					return JSON.parse(value);
+				} catch (e) {
+					return value;
+				}
+			};
 
-        for await (const line of rl) {
-            yield this.parseLogString(line)
-        }
+			// Extract basic parts using regex
+			const timestampMatch = logString.match(/\[(.*?)\]/);
+			const tagTypeMatch = logString.match(/\] (.*?):(.*?)\n/);
+			const argsMatch = logString.match(/Args:\n([\s\S]*?)\nMessage:/);
+			const messageMatch = logString.match(/Message: (.*?)\n---\n/);
 
-        stream.close()
-    }
+			if (!timestampMatch || !tagTypeMatch || !argsMatch) {
+				throw new Error("Invalid log format");
+			}
 
-    public tail(log: LogType, lines: number): LogObject[] {
-        if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
-        const logs: LogObject[] = []
-        try {
-            const logString = execSync(`tail -n ${lines} ./logs/${log}.log`).toString()
-            const logArray = logString.split('\n')
-            for (const log of logArray) {
-                if (log.trim().length > 0) {
-                    logs.push(this.parseLogString(log))
-                }
-            }
-            return logs
-        } catch (e) {
-            consola.error(e)
-            return logs
-        }
-    }
+			if (!argsMatch[1] || !timestampMatch[1] || !tagTypeMatch[1] || !tagTypeMatch[2]) {
+				throw new Error("Unable to parse logs");
+			}
+			// Parse arguments
+			const argsString = argsMatch[1].trim();
+			const args = argsString
+				.split("\n")
+				.map((line) => line.trim())
+				.filter((line) => line.length > 0)
+				.map(parseValue);
 
-    public grep(pattern: string, log: string): LogObject[] {
-        if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
-        const logs: LogObject[] = []
-        try {
-            const logString = execSync(`grep ${pattern} ./logs/${log}.log`).toString()
-            const logArray = logString.split('\n')
-            for (const log of logArray) {
-                if (log.trim().length > 0) {
-                    logs.push(this.parseLogString(log))
-                }
-            }
-            return logs
-        } catch (e) {
-            consola.error(e)
-            return logs
-        }
-    }
+			return {
+				date: new Date(timestampMatch[1]),
+				tag: tagTypeMatch[1].trim(),
+				type: tagTypeMatch[2].trim() as LogType,
+				args: args,
+				message: messageMatch ? messageMatch[1]?.trim() : "",
+				level: 1,
+			};
+		} catch (e) {
+			console.error("Failed to parse log string:", e);
+			return {
+				date: new Date(),
+				tag: "ERROR",
+				type: "error" as LogType,
+				args: ["Parse Error"],
+				message: "Failed to parse log string",
+				level: 1,
+			};
+		}
+	}
 
-    public readSync(log: LogType): LogObject[] {
-        if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`)
-        const logs: LogObject[] = []
-        const logString = readFileSync(path.join(`./logs/${log}.log`)).toString()
-        const logArray = logString.split('\n')
-        for (const log of logArray) {
-            if (log.length > 0) {
-                logs.push(this.parseLogString(log))
-            }
-        }
-        return logs
-    }
+	public dispose() {
+		for (const stream of Object.values(this.streams)) {
+			stream.close();
+		}
+	}
 
-    public getLogsByDate(date: Date, log: string = 'master'): LogObject[] | undefined {
-        try {
-            const dateString = date.toISOString().split('T')[0]
-            if (!dateString) return undefined
-            return this.grep(dateString, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+	public async *read(log: LogType): AsyncGenerator<LogObject> {
+		if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`);
 
-    public getLogsByDateRange(start: Date, end: Date, log: string = 'master'): LogObject[] | undefined {
-        try {
-            const startString = start.toISOString().split('T')[0]
-            const endString = end.toISOString().split('T')[0]
-            return this.grep(`${startString}.*${endString}`, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+		const stream = createReadStream(path.join(`./logs/${log}.log`));
+		const rl = createInterface({
+			input: stream,
+			crlfDelay: Infinity,
+		});
 
-    public getLogsByDateAndTime(date: Date, log: string = 'master'): LogObject[] | undefined {
-        try {
-            const dateString = date.toISOString().split('T')[0]
-            const timeString = date.toISOString().split('T')[1]?.split('.')[0]
-            return this.grep(`${dateString}.*${timeString}`, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+		let currentLog = "";
 
-    public getLogByTimestamp(timestamp: string, log: string = 'master'): LogObject[] | undefined {
-        try {
-            return this.grep(timestamp, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+		for await (const line of rl) {
+			if (line.trim() === "---") {
+				if (currentLog.trim().length > 0) {
+					yield this.parseLogString(currentLog);
+				}
+				currentLog = "";
+			} else {
+				currentLog += line + "\n";
+			}
+		}
 
-    public getLogsByMessage(message: string, log: string = 'master'): LogObject[] | undefined {
-        try {
-            return this.grep(message, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+		// Handle the last log if exists
+		if (currentLog.trim().length > 0) {
+			yield this.parseLogString(currentLog);
+		}
 
-    public getLogsByTag(tag: string, log: string = 'master'): LogObject[] | undefined {
-        try {
-            return this.grep(tag, log)
-        } catch (e) {
-            consola.error(e)
-            return undefined
-        }
-    }
+		stream.close();
+	}
 
-    get logger() {
-        return createConsola({
-            level: +999,
-            reporters: [
-                {
-                    log: (logObj: LogObject) => {
-                        this.log(logObj).catch(consola.error)
-                    }
-                },
-                {
-                    log: (logObj: LogObject) => {
-                        consola[logObj.type](logObj.args.join(' '))
-                    }
-                },
-                // TODO: add a reporter that sends logs to a remote server, and another that emails fatal logs to the developer
-            ]
-        })
-    }
+	public tail(log: LogType, lines: number): LogObject[] {
+		if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`);
+		const logs: LogObject[] = [];
+		try {
+			// Multiply lines by 6 because each log entry is approximately 6 lines
+			const adjustedLines = lines * 6;
+			const logString = execSync(`tail -n ${adjustedLines} ./logs/${log}.log`).toString();
+
+			// Split by separator and process each log entry
+			const logEntries = logString.split("---\n").filter((entry) => entry.trim().length > 0);
+
+			// Take only the requested number of entries from the end
+			const relevantEntries = logEntries.slice(-lines);
+
+			for (const entry of relevantEntries) {
+				logs.push(this.parseLogString(entry + "---\n"));
+			}
+
+			return logs;
+		} catch (e) {
+			consola.error(e);
+			return logs;
+		}
+	}
+
+	public grep(pattern: string, log: string): LogObject[] {
+		if (!this.logs.has(log)) throw new Error(`Log ${log} does not exist`);
+		const logs: LogObject[] = [];
+		try {
+			// Read the entire file content
+			const fileContent = readFileSync(`./logs/${log}.log`, "utf-8");
+
+			// Split the content into individual log entries
+			const logEntries = fileContent.split("---\n").filter((entry) => entry.trim().length > 0);
+
+			// Filter entries that match the pattern
+			const matchingEntries = logEntries.filter((entry) => entry.toLowerCase().includes(pattern.toLowerCase()));
+
+			// Parse matching entries
+			for (const entry of matchingEntries) {
+				logs.push(this.parseLogString(entry + "---\n"));
+			}
+
+			return logs;
+		} catch (e) {
+			consola.error(e);
+			return logs;
+		}
+	}
+
+	// Optional: Add a utility method for better grep functionality
+	public advancedGrep(options: {
+		pattern: string;
+		log: string;
+		caseSensitive?: boolean;
+		field?: "message" | "args" | "tag" | "type";
+	}): LogObject[] {
+		if (!this.logs.has(options.log)) {
+			throw new Error(`Log ${options.log} does not exist`);
+		}
+
+		const logs: LogObject[] = [];
+		try {
+			const fileContent = readFileSync(`./logs/${options.log}.log`, "utf-8");
+			const logEntries = fileContent.split("---\n").filter((entry) => entry.trim().length > 0);
+
+			for (const entry of logEntries) {
+				const logObject = this.parseLogString(entry + "---\n");
+				let matches = false;
+
+				if (options.field) {
+					const fieldValue =
+						options.field === "args" ? JSON.stringify(logObject.args) : String(logObject[options.field]);
+
+					matches = options.caseSensitive
+						? fieldValue.includes(options.pattern)
+						: fieldValue.toLowerCase().includes(options.pattern.toLowerCase());
+				} else {
+					const fullText = entry + "---\n";
+					matches = options.caseSensitive
+						? fullText.includes(options.pattern)
+						: fullText.toLowerCase().includes(options.pattern.toLowerCase());
+				}
+
+				if (matches) {
+					logs.push(logObject);
+				}
+			}
+
+			return logs;
+		} catch (e) {
+			consola.error(e);
+			return logs;
+		}
+	}
+
+	public getLogsByDate(date: Date, log: string = "master"): LogObject[] | undefined {
+		try {
+			const dateString = date.toISOString().split("T")[0];
+			if (!dateString) return undefined;
+			return this.grep(dateString, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	public getLogsByDateRange(start: Date, end: Date, log: string = "master"): LogObject[] | undefined {
+		try {
+			const startString = start.toISOString().split("T")[0];
+			const endString = end.toISOString().split("T")[0];
+			return this.grep(`${startString}.*${endString}`, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	public getLogsByDateAndTime(date: Date, log: string = "master"): LogObject[] | undefined {
+		try {
+			const dateString = date.toISOString().split("T")[0];
+			const timeString = date.toISOString().split("T")[1]?.split(".")[0];
+			return this.grep(`${dateString}.*${timeString}`, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	public getLogByTimestamp(timestamp: string, log: string = "master"): LogObject[] | undefined {
+		try {
+			return this.grep(timestamp, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	public getLogsByMessage(message: string, log: string = "master"): LogObject[] | undefined {
+		try {
+			return this.grep(message, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	public getLogsByTag(tag: string, log: string = "master"): LogObject[] | undefined {
+		try {
+			return this.grep(tag, log);
+		} catch (e) {
+			consola.error(e);
+			return undefined;
+		}
+	}
+
+	get logger() {
+		return createConsola({
+			level: +999,
+			reporters: [
+				{
+					log: (logObj: LogObject) => {
+						this.log(logObj)
+					},
+				},
+				{
+					log: (logObj: LogObject) => {
+						const { type, ...rest } = logObj;
+						const initial = consola.level;
+						consola.level = rest.level;
+						const log = rest.message ? [rest.message, ...rest.args] : rest.args;
+						// @ts-expect-error
+						consola[type](...log)
+						consola.level = initial;
+					},
+				},
+				// TODO: add a reporter that sends logs to a remote server or another safe place, and another that emails fatal logs to the developer
+			],
+		});
+	}
 }

@@ -1,1 +1,0 @@
-ALTER TABLE "forms" ADD COLUMN "allow_groups" boolean DEFAULT false;

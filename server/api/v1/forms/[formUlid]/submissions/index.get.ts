@@ -1,27 +1,23 @@
-import {getFormResponses} from "./utils/queries";
+import { getFormResponses } from "./utils/queries";
 
-export default defineEventHandler(async event => {
-    const formUlid = event.context.params?.formUlid
-    if (!formUlid) return useHttpEnd(event, {
-        statusCode: Status.badRequest,
-        body: "No form ID provided"
-    }, Status.badRequest)
+export default defineEventHandler(async (event) => {
+	const formUlid = event.context.params?.formUlid;
+	if (!formUlid)
+		throw createError({
+			status: 400,
+			message: "No form ID provided",
+		});
 
-    const [details, error] = await useAuth(event)
-    if (error || !details) return useHttpEnd(event, {
-        statusCode: Status.unauthorized,
-        body: "Unauthorized"
-    })
-
-    const submissions = await getFormResponses(formUlid).catch(err => err as Error)
-    if (submissions instanceof Error) return useHttpEnd(event, {
-        statusCode: Status.internalServerError,
-        body: submissions.message || "Unknown error while getting form submissions"
-    }, Status.internalServerError)
-
-    const response = {} as APIResponse<typeof submissions>
-    response.statusCode = Status.success
-    response.body = submissions
-
-    return response
-})
+	const { user } = await useAuth(event);
+	const { form, ...rest } = await getFormResponses(formUlid);
+	if (form.meta.userUlid !== user.ulid) {
+		throw createError({
+			statusCode: 403,
+			message: "You are not authorised to vie these submissions",
+		});
+	}
+	return {
+		form,
+		...rest,
+	};
+});
