@@ -1,5 +1,5 @@
 import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividualPayment } from "../utils/queries";
-import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
+import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";

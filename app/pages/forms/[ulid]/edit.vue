@@ -7,7 +7,7 @@ definePageMeta({
 });
 
 const ulid = useRoute().params?.ulid;
-const { data: response } = await useFetch<ReconstructedDbForm>(`/api/v1/forms/${ulid}`, {
+const { data: response } = await useFetch<ReconstructedDbForm>(`/api/forms/${ulid}`, {
 	onResponseError({ response }) {
 		console.log(response);
 	},
@@ -34,7 +34,7 @@ const submitData = computed(() => {
 });
 
 async function submit(data: any) {
-	const res = await $fetch(`/api/v1/forms/${response.value?.meta.ulid}/update`, {
+	const res = await $fetch(`/api/forms/${response.value?.meta.ulid}/update`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import { githubAuth } from "~~/server/api/v1/auth/utils";
+import { githubAuth } from "~~/server/api/auth/utils";
 
 export default defineEventHandler(async (event) => {
 	const { code } = getQuery(event);

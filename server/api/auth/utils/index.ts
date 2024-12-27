@@ -1,7 +1,7 @@
 import type { H3Event } from "h3";
 import { createToken, revokeToken, verifyToken } from "./queries";
 import { updatePassword } from "./queries";
-import { createUser, getUserByEmail } from "~~/server/api/v1/users/utils/queries";
+import { createUser, getUserByEmail } from "~~/server/api/users/utils/queries";
 import { OAuth2Client } from "google-auth-library"
 
 export async function revokeAuthToken(event: H3Event) {

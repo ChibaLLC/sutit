@@ -26,4 +26,6 @@ declare global {
         alertSuccess: (message: string, options?: Pick<NotificationOptions, 'timeout'>) => void
         alertInfo: (message: string, options?: Pick<NotificationOptions, 'timeout'>) => void
     }
+
+    type MapValueType<T> = T extends Map<any, infer V> ? V : never;
 }

@@ -13,7 +13,7 @@ async function submit() {
 	if (loading.value) return;
 	loading.value = true;
 
-	const token = await $fetch("/api/v1/auth/login", {
+	const token = await $fetch("/api/auth/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -73,7 +73,7 @@ function clickGoogleBtn() {
 }
 
 async function onSignIn(googleCrdential: GoogleCredential) {
-	const token = await $fetch("/api/v1/auth/callbacks/google", {
+	const token = await $fetch("/api/auth/callbacks/google", {
 		method: "POST",
 		body: googleCrdential,
 		async onResponse({ response }) {

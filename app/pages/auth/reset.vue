@@ -17,7 +17,7 @@ async function submit() {
 	loading.value = true;
 
 	const respopnse = await $fetch(
-		`/api/v1/auth/reset?email=${details.email}&origin=${window.location.origin}&redirect=${redirect}`,
+		`/api/auth/reset?email=${details.email}&origin=${window.location.origin}&redirect=${redirect}`,
 		{
 			method: "GET",
 			onResponseError({ response }) {

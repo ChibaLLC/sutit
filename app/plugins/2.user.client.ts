@@ -5,7 +5,7 @@ export default defineNuxtPlugin(async () => {
 	const user = await useUser();
 	if (user.value && user.value?.token === token) return;
 
-	const { data } = await useFetch(`/api/v1/users/me`, {
+	const { data } = await useFetch(`/api/users/me`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},

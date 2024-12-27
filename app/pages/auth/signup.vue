@@ -15,7 +15,7 @@ const mismatch = computed(() => {
 async function submit() {
 	loading.value = true;
 
-	const token = await $fetch("/api/v1/auth/signup", {
+	const token = await $fetch("/api/auth/signup", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -61,7 +61,7 @@ function clickGoogleBtn() {
 }
 
 async function onSignIn(googleCredential: GoogleCredential) {
-	const token = await $fetch("/api/v1/auth/callbacks/google", {
+	const token = await $fetch("/api/auth/callbacks/google", {
 		method: "POST",
 		body: googleCredential,
 		onResponseError(response) {

@@ -19,7 +19,7 @@ async function submit() {
 	if (loading.value) return;
 	loading.value = true;
 
-	const response = await $fetch(`/api/v1/auth/reset?email=${email}&token=${token}`, {
+	const response = await $fetch(`/api/auth/reset?email=${email}&token=${token}`, {
 		method: "POST",
 		body: { password: details.password },
 		onResponseError({ response }) {

@@ -1,5 +1,5 @@
-import { getUserByEmail } from "~~/server/api/v1/users/utils/queries";
-import { createToken } from "~~/server/api/v1/auth/utils/queries";
+import { getUserByEmail } from "~~/server/api/users/utils/queries";
+import { createToken } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
 
 export default defineEventHandler(async (event) => {

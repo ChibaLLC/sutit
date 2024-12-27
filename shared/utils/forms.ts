@@ -1,4 +1,4 @@
-import type { getFormResponses } from "~~/server/api/v1/forms/[formUlid]/submissions/utils/queries";
+import type { getFormResponses } from "~~/server/api/forms/[formUlid]/submissions/utils/queries";
 
 export function bubblePrice(
 	group_responses: Awaited<ReturnType<typeof getFormResponses>>["group_responses"],

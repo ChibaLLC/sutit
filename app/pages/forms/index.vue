@@ -3,7 +3,7 @@ definePageMeta({
   middleware: ['auth']
 })
 
-const { data: meta } = await useFetch("/api/v1/forms/me", {
+const { data: meta } = await useFetch("/api/forms/me", {
   headers: {
     Authorization: `Bearer ${getAuthToken()}`,
   },
@@ -38,7 +38,7 @@ function navigateIfTarget(event: MouseEvent, location: string) {
 function deleteForm(ulid: string) {
   const form = meta.value?.find((fs) => fs.ulid === ulid)
   meta.value = meta.value?.filter((fs) => fs.ulid !== ulid)
-  $fetch(`/api/v1/forms/${ulid}/delete`, {
+  $fetch(`/api/forms/${ulid}/delete`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${getAuthToken()}`

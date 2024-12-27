@@ -6,7 +6,7 @@ definePageMeta({
 const ulid = useRoute().params.ulid;
 if (!ulid) navigateTo("/forms");
 
-const { form, form_responses, group_responses, store_response } = await useFetch(`/api/v1/forms/${ulid}/submissions`, {
+const { form, form_responses, group_responses, store_response } = await useFetch(`/api/forms/${ulid}/submissions`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
@@ -18,7 +18,7 @@ const { form, form_responses, group_responses, store_response } = await useFetch
 const loadingExcel = ref(false);
 async function downloadExcel() {
 	loadingExcel.value = true;
-	const res = await $fetch<Blob>(`/api/v1/forms/${ulid}/submissions/excel`, {
+	const res = await $fetch<Blob>(`/api/forms/${ulid}/submissions/excel`, {
 		headers: {
 			Authorization: `Bearer ${getAuthToken()}`,
 			"Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -41,7 +41,7 @@ async function downloadExcel() {
 	a.remove();
 }
 
-const { data: total } = await useFetch(`/api/v1/forms/${ulid}/submissions/total`, {
+const { data: total } = await useFetch(`/api/forms/${ulid}/submissions/total`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
@@ -61,7 +61,7 @@ const checkoutMethod = ref<CreditMethod | null>(null);
 async function credit() {
 	loadingCheckout.value = true;
 	showCreditMethodsModal.value = false;
-	await $fetch(`/api/v1/forms/${ulid}/credit`, {
+	await $fetch(`/api/forms/${ulid}/credit`, {
 		method: "POST",
 		headers: {
 			Authorization: `Bearer ${getAuthToken()}`,

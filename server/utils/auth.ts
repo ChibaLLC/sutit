@@ -1,5 +1,5 @@
 import type { H3Event } from "h3";
-import { getUserByToken } from "~~/server/api/v1/users/utils/queries";
+import { getUserByToken } from "~~/server/api/users/utils/queries";
 
 export type AuthData = {
 	token: string;
