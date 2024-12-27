@@ -8,7 +8,7 @@ definePageMeta({
 });
 
 async function submit(data: any) {	
-	const res = await $fetch("/api/v1/forms/create", {
+	const res = await $fetch("/api/forms/create", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

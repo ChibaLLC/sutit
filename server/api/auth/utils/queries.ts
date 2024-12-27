@@ -3,7 +3,7 @@ import db from '~~/server/db';
 import { sessions } from "~~/server/db/schema";
 import { v4 } from "uuid";
 import type { Drizzle } from "~~/server/db/types";
-import { getUserByEmail } from "~~/server/api/v1/users/utils/queries";
+import { getUserByEmail } from "~~/server/api/users/utils/queries";
 import { users } from "~~/server/db/schema";
 
 

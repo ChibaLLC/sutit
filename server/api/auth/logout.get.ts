@@ -1,4 +1,4 @@
-import {revokeAuthToken} from "~~/server/api/v1/auth/utils";
+import {revokeAuthToken} from "~~/server/api/auth/utils";
 
 export default defineEventHandler(async event => {
     revokeAuthToken(event)

@@ -3,7 +3,7 @@ export const useUser = () =>
 		const token = getAuthCookie();
 		if (!token) return {} as UserState;
 
-		const user = await $fetch("/api/v1/users/me", {
+		const user = await $fetch("/api/users/me", {
 			headers: {
 				Authorization: `Bearer ${token}`,
 			},

@@ -1,6 +1,6 @@
 import type { Drizzle } from "~~/server/db/types";
 import { call_b2b, call_b2c, call_stk } from "~~/server/services/mpesa/methods";
-import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
+import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import {
 	deleteForm,
 	getAllFormPaymentsSum,

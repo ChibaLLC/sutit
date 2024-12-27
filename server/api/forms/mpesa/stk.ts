@@ -1,4 +1,4 @@
-import { insertFormPayment, insertPayment } from "~~/server/api/v1/forms/utils/queries";
+import { insertFormPayment, insertPayment } from "~~/server/api/forms/utils/queries";
 import { H3Event } from "h3";
 
 export function _getRequestIP(event: H3Event): string {

@@ -1,4 +1,4 @@
-import { getFormByUlid, getFormPaymentsSum } from "~~/server/api/v1/forms/utils/queries";
+import { getFormByUlid, getFormPaymentsSum } from "~~/server/api/forms/utils/queries";
 
 export default defineEventHandler(async (event) => {
 	const formUlid = event.context.params?.formUlid;

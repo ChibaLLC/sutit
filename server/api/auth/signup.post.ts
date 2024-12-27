@@ -1,6 +1,6 @@
-import { revokeAuthToken } from "~~/server/api/v1/auth/utils";
-import { createUser } from "~~/server/api/v1/users/utils/queries";
-import { authenticate } from "~~/server/api/v1/auth/utils/queries";
+import { revokeAuthToken } from "~~/server/api/auth/utils";
+import { createUser } from "~~/server/api/users/utils/queries";
+import { authenticate } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
 
 export default defineEventHandler(async (event) => {

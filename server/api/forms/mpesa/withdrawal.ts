@@ -1,4 +1,4 @@
-import { insertWithdrawal } from "~~/server/api/v1/forms/mpesa/utils/queries";
+import { insertWithdrawal } from "~~/server/api/forms/mpesa/utils/queries";
 
 export default defineEventHandler(async (event) => {
 	const body = (await readBody(event)) as B2cCallback;

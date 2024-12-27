@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getFormByUlid, createFormGroup, needsGroupPayment } from "../utils/queries";
-import { getUserByUlId } from "~~/server/api/v1/users/utils/queries";
+import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import { processFormPayments, sendResponseInvites, sendUserMail } from "../utils";
 
 export default defineEventHandler(async (event) => {

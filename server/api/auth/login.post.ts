@@ -1,5 +1,5 @@
-import { revokeAuthToken } from "~~/server/api/v1/auth/utils";
-import { authenticate } from "~~/server/api/v1/auth/utils/queries";
+import { revokeAuthToken } from "~~/server/api/auth/utils";
+import { authenticate } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
 export default defineEventHandler(async (event) => {
 	const schema = z.object({

@@ -8,7 +8,7 @@ const ulid = route.params?.ulid;
 const rerender = ref(false);
 const complete = ref(false);
 
-const { data } = await useFetch<ReconstructedDbForm>(`/api/v1/forms/${ulid}`, {
+const { data } = await useFetch<ReconstructedDbForm>(`/api/forms/${ulid}`, {
 	onResponseError({ response }) {
 		console.log(response);
 	},
@@ -54,7 +54,7 @@ let completedForm: Form | undefined = undefined;
 async function submit() {
 	try {
 		loading.value = true;
-		const response = await $fetch(`/api/v1/forms/${ulid}/submit`, {
+		const response = await $fetch(`/api/forms/${ulid}/submit`, {
 			method: "POST",
 			headers: {
 				Authorization: `Bearer ${getAuthToken()}`,
@@ -221,7 +221,7 @@ async function processInvites() {
 		paymentModal.value = true;
 		return;
 	}
-	const response = await $fetch(`/api/v1/forms/${ulid}/invite`, {
+	const response = await $fetch(`/api/forms/${ulid}/invite`, {
 		method: "POST",
 		body: {
 			invites: Array.from(invites.value),
