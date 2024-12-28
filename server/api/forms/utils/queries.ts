@@ -342,6 +342,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 		for (const element of page || []) {
 			formfieldResponseInsertList.push({
 				value: getValue(element.value),
+				// @ts-expect-error
 				fieldUlid: element.fieldUlid!,
 				formResponseUlid: formResponse.ulid,
 			});
@@ -363,6 +364,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 						value: item.name,
 						liked: item.liked,
 						carted: item.carted,
+						// @ts-expect-error
 						itemUlid: item.itemUlid!,
 						qtty: item.qtty,
 					});
