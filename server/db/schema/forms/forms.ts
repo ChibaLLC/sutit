@@ -102,6 +102,7 @@ const store_items = qb
 		price: storeItems.price,
 		likes: storeItems.likes,
 		images: storeItems.images,
+		isInfinite: storeItems.isInfinite,
 		store_index: sql<string>`${stores.index}`.as("stores_index") as unknown as typeof stores.index,
 	})
 	.from(stores)

@@ -41,7 +41,7 @@ async function downloadExcel() {
 	a.remove();
 }
 
-const { data: total } = await useFetch(`/api/forms/${ulid}/submissions/total`, {
+const { data: total } = useFetch(`/api/forms/${ulid}/submissions/total`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chiballc/nuxt-form-builder':
-        specifier: 0.1.8
-        version: 0.1.8
+        specifier: 0.1.11
+        version: 0.1.11
       crossws:
         specifier: ^0.2.4
         version: 0.2.4
@@ -245,8 +245,8 @@ packages:
     resolution: {integrity: sha512-vN5p+1kl59GVKMvTHt55NzzmYVxprfJD+ql7U9NFIfKCBkYE55LYtS+WtPlaYOyzydrKI8Nezd+aZextrd+FMA==}
     engines: {node: '>=6.9.0'}
 
-  '@chiballc/nuxt-form-builder@0.1.8':
-    resolution: {integrity: sha512-hIvwuZRcRrQ9eEeNcCXdx3CxRWrVETYFU/ONuZltPx3Yd9p16s6J0CcW/QsxQPMaEtL7uhQp4zwmlXfIBT5IrQ==}
+  '@chiballc/nuxt-form-builder@0.1.11':
+    resolution: {integrity: sha512-kg85B6rh9MTt8A+lN6SSuggeTlzGVNTUmKDO/TtEQWIEHT7rYtrNy0x9tLFvw3FQCXqnwCpdK9we1SuVnUAS6w==}
 
   '@cloudflare/kv-asset-handler@0.3.4':
     resolution: {integrity: sha512-YLPHc8yASwjNkmcDMQMY35yiWjoKAKnhUbPRszBRS0YgH+IXtsMp61j+yTcnCE3oO2DgP0U3iejLC8FTtKDC8Q==}
@@ -5249,7 +5249,7 @@ snapshots:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
 
-  '@chiballc/nuxt-form-builder@0.1.8':
+  '@chiballc/nuxt-form-builder@0.1.11':
     dependencies:
       zod: 3.24.1
 

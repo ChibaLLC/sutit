@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Form } from "@chiballc/nuxt-form-builder";
+import type { Form, Pages, Store, Stores } from "@chiballc/nuxt-form-builder";
 
 const loading = ref(false);
 const route = useRoute();
@@ -272,8 +272,8 @@ async function processInvites() {
 				<FormViewer
 					:data="
 						reactive({
-							pages: data.pages,
-							stores: data.stores,
+							pages: data.pages as Pages,
+							stores: data.stores as unknown as Stores,
 						})
 					"
 					@submit="completeForm"
