@@ -9,7 +9,7 @@ export async function getUserByToken(token: string): Promise<Drizzle.User.select
 	const rows = await db
 		.select()
 		.from(sessions)
-		.where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
+		.where(eq(sessions.token, token))
 		.innerJoin(users, eq(users.ulid, sessions.userUlid))
 		.catch((err) => {
 			console.error(err);

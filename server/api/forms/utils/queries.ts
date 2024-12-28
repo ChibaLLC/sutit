@@ -21,7 +21,7 @@ import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count, inArray, sql } from "drizzle-orm";
 import { ulid } from "ulid";
-import { z } from "zod";
+import { object, z } from "zod";
 import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
 import type { Form, Item, Page, Store, Stores } from "@chiballc/nuxt-form-builder";
@@ -322,12 +322,26 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 			message: "Unable to create a form response",
 		});
 	}
+
+	function getValue(value: any) {
+		if (typeof value !== "object") return value;
+		if (Array.isArray(value)) {
+			return JSON.stringify(value);
+		}
+		return Object.keys(value)
+			.reduce((acc, key) => {
+				const curr = JSON.stringify(value[key]);
+				acc.push(curr);
+				return acc;
+			}, [] as string[])
+			.join(", ");
+	}
 	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
 	for (const key in data.pages) {
 		const page = data.pages[key];
 		for (const element of page || []) {
 			formfieldResponseInsertList.push({
-				value: element.value,
+				value: getValue(element.value),
 				fieldUlid: element.fieldUlid!,
 				formResponseUlid: formResponse.ulid,
 			});

@@ -27,7 +27,6 @@ export const sessions = pgTable(
             .notNull()
             .references(() => users.ulid, { onDelete: "cascade" }),
         token: varchar("token", { length: 255 }).notNull(),
-        isValid: boolean("is_valid").default(true).notNull(),
         createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
     },
     (table) => {
