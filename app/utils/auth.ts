@@ -41,11 +41,6 @@ export function userIsAuthenticated() {
 export async function logout() {
     await $fetch("/api/auth/logout", {
 		async onResponse({ response }) {
-			const res = response._data;
-			if (res.statusCode !== 200) {
-				console.error(res);
-				return window.alertError("Failed to logout");
-			}
 			const state = await useUser();
 			state.value = {} as UserState;
 			setAuthCookie(undefined);
