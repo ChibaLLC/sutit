@@ -6,7 +6,7 @@ definePageMeta({
 	middleware: ["auth"],
 });
 
-const {data: stats} = useFetch("/api/forms/me/stats", {
+const {data: stats} = await useFetch("/api/forms/me/stats", {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
@@ -47,7 +47,7 @@ const Card = defineComponent({
 	},
 });
 
-const {data: recents} = useFetch(`/api/forms/me/recents`, {
+const {data: recents} = await useFetch(`/api/forms/me/recents`, {
 	headers: {
 		Authorization: `Bearer ${getAuthToken()}`,
 	},
