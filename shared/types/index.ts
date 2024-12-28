@@ -309,7 +309,7 @@ export type NotificationOptions = {
 };
 
 export type DbPage = Drizzle.SutitForm[number]["form_elements"][];
-export type DbStore = Drizzle.SutitForm[number]["store_items"][];
+export type DbStore = (Drizzle.SutitForm[number]["store_items"] & Item)[];
 export type ReconstructedDbForm = {
 	meta: Drizzle.SutitForm[number]["form_meta"];
 	pages: Record<number, DbPage>;

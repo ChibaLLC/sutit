@@ -3,6 +3,7 @@ import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
+import type { Form } from "@chiballc/nuxt-form-builder";
 
 export default defineEventHandler(async (event) => {
 	const formUlid = event.context.params?.formUlid;
@@ -82,14 +83,14 @@ export default defineEventHandler(async (event) => {
 		if (!formMail) {
 			for (const key in data.form.pages) {
 				for (const field of data.form.pages[key] || []) {
-					if (isInput(field) && field.type === Field.EMAIL) {
-						formMail = field.value as string | undefined;
+					if (isInput(field as any) && field.type === Field.EMAIL) {
+						formMail = (field as any).value as string | undefined;
 						break;
 					}
 				}
 			}
 		}
-		const formResponse = await insertData(formUlid, data.form, options.price_paid);
+		const formResponse = await insertData(formUlid, data.form as ReconstructedDbForm & Form, options.price_paid);
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,

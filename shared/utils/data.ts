@@ -1,4 +1,4 @@
-import type { Stores } from "@chiballc/nuxt-form-builder";
+import type { Item, Stores } from "@chiballc/nuxt-form-builder";
 
 export function Boolish(val: any) {
 	if (typeof val !== "string") return val;
@@ -70,11 +70,11 @@ function isSocketTemplate(data: any): data is SocketTemplate {
 	return hasOwnProperties<SocketTemplate>(data, ["type"]);
 }
 
-export function hasBoughtMerch(stores?: Stores) {
+export function hasBoughtMerch(stores?: Stores | ReconstructedDbForm["stores"]) {
 	if (!stores) return false;
 	for (const key in stores) {
 		for (const item of stores[key] || []) {
-			if (item.carted) return true;
+			if ((item as Item).carted) return true;
 		}
 	}
 	return false;
