@@ -47,7 +47,7 @@ export const itemResponses = pgTable("item_responses", {
 	carted: boolean("carted").default(false),
 	value: text("value"),
 	qtty: integer("qtty").default(1),
-	storeResponseUlid: varchar("form_response_ulid")
+	storeResponseUlid: varchar("store_response_ulid")
 		.references(() => storeResponses.ulid, { onDelete: "cascade" })
 		.notNull(),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),

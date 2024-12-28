@@ -24,9 +24,7 @@ export async function createToken(user: { userUlid?: string, email?: string }): 
 }
 
 export async function revokeToken(token: string) {
-    return await db.update(sessions).set({
-        isValid: false,
-    }).where(and(eq(sessions.token, token)))
+    return await db.delete(sessions).where(and(eq(sessions.token, token)))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to revoke token')
@@ -34,9 +32,7 @@ export async function revokeToken(token: string) {
 }
 
 export async function revokeAllTokens(userUlid: string) {
-    return await db.update(sessions).set({
-        isValid: false,
-    }).where(eq(sessions.userUlid, userUlid))
+    return await db.delete(sessions).where(eq(sessions.userUlid, userUlid))
         .catch((err) => {
             console.error(err)
             throw new Error('Unable to revoke token')
@@ -44,14 +40,15 @@ export async function revokeAllTokens(userUlid: string) {
 }
 
 export async function verifyToken(token: string): Promise<boolean> {
-    const rows = await db.select()
-        .from(sessions)
-        .where(and(eq(sessions.token, token), eq(sessions.isValid, true)))
-        .catch((err) => {
-            console.error(err)
-            throw new Error('Unable to verify token')
-        })
-    return Boolean(rows.at(0)?.isValid) || false
+    const rows = await db
+		.select()
+		.from(sessions)
+		.where(eq(sessions.token, token))
+		.catch((err) => {
+			console.error(err);
+			throw new Error("Unable to verify token");
+		});
+    return Boolean(!!rows.at(0))
 }
 
 
