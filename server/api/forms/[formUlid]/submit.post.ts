@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
 	};
 
 	if (needsPay && !data.token && data.phone) {
-		if (data.form.meta.price_individual < data.form.meta.price_individual) {
+		if (data.form.meta.price_individual < form.meta.price_individual) {
 			throw createError({
 				statusCode: 400,
 				message: "Passed price is less than the allowed minimum for this form",
