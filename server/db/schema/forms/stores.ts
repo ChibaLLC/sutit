@@ -7,14 +7,14 @@ export const stores = pgTable("stores", {
 	formUlid: varchar("form_ulid").references(() => formMeta.ulid, {
 		onDelete: "cascade",
 	}),
-	index: integer("index").notNull(),
+	index: varchar("index", {length: 255}).notNull(),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
 });
 
 export const storeItems = pgTable("store_items", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-	index: integer("index").notNull(),
+	index: varchar("index", { length: 255 }).notNull(),
 	name: varchar("name", { length: 255 }).notNull(),
 	stock: integer("stock").notNull(),
 	price: integer("price").notNull(),

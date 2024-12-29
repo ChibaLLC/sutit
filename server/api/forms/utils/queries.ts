@@ -38,6 +38,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			ulid: pageUlid,
 		});
 		page?.forEach((field) => {
+			if (!field) return log.warn("Field was null in page", page);
 			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) return;
 			const fieldUlid = field.fieldUlid || ulid();
 			fieldsData.set(fieldUlid, {
@@ -90,7 +91,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		const store_ulid = store?.at(0)?.storeUlid || ulid();
 		storesData.set(store_ulid, {
 			formUlid: data.ulid,
-			index: +key,
+			index: key,
 			ulid: store_ulid,
 		});
 		store?.forEach((item) => {
@@ -185,17 +186,16 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 
 	const { storesData, itemsData, pagesData, fieldsData } = await insertFormFields({ ...data, ulid: formUlid });
 	const existing_stores = Object.entries(form.stores);
-
 	const inserted_stores = Array.from(storesData.values()).reduce((acc, curr) => {
 		acc.set(curr.index.toString(), curr);
 		return acc;
 	}, new Map<string, MapValueType<typeof storesData>>());
-	const removedStores: number[] = [];
+	const removedStores: string[] = [];
 	existing_stores.forEach(([index, _]) => {
 		if (inserted_stores.has(index.toString())) {
 			return;
 		} else {
-			removedStores.push(+index);
+			removedStores.push(index);
 		}
 	});
 	const removedItems: string[] = [];
@@ -287,7 +287,7 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 		},
 		{ pages: new Map(), stores: new Map() } as {
 			pages: Map<string, DbPage>;
-			stores: Map<number, Store>;
+			stores: Map<string, Store>;
 		}
 	);
 

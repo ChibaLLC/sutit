@@ -89,6 +89,10 @@ async function submit(form: Form) {
 		alert("Please add a form or a store");
 	}
 
+	if(!data.value.payment.group_message){
+		data.value.payment.group_message = defaultGroupMessage()
+	}
+
 	emits("submit", data.value);
 }
 
