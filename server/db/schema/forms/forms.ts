@@ -13,7 +13,7 @@ import {
 import { ulid } from "ulid";
 import { users } from "../users";
 import { storeItems, stores } from "./stores";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, isNotNull } from "drizzle-orm";
 
 export const formMeta = pgTable("form_meta", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
@@ -50,6 +50,7 @@ export const formFields = pgTable("form_fields", {
 	options: jsonb("options"),
 	accept: varchar("accept", { length: 255 }),
 	type: varchar("type"),
+	rules: jsonb("rules"),
 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
 	}),
@@ -86,6 +87,7 @@ const form_elements = qb
 		options: formFields.options,
 		accept: formFields.accept,
 		type: formFields.type,
+		rules: formFields.rules,
 		page_index: sql<string>`${formPages.index}`.as("form_pages_index") as unknown as typeof formPages.index,
 	})
 	.from(formPages)
@@ -113,6 +115,9 @@ export const sutitForms = pgView("sutit_forms").as(
 	qb
 		.select()
 		.from(formMeta)
-		.leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
-		.leftJoin(store_items, eq(formMeta.ulid, store_items.formUlid))
+		.innerJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
 );
+
+export const sutitStores = pgView("sutit_stores").as(
+	qb.select().from(store_items).where(isNotNull(store_items.formUlid))
+)

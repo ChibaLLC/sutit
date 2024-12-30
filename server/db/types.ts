@@ -15,7 +15,8 @@ import {
 	formFields,
 	formResponses,
 	storeResponses,
-	sutitForms
+	sutitForms,
+	sutitStores,
 } from "./schema";
 import type { Column, InferModelFromColumns, InferSelectModel } from "drizzle-orm";
 
@@ -89,10 +90,9 @@ export namespace Drizzle {
 		export type select = typeof formFields.$inferInsert;
 	}
 
-	type Infer<T> = T extends Record<string, any> ? InferModelFromColumns<T, "select"> : never;
-	export type SutitForm<T = typeof sutitForms._.selectedFields> = Array<{
-		[K in keyof T]: Infer<T[K]>;
-	}>;
+	export type SutitForm = typeof sutitForms.$inferSelect;
+
+	export type SutitStore = typeof sutitStores.$inferSelect;
 
 	export namespace FormPages {
 		export type insert = typeof formPages.$inferInsert;

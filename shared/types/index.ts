@@ -308,10 +308,10 @@ export type NotificationOptions = {
 	intensity?: "info" | "success" | "error";
 };
 
-export type DbPage = Drizzle.SutitForm[number]["form_elements"][];
-export type DbStore = (Drizzle.SutitForm[number]["store_items"] & Item)[];
+export type DbPage = Drizzle.SutitForm["form_elements"][];
+export type DbStore = (Drizzle.SutitStore & Item)[];
 export type ReconstructedDbForm = {
-	meta: Drizzle.SutitForm[number]["form_meta"];
-	pages: Record<number, DbPage>;
-	stores: Record<number, DbStore>;
+	meta: Drizzle.SutitForm["form_meta"];
+	pages: Record<number | string, DbPage>;
+	stores: Record<number | string, DbStore>;
 };
