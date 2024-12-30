@@ -9,8 +9,9 @@ export const stores = pgTable("stores", {
 	}),
 	index: varchar("index", { length: 255 }).notNull(),
 	updatedAt: timestamp("updated_at")
-		.$defaultFn(() => new Date())
-		.notNull(),
+		.defaultNow()
+		.notNull()
+		.$onUpdate(() => new Date()),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -27,7 +28,8 @@ export const storeItems = pgTable("store_items", {
 		onDelete: "cascade",
 	}),
 	updatedAt: timestamp("updated_at")
-		.$defaultFn(() => new Date())
-		.notNull(),
+		.defaultNow()
+		.notNull()
+		.$onUpdate(() => new Date()),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });

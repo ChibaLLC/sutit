@@ -1,10 +1,10 @@
 {
-  "id": "012dd9fe-c854-489e-85b4-4c9a2459f748",
+  "id": "240e9a6f-bf8e-4532-8994-a8e3a834a4ef",
   "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "form_fields": {
+    "public.form_fields": {
       "name": "form_fields",
       "schema": "",
       "columns": {
@@ -62,11 +62,31 @@
           "primaryKey": false,
           "notNull": false
         },
+        "rules": {
+          "name": "rules",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "page": {
           "name": "page",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -86,9 +106,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_groups": {
+    "public.form_groups": {
       "name": "form_groups",
       "schema": "",
       "columns": {
@@ -135,9 +158,12 @@
             "form_ulid"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_meta": {
+    "public.form_meta": {
       "name": "form_meta",
       "schema": "",
       "columns": {
@@ -179,15 +205,15 @@
           "notNull": true,
           "default": 0
         },
-        "price_group_count": {
-          "name": "price_group_count",
+        "group_member_count": {
+          "name": "group_member_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "default": 0
         },
-        "price_group_message": {
-          "name": "price_group_message",
+        "group_invite_message": {
+          "name": "group_invite_message",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -205,6 +231,13 @@
           "primaryKey": false,
           "notNull": false,
           "default": false
+        },
+        "withdrawn_funds": {
+          "name": "withdrawn_funds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -238,9 +271,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_pages": {
+    "public.form_pages": {
       "name": "form_pages",
       "schema": "",
       "columns": {
@@ -261,6 +297,20 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -280,9 +330,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "store_items": {
+    "public.store_items": {
       "name": "store_items",
       "schema": "",
       "columns": {
@@ -292,27 +345,20 @@
           "primaryKey": true,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
         "index": {
           "name": "index",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "store": {
-          "name": "store",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "quantity": {
-          "name": "quantity",
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stock": {
+          "name": "stock",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -336,11 +382,32 @@
           "primaryKey": false,
           "notNull": true
         },
+        "is_infinite": {
+          "name": "is_infinite",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "store_ulid": {
           "name": "store_ulid",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -360,9 +427,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "stores": {
+    "public.stores": {
       "name": "stores",
       "schema": "",
       "columns": {
@@ -380,9 +450,16 @@
         },
         "index": {
           "name": "index",
-          "type": "integer",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         },
         "created_at": {
           "name": "created_at",
@@ -409,9 +486,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_payments": {
+    "public.form_payments": {
       "name": "form_payments",
       "schema": "",
       "columns": {
@@ -473,9 +553,12 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "store_payments": {
+    "public.store_payments": {
       "name": "store_payments",
       "schema": "",
       "columns": {
@@ -537,9 +620,12 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_field_responses": {
+    "public.form_field_responses": {
       "name": "form_field_responses",
       "schema": "",
       "columns": {
@@ -598,9 +684,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_group_responses": {
+    "public.form_group_responses": {
       "name": "form_group_responses",
       "schema": "",
       "columns": {
@@ -659,9 +748,12 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "form_responses": {
+    "public.form_responses": {
       "name": "form_responses",
       "schema": "",
       "columns": {
@@ -689,9 +781,104 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "store_responses": {
+    "public.item_responses": {
+      "name": "item_responses",
+      "schema": "",
+      "columns": {
+        "ulid": {
+          "name": "ulid",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "item_ulid": {
+          "name": "item_ulid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "liked": {
+          "name": "liked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "carted": {
+          "name": "carted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qtty": {
+          "name": "qtty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 1
+        },
+        "store_response_ulid": {
+          "name": "store_response_ulid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "item_responses_item_ulid_store_items_ulid_fk": {
+          "name": "item_responses_item_ulid_store_items_ulid_fk",
+          "tableFrom": "item_responses",
+          "tableTo": "store_items",
+          "columnsFrom": [
+            "item_ulid"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "item_responses_store_response_ulid_store_responses_ulid_fk": {
+          "name": "item_responses_store_response_ulid_store_responses_ulid_fk",
+          "tableFrom": "item_responses",
+          "tableTo": "store_responses",
+          "columnsFrom": [
+            "store_response_ulid"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.store_responses": {
       "name": "store_responses",
       "schema": "",
       "columns": {
@@ -719,9 +906,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "payments": {
+    "public.payments": {
       "name": "payments",
       "schema": "",
       "columns": {
@@ -774,15 +964,18 @@
             "reference_code"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "withdrawals": {
+    "public.withdrawals": {
       "name": "withdrawals",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
+        "ulid": {
+          "name": "ulid",
+          "type": "varchar(255)",
           "primaryKey": true,
           "notNull": true
         },
@@ -809,9 +1002,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "sessions": {
+    "public.sessions": {
       "name": "sessions",
       "schema": "",
       "columns": {
@@ -833,13 +1029,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_valid": {
-          "name": "is_valid",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -852,9 +1041,17 @@
         "token_index": {
           "name": "token_index",
           "columns": [
-            "token"
+            {
+              "expression": "token",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -881,9 +1078,12 @@
             "token"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -942,11 +1142,138 @@
             "email"
           ]
         }
-      }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {
+    "public.sutit_forms": {
+      "columns": {},
+      "definition": "select \"form_meta\".\"ulid\", \"form_meta\".\"form_name\", \"form_meta\".\"form_description\", \"form_meta\".\"user_ulid\", \"form_meta\".\"price_individual\", \"form_meta\".\"price_group_amount\", \"form_meta\".\"group_member_count\", \"form_meta\".\"group_invite_message\", \"form_meta\".\"allow_groups\", \"form_meta\".\"require_merch\", \"form_meta\".\"withdrawn_funds\", \"form_meta\".\"created_at\", \"form_meta\".\"updated_at\", \"form_field_ulid\", \"form_pages_page_ulid\", \"form_pages_formUlid\", \"form_elements\".\"label\", \"form_elements\".\"input_type\", \"form_fields_index\", \"form_elements\".\"description\", \"form_elements\".\"placeholder\", \"form_elements\".\"options\", \"form_elements\".\"accept\", \"form_elements\".\"type\", \"form_elements\".\"rules\", \"form_pages_index\" from \"form_meta\" left join (select \"form_fields\".\"ulid\" as \"form_field_ulid\", \"form_fields\".\"page\" as \"form_pages_page_ulid\", \"form_pages\".\"form_ulid\" as \"form_pages_formUlid\", \"form_fields\".\"label\", \"form_fields\".\"input_type\", \"form_fields\".\"index\" as \"form_fields_index\", \"form_fields\".\"description\", \"form_fields\".\"placeholder\", \"form_fields\".\"options\", \"form_fields\".\"accept\", \"form_fields\".\"type\", \"form_fields\".\"rules\", \"form_pages\".\"index\" as \"form_pages_index\" from \"form_pages\" inner join \"form_fields\" on \"form_pages\".\"ulid\" = \"form_fields\".\"page\") \"form_elements\" on \"form_meta\".\"ulid\" = \"form_pages_formUlid\"",
+      "name": "sutit_forms",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.sutit_stores": {
+      "columns": {
+        "form_ulid": {
+          "name": "form_ulid",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stock": {
+          "name": "stock",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "likes": {
+          "name": "likes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "images": {
+          "name": "images",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_infinite": {
+          "name": "is_infinite",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        }
+      },
+      "definition": "select \"item_ulid\", \"stores_ulid\", \"form_ulid\", \"store_items_index\", \"name\", \"stock\", \"price\", \"likes\", \"images\", \"is_infinite\", \"stores_index\" from (select \"store_items\".\"ulid\" as \"item_ulid\", \"stores\".\"ulid\" as \"stores_ulid\", \"stores\".\"form_ulid\", \"store_items\".\"index\" as \"store_items_index\", \"store_items\".\"name\", \"store_items\".\"stock\", \"store_items\".\"price\", \"store_items\".\"likes\", \"store_items\".\"images\", \"store_items\".\"is_infinite\", \"stores\".\"index\" as \"stores_index\" from \"stores\" inner join \"store_items\" on \"stores\".\"ulid\" = \"store_items\".\"store_ulid\") \"store_items\" where \"store_items\".\"form_ulid\" is not null",
+      "name": "sutit_stores",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.form_responses_view": {
+      "columns": {
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_paid": {
+          "name": "price_paid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "definition": "select \"form_responses\".\"ulid\" as \"response_ulid\", \"form_field_ulid\" as \"response_field_ulid\", \"form_elements_ulid\" as \"response_form_ulid\", \"form_field_responses\".\"value\", \"form_responses\".\"price_paid\", \"form_responses\".\"created_at\" from \"form_responses\" left join (select \"form_field_responses\".\"form_response_ulid\" as \"form_response_ulid\", \"fields_ulid\" as \"form_field_ulid\", \"form_field_responses\".\"value\", \"form_ulid\" as \"form_elements_ulid\" from \"form_field_responses\" inner join (select \"form_pages\".\"form_ulid\" as \"form_ulid\", \"form_fields\".\"ulid\" as \"fields_ulid\" from \"form_pages\" inner join \"form_fields\" on \"form_pages\".\"ulid\" = \"form_fields\".\"page\") \"form_elements\" on \"form_field_responses\".\"field_ulid\" = \"fields_ulid\") \"form_field_responses\" on \"form_responses\".\"ulid\" = \"form_response_ulid\"",
+      "name": "form_responses_view",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    },
+    "public.store_responses_view": {
+      "columns": {
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_paid": {
+          "name": "price_paid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "definition": "select \"store_responses\".\"ulid\" as \"store_response_ulid\", \"store_item_ulid\" as \"store_response_item_ulid\", \"store_items_ulid\" as \"store_response_form_ulid\", \"store_items_responses\".\"value\", \"store_responses\".\"price_paid\", \"store_responses\".\"created_at\" from \"store_responses\" left join (select \"item_responses\".\"store_response_ulid\" as \"store_response_ulid\", \"item_ulid_view\" as \"store_item_ulid\", \"item_responses\".\"value\", \"store_form_ulid\" as \"store_items_ulid\" from \"item_responses\" inner join (select \"stores\".\"form_ulid\" as \"store_form_ulid\", \"store_items\".\"ulid\" as \"item_ulid_view\", \"store_items\".\"likes\" from \"stores\" inner join \"store_items\" on \"stores\".\"ulid\" = \"store_items\".\"store_ulid\") \"store_items\" on \"item_responses\".\"item_ulid\" = \"item_ulid_view\") \"store_items_responses\" on \"store_responses\".\"ulid\" = \"store_response_ulid\"",
+      "name": "store_responses_view",
+      "schema": "public",
+      "isExisting": false,
+      "materialized": false
+    }
+  },
   "_meta": {
     "columns": {},
     "schemas": {},

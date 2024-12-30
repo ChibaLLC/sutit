@@ -20,25 +20,23 @@ import {
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
-import { and, eq, desc, sum, count, sql, lt } from "drizzle-orm";
+import { and, eq, desc, sum, count, sql, lt, notInArray } from "drizzle-orm";
 import { ulid } from "ulid";
 import { object, z } from "zod";
 import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
-import type { Form, Item, Page, Store, Stores } from "@chiballc/nuxt-form-builder";
+import type { Form, Page, Store } from "@chiballc/nuxt-form-builder";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
-	const updateTimeStamp = new Date();
 	for (const index in data.form.pages) {
 		const page = data.form.pages[index] as DbPage & Page;
 		const pageUlid = page.at(0)?.pageUlid || ulid();
 		pagesData.set(pageUlid, {
 			formUlid: data.ulid,
 			index: index,
-			ulid: pageUlid,
-			updatedAt: updateTimeStamp,
+			ulid: pageUlid
 		});
 		page?.forEach((field) => {
 			if (!field) return log.warn("Field was null in page", page);
@@ -55,8 +53,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				placeholder: field.placeholder,
 				type: field.type,
 				rules: field.rules,
-				ulid: fieldUlid,
-				updatedAt: updateTimeStamp,
+				ulid: fieldUlid
 			});
 		});
 	}
@@ -99,8 +96,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		storesData.set(storeUlid, {
 			formUlid: data.ulid,
 			index: key,
-			ulid: storeUlid,
-			updatedAt: updateTimeStamp,
+			ulid: storeUlid
 		});
 		store?.forEach((item) => {
 			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
@@ -112,8 +108,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				stock: item.stock,
 				index: item.index,
 				storeUlid: storeUlid,
-				ulid: itemUlid,
-				updatedAt: updateTimeStamp,
+				ulid: itemUlid
 			});
 		});
 	}
@@ -145,10 +140,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			})
 	}
 
-	db.delete(storeItems).where(lt(storeItems.updatedAt, updateTimeStamp));
-	db.delete(stores).where(lt(stores.updatedAt, updateTimeStamp));
-	db.delete(formFields).where(lt(formFields.updatedAt, updateTimeStamp));
-	db.delete(formPages).where(lt(formPages.updatedAt, updateTimeStamp));
+	// db.delete(storeItems).where(and(eq(), lt(storeItems.updatedAt, updateTimeStamp)));
+	// db.delete(stores).where(lt(stores.updatedAt, updateTimeStamp));
+	// db.delete(formFields).where(lt(formFields.updatedAt, updateTimeStamp));
+	// db.delete(formPages).where(lt(formPages.updatedAt, updateTimeStamp));
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
