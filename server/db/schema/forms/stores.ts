@@ -7,12 +7,7 @@ export const stores = pgTable("stores", {
 	formUlid: varchar("form_ulid").references(() => formMeta.ulid, {
 		onDelete: "cascade",
 	}),
-	index: varchar("index", { length: 255 }).notNull(),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date()),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
+	index: varchar("index", { length: 255 }).notNull()
 });
 
 export const storeItems = pgTable("store_items", {
@@ -26,10 +21,5 @@ export const storeItems = pgTable("store_items", {
 	isInfinite: boolean("is_infinite").default(false),
 	storeUlid: varchar("store_ulid", { length: 255 }).references(() => stores.ulid, {
 		onDelete: "cascade",
-	}),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date()),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
+	})
 });

@@ -28,12 +28,7 @@ export const formMeta = pgTable("form_meta", {
 	group_invite_message: text("group_invite_message"),
 	allowGroups: boolean("allow_groups").default(false),
 	requireMerch: boolean("require_merch").default(false),
-	withdrawnFunds: integer("withdrawn_funds").default(0),
-	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.$onUpdate(() => new Date())
-		.notNull(),
+	withdrawnFunds: integer("withdrawn_funds").default(0)
 });
 
 export const formPages = pgTable("form_pages", {
@@ -41,12 +36,7 @@ export const formPages = pgTable("form_pages", {
 	formUlid: varchar("form_ulid").references(() => formMeta.ulid, {
 		onDelete: "cascade",
 	}),
-	index: varchar("index", { length: 255 }).notNull(),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date()),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
+	index: varchar("index", { length: 255 }).notNull()
 });
 
 export const formFields = pgTable("form_fields", {
@@ -62,12 +52,7 @@ export const formFields = pgTable("form_fields", {
 	rules: jsonb("rules"),
 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
-	}),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.notNull()
-		.$onUpdate(() => new Date()),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
+	})
 });
 
 export type PhoneInvite = { phone: string };
