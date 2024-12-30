@@ -223,6 +223,7 @@ export function deleteArrayItems<T>(
 export function assert<T>(value: T, message?: string): NonNullable<T> {
 	if (!value) {
 		message = message || "Expected a value but nullish found";
+		// TODO: solve server dependancy
 		if (createError) {
 			throw createError({
 				statusCode: 400,

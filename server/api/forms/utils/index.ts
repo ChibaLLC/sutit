@@ -20,14 +20,14 @@ declare global {
 	var formPaymentProcessingQueue: Map<
 		string,
 		{
-			form_meta: Drizzle.SutitForm[number]["form_meta"];
+			form_meta: Drizzle.SutitForm["form_meta"];
 			callback?: (payment: Drizzle.Payment.select) => any;
 		}
 	>;
 }
 
 export async function processFormPayments(
-	form_meta: Drizzle.SutitForm[number]["form_meta"],
+	form_meta: Drizzle.SutitForm["form_meta"],
 	details: {
 		accountNumber: string;
 		phone: string;

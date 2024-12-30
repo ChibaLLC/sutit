@@ -132,8 +132,8 @@ watch([phone, con_phone], () => {
 	noMatch.value = !!(con_phone.value && con_phone.value !== phone.value);
 });
 
-const fields = collectFields(form as ReconstructedDbForm)
-const hasPay = hasPayment(form as ReconstructedDbForm)
+const fields = collectFields(form as any)
+const hasPay = hasPayment(form as any)
 </script>
 
 <template>

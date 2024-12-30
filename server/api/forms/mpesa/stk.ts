@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
 				type: TYPE.ERROR,
 				channel: channelName,
 			});
-			useHttpEnd(event, { statusCode: 400, body: "No IP found" }, 400);
 		}
 		if (!callBackIpWhitelist.includes(ip.toString())) {
 			log.warn(`IP ${ip} is not whitelisted`);
@@ -95,25 +94,17 @@ export default defineEventHandler(async (event) => {
 					client.close();
 				});
 				global.channels?.deleteChannel(channelName);
-				useHttpEnd(event, { statusCode: 500, body: "Failed to process payment" }, 500);
+				throw createError({
+					message: e.message || "Failed to process payment",
+				});
 			});
-			try {
-				funcall?.(payment);
-			} catch (e) {
-				log.error(e);
-				log.warn("Error on callback", funcall);
-			}
-		} else {
-			log.warn(
-				`No form found for CheckoutRequestID ${callback.CheckoutRequestID} and MerchantRequestID ${callback.MerchantRequestID}`
-			);
-			global.channels?.publish(channelName, {
-				statusCode: 404,
-				body: "Form not found",
-				type: TYPE.ERROR,
-				channel: channelName,
-			});
-			global.channels!.getChannel(channelName)?.terminate();
+		}
+
+		try {
+			funcall?.(payment);
+		} catch (e) {
+			log.error(e);
+			log.warn("Error on callback", funcall);
 		}
 	} else {
 		log.error(`Failed to process payment: ${callback.ResultDesc}`);

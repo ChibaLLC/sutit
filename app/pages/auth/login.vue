@@ -22,8 +22,8 @@ async function submit() {
 			email: details.email,
 			password: details.password,
 		},
-		async onResponseError({ error }) {
-			window.alertError(unWrapFetchError(error));
+		async onResponseError({ response }) {
+			window.alertError(unWrapFetchError(response));
 		},
 	});
 

@@ -41,7 +41,12 @@ export const formPages = pgTable("form_pages", {
 	formUlid: varchar("form_ulid").references(() => formMeta.ulid, {
 		onDelete: "cascade",
 	}),
-	index: varchar("index", { length: 255 }).notNull()
+	index: varchar("index", { length: 255 }).notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export const formFields = pgTable("form_fields", {
@@ -57,7 +62,12 @@ export const formFields = pgTable("form_fields", {
 	rules: jsonb("rules"),
 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
-	})
+	}),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export type PhoneInvite = { phone: string };

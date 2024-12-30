@@ -19,7 +19,7 @@ export function collectFields(form: Awaited<ReturnType<typeof getFormResponses>>
 		const page = form.pages[key];
 		if (page) {
 			page.forEach((element) => {
-				map.set(element.fieldUlid, element);
+				map.set(element.fieldUlid!, element);
 			});
 		}
 	}

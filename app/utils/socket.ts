@@ -321,6 +321,7 @@ export class RealTime {
     private init(priority = 1) {
         switch (priority) {
             case 1:
+                // TODO: check client capabilities
                 var rt = new WS() as _RealTime
                 break
             case 2:

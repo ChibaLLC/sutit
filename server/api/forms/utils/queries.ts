@@ -25,18 +25,20 @@ import { ulid } from "ulid";
 import { object, z } from "zod";
 import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
-import type { Form, Page, Store } from "@chiballc/nuxt-form-builder";
+import type { Form, Item, Page, Store, Stores } from "@chiballc/nuxt-form-builder";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
+	const updateTimeStamp = new Date();
 	for (const index in data.form.pages) {
 		const page = data.form.pages[index] as DbPage & Page;
 		const pageUlid = page.at(0)?.pageUlid || ulid();
 		pagesData.set(pageUlid, {
 			formUlid: data.ulid,
 			index: index,
-			ulid: pageUlid
+			ulid: pageUlid,
+			updatedAt: updateTimeStamp,
 		});
 		page?.forEach((field) => {
 			if (!field) return log.warn("Field was null in page", page);
@@ -53,7 +55,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				placeholder: field.placeholder,
 				type: field.type,
 				rules: field.rules,
-				ulid: fieldUlid
+				ulid: fieldUlid,
+				updatedAt: updateTimeStamp,
 			});
 		});
 	}
@@ -62,7 +65,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(formPages)
 			.values(Array.from(pagesData.values()))
-			.onConflictDoNothing()
+			.onConflictDoUpdate({
+				target: formPages.ulid,
+				set: updateConflictedColumns(formPages, ["updatedAt"]),
+			});
 	}
 	if (fieldsData.size) {
 		await db
@@ -79,9 +85,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 					"label",
 					"options",
 					"placeholder",
-					"rules"
+					"rules",
+					"updatedAt",
 				]),
-			})
+			});
 	}
 
 	const storesData: Map<string, Drizzle.Store.insert> = new Map();
@@ -92,7 +99,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		storesData.set(storeUlid, {
 			formUlid: data.ulid,
 			index: key,
-			ulid: storeUlid
+			ulid: storeUlid,
+			updatedAt: updateTimeStamp,
 		});
 		store?.forEach((item) => {
 			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
@@ -104,7 +112,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				stock: item.stock,
 				index: item.index,
 				storeUlid: storeUlid,
-				ulid: itemUlid
+				ulid: itemUlid,
+				updatedAt: updateTimeStamp,
 			});
 		});
 	}
@@ -113,7 +122,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(stores)
 			.values(Array.from(storesData.values()))
-			.onConflictDoNothing()
+			.onConflictDoUpdate({
+				target: stores.ulid,
+				set: updateConflictedColumns(stores, ["updatedAt"]),
+			});
 	}
 	if (itemsData.size) {
 		await db
@@ -127,15 +139,24 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 					"name",
 					"price",
 					"stock",
-					"isInfinite"
+					"isInfinite",
+					"updatedAt",
 				]),
-			})
+			});
 	}
 
-	// db.delete(storeItems).where(and(eq(), lt(storeItems.updatedAt, updateTimeStamp)));
-	// db.delete(stores).where(lt(stores.updatedAt, updateTimeStamp));
-	// db.delete(formFields).where(lt(formFields.updatedAt, updateTimeStamp));
-	// db.delete(formPages).where(lt(formPages.updatedAt, updateTimeStamp));
+	db.delete(storeItems).where(
+		and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
+	);
+	db.delete(stores).where(
+		and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys())))
+	);
+	db.delete(formFields).where(
+		and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
+	);
+	db.delete(formPages).where(
+		and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys())))
+	);
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
@@ -340,6 +361,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 					});
 			}
 		});
+
 	return formResponse;
 }
 
