@@ -16,6 +16,7 @@ import {
 	formResponsesView,
 	formResponses,
 	storeResponses,
+	sutitStores,
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -247,7 +248,7 @@ export async function deleteForm(formUlid: string) {
 	return (await db.delete(formMeta).where(eq(formMeta.ulid, formUlid)).returning()).at(0);
 }
 
-export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbForm {
+export async function reconstructDbForm(results: Array<typeof sutitForms.$inferSelect>): Promise<ReconstructedDbForm> {
 	const form_meta = results.at(0)?.form_meta;
 	if (!form_meta) {
 		throw createError({
@@ -255,7 +256,7 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 			message: "Unable to find the form's meta data",
 		});
 	}
-	const { pages, stores } = results.reduce(
+	const { pages } = results.reduce(
 		(acc, curr) => {
 			if (curr.form_elements.page_index !== null) {
 				const pages = acc.pages.get(curr.form_elements.page_index);
@@ -266,35 +267,34 @@ export function reconstructDbForm(results: Drizzle.SutitForm): ReconstructedDbFo
 					acc.pages.set(curr.form_elements.page_index, [page_element]);
 				}
 			}
-
-			if (curr.store_items.store_index !== null) {
-				const stores = acc.stores.get(curr.store_items.store_index);
-				const form_item = {
-					...curr.store_items,
-					carted: false,
-					liked: false,
-					stock: curr.store_items.isInfinite ? "infinity" : curr.store_items.stock,
-					qtty: 0,
-					store: curr.store_items.store_index,
-				} as Item;
-				if (stores) {
-					stores.push(form_item);
-				} else {
-					acc.stores.set(curr.store_items.store_index, [form_item]);
-				}
-			}
 			return acc;
 		},
-		{ pages: new Map(), stores: new Map() } as {
+		{ pages: new Map() } as {
 			pages: Map<string, DbPage>;
-			stores: Map<string, Store>;
 		}
 	);
+
+	const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
 
 	return {
 		meta: form_meta,
 		pages: Object.fromEntries(pages.entries()),
-		stores: Object.fromEntries(stores.entries()) as ReconstructedDbForm["stores"],
+		stores: stores.reduce((acc, curr) => {
+			const store = acc[curr.store_index];
+			const item = {
+				...curr,
+				qtty: 1,
+				store: curr.store_index,
+				carted: false,
+				liked: false,
+			};
+			if (store) {
+				store.push(item);
+			} else {
+				acc[curr.store_index] = [item];
+			}
+			return acc;
+		}, {} as ReconstructedDbForm["stores"]),
 	};
 }
 
@@ -342,7 +342,6 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 		for (const element of page || []) {
 			formfieldResponseInsertList.push({
 				value: getValue(element.value),
-				// @ts-expect-error
 				fieldUlid: element.fieldUlid!,
 				formResponseUlid: formResponse.ulid,
 			});
@@ -364,8 +363,7 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 						value: item.name,
 						liked: item.liked,
 						carted: item.carted,
-						// @ts-expect-error
-						itemUlid: item.itemUlid!,
+						itemUlid: item.itemUlid,
 						qtty: item.qtty,
 					});
 				}
@@ -390,7 +388,8 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 					.execute()
 					.finally(() => {
 						storeResponseInsertList.forEach((item) => {
-							adjustItemQuantity(item.itemUlid, item.qtty!);
+							if (!item.qtty) return;
+							adjustItemQuantity(item.itemUlid, item.qtty);
 						});
 					});
 			}
