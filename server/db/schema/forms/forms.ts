@@ -30,6 +30,9 @@ export const formMeta = pgTable("form_meta", {
 	requireMerch: boolean("require_merch").default(false),
 	withdrawnFunds: integer("withdrawn_funds").default(0),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export const formPages = pgTable("form_pages", {
@@ -38,6 +41,8 @@ export const formPages = pgTable("form_pages", {
 		onDelete: "cascade",
 	}),
 	index: varchar("index", { length: 255 }).notNull(),
+	updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const formFields = pgTable("form_fields", {
@@ -54,6 +59,10 @@ export const formFields = pgTable("form_fields", {
 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
 	}),
+	updatedAt: timestamp("updated_at")
+		.$defaultFn(() => new Date())
+		.notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type PhoneInvite = { phone: string };
