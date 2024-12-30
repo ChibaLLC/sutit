@@ -29,7 +29,11 @@ export const formMeta = pgTable("form_meta", {
 	allowGroups: boolean("allow_groups").default(false),
 	requireMerch: boolean("require_merch").default(false),
 	withdrawnFunds: integer("withdrawn_funds").default(0),
-	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export const formPages = pgTable("form_pages", {
@@ -38,6 +42,11 @@ export const formPages = pgTable("form_pages", {
 		onDelete: "cascade",
 	}),
 	index: varchar("index", { length: 255 }).notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export const formFields = pgTable("form_fields", {
@@ -54,6 +63,11 @@ export const formFields = pgTable("form_fields", {
 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
 		onDelete: "cascade",
 	}),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export type PhoneInvite = { phone: string };
@@ -77,7 +91,9 @@ const qb = new QueryBuilder();
 const form_elements = qb
 	.select({
 		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid") as unknown as typeof formFields.ulid,
-		pageUlid: sql<string>`${formFields.pageUlid}`.as("form_pages_page_ulid") as unknown as typeof formFields.pageUlid,
+		pageUlid: sql<string>`${formFields.pageUlid}`.as(
+			"form_pages_page_ulid"
+		) as unknown as typeof formFields.pageUlid,
 		formUlid: sql<string>`${formPages.formUlid}`.as("form_pages_formUlid") as unknown as typeof formPages.index,
 		label: formFields.label,
 		inputType: formFields.inputType,
@@ -112,12 +128,9 @@ const store_items = qb
 	.as("store_items");
 
 export const sutitForms = pgView("sutit_forms").as(
-	qb
-		.select()
-		.from(formMeta)
-		.leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
+	qb.select().from(formMeta).leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
 );
 
 export const sutitStores = pgView("sutit_stores").as(
 	qb.select().from(store_items).where(isNotNull(store_items.formUlid))
-)
+);

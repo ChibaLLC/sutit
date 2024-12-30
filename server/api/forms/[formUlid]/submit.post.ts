@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
 
 	const schema = z.object({
 		form: z.object({
-			meta: z.custom<Drizzle.SutitForm[number]["form_meta"]>(
-				(data: Drizzle.SutitForm[number]["form_meta"]) => !!data?.ulid
+			meta: z.custom<Drizzle.SutitForm["form_meta"]>(
+				(data: Drizzle.SutitForm["form_meta"]) => !!data?.ulid
 			),
 			pages: z
 				.custom<Record<number, DbPage>>((data: Record<number, DbPage>) => {

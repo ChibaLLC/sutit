@@ -20,7 +20,7 @@ import {
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
-import { and, eq, desc, sum, count, inArray, sql } from "drizzle-orm";
+import { and, eq, desc, sum, count, sql, lt, notInArray } from "drizzle-orm";
 import { ulid } from "ulid";
 import { object, z } from "zod";
 import { formBodyData } from "./zod";
@@ -30,6 +30,7 @@ import type { Form, Item, Page, Store, Stores } from "@chiballc/nuxt-form-builde
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
+	const updateTimeStamp = new Date();
 	for (const index in data.form.pages) {
 		const page = data.form.pages[index] as DbPage & Page;
 		const pageUlid = page.at(0)?.pageUlid || ulid();
@@ -37,6 +38,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			formUlid: data.ulid,
 			index: index,
 			ulid: pageUlid,
+			updatedAt: updateTimeStamp,
 		});
 		page?.forEach((field) => {
 			if (!field) return log.warn("Field was null in page", page);
@@ -52,7 +54,9 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				options: field.options,
 				placeholder: field.placeholder,
 				type: field.type,
+				rules: field.rules,
 				ulid: fieldUlid,
+				updatedAt: updateTimeStamp,
 			});
 		});
 	}
@@ -61,27 +65,29 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(formPages)
 			.values(Array.from(pagesData.values()))
-			.onConflictDoNothing()
-			.execute()
-			.then(async () => {
-				if (!fieldsData.size) return;
-				await db
-					.insert(formFields)
-					.values(Array.from(fieldsData.values()))
-					.onConflictDoUpdate({
-						target: formFields.ulid,
-						set: updateConflictedColumns(formFields, [
-							"accept",
-							"description",
-							"index",
-							"inputType",
-							"type",
-							"label",
-							"options",
-							"placeholder",
-						]),
-					})
-					.execute();
+			.onConflictDoUpdate({
+				target: formPages.ulid,
+				set: updateConflictedColumns(formPages, ["updatedAt"]),
+			});
+	}
+	if (fieldsData.size) {
+		await db
+			.insert(formFields)
+			.values(Array.from(fieldsData.values()))
+			.onConflictDoUpdate({
+				target: formFields.ulid,
+				set: updateConflictedColumns(formFields, [
+					"accept",
+					"description",
+					"index",
+					"inputType",
+					"type",
+					"label",
+					"options",
+					"placeholder",
+					"rules",
+					"updatedAt",
+				]),
 			});
 	}
 
@@ -89,23 +95,25 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 	for (const key in data.form.stores) {
 		const store = data.form.stores[key] as unknown as DbStore & Store;
-		const store_ulid = store?.at(0)?.storeUlid || ulid();
-		storesData.set(store_ulid, {
+		const storeUlid = store?.at(0)?.storeUlid || ulid();
+		storesData.set(storeUlid, {
 			formUlid: data.ulid,
 			index: key,
-			ulid: store_ulid,
+			ulid: storeUlid,
+			updatedAt: updateTimeStamp,
 		});
 		store?.forEach((item) => {
 			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
 			const itemUlid = item.itemUlid || ulid();
 			itemsData.set(itemUlid, {
-				name: item.name!,
-				price: item.price!,
-				images: item.images!,
-				stock: item.stock!,
-				index: item.index!,
-				storeUlid: store_ulid,
-				ulid: item.itemUlid!,
+				name: item.name,
+				price: item.price,
+				images: item.images,
+				stock: item.stock,
+				index: item.index,
+				storeUlid: storeUlid,
+				ulid: itemUlid,
+				updatedAt: updateTimeStamp,
 			});
 		});
 	}
@@ -114,27 +122,41 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(stores)
 			.values(Array.from(storesData.values()))
-			.onConflictDoNothing()
-			.execute()
-			.then(async () => {
-				if (!itemsData.size) return;
-				await db
-					.insert(storeItems)
-					.values(Array.from(itemsData.values()))
-					.onConflictDoUpdate({
-						target: storeItems.ulid,
-						set: updateConflictedColumns(storeItems, ["images", "index", "name", "price", "stock"]),
-					})
-					.execute();
+			.onConflictDoUpdate({
+				target: stores.ulid,
+				set: updateConflictedColumns(stores, ["updatedAt"]),
+			});
+	}
+	if (itemsData.size) {
+		await db
+			.insert(storeItems)
+			.values(Array.from(itemsData.values()))
+			.onConflictDoUpdate({
+				target: storeItems.ulid,
+				set: updateConflictedColumns(storeItems, [
+					"images",
+					"index",
+					"name",
+					"price",
+					"stock",
+					"isInfinite",
+					"updatedAt",
+				]),
 			});
 	}
 
-	return {
-		storesData,
-		itemsData,
-		pagesData,
-		fieldsData,
-	};
+	db.delete(storeItems).where(
+		and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
+	);
+	db.delete(stores).where(
+		and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys())))
+	);
+	db.delete(formFields).where(
+		and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
+	);
+	db.delete(formPages).where(
+		and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys())))
+	);
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
@@ -185,62 +207,7 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 		});
 	}
 
-	const { storesData, itemsData, pagesData, fieldsData } = await insertFormFields({ ...data, ulid: formUlid });
-	const existing_stores = Object.entries(form.stores);
-	const inserted_stores = Array.from(storesData.values()).reduce((acc, curr) => {
-		acc.set(curr.index.toString(), curr);
-		return acc;
-	}, new Map<string, MapValueType<typeof storesData>>());
-	const removedStores: string[] = [];
-	existing_stores.forEach(([index, _]) => {
-		if (inserted_stores.has(index.toString())) {
-			return;
-		} else {
-			removedStores.push(index);
-		}
-	});
-	const removedItems: string[] = [];
-	for (const [_, store] of existing_stores) {
-		for (const item of store) {
-			if (!item.itemUlid) continue;
-			if (!itemsData.has(item.itemUlid)) {
-				removedItems.push(item.itemUlid);
-			}
-		}
-	}
-	db.delete(stores)
-		.where(and(eq(stores.formUlid, formUlid), inArray(stores.index, removedStores)))
-		.execute()
-		.catch(log.error);
-	db.delete(storeItems).where(inArray(stores.ulid, removedItems)).execute().catch(log.error);
-
-	const existing_pages = Object.entries(form.pages);
-	const removedPages: string[] = [];
-	const inserted_pages = Array.from(pagesData.values()).reduce((acc, curr) => {
-		acc.set(curr.index.toString(), curr);
-		return acc;
-	}, new Map<string, MapValueType<typeof pagesData>>());
-	existing_pages.forEach(([index, _]) => {
-		if (inserted_pages.has(index.toString())) {
-			return;
-		} else {
-			removedPages.push(index);
-		}
-	});
-	const removedFields: string[] = [];
-	for (const [_, page] of existing_pages) {
-		for (const field of page) {
-			if (!field.fieldUlid) continue;
-			if (!fieldsData.has(field.fieldUlid)) {
-				removedFields.push(field.fieldUlid);
-			}
-		}
-	}
-	db.delete(formPages)
-		.where(and(eq(formPages.formUlid, formUlid), inArray(formPages.index, removedPages)))
-		.execute()
-		.catch(console.error);
-	db.delete(formFields).where(inArray(formFields.ulid, removedFields)).execute().catch(console.error);
+	insertFormFields({ ...data, ulid: formUlid });
 	return form.meta;
 }
 

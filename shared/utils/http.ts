@@ -3,6 +3,9 @@ import {ulid} from "ulid";
 
 const textDecoder = new TextDecoder()
 
+/**
+ * @deprecated
+ */
 export async function readStream<T>(
     reader: ReadableStreamDefaultReader | null,
     callback: (data: T) => void,
@@ -69,6 +72,7 @@ class Emitter {
  *
  * @param url the destination url
  * @param options RequestInit object
+ * @deprecated
  *
  * @returns a class instance that can be used to add event listeners to the stream
  *
