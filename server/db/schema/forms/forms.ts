@@ -115,7 +115,7 @@ export const sutitForms = pgView("sutit_forms").as(
 	qb
 		.select()
 		.from(formMeta)
-		.innerJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
+		.leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
 );
 
 export const sutitStores = pgView("sutit_stores").as(
