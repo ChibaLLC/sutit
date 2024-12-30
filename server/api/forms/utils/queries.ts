@@ -62,10 +62,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(formPages)
 			.values(Array.from(pagesData.values()))
-			.onConflictDoUpdate({
-				target: formPages.ulid,
-				set: updateConflictedColumns(formPages, ["updatedAt"]),
-			})
+			.onConflictDoNothing()
 	}
 	if (fieldsData.size) {
 		await db
@@ -82,8 +79,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 					"label",
 					"options",
 					"placeholder",
-					"rules",
-					"updatedAt",
+					"rules"
 				]),
 			})
 	}
@@ -117,10 +113,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		await db
 			.insert(stores)
 			.values(Array.from(storesData.values()))
-			.onConflictDoUpdate({
-				target: stores.ulid,
-				set: updateConflictedColumns(stores, ["updatedAt"]),
-			})
+			.onConflictDoNothing()
 	}
 	if (itemsData.size) {
 		await db
@@ -134,8 +127,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 					"name",
 					"price",
 					"stock",
-					"isInfinite",
-					"updatedAt",
+					"isInfinite"
 				]),
 			})
 	}
@@ -348,7 +340,6 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 					});
 			}
 		});
-
 	return formResponse;
 }
 

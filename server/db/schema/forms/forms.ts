@@ -28,7 +28,12 @@ export const formMeta = pgTable("form_meta", {
 	group_invite_message: text("group_invite_message"),
 	allowGroups: boolean("allow_groups").default(false),
 	requireMerch: boolean("require_merch").default(false),
-	withdrawnFunds: integer("withdrawn_funds").default(0)
+	withdrawnFunds: integer("withdrawn_funds").default(0),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at")
+		.defaultNow()
+		.$onUpdate(() => new Date())
+		.notNull(),
 });
 
 export const formPages = pgTable("form_pages", {
