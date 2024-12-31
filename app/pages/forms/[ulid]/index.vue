@@ -60,7 +60,33 @@ async function submit() {
 				Authorization: `Bearer ${getAuthToken()}`,
 			},
 			body: {
-				form: data.value,
+				form: {
+					meta: data.value?.meta,
+					pages: Object.entries(data.value?.pages || {}).reduce((acc, [index, curr]) => {
+						curr.forEach((element) => {
+							const key = element.fieldUlid;
+							if (!key) return window.alertError("An unknown error occurred");
+							// @ts-expect-error
+							acc[key] = element.value || null;
+						});
+						return acc;
+					}, {}),
+					stores: Object.entries(data.value?.stores || {}).reduce((acc, [index, store]) => {
+						store.forEach((item) => {
+							if (!item.liked) return;
+							const key = item.itemUlid;
+							if (!key) return window.alertError("An unknown error occurred");
+							// @ts-expect-error
+							acc[key] = {
+								name: item.name,
+								qtty: item.qtty,
+								liked: item.liked,
+								carted: item.carted
+							}
+						});
+						return acc;
+					}, {}),
+				},
 				phone: payment_details.value.phone,
 				token: payment_details.value.token,
 			},
@@ -74,15 +100,22 @@ async function submit() {
 		} else {
 			let message = "Form submitted successfully.";
 			if (
-				hasOwnProperties(response as {
-					formMail: string;
-					formResponse: string;
-				}, ["formMail"])
+				hasOwnProperties(
+					response as {
+						formMail: string;
+						formResponse: string;
+					},
+					["formMail"]
+				)
 			) {
-				message += " An confirmation email has been sent to " + (response as {
-					formMail: string;
-					formResponse: string;
-				}).formMail;
+				message +=
+					" An confirmation email has been sent to " +
+					(
+						response as {
+							formMail: string;
+							formResponse: string;
+						}
+					).formMail;
 			}
 			window.alertSuccess(message, { timeout: "never" });
 			await navigateTo("/");
@@ -94,14 +127,20 @@ async function submit() {
 	}
 }
 
-function addCharge(amount: number) {
-	if (!data.value) return;
-	if (data.value.meta.price_individual) {
-		data.value.meta.price_individual += amount;
-	} else {
-		data.value.meta.price_individual = amount;
-	}
-}
+const charge = computed({
+	get() {
+		if (!data.value) return 0;
+		return data.value.meta.price_individual;
+	},
+	set(value) {
+		if (!data.value) return console.error("No data found.");
+		if (data.value.meta.price_individual) {
+			data.value.meta.price_individual += value;
+		} else {
+			data.value.meta.price_individual = value;
+		}
+	},
+});
 
 function restart() {
 	loading.value = false;
@@ -204,14 +243,14 @@ function validator(part: string) {
 		if (!text.includes("@")) {
 			text = `${text}@gmail.com`;
 		}
-		return text
+		return text;
 	} else if (isPhone(text)) {
 		// invites.value.add({ phone: text })
 		window.alertError("Sorry, SMS is not yet supported");
-		return undefined
+		return undefined;
 	} else {
 		console.warn("Illegal Text Input Found: ", text);
-		return undefined
+		return undefined;
 	}
 }
 
@@ -273,12 +312,12 @@ async function processInvites() {
 					:data="
 						reactive({
 							pages: data.pages as Pages,
-							stores: data.stores as unknown as Stores,
+							stores: data.stores as Stores,
 						})
 					"
 					@submit="completeForm"
 					:re-render="rerender"
-					@price="addCharge"
+					@price="charge = $event"
 					@back="back"
 					:show-spinner="loading"
 				/>
@@ -364,7 +403,7 @@ async function processInvites() {
 						:delimiters="[',', 'Enter']"
 						:separator="','"
 						:transformer="validator"
-						@part="invites.add({ email: $event });"
+						@part="invites.add({ email: $event })"
 						@delete="invites.delete($event)"
 					/>
 				</div>

@@ -16,29 +16,9 @@ export default defineEventHandler(async (event) => {
 
 	const schema = z.object({
 		form: z.object({
-			meta: z.custom<Drizzle.SutitForm["form_meta"]>(
-				(data: Drizzle.SutitForm["form_meta"]) => !!data?.ulid
-			),
-			pages: z
-				.custom<Record<number, DbPage>>((data: Record<number, DbPage>) => {
-					const values = Object.values(data);
-					if (!values.length) return true;
-					return values.some((page) => {
-						if (!page.length) return true;
-						return page.some((element) => !!element?.fieldUlid);
-					});
-				})
-				.optional().default({}),
-			stores: z
-				.custom<Record<number, DbStore>>((data: Record<number, DbStore>) => {
-					const values = Object.values(data);
-					if (!values.length) return true;
-					return values.some((store) => {
-						if (!store.length) return true;
-						return store.some((item) => !!item?.itemUlid);
-					});
-				})
-				.optional().default({}),
+			meta: z.custom<Drizzle.SutitForm["form_meta"]>((data: Drizzle.SutitForm["form_meta"]) => !!data?.ulid),
+			pages: z.record(z.string(), z.any()),
+			stores: z.record(z.string(), z.any()),
 		}),
 		phone: z.string().optional(),
 		token: z.string().optional(),
@@ -61,7 +41,7 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	if (form.meta.requireMerch && !hasBoughtMerch(data.form.stores)) {
+	if (form.meta.requireMerch && !Object.keys(data.form.stores).length) {
 		throw createError({
 			statusCode: 403,
 			message: "You need to get something from the store section of the form",
@@ -90,7 +70,7 @@ export default defineEventHandler(async (event) => {
 				}
 			}
 		}
-		const formResponse = await insertData(formUlid, data.form as ReconstructedDbForm & Form, options.price_paid);
+		const formResponse = await insertData(formUlid, data.form, options.price_paid);
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,

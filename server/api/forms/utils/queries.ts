@@ -274,7 +274,11 @@ export async function getFormByUlid(formUlid: string) {
 	}
 }
 
-export async function insertData(formUlid: string, data: ReconstructedDbForm & Form, price_paid?: number) {
+export async function insertData(
+	formUlid: string,
+	data: { meta: ReconstructedDbForm["meta"]; pages: Record<string, any>; stores: Record<string, any> },
+	price_paid?: number
+) {
 	const formResponse = (
 		await db
 			.insert(formResponses)
@@ -305,16 +309,16 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 	}
 	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
 	for (const key in data.pages) {
-		const page = data.pages[key];
-		for (const element of page || []) {
-			formfieldResponseInsertList.push({
-				value: getValue(element.value),
-				fieldUlid: element.fieldUlid!,
-				formResponseUlid: formResponse.ulid,
-			});
-		}
+		const response = data.pages[key];
+		formfieldResponseInsertList.push({
+			value: getValue(response),
+			fieldUlid: key,
+			formResponseUlid: formResponse.ulid,
+		});
 	}
-	db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
+	if (formfieldResponseInsertList.length) {
+		db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
+	}
 	db.select()
 		.from(stores)
 		.where(eq(stores.formUlid, formUlid))
@@ -323,17 +327,14 @@ export async function insertData(formUlid: string, data: ReconstructedDbForm & F
 
 			const storeResponseInsertList: Omit<Drizzle.StoreItemResponse.insert, "storeResponseUlid">[] = [];
 			for (const key in data.stores) {
-				const store = data.stores[key];
-				for (const item of store || []) {
-					if (!(item.carted || item.liked)) continue;
-					storeResponseInsertList.push({
-						value: item.name,
-						liked: item.liked,
-						carted: item.carted,
-						itemUlid: item.itemUlid,
-						qtty: item.qtty,
-					});
-				}
+				const item = data.stores[key];
+				storeResponseInsertList.push({
+					value: item.name,
+					liked: item.liked,
+					carted: item.carted,
+					itemUlid: key,
+					qtty: item.qtty,
+				});
 			}
 
 			if (storeResponseInsertList.length) {
