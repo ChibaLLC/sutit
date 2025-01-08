@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 			return readableStream;
 		},
 		getMeta() {
-			return Promise.resolve(stats);
+			return stats;
 		},
 	});
 });

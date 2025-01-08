@@ -11,6 +11,7 @@ import { createInterface, type Interface } from "node:readline";
 import { stat } from "node:fs/promises";
 import type { MimeType } from "file-type";
 import type { File as PersistentFile } from "formidable";
+import type { StaticAssetMeta } from "h3";
 import { isBase64DataEncodedString, getMimeType } from "~~/shared/utils/data";
 
 export async function saveBlobToFile(blob: Blob, filePath: string) {
@@ -19,18 +20,17 @@ export async function saveBlobToFile(blob: Blob, filePath: string) {
 	await writeFile(filePath, buffer);
 }
 
+type StorageItem = AllOrNothing<{
+	readStream: NodeJS.ReadableStream;
+	readableStream: ReadableStream;
+	readLine: () => Interface;
+	value: () => Promise<Buffer>;
+	stats: { mime: MimeType } & MaybePromise<StaticAssetMeta | undefined>;
+}>;
 abstract class AbstractFileStorage {
 	abstract location(destination: string): string;
 	abstract hasItem(key: string): boolean;
-	abstract getItem(key: string | undefined): Promise<
-		AllOrNothing<{
-			readStream: NodeJS.ReadableStream;
-			readableStream: ReadableStream;
-			readLine: () => Interface;
-			value: () => Promise<Buffer>;
-			stats: { [key: string]: any; mime: MimeType };
-		}>
-	>;
+	abstract getItem(key: string | undefined): Promise<StorageItem>;
 	abstract setItem(
 		key: string,
 		value:
@@ -59,6 +59,7 @@ class LocalFileStorage implements AbstractFileStorage {
 		}
 		this.root = options.root;
 	}
+
 	location(destination: string) {
 		const basePath = join(this.root, destination).replace(/:/g, sep);
 		return resolve(basePath);
@@ -68,15 +69,7 @@ class LocalFileStorage implements AbstractFileStorage {
 		return existsSync(this.location(key));
 	}
 
-	async getItem(key: string | undefined): Promise<
-		AllOrNothing<{
-			readStream: NodeJS.ReadableStream;
-			readableStream: ReadableStream;
-			readLine: () => Interface;
-			value: () => Promise<Buffer>;
-			stats: { [key: string]: any; mime: MimeType };
-		}>
-	> {
+	async getItem(key: string | undefined): Promise<StorageItem> {
 		if (!key || !this.hasItem(key)) {
 			return {
 				readStream: undefined,
@@ -208,46 +201,42 @@ class LocalFileStorage implements AbstractFileStorage {
 
 class GitHubStorage implements AbstractFileStorage {
 	constructor(options: { repo: string; branch: string; dir: string; token?: string }) {}
-	override location(destination: string): string {
+	location(destination: string): string {
 		throw new Error("Method not implemented.");
 	}
-	override hasItem(key: string): boolean {
+	hasItem(key: string): boolean {
 		throw new Error("Method not implemented.");
 	}
-	override getItem(key: string | undefined): Promise<
-		AllOrNothing<{
-			readStream: NodeJS.ReadableStream;
-			readableStream: ReadableStream;
-			readLine: () => Interface;
-			value: () => Promise<Buffer>;
-			stats: { [key: string]: any; mime: MimeType; };
-		}>
-	> {
+	getItem(key: string | undefined): Promise<StorageItem> {
 		throw new Error("Method not implemented.");
 	}
-	override setItem(key: string, value: string |
-		NodeJS.ArrayBufferView |
-		Iterable<string | NodeJS.ArrayBufferView> |
-		AsyncIterable<string | NodeJS.ArrayBufferView> |
-		Stream): Promise<void> {
+	setItem(
+		key: string,
+		value:
+			| string
+			| NodeJS.ArrayBufferView
+			| Iterable<string | NodeJS.ArrayBufferView>
+			| AsyncIterable<string | NodeJS.ArrayBufferView>
+			| Stream
+	): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	override setItemRaw(key: string, value: PersistentFile | Blob | string): Promise<void> {
+	setItemRaw(key: string, value: PersistentFile | Blob | string): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	override removeItem(key: string): Promise<void> {
+	removeItem(key: string): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	override getKeys(base: string): Promise<string[]> {
+	getKeys(base: string): Promise<string[]> {
 		throw new Error("Method not implemented.");
 	}
-	override clear(base: string): Promise<void> {
+	clear(base: string): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	override dispose(): Promise<void> {
+	dispose(): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	override watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void> {
+	watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void> {
 		throw new Error("Method not implemented.");
 	}
 }
