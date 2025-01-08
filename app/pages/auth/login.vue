@@ -33,14 +33,15 @@ async function submit() {
 			setAuthCookie(undefined);
 		});
 	}
-	(await useUser()).value!.token = token;
+	const { user } = await useUser();
+	user.value.token = token;
 	if (redirect) {
 		if (typeof redirect !== "string") throw new Error("Redirect Error");
 		await navigateTo(redirect);
 	} else {
 		await navigateTo("/");
 	}
-	loading.value = false
+	loading.value = false;
 }
 
 const loadingGithub = ref(false);
@@ -91,7 +92,8 @@ async function onSignIn(googleCrdential: GoogleCredential) {
 				setAuthCookie(undefined);
 			});
 		}
-		(await useUser()).value!.token = token;
+		const {user} = await useUser();
+		user.value!.token = token;
 		navigateTo("/");
 	}
 	loadingGoogle.value = false;

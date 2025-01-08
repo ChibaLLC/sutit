@@ -41,8 +41,8 @@ export function userIsAuthenticated() {
 export async function logout() {
     await $fetch("/api/auth/logout", {
 		async onResponse({ response }) {
-			const state = await useUser();
-			state.value = {} as UserState;
+			const {user} = await useUser();
+			user.value = {} as UserState;
 			setAuthCookie(undefined);
 			await navigateTo("/auth/login");
 		},

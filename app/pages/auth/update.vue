@@ -37,7 +37,8 @@ async function submit() {
 	if (response) {
 		alert("Password reset successfully");
 		setAuthCookie(response);
-		(await useUser()).value!.token = response;
+		const {user} = await useUser();
+		user.value.token = response;
 		await navigateTo("/");
 
 		if (redirect) {
