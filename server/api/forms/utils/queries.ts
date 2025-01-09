@@ -26,6 +26,7 @@ import { object, z } from "zod";
 import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
 import type { Page, Store } from "@chiballc/nuxt-form-builder";
+import { getUserByUlId } from "../../users/utils/queries";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
@@ -215,7 +216,8 @@ export async function deleteForm(formUlid: string) {
 	return (await db.delete(formMeta).where(eq(formMeta.ulid, formUlid)).returning()).at(0);
 }
 
-async function offloadStoreImages(items: Drizzle.SutitStore[], user_email?: string) {
+// TODO: @blocked remove email dependancy
+async function offloadStoreImages(items: Drizzle.SutitStore[], user_email: string) {
 	const editedItems: Drizzle.SutitStore[] = [];
 	const promises = items.map(async (item) => {
 		await Promise.all(
@@ -225,10 +227,10 @@ async function offloadStoreImages(items: Drizzle.SutitStore[], user_email?: stri
 						const { blob, extension } = await base64ToBlob(image);
 						if (!blob) return;
 
-						let filename = ulid();
-						const folder = user_email || ulid();
+						let filename = `${item.name}-image-${index}`;
+						const folder = user_email;
 						const destination = `${folder}/${filename}.${extension}`;
-						
+
 						await $storage.file.setItemRaw(destination, blob);
 						const path = `/files/${destination}`;
 						item.images[index] = path;
@@ -243,27 +245,28 @@ async function offloadStoreImages(items: Drizzle.SutitStore[], user_email?: stri
 	});
 
 	await Promise.all(promises.flat());
-	if (editedItems.length) {
-		db.insert(storeItems)
-			.values(
-				editedItems.map((item) => ({
-					images: item.images,
-					index: item.index,
-					name: item.name,
-					price: item.price,
-					ulid: item.itemUlid,
-					isInfinite: item.isInfinite,
-					likes: item.likes,
-					storeUlid: item.storeUlid,
-					stock: item.stock,
-				}))
-			)
-			.onConflictDoUpdate({
-				target: storeItems.ulid,
-				set: updateConflictedColumns(storeItems, ["images"]),
-			})
-			.execute();
-	}
+	// TODO: @blocked Uncomment once store images fix
+	// if (editedItems.length) {
+	// 	db.insert(storeItems)
+	// 		.values(
+	// 			editedItems.map((item) => ({
+	// 				images: item.images,
+	// 				index: item.index,
+	// 				name: item.name,
+	// 				price: item.price,
+	// 				ulid: item.itemUlid,
+	// 				isInfinite: item.isInfinite,
+	// 				likes: item.likes,
+	// 				storeUlid: item.storeUlid,
+	// 				stock: item.stock,
+	// 			}))
+	// 		)
+	// 		.onConflictDoUpdate({
+	// 			target: storeItems.ulid,
+	// 			set: updateConflictedColumns(storeItems, ["images"]),
+	// 		})
+	// 		.execute();
+	// }
 }
 
 export async function reconstructDbForm(results: Array<typeof sutitForms.$inferSelect>): Promise<ReconstructedDbForm> {
@@ -293,7 +296,12 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 	);
 
 	const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
-	await offloadStoreImages(stores);
+	const user = await getUserByUlId(form_meta.userUlid);
+	if (user && user.email) {
+		await offloadStoreImages(stores, user.email);
+	} else {
+		console.warn("User email not found during image optimisation");
+	}
 
 	return {
 		meta: form_meta,

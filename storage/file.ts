@@ -146,8 +146,8 @@ class LocalFileStorage implements AbstractFileStorage {
 	async setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString) {
 		try {
 			const fileLocation = this.location(key);
-			if (!existsSync(fileLocation)) {
-				const folder = fileLocation.split(sep).slice(0, -1).join(sep);
+			const folder = fileLocation.split(sep).slice(0, -1).join(sep);
+			if (!existsSync(folder)) {
 				await mkdir(folder, { recursive: true });
 			}
 
@@ -258,15 +258,21 @@ class GitHubStorage implements AbstractFileStorage {
 		throw new Error("Method not implemented.");
 	}
 }
-const storage = isDevelopment
-	? new LocalFileStorage({
-			root: "./filestore",
-	  })
-	: new GitHubStorage({
-			repo: "YallanYati/images",
-			branch: "main",
-			dir: "/images",
-			token: process.env.GITHUB_API_TOKEN,
-	  });
+
+// TODO: @blocked Uncomment once store images fix
+// const storage = isDevelopment
+// 	? new LocalFileStorage({
+// 			root: "./filestore",
+// 	  })
+// 	: new GitHubStorage({
+// 			repo: "YallanYati/images",
+// 			branch: "main",
+// 			dir: "/images",
+// 			token: process.env.GITHUB_API_TOKEN,
+// 	  });
+
+const storage = new LocalFileStorage({
+	root: "./filestore",
+});
 
 export default storage;

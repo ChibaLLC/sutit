@@ -68,10 +68,11 @@ export async function uploadStoreImages(data: SutitFormData) {
 		.map((stores) =>
 			stores.map((item) => {
 				return item.images.map(async (image, index) => {
-					const url = await uploadFile(image, user.value.email);
-					if (url) {
-						item.images[index] = url;
-					}
+					// TODO: @blocked Uncomment once store images fix
+					// const url = await uploadFile(image, user.value.email);
+					// if (url) {
+					// 	item.images[index] = url;
+					// }
 				});
 			})
 		)
