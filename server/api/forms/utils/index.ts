@@ -14,7 +14,6 @@ import { v4 } from "uuid";
 import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
-import type { getFormResponses } from "../[formUlid]/submissions/utils/queries";
 
 declare global {
 	var formPaymentProcessingQueue: Map<
@@ -181,22 +180,31 @@ export const sendPaymentMailReceipt = async (
 	amount: number | string,
 	receiptNumber: string
 ) => {
-	let email = user.email;
-	let name;
-	if (!email) {
-		const _user = await getUserByUlId(user.userUlid!);
-		email = _user?.email;
-		name = _user?.name;
+	if (!user.email && !user.userUlid) {
+		throw createError({
+			statusCode: 500,
+			message: "No userUlid or email provided",
+		});
 	}
-	if (!email) return log.warn("User has no email");
-	if (!name) return log.warn("User has no name");
+	if (user.userUlid) {
+		const _user = await getUserByUlId(user.userUlid);
+		var email = _user?.email;
+		var name = _user?.name;
+	} else {
+		email = user.email;
+	}
+	
+	if (!email) throw createError({
+		statusCode: 500,
+		message: "User has no email",
+	});
+	
 	let subject = "[Payment]: Payment Receipt for " + name;
-
 	return sendMail({
 		to: email,
 		subject: subject,
 		html: PAYMENT_RECEIPT_HTML({
-			user: { name: name, email: email },
+			user: { name: email.split("@").at(0)!, email: email },
 			amount: amount,
 			time: new Date().toLocaleDateString(),
 			receiptNumber,
@@ -303,4 +311,3 @@ export async function sendResponseInvites(
 		}
 	});
 }
-

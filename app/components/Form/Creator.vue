@@ -1,29 +1,12 @@
 <script setup lang="ts">
-import type { Form, Pages, Stores } from "@chiballc/nuxt-form-builder";
-
-type FormData = {
-	name: string;
-	description: string | null | undefined;
-	allowGroups: boolean;
-	requireMerch: boolean;
-	form: {
-		stores: Stores;
-		pages: Pages;
-	};
-	payment: {
-		amount: number | null | undefined;
-		group_amount: number | null | undefined;
-		group_limit: number | null | undefined;
-		group_message: string | null;
-	};
-};
+import type { Form } from "@chiballc/nuxt-form-builder";
 
 const emits = defineEmits<{
-	submit: [FormData];
+	submit: [SutitFormData];
 }>();
 const props = defineProps({
 	starter: {
-		type: Object as PropType<FormData>,
+		type: Object as PropType<SutitFormData>,
 		required: false,
 	},
 });
@@ -47,7 +30,7 @@ const defaultGroupMessage = () => {
 	}
 };
 
-const data = ref<FormData>(
+const data = ref<SutitFormData>(
 	props.starter || {
 		name: "",
 		description: "" as string | null | undefined,
@@ -89,10 +72,11 @@ async function submit(form: Form) {
 		alert("Please add a form or a store");
 	}
 
-	if(!data.value.payment.group_message){
-		data.value.payment.group_message = defaultGroupMessage()
+	if (!data.value.payment.group_message?.trim()) {
+		data.value.payment.group_message = defaultGroupMessage();
 	}
 
+	await uploadStoreImages(data.value);
 	emits("submit", data.value);
 }
 

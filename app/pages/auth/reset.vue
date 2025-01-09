@@ -1,6 +1,5 @@
 <script setup lang="ts">
-const url = useRoute();
-const redirect = url.query?.redirect;
+const redirect = useRedirect()
 const loading = ref(false);
 const details = reactive({
 	email: "",
@@ -17,9 +16,14 @@ async function submit() {
 	loading.value = true;
 
 	const respopnse = await $fetch(
-		`/api/auth/reset?email=${details.email}&origin=${window.location.origin}&redirect=${redirect}`,
+		`/api/auth/reset`,
 		{
 			method: "GET",
+			query: {
+				email: details.email,
+				origin: window.location.origin,
+				redirect: redirect
+			},
 			onResponseError({ response }) {
 				loading.value = false;
 				errors.value.add(response._data.body || "An unknown error occurred");
@@ -29,7 +33,7 @@ async function submit() {
 
 	loading.value = false;
 	if (respopnse) {
-		alert("Password reset link sent to your email");
+		window.alertSuccess("Password reset link sent to your email");
 		await navigateTo("/auth/login");
 	}
 }

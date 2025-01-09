@@ -31,7 +31,8 @@ async function submit() {
 
 	if (token) {
 		setAuthCookie(token);
-		(await useUser()).value!.token = token;
+		const { user } = await useUser();
+		user.value.token = token;
 		const _redirect = collapseString(redirect);
 		if (_redirect) {
 			await navigateTo(_redirect);
@@ -70,7 +71,8 @@ async function onSignIn(googleCredential: GoogleCredential) {
 	});
 	loadingGoogle.value = false;
 	if (token) {
-		(await useUser()).value!.token = token;
+		const { user } = await useUser();
+		user.value.token = token;
 		navigateTo("/");
 	}
 }

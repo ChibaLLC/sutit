@@ -2,7 +2,7 @@ export default defineNuxtPlugin(async () => {
 	const token = getAuthCookie();
 	if (!token) return;
 
-	const user = await useUser();
+	const { user } = await useUser();
 	if (user.value && user.value?.token === token) return;
 
 	const { data } = await useFetch(`/api/users/me`, {

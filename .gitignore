@@ -33,3 +33,4 @@ puppet.*
 false
 
 nginx/certs
+filestore
