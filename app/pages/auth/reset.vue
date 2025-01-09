@@ -39,8 +39,8 @@ async function submit() {
 }
 </script>
 <template>
-	<Title>Reset Password</Title>
 	<section class="absolute w-full" style="margin-top: 100px">
+		<Title>Reset Password</Title>
 		<div class="container mx-auto px-4 h-full">
 			<div class="flex content-center items-center justify-center h-full">
 				<div class="w-full lg:w-4/12 px-4">

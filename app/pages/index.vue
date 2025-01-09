@@ -1,6 +1,6 @@
 <template>
-  <Title>Home</Title>
   <main>
+    <Title>Home</Title>
     <div class="wrapper">
       <p class="font-sans font-bold text-8xl text-center mt-16 max-sm:mt-12 text-dark max-sm:text-5xl">
         Your <span class="text-peach">Success</span> <br> Story Starts <br> With Us
