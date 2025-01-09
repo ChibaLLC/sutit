@@ -360,7 +360,7 @@ export function base64ToBlob(base64Data: string) {
 	return parseBase64Data(base64[1] || base64[0], mimeType);
 }
 
-type Base64EncodedDataString = `data:${string};base64,`;
+export type Base64EncodedDataString = `data:${string};base64,`;
 export function isBase64DataEncodedString(input?: string): input is Base64EncodedDataString {
 	if (!input) return false;
 	const regex = /^data:[a-zA-Z0-9.-]+\/[a-zA-Z0-9.+-]+;base64,/;

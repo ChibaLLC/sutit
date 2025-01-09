@@ -1,4 +1,5 @@
-import { createStorage, defineDriver } from "unstorage";
+/// no-auto-imports
+import { createStorage } from "unstorage";
 import { isDevelopment } from "~~/server/utils/env";
 import ghDriver from "unstorage/drivers/github";
 import { existsSync, watch } from "fs";
@@ -28,8 +29,7 @@ type StorageItem = AllOrNothing<{
 	stats: { mime: MimeType } & MaybePromise<StaticAssetMeta | undefined>;
 }>;
 abstract class AbstractFileStorage {
-	abstract location(destination: string): string;
-	abstract hasItem(key: string): boolean;
+	abstract hasItem(key: string): MaybePromise<boolean>;
 	abstract getItem(key: string | undefined): Promise<StorageItem>;
 	abstract setItem(
 		key: string,
@@ -39,8 +39,8 @@ abstract class AbstractFileStorage {
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
 			| Stream
-	): Promise<void>;
-	abstract setItemRaw(key: string, value: PersistentFile | Blob | string): Promise<void>;
+	): Promise<boolean>;
+	abstract setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void>;
 	abstract removeItem(key: string): Promise<void>;
 	abstract getKeys(base: string): Promise<string[]>;
 	abstract clear(base: string): Promise<void>;
@@ -60,13 +60,18 @@ class LocalFileStorage implements AbstractFileStorage {
 		this.root = options.root;
 	}
 
-	location(destination: string) {
+	private location(destination: string) {
 		const basePath = join(this.root, destination).replace(/:/g, sep);
 		return resolve(basePath);
 	}
 
 	hasItem(key: string) {
-		return existsSync(this.location(key));
+		try {
+			return existsSync(this.location(key));
+		} catch (e) {
+			console.error(e);
+			return false;
+		}
 	}
 
 	async getItem(key: string | undefined): Promise<StorageItem> {
@@ -125,34 +130,44 @@ class LocalFileStorage implements AbstractFileStorage {
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
 			| Stream
 	) {
-		const target = this.location(key);
-		const folder = target.split(sep).slice(0, -1).join(sep);
-		if (!existsSync(folder)) {
-			await mkdir(folder, { recursive: true });
+		try {
+			const target = this.location(key);
+			const folder = target.split(sep).slice(0, -1).join(sep);
+			if (!existsSync(folder)) {
+				await mkdir(folder, { recursive: true });
+			}
+			await writeFile(target, value);
+			return true;
+		} catch (e) {
+			console.error(e);
+			return false;
 		}
-		return await writeFile(target, value);
 	}
-	async setItemRaw(key: string, value: PersistentFile | Blob | string) {
-		const fileLocation = this.location(key);
-		if (!existsSync(fileLocation)) {
-			const folder = fileLocation.split(sep).slice(0, -1).join(sep);
-			await mkdir(folder, { recursive: true });
-		}
+	async setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString) {
+		try {
+			const fileLocation = this.location(key);
+			if (!existsSync(fileLocation)) {
+				const folder = fileLocation.split(sep).slice(0, -1).join(sep);
+				await mkdir(folder, { recursive: true });
+			}
 
-		if (hasOwnProperties(value, ["filepath"])) {
-			await rename(value.filepath, fileLocation);
-		} else if (value instanceof Blob) {
-			await saveBlobToFile(value, fileLocation);
-		} else if (isBase64DataEncodedString(value)) {
-			const { blob } = await base64ToBlob(value);
-			if (!blob) return log.error("Unable to convert data to blob: ", value.slice(0, 100));
-			await saveBlobToFile(blob, fileLocation);
-		} else {
-			await writeFile(fileLocation, value);
+			if (hasOwnProperties(value, ["filepath"])) {
+				await rename(value.filepath, fileLocation);
+			} else if (value instanceof Blob) {
+				await saveBlobToFile(value, fileLocation);
+			} else if (isBase64DataEncodedString(value)) {
+				const { blob } = await base64ToBlob(value);
+				if (!blob) return log.error("Unable to convert data to blob: ", value.slice(0, 100));
+				await saveBlobToFile(blob, fileLocation);
+			} else {
+				await writeFile(fileLocation, value);
+			}
+		} catch (e) {
+			console.error(e);
 		}
 	}
 	async removeItem(key: string) {
-		return await unlink(this.location(key));
+		return await unlink(this.location(key)).catch(console.error);
 	}
 	async getKeys(base: string) {
 		try {
@@ -176,16 +191,19 @@ class LocalFileStorage implements AbstractFileStorage {
 			const files = await readdir(directory);
 
 			for (const file of files) {
-				const stats = await lstat(file).catch((e) => null);
+				const stats = await lstat(file).catch((e) => {
+					console.error(e);
+					return null;
+				});
 				if (stats?.isDirectory()) {
 					deleteFiles(file);
 				}
 
-				unlink(file);
+				unlink(file).catch(console.error);
 			}
 		}
 
-		return await deleteFiles(this.root);
+		return await deleteFiles(this.location(base));
 	}
 	async dispose() {}
 	async watch(callback: (event: "remove" | "update", filename: string) => void) {
@@ -204,7 +222,7 @@ class GitHubStorage implements AbstractFileStorage {
 	location(destination: string): string {
 		throw new Error("Method not implemented.");
 	}
-	hasItem(key: string): boolean {
+	hasItem(key: string): Promise<boolean> {
 		throw new Error("Method not implemented.");
 	}
 	getItem(key: string | undefined): Promise<StorageItem> {
@@ -218,10 +236,10 @@ class GitHubStorage implements AbstractFileStorage {
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
 			| Stream
-	): Promise<void> {
+	): Promise<boolean> {
 		throw new Error("Method not implemented.");
 	}
-	setItemRaw(key: string, value: PersistentFile | Blob | string): Promise<void> {
+	setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
 	removeItem(key: string): Promise<void> {

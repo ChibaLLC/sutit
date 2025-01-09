@@ -1,3 +1,4 @@
+/// no-auto-imports
 import { Boolish } from "~~/shared/utils/data";
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
