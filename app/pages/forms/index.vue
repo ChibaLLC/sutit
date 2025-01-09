@@ -54,8 +54,8 @@ function deleteForm(ulid: string) {
 }
 </script>
 <template>
-  <Title>Forms</Title>
   <div class="flex min-h-screen w-full">
+    <Title>Forms</Title>
     <main class="w-full max-w-[1200px] mx-auto flex flex-col items-center">
       <div class="w-full px-8 mt-5 relative overflow-x-auto rounded-t">
         <div class="py-2 flex justify-between items-center">

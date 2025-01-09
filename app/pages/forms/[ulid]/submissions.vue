@@ -132,13 +132,13 @@ watch([phone, con_phone], () => {
 	noMatch.value = !!(con_phone.value && con_phone.value !== phone.value);
 });
 
-const fields = collectFields(form as any)
-const hasPay = hasPayment(form as any)
+const fields = collectFields(form as any);
+const hasPay = hasPayment(form as any);
 </script>
 
 <template>
-	<Title>Submissions | {{ form.meta.formName }}</Title>
 	<div class="flex min-h-screen w-full">
+		<Title>Submissions | {{ form.meta.formName }}</Title>
 		<main class="w-full flex flex-col items-center max-w-[1200px] mx-auto">
 			<div class="mt-4 w-full flex justify-between items-center px-10">
 				<span class="font-bold text-left uppercase" style="font-size: larger">

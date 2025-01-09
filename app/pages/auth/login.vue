@@ -100,7 +100,8 @@ async function onSignIn(googleCrdential: GoogleCredential) {
 }
 </script>
 <template>
-	<Title>Login</Title>
+	<div>
+		<Title>Login</Title>
 	<div class="wrapper"></div>
 	<div
 		class="border border-sky bg-light/20 rounded-2xl max-sm:rounded w-[600px] max-w-[90vw] m-auto mt-20 p-10 shadow-md shadow-sky max-sm:mt-10"
@@ -266,6 +267,7 @@ async function onSignIn(googleCrdential: GoogleCredential) {
 				<NuxtLink to="/auth/signup" class="text-dark font-bold hover:underline">Sign Up</NuxtLink>
 			</p>
 		</form>
+	</div>
 	</div>
 </template>
 

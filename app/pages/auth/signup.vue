@@ -92,7 +92,8 @@ onMounted(() => {
 </script>
 
 <template>
-	<Title>Sign Up</Title>
+	<div>
+		<Title>Sign Up</Title>
 	<div class="wrapper"></div>
 	<div
 		class="border border-sky bg-light/20 rounded-2xl max-sm:rounded w-[600px] max-w-[90vw] m-auto mt-20 p-10 shadow-md shadow-sky max-sm:mt-10"
@@ -214,6 +215,7 @@ onMounted(() => {
 				<NuxtLink to="/auth/login" class="text-dark font-bold hover:underline">Login</NuxtLink>
 			</p>
 		</form>
+	</div>
 	</div>
 </template>
 

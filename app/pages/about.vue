@@ -1,5 +1,6 @@
 <template>
-    <div class="bg-sky w-full h-fit absolute top-0 -z-10">
+    <div>
+        <div class="bg-sky w-full h-fit absolute top-0 -z-10">
         <img src="/images/bg.jpg" alt="" class="w-full aspect-video object-cover mix-blend-multiply blur">
     </div>
     <section class="pb-20 mt-24 w-10/12 max-sm:w-11/12 m-auto">
@@ -378,4 +379,5 @@
             </div>
         </div>
     </section>
+    </div>
 </template>

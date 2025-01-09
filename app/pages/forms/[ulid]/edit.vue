@@ -54,7 +54,6 @@ async function submit(data: any) {
 </script>
 
 <template>
-	<Title>Build Form</Title>
 	<FormCreator :starter="submitData" @submit="submit" />
 </template>
 
