@@ -1,5 +1,13 @@
 export default defineEventHandler(async (event) => {
-	const filepath = event.context.params?.path;
+	let filepath = event.context.params?.path;
+	if (!filepath) {
+		throw createError({
+			status: 400,
+			message: "File Path Not Passed",
+		});
+	}
+	
+	filepath = decodeURIComponent(filepath);
 	const { stats, readableStream } = await $storage.file.getItem(filepath);
 	if (!readableStream) {
 		throw createError({
