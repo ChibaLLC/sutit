@@ -7,6 +7,8 @@ export default defineEventHandler(async (event) => {
 	
 	let folder = event.context.params?.path;
 	if (!folder) folder = "/";
+	
+	folder = decodeURIComponent(folder)
 	const { files } = await readFiles(event);
 	const paths = [];
 	for (const key in files) {
