@@ -1,5 +1,5 @@
 /// no-auto-imports
-import { createStorage } from "unstorage";
+import { createStorage, type Storage } from "unstorage";
 import { isDevelopment } from "~~/server/utils/env";
 import ghDriver from "unstorage/drivers/github";
 import { existsSync, watch } from "fs";
@@ -14,6 +14,7 @@ import type { MimeType } from "file-type";
 import type { File as PersistentFile } from "formidable";
 import type { StaticAssetMeta } from "h3";
 import { isBase64DataEncodedString, getMimeType } from "~~/shared/utils/data";
+import githubDriver from "unstorage/drivers/github";
 
 export async function saveBlobToFile(blob: Blob, filePath: string) {
 	const arrayBuffer = await blob.arrayBuffer();
@@ -38,7 +39,7 @@ abstract class AbstractFileStorage {
 			| NodeJS.ArrayBufferView
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream
+			| Stream,
 	): Promise<boolean>;
 	abstract setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void>;
 	abstract removeItem(key: string): Promise<void>;
@@ -46,6 +47,138 @@ abstract class AbstractFileStorage {
 	abstract clear(base: string): Promise<void>;
 	abstract dispose(): Promise<void>;
 	abstract watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void>;
+}
+
+class GithubStorage implements AbstractFileStorage {
+	protected githubStore: Storage;
+	constructor(options: { repo: string; branch: string; dir: string; token: string }) {
+		this.githubStore = createStorage({
+			driver: githubDriver({
+				repo: options.repo,
+				branch: options.branch,
+				dir: options.dir,
+				token: options.token,
+			}),
+		});
+	}
+
+	hasItem(key: string): MaybePromise<boolean> {
+		return this.githubStore.hasItem(key);
+	}
+
+	async getItem(key: string | undefined): Promise<StorageItem> {
+		if (!key)
+			return {
+				readStream: undefined,
+				readLine: undefined,
+				value: undefined,
+				stats: undefined,
+				readableStream: undefined,
+			};
+		let item = await this.githubStore.getItem(key);
+		if (item == null) {
+			return {
+				readStream: undefined,
+				readLine: undefined,
+				value: undefined,
+				stats: undefined,
+				readableStream: undefined,
+			};
+		}
+
+		const readStream = createReadStream(<string>item);
+		const readableStream = new ReadableStream({
+			start(controller) {
+				readStream.on("data", (chunk) => {
+					controller.enqueue(chunk);
+				});
+
+				readStream.on("end", () => {
+					controller.close();
+				});
+
+				readStream.on("error", (err) => {
+					controller.error(err);
+				});
+			},
+			cancel() {
+				readStream.destroy();
+			},
+		});
+
+		return {
+			readStream,
+			readableStream,
+			readLine: () =>
+				createInterface({
+					input: readStream,
+					crlfDelay: Infinity,
+				}),
+			value: () => readFile(<string>item),
+			stats: {
+				...(await stat(<string>item)),
+				mime: (getMimeType(<string>item) || "bin") as MimeType,
+			},
+		};
+	}
+
+	async setItem(
+		key: string,
+		value:
+			| string
+			| NodeJS.ArrayBufferView
+			| Iterable<string | NodeJS.ArrayBufferView>
+			| AsyncIterable<string | NodeJS.ArrayBufferView>
+			| Stream,
+	): Promise<boolean> {
+		try {
+			await this.githubStore.setItem(key, value);
+			return true;
+		} catch (e: any) {
+			console.log(e);
+			return false;
+		}
+	}
+
+	async setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void> {
+		try {
+			await this.githubStore.setItemRaw(key, value);
+		} catch (e: any) {
+			console.log(e);
+		}
+	}
+
+	async removeItem(key: string): Promise<void> {
+		try {
+			await this.githubStore.removeItem(key);
+		} catch (e: any) {}
+	}
+
+	async getKeys(base: string): Promise<string[]> {
+		try {
+			const keys = await this.githubStore.getKeys(base);
+			return keys;
+		} catch (e: any) {
+			console.log(e);
+			return [] as string[];
+		}
+	}
+
+	async clear(base: string): Promise<void> {
+		try {
+			await this.githubStore.clear(base);
+		} catch (e: any) {
+			console.log(e);
+		}
+	}
+
+	async dispose(): Promise<void> {
+		try {
+			await this.githubStore.dispose();
+		} catch (e: any) {
+			console.log(e);
+		}
+	}
 }
 
 class LocalFileStorage implements AbstractFileStorage {
@@ -128,7 +261,7 @@ class LocalFileStorage implements AbstractFileStorage {
 			| NodeJS.ArrayBufferView
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream
+			| Stream,
 	) {
 		try {
 			const target = this.location(key);
@@ -217,47 +350,47 @@ class LocalFileStorage implements AbstractFileStorage {
 	}
 }
 
-class GitHubStorage implements AbstractFileStorage {
-	constructor(options: { repo: string; branch: string; dir: string; token?: string }) {}
-	location(destination: string): string {
-		throw new Error("Method not implemented.");
-	}
-	hasItem(key: string): Promise<boolean> {
-		throw new Error("Method not implemented.");
-	}
-	getItem(key: string | undefined): Promise<StorageItem> {
-		throw new Error("Method not implemented.");
-	}
-	setItem(
-		key: string,
-		value:
-			| string
-			| NodeJS.ArrayBufferView
-			| Iterable<string | NodeJS.ArrayBufferView>
-			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream
-	): Promise<boolean> {
-		throw new Error("Method not implemented.");
-	}
-	setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	removeItem(key: string): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	getKeys(base: string): Promise<string[]> {
-		throw new Error("Method not implemented.");
-	}
-	clear(base: string): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	dispose(): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void> {
-		throw new Error("Method not implemented.");
-	}
-}
+// class GitHubStorage implements AbstractFileStorage {
+// 	constructor(options: { repo: string; branch: string; dir: string; token?: string }) {}
+// 	location(destination: string): string {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	hasItem(key: string): Promise<boolean> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	getItem(key: string | undefined): Promise<StorageItem> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	setItem(
+// 		key: string,
+// 		value:
+// 			| string
+// 			| NodeJS.ArrayBufferView
+// 			| Iterable<string | NodeJS.ArrayBufferView>
+// 			| AsyncIterable<string | NodeJS.ArrayBufferView>
+// 			| Stream,
+// 	): Promise<boolean> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	removeItem(key: string): Promise<void> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	getKeys(base: string): Promise<string[]> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	clear(base: string): Promise<void> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	dispose(): Promise<void> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// 	watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void> {
+// 		throw new Error("Method not implemented.");
+// 	}
+// }
 
 // TODO: @blocked Uncomment once store images fix
 // const storage = isDevelopment
@@ -274,5 +407,11 @@ class GitHubStorage implements AbstractFileStorage {
 const storage = new LocalFileStorage({
 	root: "./filestore",
 });
+const githubStorage = new GithubStorage({
+  repo: "sutit/sutit",
+  branch: "main",
+  token: process.env.GITHUB_API_TOKEN as string,
+  dir: "/files"
+})
 
 export default storage;
