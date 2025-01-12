@@ -1,5 +1,5 @@
 /// no-auto-imports
-import { createStorage, type Storage } from "unstorage";
+import { createStorage, type Storage, type Unwatch, type WatchEvent } from "unstorage";
 import { isDevelopment } from "~~/server/utils/env";
 import ghDriver from "unstorage/drivers/github";
 import { existsSync, watch } from "fs";
@@ -39,7 +39,7 @@ abstract class AbstractFileStorage {
 			| NodeJS.ArrayBufferView
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream,
+			| Stream
 	): Promise<boolean>;
 	abstract setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void>;
 	abstract removeItem(key: string): Promise<void>;
@@ -129,7 +129,7 @@ class GithubStorage implements AbstractFileStorage {
 			| NodeJS.ArrayBufferView
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream,
+			| Stream
 	): Promise<boolean> {
 		try {
 			await this.githubStore.setItem(key, value);
@@ -178,6 +178,10 @@ class GithubStorage implements AbstractFileStorage {
 		} catch (e: any) {
 			console.log(e);
 		}
+	}
+
+	watch(callback: (event: WatchEvent, key: string) => void) {
+		return this.githubStore.watch(callback);
 	}
 }
 
@@ -261,7 +265,7 @@ class LocalFileStorage implements AbstractFileStorage {
 			| NodeJS.ArrayBufferView
 			| Iterable<string | NodeJS.ArrayBufferView>
 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-			| Stream,
+			| Stream
 	) {
 		try {
 			const target = this.location(key);
@@ -408,10 +412,10 @@ const storage = new LocalFileStorage({
 	root: "./filestore",
 });
 const githubStorage = new GithubStorage({
-  repo: "sutit/sutit",
-  branch: "main",
-  token: process.env.GITHUB_API_TOKEN as string,
-  dir: "/files"
-})
+	repo: "sutit/sutit",
+	branch: "main",
+	token: process.env.GITHUB_API_TOKEN as string,
+	dir: "/files",
+});
 
 export default storage;
