@@ -260,7 +260,7 @@ export function assert<T>(value: T, message?: string): NonNullable<T> {
 	return value;
 }
 
-export function assertEnv(key: keyof typeof process.env) {
+export function getEnv(key: keyof typeof process.env) {
 	return assert(process.env[key], `Env variable ${key} not found. Please include it with a non-empty value`);
 }
 
