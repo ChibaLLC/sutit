@@ -27,6 +27,7 @@ import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
 import type { Page, Store } from "@chiballc/nuxt-form-builder";
 import { getUserByUlId } from "../../users/utils/queries";
+import { sep } from "node:path";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
@@ -217,7 +218,7 @@ export async function deleteForm(formUlid: string) {
 }
 
 // TODO: @blocked remove email dependancy
-async function offloadStoreImages(items: Drizzle.SutitStore[], user_email: string) {
+async function offloadStoreImages(items: Drizzle.SutitStore[], form_meta: Drizzle.SutitForm["form_meta"]) {
 	const editedItems: Drizzle.SutitStore[] = [];
 	const promises = items.map(async (item) => {
 		await Promise.all(
@@ -228,8 +229,8 @@ async function offloadStoreImages(items: Drizzle.SutitStore[], user_email: strin
 						if (!blob) return;
 
 						let filename = `${item.name}-image-${index}`;
-						const folder = user_email;
-						const destination = `${folder}/${filename}.${extension}`;
+						const folder = `${form_meta.userUlid}${sep}${form_meta.ulid}`;
+						const destination = `${folder}${sep}${filename}.${extension}`;
 
 						await $storage.file.setItemRaw(destination, blob);
 						const path = `/files/${destination}`;
@@ -298,7 +299,7 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 	const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
 	const user = await getUserByUlId(form_meta.userUlid);
 	if (user && user.email) {
-		await offloadStoreImages(stores, user.email);
+		await offloadStoreImages(stores, form_meta);
 	} else {
 		console.warn("User email not found during image optimisation");
 	}

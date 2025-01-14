@@ -67,7 +67,7 @@ export async function uploadStoreImages(data: SutitFormData) {
 	const promises = Object.values(data.form.stores)
 		.map((stores) =>
 			stores.map((item) => {
-				return item.images.map(async (image, index) => {
+				return item.images?.map(async (image, index) => {
 					// TODO: @blocked Uncomment once store images fix
 					// const url = await uploadFile(image, user.value.email);
 					// if (url) {
