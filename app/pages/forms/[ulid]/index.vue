@@ -81,7 +81,8 @@ async function submit() {
 								name: item.name,
 								qtty: item.qtty,
 								liked: item.liked,
-								carted: item.carted
+								carted: item.carted,
+								stock: item.stock
 							}
 						});
 						return acc;
@@ -122,8 +123,6 @@ async function submit() {
 		}
 	} catch (e) {
 		console.error(e);
-	} finally {
-		loading.value = false;
 	}
 }
 

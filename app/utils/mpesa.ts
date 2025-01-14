@@ -1,7 +1,4 @@
-export function hasChannelData(response: any): response is {
-	merchantRequestID: string;
-	checkoutRequestID: string;
-} {
+export function hasChannelData(response: any) {
 	return hasOwnProperties<{
 		merchantRequestID: string;
 		checkoutRequestID: string;

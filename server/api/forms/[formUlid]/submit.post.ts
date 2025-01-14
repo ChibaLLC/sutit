@@ -4,6 +4,30 @@ import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sen
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
 
+function validateOrders(
+	items: Record<
+		string,
+		{
+			name: string;
+			qtty: string | number;
+			liked: boolean;
+			carted: boolean;
+			stock: string | number;
+		}
+	>
+) {
+	Object.entries(items)
+		.values()
+		.forEach(([_, item]) => {
+			// TODO: Check from the db instead or cache
+			if (+item.qtty < +item.stock) {
+				throw createError({
+					message: `Requested quanty: ${item.qtty} is less than the available stock: ${item.stock}`,
+				});
+			}
+		});
+}
+
 export default defineEventHandler(async (event) => {
 	const formUlid = event.context.params?.formUlid;
 	if (!formUlid) {
@@ -17,7 +41,16 @@ export default defineEventHandler(async (event) => {
 		form: z.object({
 			meta: z.custom<Drizzle.SutitForm["form_meta"]>((data: Drizzle.SutitForm["form_meta"]) => !!data?.ulid),
 			pages: z.record(z.string(), z.any()),
-			stores: z.record(z.string(), z.any()),
+			stores: z.record(
+				z.string(),
+				z.object({
+					name: z.string(),
+					qtty: z.union([z.string(), z.number()]),
+					liked: z.boolean(),
+					carted: z.boolean(),
+					stock: z.union([z.string(), z.number()]),
+				})
+			),
 		}),
 		phone: z.string().optional(),
 		token: z.string().optional(),
@@ -28,7 +61,7 @@ export default defineEventHandler(async (event) => {
 		throw createError({
 			statusCode: 400,
 			message: error?.message,
-			data: {error, data: await readBody(event)},
+			data: { error, data: await readBody(event) },
 		});
 	}
 
@@ -46,6 +79,8 @@ export default defineEventHandler(async (event) => {
 			message: "You need to get something from the store section of the form",
 		});
 	}
+
+	validateOrders(data.form.stores);
 
 	const creator = await getUserByUlId(form.meta.userUlid);
 	if (!creator) {
