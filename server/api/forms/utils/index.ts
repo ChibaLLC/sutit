@@ -175,11 +175,11 @@ export function generateReceiptNumber(payment: string | Drizzle.Payment.select) 
 	return number;
 }
 
-export const sendPaymentMailReceipt = async (
+export async function sendPaymentMailReceipt(
 	user: { userUlid?: string; email?: string },
 	amount: number | string,
 	receiptNumber: string
-) => {
+) {
 	if (!user.email && !user.userUlid) {
 		throw createError({
 			statusCode: 500,
@@ -192,25 +192,27 @@ export const sendPaymentMailReceipt = async (
 		var name = _user?.name;
 	} else {
 		email = user.email;
+		name = email?.split("@").at(0);
 	}
-	
-	if (!email) throw createError({
-		statusCode: 500,
-		message: "User has no email",
-	});
-	
+
+	if (!email)
+		throw createError({
+			statusCode: 500,
+			message: "User has no email",
+		});
+
 	let subject = "[Payment]: Payment Receipt for " + name;
 	return sendMail({
 		to: email,
 		subject: subject,
 		html: PAYMENT_RECEIPT_HTML({
-			user: { name: email.split("@").at(0)!, email: email },
+			user: { name: name!, email: email },
 			amount: amount,
 			time: new Date().toLocaleDateString(),
 			receiptNumber,
 		}),
 	});
-};
+}
 
 function isPhoneCreditMethod(creditMethod: CreditMethod): creditMethod is PhoneCreditMethod {
 	return !!creditMethod?.phone;
