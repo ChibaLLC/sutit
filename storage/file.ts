@@ -49,7 +49,7 @@ abstract class AbstractFileStorage {
 	abstract watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void>;
 }
 
-class GithubStorage implements AbstractFileStorage {
+class GitHubStorage implements AbstractFileStorage {
 	protected githubStore: Storage;
 	constructor(options: { repo: string; branch: string; dir: string; token: string }) {
 		this.githubStore = createStorage({
@@ -354,49 +354,6 @@ class LocalFileStorage implements AbstractFileStorage {
 	}
 }
 
-// class GitHubStorage implements AbstractFileStorage {
-// 	constructor(options: { repo: string; branch: string; dir: string; token?: string }) {}
-// 	location(destination: string): string {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	hasItem(key: string): Promise<boolean> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	getItem(key: string | undefined): Promise<StorageItem> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	setItem(
-// 		key: string,
-// 		value:
-// 			| string
-// 			| NodeJS.ArrayBufferView
-// 			| Iterable<string | NodeJS.ArrayBufferView>
-// 			| AsyncIterable<string | NodeJS.ArrayBufferView>
-// 			| Stream,
-// 	): Promise<boolean> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	setItemRaw(key: string, value: PersistentFile | Blob | Base64EncodedDataString): Promise<void> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	removeItem(key: string): Promise<void> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	getKeys(base: string): Promise<string[]> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	clear(base: string): Promise<void> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	dispose(): Promise<void> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// 	watch(callback: (event: "remove" | "update", filename: string) => void): MaybePromise<() => void> {
-// 		throw new Error("Method not implemented.");
-// 	}
-// }
-
-// TODO: @blocked Uncomment once store images fix
 // const storage = isDevelopment
 // 	? new LocalFileStorage({
 // 			root: "./filestore",
@@ -405,17 +362,10 @@ class LocalFileStorage implements AbstractFileStorage {
 // 			repo: "YallanYati/images",
 // 			branch: "main",
 // 			dir: "/images",
-// 			token: process.env.GITHUB_API_TOKEN,
+// 			token: getEnv("GITHUB_API_TOKEN"),
 // 	  });
 
 const storage = new LocalFileStorage({
 	root: "./filestore",
 });
-const githubStorage = new GithubStorage({
-	repo: "sutit/sutit",
-	branch: "main",
-	token: process.env.GITHUB_API_TOKEN as string,
-	dir: "/files",
-});
-
 export default storage;

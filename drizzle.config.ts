@@ -1,7 +1,8 @@
 import { defineConfig } from "drizzle-kit";
-import { assertEnv } from "./shared/utils/data";
+import { assert } from "console";
 
-var url = new URL(assertEnv("DATABASE_URL"));
+assert(process.env.DATABASE_URL, "Env variable DATABASE_URL not found. Please include it with a non-empty value");
+var url = new URL(process.env.DATABASE_URL || "");
 export const credentials = url;
 export default defineConfig({
 	schema: "./server/db/schema/index.ts",

@@ -54,10 +54,16 @@ export async function verifyToken(token: string): Promise<boolean> {
 
 export async function authenticate(data: { email: string, password: string }): Promise<string> {
     const user = await getUserByEmail(data.email)
-    if (!user) throw new Error('User not found')
+    if (!user) throw createError({
+		status: 404,
+		message: "User not found",
+	});
 
     const valid = verifyPassword(data.password, user.salt, user.password)
-    if (!valid) throw new Error('Invalid password')
+    if (!valid) throw createError({
+		status: 403,
+		message: "Invalid password",
+	});
 
 
     return await createToken({ userUlid: user.ulid, email: user.email })
