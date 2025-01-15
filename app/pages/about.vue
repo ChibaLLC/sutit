@@ -206,7 +206,7 @@
                         <div class="pt-6 text-center">
                             <h5 class="text-xl font-bold">Saxo Munene</h5>
                             <p class="mt-1 text-sm text-gray-500 uppercase font-semibold">
-                                Supply Chain Acquisition Specialist
+                               Founding Partner 
                             </p>
                             <div class="mt-6">
                                 <button
