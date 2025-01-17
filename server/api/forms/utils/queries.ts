@@ -300,18 +300,18 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 	const { pages } = results.reduce(
 		(acc, curr) => {
 			if (curr.form_elements.page_index !== null) {
-				const pages = acc.pages.get(curr.form_elements.page_index);
-				const page_element = curr.form_elements;
+				const pages = acc.pages[curr.form_elements.page_index];
+				const form_element = curr.form_elements;
 				if (pages) {
-					pages.push(page_element);
+					pages.push(form_element);
 				} else {
-					acc.pages.set(curr.form_elements.page_index, [page_element]);
+					acc.pages[curr.form_elements.page_index] = [form_element];
 				}
 			}
 			return acc;
 		},
-		{ pages: new Map() } as {
-			pages: Map<string, DbPage>;
+		{ pages: {} } as {
+			pages: Record<string, DbPage>;
 		}
 	);
 
@@ -325,7 +325,7 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 
 	return {
 		meta: form_meta,
-		pages: Object.fromEntries(pages.entries()),
+		pages: pages,
 		stores: stores.reduce((acc, curr) => {
 			const store = acc[curr.store_index];
 			const item = {
