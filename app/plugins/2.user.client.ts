@@ -1,11 +1,11 @@
 export default defineNuxtPlugin(async () => {
-	const token = getAuthCookie();
+	const token = getAuthToken();
 	if (!token) return;
 
 	const { user } = await useUser();
-	if (user.value && user.value?.token === token) return;
+	if (user.value && user.value.token === token) return;
 
-	const { data } = await useFetch(`/api/users/me`, {
+	const data = await $fetch(`/api/users/me`, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
@@ -21,8 +21,8 @@ export default defineNuxtPlugin(async () => {
 		},
 	});
 
-	if (data.value) {
-		user.value = data.value;
+	if (data) {
+		user.value = data;
 	} else {
 		setAuthCookie(undefined);
 		user.value = {} as UserState;
