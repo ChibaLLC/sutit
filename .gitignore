@@ -34,3 +34,5 @@ false
 
 nginx/certs
 filestore
+
+playground.ts
