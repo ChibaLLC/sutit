@@ -376,6 +376,7 @@ export async function insertData(
 	}
 
 	function getValue(value: any) {
+		if (!value) return undefined;
 		if (typeof value !== "object") return value;
 		if (Array.isArray(value)) {
 			return JSON.stringify(value);
