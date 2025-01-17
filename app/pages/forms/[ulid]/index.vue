@@ -29,10 +29,8 @@ function hasPhone() {
 }
 
 async function processForm() {
-	loading.value = true;
 	paymentModal.value = false;
 	if (group.self && data.value?.meta.requireMerch && !hasBoughtMerch(data.value.stores)) {
-		loading.value = false;
 		return window.alertError("You need to get something from the store section of this form!");
 	}
 	if (data.value?.meta?.allowGroups && !group.self) {
@@ -42,16 +40,17 @@ async function processForm() {
 	if (hasPrice(data.value) && !hasPhone()) {
 		paymentModal.value = true;
 	} else if (hasPrice(data.value) && hasPhone()) {
-		console.log("Submitting paid form", completedForm);
+		log.info("Submitting paid form", completedForm);
 		await submit();
 	} else if (!hasPrice(data.value)) {
-		console.log("Submitting unpaid form", completedForm);
+		log.info("Submitting unpaid form", completedForm);
 		await submit();
 	}
 }
 
 let completedForm: Form | undefined = undefined;
 async function submit() {
+	if (loading.value) return window.alertInfo("Please wait for the previous submission to be processed");
 	try {
 		loading.value = true;
 		const response = await $fetch(`/api/forms/${ulid}/submit`, {
@@ -82,8 +81,8 @@ async function submit() {
 								qtty: item.qtty,
 								liked: item.liked,
 								carted: item.carted,
-								stock: item.stock
-							}
+								stock: item.stock,
+							};
 						});
 						return acc;
 					}, {}),
@@ -119,10 +118,12 @@ async function submit() {
 					).formMail;
 			}
 			window.alertSuccess(message, { timeout: "never" });
+			loading.value = false;
 			await navigateTo("/");
 		}
 	} catch (e) {
 		console.error(e);
+		loading.value = false;
 	}
 }
 
@@ -207,6 +208,9 @@ class Invite<T extends { email: string } | { phone: string } = any> extends Set<
 	}
 }
 const invites = ref<Invite>(new Invite());
+
+// TODO: Rewrite
+// start
 const _member_count = ref(0);
 const member_count = computed({
 	get: () => _member_count.value || invites.value.size,
@@ -225,6 +229,7 @@ if (token) {
 	group.chosen = true;
 	group.self = true;
 }
+// end
 
 function chooseSelfOrGroup(e: Event) {
 	if ((e.target as HTMLElement).id === "for_me") {
@@ -271,10 +276,11 @@ async function processInvites() {
 			const data = response._data;
 			window.alertError(unWrapFetchError(data));
 		},
-	});
+	}).catch(() => undefined);
 	if (hasChannelData(response)) {
 		ResolveMpesaPayment(response, loading, rerender, complete);
 	}
+	loading.value = false
 }
 </script>
 
