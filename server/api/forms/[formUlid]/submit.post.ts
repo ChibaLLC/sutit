@@ -20,7 +20,7 @@ function validateOrders(
 		.values()
 		.forEach(([_, item]) => {
 			// TODO: Check from the db instead or cache
-			if (+item.qtty < +item.stock) {
+			if (+item.qtty > +item.stock) {
 				throw createError({
 					message: `Requested quanty: ${item.qtty} is less than the available stock: ${item.stock}`,
 				});
