@@ -53,6 +53,11 @@ async function loginWithGithub() {
 	});
 }
 
+declare global {
+	interface Window {
+		onSignIn?: Function;
+	}
+}
 const loadingGoogle = ref(true);
 onMounted(() => {
 	const script = document.createElement("script");
@@ -61,7 +66,7 @@ onMounted(() => {
 	script.defer = true;
 
 	document.body.appendChild(script);
-	if (!(window as any)?.onSignIn) {
+	if (!window.onSignIn) {
 		Object.defineProperty(window, "onSignIn", { value: onSignIn });
 	}
 	loadingGoogle.value = false;

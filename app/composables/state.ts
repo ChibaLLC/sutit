@@ -25,6 +25,7 @@ export async function useUser() {
 	return { user: data as Ref<UserState>, error };
 }
 
+// TODO: Review after TypeScript 5.8
 type Result<T> = T | undefined;
 type Error = Ref<any | undefined>;
 export async function useAsyncState<T>(
@@ -88,8 +89,9 @@ export async function useAsyncState<T>(
 			error.value = _error;
 
 			if (typeof error?.value === "string" && error.value.toLocaleLowerCase().includes("nuxt")) {
-				console.warn(
-					"Please note that the initialisation function of useAsyncState should not contain a function that needs nuxt instance"
+				consola.warn(
+					"Please note that the initialisation function of useAsyncState" +
+						" should not contain a function that needs nuxt instance"
 				);
 			}
 		}
