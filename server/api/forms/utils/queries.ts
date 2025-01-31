@@ -111,13 +111,11 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			return 0;
 		} else {
 			if (typeof item.stock !== "number") {
-				const stock = parseInt(item.stock);
-				if (isNaN(stock)) {
-					item.stock = 0;
-					(item as DbStore[number]).isInfinite = true;
-				} else {
-					item.stock = stock;
-				}
+				item.stock = parseInt(item.stock);
+			}
+			if (isNaN(item.stock)) {
+				item.stock = 0;
+				(item as DbStore[number]).isInfinite = true;
 			}
 			(item as DbStore[number]).isInfinite = false;
 			return item.stock;
