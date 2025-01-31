@@ -97,7 +97,11 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 
 	function isInfinite(item: Item | DbStore[number]) {
-		return item.stock === "infinity" || (item as DbStore[number]).isInfinite === true;
+		return (
+			item.stock === "infinity" ||
+			(item as any)?.stock === "infinite" ||
+			(item as DbStore[number]).isInfinite === true
+		);
 	}
 
 	function parseStock(item: Item | DbStore[number]) {
@@ -108,6 +112,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 		} else {
 			if (typeof item.stock !== "number") {
 				item.stock = parseInt(item.stock);
+			}
+			if (isNaN(item.stock)) {
+				item.stock = 0;
+				(item as DbStore[number]).isInfinite = true;
 			}
 			(item as DbStore[number]).isInfinite = false;
 			return item.stock;
