@@ -14,7 +14,7 @@ function validateOrders(
 			carted: boolean;
 			stock: string | number;
 		}
-	>
+	>,
 ) {
 	Object.entries(items)
 		.values()
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
 					liked: z.boolean(),
 					carted: z.boolean(),
 					stock: z.union([z.string(), z.number()]),
-				})
+				}),
 			),
 		}),
 		phone: z.string().optional(),
@@ -108,13 +108,13 @@ export default defineEventHandler(async (event) => {
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
-			`[Update] Submission ${data.form.meta.formName}`
+			`[Update] Submission ${data.form.meta.formName}`,
 		);
 		if (formMail) {
 			sendUserMail(
 				{ email: formMail },
 				`Form submission successful for ${data.form.meta.formName}`,
-				`[Update] Successful form submission ${data.form.meta.formName}`
+				`[Update] Successful form submission ${data.form.meta.formName}`,
 			);
 		}
 
@@ -143,9 +143,9 @@ export default defineEventHandler(async (event) => {
 				const receiptNumber = generateReceiptNumber(payment);
 				const { formMail } = await commit({ price_paid: payment.amount });
 				if (formMail) {
-					sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
+					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
 				}
-			}
+			},
 		);
 	} else if (needsPay && data.token) {
 		const { invite } = await getInviteFormGroup(formUlid, data.token);
