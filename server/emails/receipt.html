@@ -67,17 +67,17 @@
 			<div class="header">SUTIT</div>
 			<div class="content">
 				<h2>It’s A New Response!</h2>
-				<p>Hi, John Doe.</p>
+				<p>Hi, {{name}}</p>
 				<p>
-					This is to inform you that a response to your form - Form Name - has come your way from: 0712 345
-					678
+					This is to inform you that a response to your form - {{formName}} - has come your way from:
+					{{phoneNumber}}
 				</p>
-				<p><strong>Ticket Order Number: SJ#01234P</strong></p>
+				<p><strong>Ticket Order Number: SJ#{{receiptNumber}}</strong></p>
 				<a href="#" class="button">Check Order</a>
 			</div>
 			<div class="table-container">
 				<h3>Order Summary</h3>
-				<p>Confirmation SJ#01234P - January 25, 2025</p>
+				<p>Confirmation SJ#{{receiptNumber}} - {{date}}</p>
 				<table>
 					<tr>
 						<th>Product</th>
