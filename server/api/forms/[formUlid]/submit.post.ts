@@ -3,6 +3,7 @@ import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
+import { generateStoreTable, sendUserReceipt } from "../utils/email";
 
 function validateOrders(
 	items: Record<
@@ -141,8 +142,18 @@ export default defineEventHandler(async (event) => {
 			},
 			async (payment) => {
 				const receiptNumber = generateReceiptNumber(payment);
+
 				const { formMail } = await commit({ price_paid: payment.amount });
+				let formData = {
+          name: data?.phone,
+          phoneNumber: data?.phone,
+          receiptNumber: receiptNumber,
+          date: new Date().toLocaleTimeString()
+          products: form.meta.requireMerch ? generateStoreTable(data?.form.stores) : ''
+
+        };
 				if (formMail) {
+          await sendUserReceipt(formMail, formData, 'receipt')
 					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
 				}
 			},

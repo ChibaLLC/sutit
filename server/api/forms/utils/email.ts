@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import type { Item, Store } from "@chiballc/nuxt-form-builder";
 export const sendUserReceipt = async (
 	email: string,
 	templateData: Record<string, string | number | any | any[]>,
@@ -29,4 +30,35 @@ const replaceTemplateData = (content: string, templateData: Record<string, strin
 		newContent = content.replace(new RegExp(`{{${key}}}`, "g"), templateData[key]);
 	});
 	return newContent;
+};
+export const generateStoreTable = (stores: Item[]) => {
+	let table = `
+
+				<table>
+					<tr>
+						<th>Product</th>
+						<th>@</th>
+						<th>Quantity</th>
+						<th>Total</th>
+					</tr>
+  `;
+	let total = 0;
+	stores.forEach((item) => {
+		total += item.qtty * item.price;
+		table += `
+<tr>
+						<td>${item.name}</td>
+						<td>${item.price}</td>
+						<td>${item.qtty}</td>
+						<td>${item.qtty * item.price}</td>
+					</tr>
+`;
+	});
+	table += `
+	<tr>
+						<th colspan="3">TOTAL</th>
+						<th>${total}</th>
+					</tr>
+`;
+	return table;
 };
