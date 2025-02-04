@@ -144,16 +144,16 @@ export default defineEventHandler(async (event) => {
 				const receiptNumber = generateReceiptNumber(payment);
 
 				const { formMail } = await commit({ price_paid: payment.amount });
-				let formData = {
-          name: data?.phone,
-          phoneNumber: data?.phone,
-          receiptNumber: receiptNumber,
-          date: new Date().toLocaleTimeString()
-          products: form.meta.requireMerch ? generateStoreTable(data?.form.stores) : ''
 
-        };
+				let formData = {
+					name: data?.phone,
+					phoneNumber: data?.phone,
+					receiptNumber: receiptNumber,
+					date: new Date().toLocaleTimeString(),
+					products: form.meta.requireMerch ? generateStoreTable(data?.form.stores) : "",
+				};
 				if (formMail) {
-          await sendUserReceipt(formMail, formData, 'receipt')
+					await sendUserReceipt(formMail, formData, "receipt");
 					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
 				}
 			},
