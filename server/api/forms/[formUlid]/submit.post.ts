@@ -3,6 +3,7 @@ import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
+import { generateStoreTable, sendUserReceipt } from "../utils/email";
 
 function validateOrders(
 	items: Record<
@@ -14,7 +15,7 @@ function validateOrders(
 			carted: boolean;
 			stock: string | number;
 		}
-	>
+	>,
 ) {
 	Object.entries(items)
 		.values()
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
 					liked: z.boolean(),
 					carted: z.boolean(),
 					stock: z.union([z.string(), z.number()]),
-				})
+				}),
 			),
 		}),
 		phone: z.string().optional(),
@@ -108,13 +109,13 @@ export default defineEventHandler(async (event) => {
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
-			`[Update] Submission ${data.form.meta.formName}`
+			`[Update] Submission ${data.form.meta.formName}`,
 		);
 		if (formMail) {
 			sendUserMail(
 				{ email: formMail },
 				`Form submission successful for ${data.form.meta.formName}`,
-				`[Update] Successful form submission ${data.form.meta.formName}`
+				`[Update] Successful form submission ${data.form.meta.formName}`,
 			);
 		}
 
@@ -141,11 +142,21 @@ export default defineEventHandler(async (event) => {
 			},
 			async (payment) => {
 				const receiptNumber = generateReceiptNumber(payment);
+
 				const { formMail } = await commit({ price_paid: payment.amount });
+				let formData = {
+          name: data?.phone,
+          phoneNumber: data?.phone,
+          receiptNumber: receiptNumber,
+          date: new Date().toLocaleTimeString()
+          products: form.meta.requireMerch ? generateStoreTable(data?.form.stores) : ''
+
+        };
 				if (formMail) {
-					sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
+          await sendUserReceipt(formMail, formData, 'receipt')
+					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
 				}
-			}
+			},
 		);
 	} else if (needsPay && data.token) {
 		const { invite } = await getInviteFormGroup(formUlid, data.token);
