@@ -26,17 +26,5 @@ export default defineNuxtConfig({
 	compatibilityDate: "2024-11-09",
 	app: {
 		pageTransition: { name: "page", mode: "out-in" },
-		head: {
-			htmlAttrs: {
-				lang: "en",
-			},
-			link: [
-				{
-					rel: "icon",
-					type: "image/jpeg",
-					href: "/favico.jpeg",
-				},
-			],
-		},
 	},
 });
