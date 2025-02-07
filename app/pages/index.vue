@@ -1,3 +1,29 @@
+<script setup lang="ts">
+definePageMeta({
+	middleware: "dash",
+});
+const seoMeta = ref({
+	title: "Home | Sutit.org",
+	description: "Sutit.org is a platform that helps you automate your business processes",
+});
+// Seo Meta
+useSeoMeta({
+	title: seoMeta.value.title,
+	description: seoMeta.value.description,
+	ogTitle: seoMeta.value.title,
+	ogDescription: seoMeta.value.description,
+	ogImage: "/favico.jpeg",
+	ogUrl: "[og:url]",
+	twitterTitle: seoMeta.value.title,
+	twitterDescription: seoMeta.value.description,
+	twitterImage: "/favico.jpeg",
+	twitterCard: "summary",
+});
+useHead({
+	title: seoMeta.value.title,
+});
+</script>
+
 <template>
 	<main>
 		<Title>Home</Title>
@@ -80,9 +106,3 @@
 	}
 }
 </style>
-<script setup lang="ts">
-definePageMeta({
-	middleware: "dash",
-});
-</script>
-

@@ -13,7 +13,25 @@ const { data } = await useFetch<ReconstructedDbForm>(`/api/forms/${ulid}`, {
 		console.log(response);
 	},
 });
-
+const seoMetaData = ref({
+	description: data.value?.meta.formDescription,
+	title: data.value?.meta.formName,
+});
+// Added Seo Settings
+useSeoMeta({
+	description: seoMetaData.value.description,
+	ogTitle: seoMetaData.value.title,
+	ogDescription: seoMetaData.value.description,
+	ogImage: "/favico.jpeg",
+	ogUrl: "[og:url]",
+	twitterTitle: seoMetaData.value.title,
+	twitterDescription: seoMetaData.value.description,
+	twitterImage: "/favico.jpeg",
+	twitterCard: "summary",
+});
+useHead({
+	title: seoMetaData.value.title,
+});
 const paymentModal = ref(false);
 const payment_details = ref<{ phone: string; token?: string }>({
 	phone: "",
@@ -105,7 +123,7 @@ async function submit() {
 						formMail: string;
 						formResponse: string;
 					},
-					["formMail"]
+					["formMail"],
 				)
 			) {
 				message +=
@@ -280,7 +298,7 @@ async function processInvites() {
 	if (hasChannelData(response)) {
 		ResolveMpesaPayment(response, loading, rerender, complete);
 	}
-	loading.value = false
+	loading.value = false;
 }
 </script>
 
