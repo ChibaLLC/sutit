@@ -25,9 +25,9 @@ const readTemplate = (template: string) => {
 };
 
 const replaceTemplateData = (content: string, templateData: Record<string, string | number | any | any[]>) => {
-	let newContent = "";
+	let newContent = content;
 	Object.keys(templateData).forEach((key) => {
-		newContent = content.replace(new RegExp(`{{${key}}}`, "g"), templateData[key]);
+		newContent = newContent.replace(new RegExp(`{{${key}}}`, "g"), templateData[key]);
 	});
 	return newContent;
 };
