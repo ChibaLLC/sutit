@@ -17,7 +17,7 @@ const seoMetaData = ref({
 	description: data.value?.meta.formDescription,
 	title: data.value?.meta.formName,
 });
-// Added Seo Settings
+
 useSeoMeta({
 	description: seoMetaData.value.description,
 	ogTitle: seoMetaData.value.title,
@@ -28,9 +28,6 @@ useSeoMeta({
 	twitterDescription: seoMetaData.value.description,
 	twitterImage: "/favico.jpeg",
 	twitterCard: "summary",
-});
-useHead({
-	title: seoMetaData.value.title,
 });
 const paymentModal = ref(false);
 const payment_details = ref<{ phone: string; token?: string }>({

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { Form } from "@chiballc/nuxt-form-builder";
-import { useQRCode } from "@vueuse/integrations/useQRCode";
 import { QrCodeIcon } from "lucide-vue-next";
 
 definePageMeta({
@@ -18,9 +16,6 @@ useSeoMeta({
 	twitterDescription: "All user created forms",
 	twitterImage: "/favico.jpeg",
 	twitterCard: "summary",
-});
-useHead({
-	title: "All Forms",
 });
 
 const { data: meta } = await useFetch("/api/forms/me", {
