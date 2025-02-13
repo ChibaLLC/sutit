@@ -18,9 +18,6 @@ useSeoMeta({
 	twitterImage: "/favico.jpeg",
 	twitterCard: "summary",
 });
-useHead({
-	title: "Create Form",
-});
 const loading = ref(false);
 async function submit(data: any) {
 	if (loading.value) return alert("This form is being processed. Please wait.");

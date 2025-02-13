@@ -8,7 +8,6 @@ const seoMeta = ref({
 });
 // Seo Meta
 useSeoMeta({
-	title: seoMeta.value.title,
 	description: seoMeta.value.description,
 	ogTitle: seoMeta.value.title,
 	ogDescription: seoMeta.value.description,
@@ -18,9 +17,6 @@ useSeoMeta({
 	twitterDescription: seoMeta.value.description,
 	twitterImage: "/favico.jpeg",
 	twitterCard: "summary",
-});
-useHead({
-	title: seoMeta.value.title,
 });
 </script>
 
