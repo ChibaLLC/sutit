@@ -21,7 +21,6 @@
     "@types/mime-db": "^1.43.5",
     "@types/nodemailer": "^6.4.15",
     "@types/uuid": "^9.0.8",
-    "concurrently": "^8.2.2",
     "dotenv": "^16.4.1",
     "nuxt": "^3.14.159",
     "sass": "^1.70.0",
