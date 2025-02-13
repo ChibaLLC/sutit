@@ -22,7 +22,7 @@ import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count, sql, lt, notInArray } from "drizzle-orm";
 import { ulid } from "ulid";
-import { object, z } from "zod";
+import { z } from "zod";
 import { formBodyData } from "./zod";
 import { updateConflictedColumns } from "~~/server/utils/db";
 import type { Item, Page, Store } from "@chiballc/nuxt-form-builder";
@@ -174,18 +174,24 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			});
 	}
 
-	db.delete(storeItems).where(
-		and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
-	);
-	db.delete(stores).where(
-		and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys())))
-	);
-	db.delete(formFields).where(
-		and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
-	);
-	db.delete(formPages).where(
-		and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys())))
-	);
+	db.delete(storeItems)
+		.where(
+			and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
+		)
+		.finally(() => {
+			db.delete(stores).where(
+				and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys())))
+			);
+		});
+	db.delete(formFields)
+		.where(
+			and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
+		)
+		.finally(() => {
+			db.delete(formPages).where(
+				and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys())))
+			);
+		});
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {

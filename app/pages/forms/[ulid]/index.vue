@@ -13,7 +13,22 @@ const { data } = await useFetch<ReconstructedDbForm>(`/api/forms/${ulid}`, {
 		console.log(response);
 	},
 });
+const seoMetaData = ref({
+	description: data.value?.meta.formDescription,
+	title: data.value?.meta.formName,
+});
 
+useSeoMeta({
+	description: seoMetaData.value.description,
+	ogTitle: seoMetaData.value.title,
+	ogDescription: seoMetaData.value.description,
+	ogImage: "/favico.jpeg",
+	ogUrl: "[og:url]",
+	twitterTitle: seoMetaData.value.title,
+	twitterDescription: seoMetaData.value.description,
+	twitterImage: "/favico.jpeg",
+	twitterCard: "summary",
+});
 const paymentModal = ref(false);
 const payment_details = ref<{ phone: string; token?: string }>({
 	phone: "",

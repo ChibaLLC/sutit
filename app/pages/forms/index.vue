@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import type { Form } from "@chiballc/nuxt-form-builder";
-import { useQRCode } from "@vueuse/integrations/useQRCode";
 import { QrCodeIcon } from "lucide-vue-next";
 
 definePageMeta({
 	middleware: ["auth"],
+});
+
+// Added Seo Settings
+useSeoMeta({
+	description: "All your created forms ",
+	ogTitle: "All user Forms",
+	ogDescription: "All user created forms",
+	ogImage: "/favico.jpeg",
+	twitterTitle: "All Forms",
+	ogUrl: "[og:url]",
+	twitterDescription: "All user created forms",
+	twitterImage: "/favico.jpeg",
+	twitterCard: "summary",
 });
 
 const { data: meta } = await useFetch("/api/forms/me", {

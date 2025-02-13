@@ -1,3 +1,21 @@
+<script lang="ts" setup>
+const seoMeta = ref({
+	title: "Contact | Sutit.org",
+	description: "Sutit.org is a platform that helps you automate your business processes",
+});
+// Seo Meta
+useSeoMeta({
+	description: seoMeta.value.description,
+	ogTitle: seoMeta.value.title,
+	ogDescription: seoMeta.value.description,
+	ogImage: "/favico.jpeg",
+	ogUrl: "[og:url]",
+	twitterTitle: seoMeta.value.title,
+	twitterDescription: seoMeta.value.description,
+	twitterImage: "/favico.jpeg",
+	twitterCard: "summary",
+});
+</script>
 <template>
 	<div class="w-10/12 m-auto flex flex-col max-sm:w-full">
 		<Title>Sutit | Contact</Title>
