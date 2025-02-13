@@ -6,7 +6,6 @@ const seoMeta = ref({
 	title: "Home | Sutit.org",
 	description: "Sutit.org is a platform that helps you automate your business processes",
 });
-// Seo Meta
 useSeoMeta({
 	description: seoMeta.value.description,
 	ogTitle: seoMeta.value.title,
@@ -102,9 +101,4 @@ useSeoMeta({
 	}
 }
 </style>
-<script setup lang="ts">
-definePageMeta({
-	middleware: "dash",
-});
-</script>
 
