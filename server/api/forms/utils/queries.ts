@@ -97,29 +97,29 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 
 	function isInfinite(item: Item | DbStore[number]) {
-		return (
-			item.stock === "infinity" ||
-			(item as any)?.stock === "infinite" ||
-			(item as DbStore[number]).isInfinite === true
-		);
+		return `${item.stock}`.includes("infinit") || (item as DbStore[number]).isInfinite === true;
 	}
 
 	function parseStock(item: Item | DbStore[number]) {
 		if (isInfinite(item)) {
 			(item as DbStore[number]).isInfinite = true;
 			item.stock = 0;
-			return 0;
 		} else {
-			if (typeof item.stock !== "number") {
-				item.stock = parseInt(item.stock);
-			}
-			if (isNaN(item.stock)) {
+			try {
+				if (typeof item.stock !== "number") {
+					item.stock = parseInt(item.stock);
+				}
+			} catch (_) {}
+
+			if (isNaN(item.stock as any)) {
 				item.stock = 0;
 				(item as DbStore[number]).isInfinite = true;
+			} else {
+				(item as DbStore[number]).isInfinite = false;
 			}
-			(item as DbStore[number]).isInfinite = false;
-			return item.stock;
 		}
+
+		return item.stock as number;
 	}
 	for (const key in data.form.stores) {
 		const store = data.form.stores[key] as unknown as DbStore & Store;
@@ -174,24 +174,23 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			});
 	}
 
-	db.delete(storeItems)
+	await db
+		.delete(storeItems)
 		.where(
 			and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
-		)
-		.finally(() => {
-			db.delete(stores).where(
-				and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys())))
-			);
-		});
-	db.delete(formFields)
+		);
+	await db
+		.delete(stores)
+		.where(and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys()))));
+		
+	await db
+		.delete(formFields)
 		.where(
 			and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
-		)
-		.finally(() => {
-			db.delete(formPages).where(
-				and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys())))
-			);
-		});
+		);
+	await db
+		.delete(formPages)
+		.where(and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys()))));
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
@@ -219,6 +218,15 @@ export async function createForm(data: z.infer<typeof formBodyData>, { user }: A
 }
 
 export async function updateForm(formUlid: string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
+	const form = await getFormByUlid(formUlid);
+	if (!form) throw new Error("Unable to find the initial form to edit");
+	if (form.meta.userUlid !== user.ulid) {
+		throw createError({
+			statusCode: 403,
+			message: "You are not allowed to edit this form.",
+		});
+	}
+
 	db.update(formMeta)
 		.set({
 			allowGroups: data.allowGroups,
@@ -229,18 +237,11 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 			formName: data.name,
 			formDescription: data.description,
 			userUlid: user.ulid,
+			requireMerch: data.requireMerch,
+			updatedAt: new Date(),
 		})
 		.where(eq(formMeta.ulid, formUlid))
 		.execute();
-	const form = await getFormByUlid(formUlid);
-	if (!form) throw new Error("Unable to find the initial form to edit");
-
-	if (user.ulid !== form.meta.userUlid) {
-		throw createError({
-			status: 403,
-			message: "You are not allowed to make these changes to the form",
-		});
-	}
 
 	insertFormFields({ ...data, ulid: formUlid });
 	return form.meta;
@@ -463,7 +464,7 @@ export async function insertData(
 }
 
 export async function getFormsByUser(userUlid: string) {
-	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).orderBy(desc(formMeta.createdAt));
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).orderBy(desc(formMeta.updatedAt));
 }
 
 function adjustItemQuantity(itemUlid: string, qtty: number) {
@@ -637,7 +638,7 @@ export async function needsGroupPayment(form: ReconstructedDbForm | string, subm
 }
 
 export async function getRecentForms(userUlid: string) {
-	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).limit(5).orderBy(desc(formMeta.createdAt));
+	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).limit(5).orderBy(desc(formMeta.updatedAt));
 }
 
 export async function updateFormWithdrawnFunds(formUlid: string, amount: number) {
