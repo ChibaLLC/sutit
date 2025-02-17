@@ -20,7 +20,7 @@ import {
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
-import { and, eq, desc, sum, count, sql, lt, notInArray } from "drizzle-orm";
+import { and, eq, desc, sum, count, sql, lt, notInArray, inArray } from "drizzle-orm";
 import { ulid } from "ulid";
 import { z } from "zod";
 import { formBodyData } from "./zod";
@@ -177,20 +177,40 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 	await db
 		.delete(storeItems)
 		.where(
-			and(lt(storeItems.updatedAt, updateTimeStamp), notInArray(storeItems.ulid, Array.from(itemsData.keys())))
+			and(
+				lt(storeItems.updatedAt, updateTimeStamp),
+				notInArray(storeItems.ulid, Array.from(itemsData.keys())),
+				inArray(storeItems.storeUlid, Array.from(storesData.keys()))
+			)
 		);
 	await db
 		.delete(stores)
-		.where(and(lt(stores.updatedAt, updateTimeStamp), notInArray(stores.ulid, Array.from(storesData.keys()))));
-		
+		.where(
+			and(
+				lt(stores.updatedAt, updateTimeStamp),
+				eq(stores.formUlid, data.ulid),
+				notInArray(stores.ulid, Array.from(storesData.keys()))
+			)
+		);
+
 	await db
 		.delete(formFields)
 		.where(
-			and(lt(formFields.updatedAt, updateTimeStamp), notInArray(formFields.ulid, Array.from(fieldsData.keys())))
+			and(
+				lt(formFields.updatedAt, updateTimeStamp),
+				inArray(formFields.pageUlid, Array.from(pagesData.keys())),
+				notInArray(formFields.ulid, Array.from(fieldsData.keys()))
+			)
 		);
 	await db
 		.delete(formPages)
-		.where(and(lt(formPages.updatedAt, updateTimeStamp), notInArray(formPages.ulid, Array.from(pagesData.keys()))));
+		.where(
+			and(
+				lt(formPages.updatedAt, updateTimeStamp),
+				eq(formPages.formUlid, data.ulid),
+				notInArray(formPages.ulid, Array.from(pagesData.keys()))
+			)
+		);
 }
 
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
