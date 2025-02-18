@@ -25,8 +25,8 @@ export async function saveBlobToFile(blob: Blob, filePath: string) {
 type StorageItem = AllOrNothing<{
 	readStream: NodeJS.ReadableStream;
 	readableStream: ReadableStream;
-	readLine: () => Interface;
-	value: () => Promise<Buffer>;
+	get readLine(): Interface;
+	get value(): Promise<Buffer>;
 	stats: { mime: MimeType } & MaybePromise<StaticAssetMeta | undefined>;
 }>;
 abstract class AbstractFileStorage {
@@ -109,12 +109,15 @@ class GitHubStorage implements AbstractFileStorage {
 		return {
 			readStream,
 			readableStream,
-			readLine: () =>
-				createInterface({
+			get readLine() {
+				return createInterface({
 					input: readStream,
 					crlfDelay: Infinity,
-				}),
-			value: () => readFile(<string>item),
+				});
+			},
+			get value() {
+				return readFile(<string>item);
+			},
 			stats: {
 				...(await stat(<string>item)),
 				mime: (getMimeType(<string>item) || "bin") as MimeType,
@@ -246,12 +249,15 @@ class LocalFileStorage implements AbstractFileStorage {
 		return {
 			readStream,
 			readableStream,
-			readLine: () =>
-				createInterface({
+			get readLine() {
+				return createInterface({
 					input: readStream,
 					crlfDelay: Infinity,
-				}),
-			value: () => readFile(target),
+				});
+			},
+			get value() {
+				return readFile(target);
+			},
 			stats: {
 				...(await stat(target)),
 				mime: (getMimeType(target) || "bin") as MimeType,
