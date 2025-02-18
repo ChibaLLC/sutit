@@ -1,10 +1,9 @@
 import path from "path";
 import fs from "fs";
-import type { Item, Store } from "@chiballc/nuxt-form-builder";
 export const sendUserReceipt = async (
 	email: string,
 	templateData: Record<string, string | number | any | any[]>,
-	template: string,
+	template: string
 ) => {
 	// Read content
 	let templateContent = readTemplate(template);
@@ -31,34 +30,51 @@ const replaceTemplateData = (content: string, templateData: Record<string, strin
 	});
 	return newContent;
 };
-export const generateStoreTable = (stores: Item[]) => {
-	let table = `
 
+type Item = {
+	name: string;
+	qtty: string | "infinity" | number;
+	liked: boolean;
+	carted: boolean;
+	stock: string | number;
+	price: string | number;
+};
+export const generateStoreTable = (stores?: Record<string | number, Item>) => {
+	if (!stores) return "";
+
+	let table = /*html*/ `
 				<table>
 					<tr>
 						<th>Product</th>
 						<th>@</th>
 						<th>Quantity</th>
 						<th>Total</th>
-					</tr>
-  `;
+					</tr>`;
+
 	let total = 0;
-	stores.forEach((item) => {
-		total += item.qtty * item.price;
-		table += `
-<tr>
-						<td>${item.name}</td>
-						<td>${item.price}</td>
-						<td>${item.qtty}</td>
-						<td>${item.qtty * item.price}</td>
-					</tr>
-`;
+	let parsed: Item[];
+	if (Array.isArray(stores)) {
+		parsed = stores;
+	} else {
+		parsed = Object.values(stores);
+	}
+
+	parsed.forEach((item) => {
+		total += +item.qtty * +item.price;
+		table += /*html*/ `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.price}</td>
+					<td>${item.qtty}</td>
+					<td>${+item.qtty * +item.price}</td>
+				</tr>`;
 	});
-	table += `
-	<tr>
-						<th colspan="3">TOTAL</th>
-						<th>${total}</th>
-					</tr>
-`;
+
+	table += /*html*/ `
+			<tr>
+				<th colspan="3">TOTAL</th>
+				<th>${total}</th>
+			</tr>`;
+
 	return table;
 };

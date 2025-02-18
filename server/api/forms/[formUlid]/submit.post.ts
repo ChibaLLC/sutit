@@ -1,9 +1,10 @@
 import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividualPayment } from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/users/utils/queries";
-import { generateReceiptNumber, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
+import { generateReceiptNumber, hasInfiniteStock, parseStock, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
 import { generateStoreTable, sendUserReceipt } from "../utils/email";
+import type { Item } from "@chiballc/nuxt-form-builder";
 
 function validateOrders(
 	items: Record<
@@ -15,18 +16,18 @@ function validateOrders(
 			carted: boolean;
 			stock: string | number;
 		}
-	>,
+	>
 ) {
-	Object.entries(items)
-		.values()
-		.forEach(([_, item]) => {
-			// TODO: Check from the db instead or cache
-			if (+item.qtty > +item.stock) {
-				throw createError({
-					message: `Requested quanty: ${item.qtty} is less than the available stock: ${item.stock}`,
-				});
-			}
-		});
+	Object.values(items).forEach((item) => {
+		// TODO: Check from the db instead or cache
+		if(hasInfiniteStock(item as Item)) return
+		item.stock = parseStock(item as Item)
+		if (+item.qtty > +item.stock) {
+			throw createError({
+				message: `Requested quanty: ${item.qtty} is less than the available stock: ${item.stock}`,
+			});
+		}
+	});
 }
 
 export default defineEventHandler(async (event) => {
@@ -50,7 +51,8 @@ export default defineEventHandler(async (event) => {
 					liked: z.boolean(),
 					carted: z.boolean(),
 					stock: z.union([z.string(), z.number()]),
-				}),
+					price: z.union([z.string(), z.number()]),
+				})
 			),
 		}),
 		phone: z.string().optional(),
@@ -109,13 +111,13 @@ export default defineEventHandler(async (event) => {
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
-			`[Update] Submission ${data.form.meta.formName}`,
+			`[Update] Submission ${data.form.meta.formName}`
 		);
 		if (formMail) {
 			sendUserMail(
 				{ email: formMail },
 				`Form submission successful for ${data.form.meta.formName}`,
-				`[Update] Successful form submission ${data.form.meta.formName}`,
+				`[Update] Successful form submission ${data.form.meta.formName}`
 			);
 		}
 
@@ -150,13 +152,13 @@ export default defineEventHandler(async (event) => {
 					phoneNumber: data?.phone,
 					receiptNumber: receiptNumber,
 					date: new Date().toLocaleTimeString(),
-					products: form.meta.requireMerch ? generateStoreTable(data?.form.stores) : "",
+					products: generateStoreTable(data?.form.stores),
 				};
 				if (formMail) {
 					await sendUserReceipt(formMail, formData, "receipt");
 					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
 				}
-			},
+			}
 		);
 	} else if (needsPay && data.token) {
 		const { invite } = await getInviteFormGroup(formUlid, data.token);

@@ -28,6 +28,7 @@ import { updateConflictedColumns } from "~~/server/utils/db";
 import type { Item, Page, Store } from "@chiballc/nuxt-form-builder";
 import { getUserByUlId } from "../../users/utils/queries";
 import { sep } from "node:path";
+import { hasInfiniteStock, parseStock } from ".";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
 	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
@@ -96,31 +97,6 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 	const storesData: Map<string, Drizzle.Store.insert> = new Map();
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 
-	function isInfinite(item: Item | DbStore[number]) {
-		return `${item.stock}`.includes("infinit") || (item as DbStore[number]).isInfinite === true;
-	}
-
-	function parseStock(item: Item | DbStore[number]) {
-		if (isInfinite(item)) {
-			(item as DbStore[number]).isInfinite = true;
-			item.stock = 0;
-		} else {
-			try {
-				if (typeof item.stock !== "number") {
-					item.stock = parseInt(item.stock);
-				}
-			} catch (_) {}
-
-			if (isNaN(item.stock as any)) {
-				item.stock = 0;
-				(item as DbStore[number]).isInfinite = true;
-			} else {
-				(item as DbStore[number]).isInfinite = false;
-			}
-		}
-
-		return item.stock as number;
-	}
 	for (const key in data.form.stores) {
 		const store = data.form.stores[key] as unknown as DbStore & Store;
 		const storeUlid = store?.at(0)?.storeUlid || ulid();
@@ -142,7 +118,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				storeUlid: storeUlid,
 				ulid: itemUlid,
 				updatedAt: updateTimeStamp,
-				isInfinite: isInfinite(item),
+				isInfinite: hasInfiniteStock(item),
 			});
 		});
 	}
