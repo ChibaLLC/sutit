@@ -14,6 +14,7 @@ import { v4 } from "uuid";
 import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
+import type { Item } from "@chiballc/nuxt-form-builder";
 
 declare global {
 	var formPaymentProcessingQueue: Map<
@@ -312,4 +313,30 @@ export async function sendResponseInvites(
 			);
 		}
 	});
+}
+
+export function hasInfiniteStock(item: Partial<Item | DbStore[number]>) {
+	return (
+		item.stock === "infinity" ||
+		(item as any)?.stock === "infinite" ||
+		(item as DbStore[number]).isInfinite === true
+	);
+}
+
+export function parseStock(item: Partial<Item | DbStore[number]>) {
+	if (hasInfiniteStock(item)) {
+		(item as DbStore[number]).isInfinite = true;
+		item.stock = 0;
+		return 0;
+	} else {
+		if (typeof item.stock !== "number") {
+			item.stock = parseInt(item.stock || "0");
+		}
+		if (isNaN(item.stock)) {
+			item.stock = 0;
+			(item as DbStore[number]).isInfinite = true;
+		}
+		(item as DbStore[number]).isInfinite = false;
+		return item.stock;
+	}
 }
