@@ -1,96 +1,106 @@
 <!doctype html>
 <html>
-	<head>
-		<title>Order Confirmation</title>
-		<style>
-			body {
-				font-family: Arial, sans-serif;
-				background-color: #f4f4f4;
-				margin: 0;
-				padding: 0;
-			}
-			.container {
-				max-width: 600px;
-				margin: 20px auto;
-				background: #ffffff;
-				border-radius: 8px;
-				overflow: hidden;
-			}
-			.header {
-				background: #0aaf48;
-				color: white;
-				padding: 20px;
-				text-align: center;
-				font-size: 24px;
-				font-weight: bold;
-			}
-			.content {
-				padding: 20px;
-				text-align: center;
-			}
-			.button {
-				display: inline-block;
-				background: #0aaf48;
-				color: white;
-				padding: 10px 20px;
-				text-decoration: none;
-				border-radius: 5px;
-				margin-top: 15px;
-			}
-			.table-container {
-				padding: 20px;
-			}
-			table {
-				width: 100%;
-				border-collapse: collapse;
-			}
-			th,
-			td {
-				border: 1px solid #ddd;
-				padding: 10px;
-				text-align: left;
-			}
-			th {
-				background: #0aaf48;
-				color: white;
-			}
-			.footer {
-				background: #0aaf48;
-				color: white;
-				padding: 20px;
-				text-align: center;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="container">
-			<div class="header">SUTIT</div>
-			<div class="content">
-				<h2>It’s A New Response!</h2>
-				<p>Hi, {{name}}</p>
-				<p>
-					This is to inform you that a response to your form - {{formName}} - has come your way from:
-					{{phoneNumber}}
-				</p>
-				<p><strong>Ticket Order Number: SJ#{{receiptNumber}}</strong></p>
-				<a href="#" class="button">Check Order</a>
-			</div>
-			<div class="table-container">
-				<h3>Order Summary</h3>
-				<p>Confirmation SJ#{{receiptNumber}} - {{date}}</p>
-				{{products}}
-			</div>
-			<div class="footer">
-				<h3>Any Questions?</h3>
-				<p>Do you have any questions or noticed something wrong?</p>
-				<p>
-					Contact our
-					<a href="https://sutit.org/contact" style="color: yellow; text-decoration: underline"
-						>Support team</a
-					>
-					and we’ll help.
-				</p>
-			</div>
+
+<head>
+	<title>Order Confirmation</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #f4f4f4;
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			max-width: 600px;
+			margin: 20px auto;
+			background: #ffffff;
+			border-radius: 8px;
+			overflow: hidden;
+		}
+
+		.header {
+			background: #0aaf48;
+			color: white;
+			padding: 20px;
+			text-align: center;
+			font-size: 24px;
+			font-weight: bold;
+		}
+
+		.content {
+			padding: 20px;
+			text-align: center;
+		}
+
+		.button {
+			display: inline-block;
+			background: #0aaf48;
+			color: white;
+			padding: 10px 20px;
+			text-decoration: none;
+			border-radius: 5px;
+			margin-top: 15px;
+		}
+
+		.table-container {
+			padding: 20px;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			border: 1px solid #ddd;
+			padding: 10px;
+			text-align: left;
+		}
+
+		th {
+			background: #0aaf48;
+			color: white;
+		}
+
+		.footer {
+			background: #0aaf48;
+			color: white;
+			padding: 20px;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="header">SUTIT</div>
+		<div class="content">
+			<h2>It’s A New Response!</h2>
+			<p>Hi, {{name}}</p>
+			<p>
+				This is to inform you that a response to your form - {{formName}} - has come your way from:
+				{{phoneNumber}}
+			</p>
+			<p><strong>Ticket Order Number: SJ#{{receiptNumber}}</strong></p>
+			<a href="#" class="button">Check Order</a>
 		</div>
-	</body>
+		<div class="table-container">
+			<h3>Order Summary</h3>
+			<p>Confirmation SJ#{{receiptNumber}} - {{date}}</p>
+			{{products}}
+		</div>
+		<div class="footer">
+			<h3>Any Questions?</h3>
+			<p>Do you have any questions or noticed something wrong?</p>
+			<p>
+				Contact our
+				<a href="https://sutit.org/contact" style="color: yellow; text-decoration: underline">Support team</a>
+				and we’ll help.
+			</p>
+		</div>
+	</div>
+</body>
+
 </html>
