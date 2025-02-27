@@ -72,7 +72,7 @@ const PAYMENT_RECEIPT_HTML = (details: {
 	time: string;
 	receiptNumber?: string;
 }) => {
-	return `
+	return /*html*/ `
 <!DOCTYPE html>
 <html lang="en">
 <head>
