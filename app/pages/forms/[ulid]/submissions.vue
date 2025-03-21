@@ -134,6 +134,13 @@ watch([phone, con_phone], () => {
 
 const fields = collectFields(form as any);
 const hasPay = hasPayment(form as any);
+
+const rows = groupByResponseId(form_responses);
+{
+	{
+		rows;
+	}
+}
 </script>
 
 <template>
@@ -235,6 +242,7 @@ const hasPay = hasPayment(form as any);
 						<tr class="text-left border-b bg-slate-200 border-slate-200">
 							<th class="px-6 py-4">#</th>
 							<th v-for="[_, field] of fields" class="px-6 py-3">
+								{{ field.fieldUlid }}
 								{{ field.label }}
 							</th>
 							<th v-if="hasPay" class="px-6 py-3">Payment</th>
@@ -242,18 +250,18 @@ const hasPay = hasPayment(form as any);
 					</thead>
 					<tbody class="divide-y divide-slate-200 text-white border-b">
 						<tr
-							v-for="([_, row], index) of getData(form_responses)"
+							v-for="(row, index) in groupByResponseId(form_responses)"
+							:key="index"
 							class="text-sm text-slate-700 cursor-pointer hover:bg-slate-200"
 						>
 							<td class="px-6 py-4">{{ index + 1 }}</td>
-							<td v-for="field of getResponseFields(row, fields)" class="max-w-[30px]">
+
+							<td v-for="[_, field] in fields" class="max-w-[30px]">
 								<div
 									v-html="
-										Array.isArray(field.value)
-											? `<div class='text-ellipsis self-start hover:max-h-fit'>${field.value.join(
-													'<br>'
-											  )}</div>`
-											: field.value
+										field.fieldUlid
+											? `<div class='text-ellipsis self-start hover:max-h-fit'>${row.find((r) => r.fieldUlid == field.fieldUlid)?.value}</div>`
+											: ''
 									"
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"
 								></div>
