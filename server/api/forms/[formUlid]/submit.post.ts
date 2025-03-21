@@ -18,7 +18,7 @@ function validateOrders(
 		}
 	>
 ) {
-	Object.values(items).forEach((item) => {
+	Object.values(items || {})?.forEach((item) => {
 		// TODO: Check from the db instead or cache
 		if(hasInfiniteStock(item as Item)) return
 		item.stock = parseStock(item as Item)
@@ -76,14 +76,14 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	if (form.meta.requireMerch && !Object.keys(data.form.stores).length) {
+	if (form.meta.requireMerch && !Object.keys(data.form?.stores || {}).length) {
 		throw createError({
 			statusCode: 403,
 			message: "You need to get something from the store section of the form",
 		});
 	}
 
-	validateOrders(data.form.stores);
+	validateOrders(data.form?.stores);
 
 	const creator = await getUserByUlId(form.meta.userUlid);
 	if (!creator) {
@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
 		if (!data) return {};
 		let formMail = (options.invitee as { email: string })?.email || details?.user.email;
 		if (!formMail) {
-			for (const key in data.form.pages) {
+			for (const key in data.form.pages || {}) {
 				for (const field of data.form.pages[key] || []) {
 					if (field.type === Field.EMAIL) {
 						formMail = field.value as string;
@@ -156,7 +156,7 @@ export default defineEventHandler(async (event) => {
 				};
 				if (formMail) {
 					await sendUserReceipt(formMail, formData, "receipt");
-					await sendPaymentMailReceipt({ email: formMail }, form.meta.price_individual, receiptNumber);
+					await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
 				}
 			}
 		);
