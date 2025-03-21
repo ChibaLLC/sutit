@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 function PASSWORD_RESET_TEMPLATE(link: any) {
-    return `<!DOCTYPE html>
+    return /*html*/ `<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -125,7 +125,7 @@ function PASSWORD_RESET_TEMPLATE(link: any) {
 </body>
 
 </html>
-`
+`;
 }
 
 export const transporter = nodemailer.createTransport({

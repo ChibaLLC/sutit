@@ -97,6 +97,7 @@ async function submit() {
 								liked: item.liked,
 								carted: item.carted,
 								stock: item.stock,
+								price: item.price
 							};
 						});
 						return acc;
