@@ -242,7 +242,6 @@ const rows = groupByResponseId(form_responses);
 						<tr class="text-left border-b bg-slate-200 border-slate-200">
 							<th class="px-6 py-4">#</th>
 							<th v-for="[_, field] of fields" class="px-6 py-3">
-								{{ field.fieldUlid }}
 								{{ field.label }}
 							</th>
 							<th v-if="hasPay" class="px-6 py-3">Payment</th>

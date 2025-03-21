@@ -8,7 +8,7 @@ function replaceSpecialChars(input: string): string {
 
 export async function constructExcel(
 	{ form, form_responses, group_responses, store_response }: Awaited<ReturnType<typeof getFormResponses>>,
-	user: Drizzle.User.select
+	user: Drizzle.User.select,
 ) {
 	const workbook = new excel.Workbook();
 	workbook.creator = "Sutit Investment Limited";
@@ -19,27 +19,27 @@ export async function constructExcel(
 	const worksheet = workbook.addWorksheet(replaceSpecialChars(form.meta.formName));
 	const titles = [];
 	const fields = collectFields(form);
-	fields.forEach(field => {
-		titles.push(field.label)
-	})
+	const rows = groupByResponseId(form_responses);
+	fields.forEach((field) => {
+		titles.push(field.label);
+	});
 	if (_hasPayment) titles.push("Price");
 	worksheet.addRow(titles).font = { bold: true };
 
-	for (const [_, response] of getData(form_responses)) {
-		const values: string[] = [];
-		for (const field of getResponseFields(response, fields)) {
-			if (Array.isArray(field.value)) {
-				field.value = Object.values(field.value || {})
-					.map((d) => useCapitalize(d as string))
-					.join(", ");
+	// Grouup data
+	rows.forEach((row) => {
+		let values: string[] = [];
+		fields.forEach((field) => {
+			let rowValue = row.find((r) => r.fieldUlid == field.fieldUlid);
+			if (rowValue) {
+				values.push(rowValue.value ?? "");
 			}
-			values.push(field.value);
-		}
+		});
 		if (_hasPayment) {
-			values.push(bubblePrice(group_responses, response.at(0)));
+			values.push(bubblePrice(group_responses, row.at(0)));
 		}
 		worksheet.addRow(values);
-	}
+	});
 
 	return workbook.xlsx;
 }
