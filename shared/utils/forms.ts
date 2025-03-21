@@ -83,7 +83,6 @@ export function groupByResponseId(responses: Awaited<ReturnType<typeof getFormRe
 		let group: any[] = [];
 		responses.forEach((r) => {
 			if (id == r.responseUlid) {
-				console.log(id, r.responseUlid);
 				group.push(r);
 			}
 		});
