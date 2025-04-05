@@ -141,6 +141,28 @@ const rows = groupByResponseId(form_responses);
 		rows;
 	}
 }
+
+// Card Data
+interface CardData {
+	count: string | number;
+	title: string;
+	description?: string;
+	icon: string;
+}
+const cardData = ref<CardData[]>([]);
+// Add Card Data
+cardData.value.push({
+	count: rows.length,
+	title: `Total Submissions`,
+	icon: `mdi:book`,
+});
+if (hasPay) {
+	cardData.value.push({
+		count: total.value ?? 0,
+		title: "Total Cash",
+		icon: "mdi:dollar",
+	});
+}
 </script>
 
 <template>
@@ -160,29 +182,13 @@ const rows = groupByResponseId(form_responses);
 						:disabled="loadingExcel"
 					>
 						Excel
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-4 h-4"
-							v-if="!loadingExcel"
-						>
-							<path
-								d="M2.85858 2.87732L15.4293 1.0815C15.7027 1.04245 15.9559 1.2324 15.995 1.50577C15.9983 1.52919 16 1.55282 16 1.57648V22.4235C16 22.6996 15.7761 22.9235 15.5 22.9235C15.4763 22.9235 15.4527 22.9218 15.4293 22.9184L2.85858 21.1226C2.36593 21.0522 2 20.6303 2 20.1327V3.86727C2 3.36962 2.36593 2.9477 2.85858 2.87732ZM4 4.73457V19.2654L14 20.694V3.30599L4 4.73457ZM17 19H20V4.99997H17V2.99997H21C21.5523 2.99997 22 3.44769 22 3.99997V20C22 20.5523 21.5523 21 21 21H17V19ZM10.2 12L13 16H10.6L9 13.7143L7.39999 16H5L7.8 12L5 7.99997H7.39999L9 10.2857L10.6 7.99997H13L10.2 12Z"
-							></path>
-						</svg>
-						<span :class="{ 'animate-spin': loadingExcel }" class="w-full grid place-items-center" v-else>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								class="w-5 h-5"
-							>
-								<path
-									d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z"
-								></path>
-							</svg>
-						</span>
+						<Icon v-if="!loadingExcel" name="mdi:file-excel" class="w-4 h-4" />
+						<Icon
+							v-else
+							name="prime:spinner"
+							:class="{ 'animate-spin': loadingExcel }"
+							class="w-full grid place-items-center"
+						/>
 					</button>
 					<button
 						class="flex items-center space-x-2 gap-2 px-3 py-1 bg-slate-900 rounded text-white :hover:bg-gray-20 transition-colors"
@@ -192,40 +198,14 @@ const rows = groupByResponseId(form_responses);
 						:disabled="loadingCheckout"
 					>
 						Credit
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-							v-if="!loadingCheckout"
-							class="w-4 h-4"
-						>
-							<path
-								d="M12 9C11.4477 9 11 9.44771 11 10V15.5856L9.70711 14.2928C9.3166 13.9024 8.68343 13.9024 8.29292 14.2928C7.90236 14.6834 7.90236 15.3165 8.29292 15.7071L11.292 18.7063C11.6823 19.0965 12.3149 19.0968 12.7055 18.707L15.705 15.7137C16.0955 15.3233 16.0955 14.69 15.705 14.2996C15.3145 13.909 14.6814 13.909 14.2908 14.2996L13 15.5903V10C13 9.44771 12.5523 9 12 9Z"
-								fill="currentColor"
-							/>
-							<path
-								fill-rule="evenodd"
-								clip-rule="evenodd"
-								d="M21 1C22.6569 1 24 2.34315 24 4V8C24 9.65685 22.6569 11 21 11H19V20C19 21.6569 17.6569 23 16 23H8C6.34315 23 5 21.6569 5 20V11H3C1.34315 11 0 9.65685 0 8V4C0 2.34315 1.34315 1 3 1H21ZM22 8C22 8.55228 21.5523 9 21 9H19V7H20C20.5523 7 21 6.55229 21 6C21 5.44772 20.5523 5 20 5H4C3.44772 5 3 5.44772 3 6C3 6.55229 3.44772 7 4 7H5V9H3C2.44772 9 2 8.55228 2 8V4C2 3.44772 2.44772 3 3 3H21C21.5523 3 22 3.44772 22 4V8ZM7 7V20C7 20.5523 7.44772 21 8 21H16C16.5523 21 17 20.5523 17 20V7H7Z"
-								fill="currentColor"
-							/>
-						</svg>
-						<span
-							:class="{ 'animate-spin': loadingCheckout }"
-							class="w-full grid place-items-center"
+						<Icon v-if="!loadingCheckout" name="mdi:dollar" class="w-4 h-4" />
+
+						<Icon
 							v-else
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								class="w-5 h-5"
-							>
-								<path
-									d="M18.364 5.63604L16.9497 7.05025C15.683 5.7835 13.933 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C15.866 19 19 15.866 19 12H21C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C14.4853 3 16.7353 4.00736 18.364 5.63604Z"
-								></path>
-							</svg>
-						</span>
+							name="prime:spinner"
+							:class="{ 'animate-spin': loadingExcel }"
+							class="w-full grid place-items-center"
+						/>
 					</button>
 					<span class="flex items-center space-x-2 px-3 py-1 rounded text-[#262626]" v-if="hasPay">
 						<span class="text-[#262626]">Total:</span>
@@ -235,6 +215,17 @@ const rows = groupByResponseId(form_responses);
 			</div>
 
 			<div class="w-full mt-2 px-10 relative overflow-x-auto rounded">
+				<div class="grid grid-cols-12 gap-4 mb-3">
+					<CardSummaryCard
+						v-for="dt in cardData"
+						:key="dt.title"
+						class="col-span-4"
+						:count="dt.count"
+						:title="dt.title"
+						:description="dt.description"
+						:icon="dt.icon"
+					/>
+				</div>
 				<table
 					class="w-full text-sm text-left rtl:text-right bg-gradient-to-br from-white to-slate-100 text-[#262626] rounded"
 				>
