@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { DollarSignIcon, FileTextIcon, GitGraphIcon } from "lucide-vue-next";
-import { h, type Component } from "vue";
-
 definePageMeta({
 	middleware: ["auth"],
 });
@@ -15,35 +12,6 @@ const { data: stats } = await useFetch("/api/forms/me/stats", {
 	},
 	onRequestError({ error }) {
 		console.error(error);
-	},
-});
-
-const Card = defineComponent({
-	props: {
-		title: {
-			type: String,
-			required: true,
-		},
-		count: Number,
-		icon: {
-			type: Function as unknown as PropType<Component>,
-			required: true,
-		},
-		description: String,
-	},
-	render() {
-		return h("div", [
-			h("div", { class: "flex items-center justify-between" }, [
-				h("div", [
-					h("p", { class: "font-bold text-xl uppercase" }, this.$props.title),
-					h("h3", { class: "text-2xl font-bold text-gray-900 mt-1" }, this.$props?.count || 0),
-				]),
-				h("div", { class: "bg-gray-100 group-hover:bg-gray-200 rounded-full p-3 transition-colors" }, [
-					h(this.$props.icon, { class: "w-6 h-6 text-gray-700" }),
-				]),
-			]),
-			h("div", { class: "mt-4 flex items-center text-sm text-gray-600" }, this.$props.description),
-		]);
 	},
 });
 
@@ -69,13 +37,11 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 				to="/forms"
 				class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300"
 			>
-				<Card
+				<CardSummaryCard
 					title="forms"
-					:icon="FileTextIcon"
+					:icon="`mdi:file`"
 					:count="stats.forms"
 					:description="`You have created ${stats?.forms || 0} forms so far`"
-					style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #f3f3f3 25.3%, #e0fbfc 100%)"
-					class="p-6 ring-1 ring-sky rounded shadow"
 				/>
 				<div class="h-1 w-full bg-transparent rounded -mt-1" v-if="stats.forms < 10">
 					<div
@@ -88,13 +54,11 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 				to="/finance"
 				class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300"
 			>
-				<Card
+				<CardSummaryCard
 					title="money"
-					:icon="DollarSignIcon"
+					icon="mdi:dollar"
 					:count="stats.earnings"
 					:description="`You have earned ${stats?.earnings || 0} KES so far`"
-					class="p-6 ring-1 ring-sky rounded shadow"
-					style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #f3f3f3 25.3%, #e0fbfc 100%)"
 				/>
 				<div class="h-1 w-full bg-transparent rounded -mt-1" v-if="stats.earnings < 10000">
 					<div
@@ -107,13 +71,11 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 				to="/marketplace"
 				class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300"
 			>
-				<Card
+				<CardSummaryCard
 					title="reach"
-					:icon="GitGraphIcon"
+					icon="mdi:git"
 					:count="stats.responses"
 					:description="`You have reached ${stats.responses || 0} people`"
-					class="p-6 ring-1 ring-sky rounded shadow"
-					style="background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #f3f3f3 25.3%, #e0fbfc 100%)"
 				/>
 				<div class="h-1 w-full bg-transparent rounded -mt-1" v-if="stats.responses < 10">
 					<div
@@ -133,16 +95,7 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 			>
 				<li v-for="item in recents" class="flex align-middle gap-3 m-auto p-2 w-full">
 					<div class="w-fit">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-6 h-6 text-gray-500"
-						>
-							<path
-								d="M17 2V4H20.0066C20.5552 4 21 4.44495 21 4.9934V21.0066C21 21.5552 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5551 3 21.0066V4.9934C3 4.44476 3.44495 4 3.9934 4H7V2H17ZM7 6H5V20H19V6H17V8H7V6ZM9 16V18H7V16H9ZM9 13V15H7V13H9ZM9 10V12H7V10H9ZM15 4H9V6H15V4Z"
-							></path>
-						</svg>
+						<Icon name="mdi:file" class="w-6 h-6 text-gray-500" />
 					</div>
 					<div class="flex w-full">
 						<div class="inline-flex align-middle">
@@ -159,41 +112,23 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 							>
 						</div>
 						<div class="inline-flex w-fit ml-auto">
-							<NuxtLink :to="`/forms/${item.ulid}`">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
+							<NuxtLink :to="`/forms/${item.ulid}`" title="View  Form">
+								<Icon
+									name="mdi:eye"
 									class="w-6 h-6 hover:text-blue-500 text-gray-500 transition-colors"
-								>
-									<path
-										d="M12.0003 3C17.3924 3 21.8784 6.87976 22.8189 12C21.8784 17.1202 17.3924 21 12.0003 21C6.60812 21 2.12215 17.1202 1.18164 12C2.12215 6.87976 6.60812 3 12.0003 3ZM12.0003 19C16.2359 19 19.8603 16.052 20.7777 12C19.8603 7.94803 16.2359 5 12.0003 5C7.7646 5 4.14022 7.94803 3.22278 12C4.14022 16.052 7.7646 19 12.0003 19ZM12.0003 16.5C9.51498 16.5 7.50026 14.4853 7.50026 12C7.50026 9.51472 9.51498 7.5 12.0003 7.5C14.4855 7.5 16.5003 9.51472 16.5003 12C16.5003 14.4853 14.4855 16.5 12.0003 16.5ZM12.0003 14.5C13.381 14.5 14.5003 13.3807 14.5003 12C14.5003 10.6193 13.381 9.5 12.0003 9.5C10.6196 9.5 9.50026 10.6193 9.50026 12C9.50026 13.3807 10.6196 14.5 12.0003 14.5Z"
-									></path>
-								</svg>
+								/>
 							</NuxtLink>
-							<NuxtLink :to="`/forms/${item.ulid}/edit`">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
+							<NuxtLink :to="`/forms/${item.ulid}/edit`" title="Edit Form">
+								<Icon
+									name="mdi:edit-box-outline"
 									class="w-6 h-6 hover:text-orange-500 text-gray-500 transition-colors"
-								>
-									<path
-										d="M5 18.89H6.41421L15.7279 9.57627L14.3137 8.16206L5 17.4758V18.89ZM21 20.89H3V16.6473L16.435 3.21231C16.8256 2.82179 17.4587 2.82179 17.8492 3.21231L20.6777 6.04074C21.0682 6.43126 21.0682 7.06443 20.6777 7.45495L9.24264 18.89H21V20.89ZM15.7279 6.74785L17.1421 8.16206L18.5563 6.74785L17.1421 5.33363L15.7279 6.74785Z"
-									></path>
-								</svg>
+								/>
 							</NuxtLink>
-							<NuxtLink :to="`/forms/${item.ulid}/submissions`">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
+							<NuxtLink :to="`/forms/${item.ulid}/submissions`" title="Submissions">
+								<Icon
+									name="mdi:page-next-outline"
 									class="w-6 h-6 hover:text-emerald-500 text-gray-500 transition-colors"
-								>
-									<path
-										d="M13.2 12L16 16H13.6L12 13.7143L10.4 16H8L10.8 12L8 8H10.4L12 10.2857L13.6 8H15V4H5V20H19V8H16L13.2 12ZM3 2.9918C3 2.44405 3.44749 2 3.9985 2H16L20.9997 7L21 20.9925C21 21.5489 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5447 3 21.0082V2.9918Z"
-									></path>
-								</svg>
+								/>
 							</NuxtLink>
 						</div>
 					</div>
