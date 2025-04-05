@@ -15,6 +15,7 @@
 		"migrate": "drizzle-kit generate && drizzle-kit push"
 	},
 	"devDependencies": {
+		"@nuxt/icon": "1.11.0",
 		"@nuxt/scripts": "0.11.5",
 		"@nuxtjs/tailwindcss": "^6.13.2",
 		"@types/formidable": "^3.4.5",
@@ -52,5 +53,6 @@
 	},
 	"engines": {
 		"node": "22.x"
-	}
+	},
+	"packageManager": "pnpm@10.6.3+sha1.43e3aa4a371d889dfb0ffe7a9b5d4ca0668ccaa9"
 }
