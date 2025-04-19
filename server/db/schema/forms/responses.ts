@@ -107,7 +107,7 @@ export const formResponsesView = pgView("form_responses_view").as(
 			date: formResponses.createdAt,
 		})
 		.from(formResponses)
-		.leftJoin(form_field_responses, eq(formResponses.ulid, form_field_responses.formResponseUlid))
+		.leftJoin(form_field_responses, eq(formResponses.ulid, form_field_responses.formResponseUlid)),
 );
 
 export const storeResponsesView = pgView("store_responses_view").as(
@@ -121,5 +121,5 @@ export const storeResponsesView = pgView("store_responses_view").as(
 			date: storeResponses.createdAt,
 		})
 		.from(storeResponses)
-		.leftJoin(store_items_responses, eq(storeResponses.ulid, store_items_responses.storeResponseUlid))
+		.leftJoin(store_items_responses, eq(storeResponses.ulid, store_items_responses.storeResponseUlid)),
 );
