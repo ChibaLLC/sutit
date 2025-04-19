@@ -156,8 +156,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			and(
 				lt(storeItems.updatedAt, updateTimeStamp),
 				notInArray(storeItems.ulid, Array.from(itemsData.keys())),
-				inArray(storeItems.storeUlid, Array.from(storesData.keys()))
-			)
+				inArray(storeItems.storeUlid, Array.from(storesData.keys())),
+			),
 		);
 	await db
 		.delete(stores)
@@ -165,8 +165,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			and(
 				lt(stores.updatedAt, updateTimeStamp),
 				eq(stores.formUlid, data.ulid),
-				notInArray(stores.ulid, Array.from(storesData.keys()))
-			)
+				notInArray(stores.ulid, Array.from(storesData.keys())),
+			),
 		);
 
 	await db
@@ -175,8 +175,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			and(
 				lt(formFields.updatedAt, updateTimeStamp),
 				inArray(formFields.pageUlid, Array.from(pagesData.keys())),
-				notInArray(formFields.ulid, Array.from(fieldsData.keys()))
-			)
+				notInArray(formFields.ulid, Array.from(fieldsData.keys())),
+			),
 		);
 	await db
 		.delete(formPages)
@@ -184,8 +184,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			and(
 				lt(formPages.updatedAt, updateTimeStamp),
 				eq(formPages.formUlid, data.ulid),
-				notInArray(formPages.ulid, Array.from(pagesData.keys()))
-			)
+				notInArray(formPages.ulid, Array.from(pagesData.keys())),
+			),
 		);
 }
 
@@ -270,7 +270,7 @@ async function offloadStoreImages(items: Drizzle.SutitStore[], form_meta: Drizzl
 						log.error(e);
 					}
 				}
-			})
+			}),
 		);
 		return item;
 	});
@@ -323,7 +323,7 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 		},
 		{ pages: {} } as {
 			pages: Record<string, DbPage>;
-		}
+		},
 	);
 
 	const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
@@ -337,23 +337,26 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 	return {
 		meta: form_meta,
 		pages: pages,
-		stores: stores.reduce((acc, curr) => {
-			const store = acc[curr.store_index];
-			const item = {
-				...curr,
-				qtty: 1,
-				store: curr.store_index,
-				carted: false,
-				liked: false,
-				stock: curr.isInfinite ? ("infinity" as "infinity") : curr.stock,
-			};
-			if (store) {
-				store.push(item);
-			} else {
-				acc[curr.store_index] = [item];
-			}
-			return acc;
-		}, {} as ReconstructedDbForm["stores"]),
+		stores: stores.reduce(
+			(acc, curr) => {
+				const store = acc[curr.store_index];
+				const item = {
+					...curr,
+					qtty: 1,
+					store: curr.store_index,
+					carted: false,
+					liked: false,
+					stock: curr.isInfinite ? ("infinity" as "infinity") : curr.stock,
+				};
+				if (store) {
+					store.push(item);
+				} else {
+					acc[curr.store_index] = [item];
+				}
+				return acc;
+			},
+			{} as ReconstructedDbForm["stores"],
+		),
 	};
 }
 
@@ -369,7 +372,7 @@ export async function getFormByUlid(formUlid: string) {
 export async function insertData(
 	formUlid: string,
 	data: { meta: ReconstructedDbForm["meta"]; pages: Record<string, any>; stores: Record<string, any> },
-	price_paid?: number
+	price_paid?: number,
 ) {
 	const formResponse = (
 		await db
@@ -436,6 +439,7 @@ export async function insertData(
 						.insert(storeResponses)
 						.values({
 							pricePaid: price_paid,
+							formResponseUlid: formResponse.ulid,
 						})
 						.returning()
 				).at(0);
@@ -601,7 +605,7 @@ export async function getResponsesCount(userUlid: string) {
 export async function neeedsPay(
 	form: ReconstructedDbForm | string,
 	type: "group" | "individual",
-	submitPrice?: number
+	submitPrice?: number,
 ): Promise<[ReconstructedDbForm, boolean]> {
 	if (typeof form === "string") {
 		form = (await getFormByUlid(form))!;
@@ -659,7 +663,7 @@ export async function getInviteFormGroup(formUlid: string, token: string) {
 			} else {
 				return false;
 			}
-		})
+		}),
 	);
 	return {
 		invite,

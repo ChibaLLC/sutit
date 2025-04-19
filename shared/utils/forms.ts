@@ -90,3 +90,16 @@ export function groupByResponseId(responses: Awaited<ReturnType<typeof getFormRe
 	});
 	return formResponses;
 }
+
+export function getFormStoreResponses(
+	responseUlid: string,
+	storeResponses: Awaited<ReturnType<typeof getFormResponses>>["store_response"],
+) {
+	const formStoreResponses: Awaited<ReturnType<typeof getFormResponses>>["store_response"] = [];
+	storeResponses.forEach((res) => {
+		if (res.formResponseUlid == responseUlid) {
+			formStoreResponses.push(res);
+		}
+	});
+	return formStoreResponses;
+}

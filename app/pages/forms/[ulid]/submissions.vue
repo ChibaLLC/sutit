@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { getFormResponses } from "~~/server/api/forms/[formUlid]/submissions/utils/queries";
+
 definePageMeta({
 	middleware: "auth",
 });
@@ -163,6 +165,27 @@ if (hasPay) {
 		icon: "mdi:dollar",
 	});
 }
+
+// Add interface for purchase response
+interface PurchaseResponse {
+	responseUlid: string;
+	itemUlid: string;
+	formUlid: string;
+	qtty: number;
+	value: string;
+	pricePaid: number;
+	date: string;
+}
+
+// Add reactive state for purchases
+const purchaseResponses = ref<Awaited<ReturnType<typeof getFormResponses>>["store_response"]>([]);
+const showPurchasesModal = ref(false);
+
+// Add function to handle purchases
+function showStoreResponses(responseUlid: string) {
+	purchaseResponses.value = getFormStoreResponses(responseUlid, store_response);
+	showPurchasesModal.value = true;
+}
 </script>
 
 <template>
@@ -236,6 +259,7 @@ if (hasPay) {
 								{{ field.label }}
 							</th>
 							<th v-if="hasPay" class="px-6 py-3">Payment</th>
+							<th v-if="store_response.length > 0" class="px-6 py-3">Store</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-200 text-white border-b">
@@ -257,6 +281,14 @@ if (hasPay) {
 								></div>
 							</td>
 							<td v-if="hasPay" class="px-6 py-4">KES {{ bubblePrice(group_responses, row.at(0)) }}</td>
+							<td v-if="row[index]?.responseUlid && store_response.length > 0" class="px-6 py-4">
+								<button
+									@click="showStoreResponses(row[index].responseUlid)"
+									class="px-3 py-1 bg-green-600 rounded text-white hover:bg-green-500 transition-colors"
+								>
+									Show Purchases
+								</button>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -400,6 +432,38 @@ if (hasPay) {
 				</div>
 				<div v-if="helpText">
 					<p class="text-red-500 text-sm">Please provide a paybill number</p>
+				</div>
+			</Modal>
+
+			<!-- Add new modal for purchase history -->
+			<Modal
+				title="Purchase History"
+				:show="showPurchasesModal"
+				@confirm="showPurchasesModal = false"
+				@cancel="showPurchasesModal = false"
+			>
+				<div class="w-full">
+					<table class="w-full text-sm text-left bg-white text-slate-700 rounded">
+						<thead class="text-xs text-slate-900 uppercase bg-slate-100">
+							<tr>
+								<th class="px-4 py-2">Item</th>
+								<th class="px-4 py-2">Quantity</th>
+								<th class="px-4 py-2">Price</th>
+								<th class="px-4 py-2">Date</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-200">
+							<tr v-for="(purchase, index) in purchaseResponses" :key="index" class="hover:bg-slate-50">
+								<td class="px-4 py-2">{{ purchase.value }}</td>
+								<td class="px-4 py-2">{{ purchase.qtty }}</td>
+								<td class="px-4 py-2">KES {{ purchase.pricePaid }}</td>
+								<td class="px-4 py-2">{{ new Date(purchase.date).toLocaleString() }}</td>
+							</tr>
+							<tr v-if="purchaseResponses.length === 0">
+								<td colspan="4" class="px-4 py-2 text-center">No purchases recorded yet</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 			</Modal>
 		</main>
