@@ -10,7 +10,7 @@ export default defineNuxtConfig({
 		},
 	},
 	css: ["~/assets/scss/main.scss"],
-	modules: ["@nuxtjs/tailwindcss", "@chiballc/nuxt-form-builder", "@nuxt/scripts"],
+	modules: ["@nuxtjs/tailwindcss", "@chiballc/nuxt-form-builder", "@nuxt/scripts", "@nuxt/icon"],
 	runtimeConfig: {
 		public: {
 			githubClientId: process.env.GITHUB_CLIENT_ID,
