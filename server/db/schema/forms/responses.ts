@@ -34,6 +34,10 @@ export const formGroupResponses = pgTable("form_group_responses", {
 
 export const storeResponses = pgTable("store_responses", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
+	// Add Form Response To Reference Form
+	formResponseUlid: varchar("form_response_ulid")
+		.references(() => formResponses.ulid, { onDelete: "cascade" })
+		.notNull(),
 	pricePaid: integer("price_paid").notNull().default(0),
 	createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
 });
@@ -91,6 +95,7 @@ const store_items_responses = qb
 		itemUlid: sql<string>`${store_items.itemUlid}`.as("store_item_ulid"),
 		value: itemResponses.value,
 		formUlid: sql<string>`${store_items.formUlid}`.as("store_items_ulid"),
+		qtty: sql<string>`${itemResponses.qtty}`.as("qtty"),
 	})
 	.from(itemResponses)
 	.innerJoin(store_items, eq(itemResponses.itemUlid, store_items.itemUlid))
@@ -116,6 +121,8 @@ export const storeResponsesView = pgView("store_responses_view").as(
 			responseUlid: sql<string>`${storeResponses.ulid}`.as("store_response_ulid"),
 			itemUlid: sql<string>`${store_items_responses.itemUlid}`.as("store_response_item_ulid"),
 			formUlid: sql<string>`${store_items_responses.formUlid}`.as("store_response_form_ulid"),
+			formResponseUlid: storeResponses.formResponseUlid,
+			qtty: store_items_responses.qtty,
 			value: store_items_responses.value,
 			pricePaid: storeResponses.pricePaid,
 			date: storeResponses.createdAt,
