@@ -87,7 +87,7 @@ async function submit() {
 					}, {}),
 					stores: Object.entries(data.value?.stores || {}).reduce((acc, [index, store]) => {
 						store.forEach((item) => {
-							if (!item.liked) return;
+							if (!item.carted) return;
 							const key = item.itemUlid;
 							if (!key) return window.alertError("An unknown error occurred");
 							// @ts-expect-error
@@ -97,7 +97,7 @@ async function submit() {
 								liked: item.liked,
 								carted: item.carted,
 								stock: item.stock,
-								price: item.price
+								price: item.price,
 							};
 						});
 						return acc;
@@ -121,7 +121,7 @@ async function submit() {
 						formMail: string;
 						formResponse: string;
 					},
-					["formMail"]
+					["formMail"],
 				)
 			) {
 				message +=
@@ -296,7 +296,7 @@ async function processInvites() {
 	if (hasChannelData(response)) {
 		ResolveMpesaPayment(response, loading, rerender, complete);
 	}
-	loading.value = false
+	loading.value = false;
 }
 </script>
 
