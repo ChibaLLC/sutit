@@ -8,12 +8,7 @@ services:
         env_file:
             - ".env"
         volumes:
-            - "./filestore:/app/filestore:rw"
-        labels:
-            - traefik.enable=true
-            - traefik.http.routers.web.rule=Host(`${DOKPLOY_DOMAIN}`)
-            - traefik.http.routers.web.entrypoints=web
-            - traefik.http.services.web.loadbalancer.server.port=3000
+            - "./filestore:/app/filestore:rw"        
 
 networks:
     default:
