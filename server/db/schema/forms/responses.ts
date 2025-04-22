@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { pgTable, timestamp, varchar, text, pgView, QueryBuilder, integer, boolean } from "drizzle-orm/pg-core";
 import { ulid } from "ulid";
-import { formFields, formGroups, formPages } from "./forms";
+import { formGroups, formPages } from "./forms";
 import { storeItems, stores as _stores } from "./stores";
 
 export const formResponses = pgTable("form_responses", {
@@ -12,9 +12,7 @@ export const formResponses = pgTable("form_responses", {
 
 export const formFieldResponses = pgTable("form_field_responses", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
-	fieldUlid: varchar("field_ulid", { length: 255 })
-		.notNull()
-		.references(() => formFields.ulid, { onDelete: "cascade" }),
+	fieldUlid: varchar("field_ulid", { length: 255 }).notNull(),
 	value: text("value"),
 	formResponseUlid: varchar("form_response_ulid")
 		.references(() => formResponses.ulid, { onDelete: "cascade" })
@@ -62,10 +60,13 @@ const qb = new QueryBuilder();
 const form_elements = qb
 	.select({
 		formUlid: sql<string>`${formPages.formUlid}`.as("form_ulid"),
-		fieldUlid: sql<string>`${formFields.ulid}`.as("fields_ulid"),
+		fieldUlid: sql<string>`(field ->> 'ulid')`.as("fields_ulid"),
 	})
 	.from(formPages)
-	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
+	// Unnest JSONB array of fields
+	// lateral join expands each field in the array into its own row
+	// so we alias it as "field"
+	.innerJoin(sql`jsonb_array_elements(${formPages.fields}) AS field`, sql`true`)
 	.as("form_elements");
 
 const store_items = qb
