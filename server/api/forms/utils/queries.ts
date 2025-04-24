@@ -403,14 +403,23 @@ export async function insertData(
 			.join(", ");
 	}
 	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
-	for (const key in data.pages) {
-		const response = data.pages[key];
+	data.pages.forEach((field, key) => {
 		formfieldResponseInsertList.push({
-			value: getValue(response),
-			fieldUlid: key,
+			value: field.value,
+			field: field,
+			fieldUlid: field.ulid,
 			formResponseUlid: formResponse.ulid,
+			formUlid: data.meta.ulid,
 		});
-	}
+	});
+	// for (const key in data.pages) {
+	// 	const response = data.pages[key];
+	// 	formfieldResponseInsertList.push({
+	// 		value: getValue(response),
+	// 		fieldUlid: key,
+	// 		formResponseUlid: formResponse.ulid,
+	// 	});
+	// }
 	if (formfieldResponseInsertList.length) {
 		db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
 	}
