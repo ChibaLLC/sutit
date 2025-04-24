@@ -273,8 +273,8 @@ function showStoreResponses(responseUlid: string) {
 							<td v-for="[_, field] in fields" class="max-w-[30px]">
 								<div
 									v-html="
-										field.fieldUlid
-											? `<div class='text-ellipsis self-start hover:max-h-fit'>${row.find((r) => r.fieldUlid == field.fieldUlid)?.value}</div>`
+										field.ulid
+											? `<div class='text-ellipsis self-start hover:max-h-fit'>${row.find((r) => r.field.ulid == field.ulid)?.value}</div>`
 											: ''
 									"
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"

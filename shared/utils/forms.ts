@@ -15,11 +15,17 @@ export function bubblePrice(
 
 export function collectFields(form: Awaited<ReturnType<typeof getFormResponses>>["form"]) {
 	const map = new Map<string, (typeof form.pages)[number][number]>();
+
+	// Iterate over form.pages to map the fields
 	for (const key in form.pages) {
 		const page = form.pages[key];
 		if (page) {
+			// For each field in the page, we are mapping by 'ulid'
 			page.forEach((element) => {
-				map.set(element.fieldUlid!, element);
+				// Use 'ulid' as the unique identifier for the map key
+				if (element.ulid) {
+					map.set(element.ulid, element); // Map the element by its 'ulid'
+				}
 			});
 		}
 	}

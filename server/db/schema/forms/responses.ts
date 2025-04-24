@@ -86,7 +86,7 @@ const form_field_responses = qb
 		formResponseUlid: sql<string>`${formFieldResponses.formResponseUlid}`.as("form_response_ulid"),
 		field: formFieldResponses.field,
 		value: formFieldResponses.value,
-		formUlid: sql<string>`${formFieldResponses.formUlid}`.as("form_elements_ulid"),
+		formUlid: sql<string>`${formFieldResponses.formUlid}`.as("form_ulid"),
 	})
 	.from(formFieldResponses)
 	.as("form_field_responses");
@@ -105,12 +105,13 @@ const store_items_responses = qb
 
 export const formResponsesView = pgView("form_responses_view").as(
 	qb
+		.with(form_field_responses)
 		.select({
 			responseUlid: sql<string>`${formResponses.ulid}`.as("response_ulid"),
-			field: sql<string>`${form_field_responses.field}`.as("response_field"),
 			formUlid: sql<string>`${form_field_responses.formUlid}`.as("response_form_ulid"),
 			value: form_field_responses.value,
 			pricePaid: formResponses.pricePaid,
+			// field: form_field_responses.field,
 			date: formResponses.createdAt,
 		})
 		.from(formResponses)

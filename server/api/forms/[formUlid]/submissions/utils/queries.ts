@@ -1,5 +1,12 @@
 import db from "~~/server/db";
-import { formGroupResponses, formGroups, formResponsesView, storeResponsesView } from "~~/server/db/schema";
+import {
+	formFieldResponses,
+	formGroupResponses,
+	formGroups,
+	formResponses,
+	formResponsesView,
+	storeResponsesView,
+} from "~~/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getFormByUlid } from "../../../utils/queries";
 
@@ -12,10 +19,19 @@ export async function getFormResponses(formUlId: string) {
 		});
 	}
 	const form_responses_promise = db
-		.select()
-		.from(formResponsesView)
-		.where(eq(formResponsesView.formUlid, formUlId))
-		.orderBy(desc(formResponsesView.date));
+		.select({
+			responseUlid: formResponses.ulid,
+			formUlid: formFieldResponses.formUlid,
+			value: formFieldResponses.value,
+			pricePaid: formResponses.pricePaid,
+			field: formFieldResponses.field,
+			date: formResponses.createdAt,
+		})
+		.from(formResponses)
+		.leftJoin(formFieldResponses, eq(formResponses.ulid, formFieldResponses.formResponseUlid))
+		.where(eq(formFieldResponses.formUlid, formUlId)) // 👈 filter by formUlId
+		.orderBy(desc(formResponses.createdAt));
+
 	const store_response_promise = db
 		.select()
 		.from(storeResponsesView)
@@ -27,7 +43,7 @@ export async function getFormResponses(formUlId: string) {
 			groupName: formGroups.groupName,
 			invites: formGroups.invites,
 			paymentUlid: formGroups.paymentUlid,
-			formGroupUlid: formGroups.ulid
+			formGroupUlid: formGroups.ulid,
 		})
 		.from(formGroupResponses)
 		.where(eq(formGroupResponses.formUlid, formUlId))
