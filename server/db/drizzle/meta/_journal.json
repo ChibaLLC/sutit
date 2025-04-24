@@ -22,6 +22,13 @@
       "when": 1745351629817,
       "tag": "0002_serious_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1745481312211,
+      "tag": "0003_lively_ultimatum",
+      "breakpoints": true
     }
   ]
 }
