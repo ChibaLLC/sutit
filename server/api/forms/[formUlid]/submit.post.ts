@@ -116,12 +116,11 @@ export default defineEventHandler(async (event) => {
 		if (!data) return {};
 		let formMail = (options.invitee as { email: string })?.email || details?.user.email;
 		if (!formMail) {
-			for (const key in data.form.pages || {}) {
-				for (const field of data.form.pages[key] || []) {
-					if (field.type === Field.EMAIL) {
-						formMail = field.value as string;
-						break;
-					}
+			for (let i = 0; i < data.form.pages.length; i++) {
+				const field = data.form.pages[i];
+				if (field.type == Field.EMAIL) {
+					formMail = field.value as string;
+					break; // This will exit the loop immediately
 				}
 			}
 		}
