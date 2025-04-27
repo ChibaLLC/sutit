@@ -12,7 +12,6 @@ import {
 	formGroupResponses,
 	formGroups,
 	storeItems,
-	formFields,
 	formResponses,
 	storeResponses,
 	sutitForms,
@@ -84,10 +83,6 @@ export namespace Drizzle {
 	export namespace FormGroupResponses {
 		export type insert = typeof formGroupResponses.$inferInsert;
 		export type select = typeof formGroupResponses.$inferSelect;
-	}
-	export namespace FormFields {
-		export type insert = typeof formFields.$inferInsert;
-		export type select = typeof formFields.$inferInsert;
 	}
 
 	export type SutitForm = typeof sutitForms.$inferSelect;

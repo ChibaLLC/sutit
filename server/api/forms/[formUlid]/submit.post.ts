@@ -1,6 +1,13 @@
 import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividualPayment } from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/users/utils/queries";
-import { generateReceiptNumber, hasInfiniteStock, parseStock, processFormPayments, sendPaymentMailReceipt, sendUserMail } from "../utils";
+import {
+	generateReceiptNumber,
+	hasInfiniteStock,
+	parseStock,
+	processFormPayments,
+	sendPaymentMailReceipt,
+	sendUserMail,
+} from "../utils";
 import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
 import { generateStoreTable, sendUserReceipt } from "../utils/email";
@@ -16,12 +23,12 @@ function validateOrders(
 			carted: boolean;
 			stock: string | number;
 		}
-	>
+	>,
 ) {
 	Object.values(items || {})?.forEach((item) => {
 		// TODO: Check from the db instead or cache
-		if(hasInfiniteStock(item as Item)) return
-		item.stock = parseStock(item as Item)
+		if (hasInfiniteStock(item as Item)) return;
+		item.stock = parseStock(item as Item);
 		if (+item.qtty > +item.stock) {
 			throw createError({
 				message: `Requested quanty: ${item.qtty} is less than the available stock: ${item.stock}`,
@@ -42,7 +49,19 @@ export default defineEventHandler(async (event) => {
 	const schema = z.object({
 		form: z.object({
 			meta: z.custom<Drizzle.SutitForm["form_meta"]>((data: Drizzle.SutitForm["form_meta"]) => !!data?.ulid),
-			pages: z.record(z.string(), z.any()),
+			pages: z.array(
+				z.object({
+					type: z.string().nullable(),
+					ulid: z.string().nullable(),
+					index: z.number().nullable(),
+					label: z.string().nullable(),
+					pageUlid: z.string().nullable(),
+					inputType: z.string().nullable(),
+					description: z.string().nullable(),
+					placeholder: z.string().nullable(),
+					value: z.string(),
+				}),
+			),
 			stores: z.record(
 				z.string(),
 				z.object({
@@ -52,13 +71,12 @@ export default defineEventHandler(async (event) => {
 					carted: z.boolean(),
 					stock: z.union([z.string(), z.number()]),
 					price: z.union([z.string(), z.number()]),
-				})
+				}),
 			),
 		}),
 		phone: z.string().optional(),
 		token: z.string().optional(),
 	});
-
 	var { data, error } = await readValidatedBody(event, schema.safeParse);
 	if (error || !data) {
 		throw createError({
@@ -98,12 +116,11 @@ export default defineEventHandler(async (event) => {
 		if (!data) return {};
 		let formMail = (options.invitee as { email: string })?.email || details?.user.email;
 		if (!formMail) {
-			for (const key in data.form.pages || {}) {
-				for (const field of data.form.pages[key] || []) {
-					if (field.type === Field.EMAIL) {
-						formMail = field.value as string;
-						break;
-					}
+			for (let i = 0; i < data.form.pages.length; i++) {
+				const field = data.form.pages[i];
+				if (field.type == Field.EMAIL) {
+					formMail = field.value as string;
+					break; // This will exit the loop immediately
 				}
 			}
 		}
@@ -111,13 +128,13 @@ export default defineEventHandler(async (event) => {
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
-			`[Update] Submission ${data.form.meta.formName}`
+			`[Update] Submission ${data.form.meta.formName}`,
 		);
 		if (formMail) {
 			sendUserMail(
 				{ email: formMail },
 				`Form submission successful for ${data.form.meta.formName}`,
-				`[Update] Successful form submission ${data.form.meta.formName}`
+				`[Update] Successful form submission ${data.form.meta.formName}`,
 			);
 		}
 
@@ -158,7 +175,7 @@ export default defineEventHandler(async (event) => {
 					await sendUserReceipt(formMail, formData, "receipt");
 					await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
 				}
-			}
+			},
 		);
 	} else if (needsPay && data.token) {
 		const { invite } = await getInviteFormGroup(formUlid, data.token);

@@ -8,7 +8,6 @@ import {
 	formMeta,
 	formPages,
 	storeItems,
-	formFields,
 	sutitForms,
 	type FormGroupInvite,
 	type PhoneInvite,
@@ -17,6 +16,7 @@ import {
 	formResponses,
 	storeResponses,
 	sutitStores,
+	sutitFormPages,
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -30,8 +30,7 @@ import { getUserByUlId } from "../../users/utils/queries";
 import { sep } from "node:path";
 import { hasInfiniteStock, parseStock } from ".";
 
-async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
-	const fieldsData: Map<string, Drizzle.FormFields.insert> = new Map();
+async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }, update: boolean = false) {
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
 	const updateTimeStamp = new Date();
 	for (const index in data.form.pages) {
@@ -41,26 +40,23 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			formUlid: data.ulid,
 			index: index,
 			ulid: pageUlid,
+			fields: page.map((field) => {
+				return {
+					index: field.index!,
+					inputType: field.inputType!,
+					label: field.label || "Unlabelled",
+					pageUlid: pageUlid,
+					accept: field.accept,
+					description: field.description,
+					options: field.options,
+					placeholder: field.placeholder,
+					type: field.type,
+					rules: field.rules,
+					ulid: field.fieldUlid || ulid(),
+					updatedAt: updateTimeStamp,
+				};
+			}),
 			updatedAt: updateTimeStamp,
-		});
-		page?.forEach((field) => {
-			if (!field) return log.warn("Field was null in page", page);
-			if (field.fieldUlid && fieldsData.has(field.fieldUlid)) return;
-			const fieldUlid = field.fieldUlid || ulid();
-			fieldsData.set(fieldUlid, {
-				index: field.index!,
-				inputType: field.inputType!,
-				label: field.label || "Unlabelled",
-				pageUlid: pageUlid,
-				accept: field.accept,
-				description: field.description,
-				options: field.options,
-				placeholder: field.placeholder,
-				type: field.type,
-				rules: field.rules,
-				ulid: fieldUlid,
-				updatedAt: updateTimeStamp,
-			});
 		});
 	}
 
@@ -70,27 +66,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			.values(Array.from(pagesData.values()))
 			.onConflictDoUpdate({
 				target: formPages.ulid,
-				set: updateConflictedColumns(formPages, ["updatedAt"]),
-			});
-	}
-	if (fieldsData.size) {
-		await db
-			.insert(formFields)
-			.values(Array.from(fieldsData.values()))
-			.onConflictDoUpdate({
-				target: formFields.ulid,
-				set: updateConflictedColumns(formFields, [
-					"accept",
-					"description",
-					"index",
-					"inputType",
-					"type",
-					"label",
-					"options",
-					"placeholder",
-					"rules",
-					"updatedAt",
-				]),
+				set: {
+					fields: sql`excluded.fields`, // Take new fields
+					updatedAt: updateTimeStamp,
+				},
 			});
 	}
 
@@ -169,15 +148,15 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			),
 		);
 
-	await db
-		.delete(formFields)
-		.where(
-			and(
-				lt(formFields.updatedAt, updateTimeStamp),
-				inArray(formFields.pageUlid, Array.from(pagesData.keys())),
-				notInArray(formFields.ulid, Array.from(fieldsData.keys())),
-			),
-		);
+	// await db
+	// 	.delete(formFields)
+	// 	.where(
+	// 		and(
+	// 			lt(formFields.updatedAt, updateTimeStamp),
+	// 			inArray(formFields.pageUlid, Array.from(pagesData.keys())),
+	// 			notInArray(formFields.ulid, Array.from(fieldsData.keys())),
+	// 		),
+	// 	);
 	await db
 		.delete(formPages)
 		.where(
@@ -300,31 +279,15 @@ async function offloadStoreImages(items: Drizzle.SutitStore[], form_meta: Drizzl
 	// }
 }
 
-export async function reconstructDbForm(results: Array<typeof sutitForms.$inferSelect>): Promise<ReconstructedDbForm> {
-	const form_meta = results.at(0)?.form_meta;
-	if (!form_meta) {
-		throw createError({
-			status: 500,
-			message: "Unable to find the form's meta data",
-		});
-	}
-	const { pages } = results.reduce(
-		(acc, curr) => {
-			if (curr.form_elements.page_index !== null) {
-				const pages = acc.pages[curr.form_elements.page_index];
-				const form_element = curr.form_elements;
-				if (pages) {
-					pages.push(form_element);
-				} else {
-					acc.pages[curr.form_elements.page_index] = [form_element];
-				}
-			}
-			return acc;
-		},
-		{ pages: {} } as {
-			pages: Record<string, DbPage>;
-		},
-	);
+export async function reconstructDbForm(results: any): Promise<ReconstructedDbForm> {
+	const form_meta = results[0];
+	const pages = await db.select().from(sutitFormPages).where(eq(sutitFormPages.formUlid, form_meta.ulid));
+	// Formart Pages into an Object
+	const formartPages = {};
+	// Loop Through Pages
+	pages.forEach((page, index) => {
+		formartPages[index] = page.fields;
+	});
 
 	const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
 	const user = await getUserByUlId(form_meta.userUlid);
@@ -336,7 +299,7 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 
 	return {
 		meta: form_meta,
-		pages: pages,
+		pages: formartPages,
 		stores: stores.reduce(
 			(acc, curr) => {
 				const store = acc[curr.store_index];
@@ -361,8 +324,8 @@ export async function reconstructDbForm(results: Array<typeof sutitForms.$inferS
 }
 
 export async function getFormByUlid(formUlid: string) {
-	const results = await db.select().from(sutitForms).where(eq(sutitForms.form_meta.ulid, formUlid));
-	if (results.length) {
+	const results = await db.select().from(sutitForms).where(eq(sutitForms.ulid, formUlid));
+	if (results) {
 		return reconstructDbForm(results);
 	} else {
 		return null;
@@ -404,14 +367,23 @@ export async function insertData(
 			.join(", ");
 	}
 	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
-	for (const key in data.pages) {
-		const response = data.pages[key];
+	data.pages.forEach((field, key) => {
 		formfieldResponseInsertList.push({
-			value: getValue(response),
-			fieldUlid: key,
+			value: field.value,
+			field: field,
+			fieldUlid: field.ulid,
 			formResponseUlid: formResponse.ulid,
+			formUlid: data.meta.ulid,
 		});
-	}
+	});
+	// for (const key in data.pages) {
+	// 	const response = data.pages[key];
+	// 	formfieldResponseInsertList.push({
+	// 		value: getValue(response),
+	// 		fieldUlid: key,
+	// 		formResponseUlid: formResponse.ulid,
+	// 	});
+	// }
 	if (formfieldResponseInsertList.length) {
 		db.insert(formFieldResponses).values(formfieldResponseInsertList).execute();
 	}
@@ -557,8 +529,8 @@ export async function getAllFormPayments(userUlid: string) {
 	return db
 		.select()
 		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.form_meta.ulid));
+		.where(eq(sutitForms.userUlid, userUlid))
+		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.ulid));
 }
 
 export async function getAllFormPaymentsSum(userUlid: string) {
@@ -578,7 +550,7 @@ export async function getAllFormPaymentsSum(userUlid: string) {
 
 export async function getFormCount(userUlid: string) {
 	const result = await db
-		.select({ count: count(sutitForms.form_meta.ulid) })
+		.select({ count: count(sutitForms.ulid) })
 		.from(formMeta)
 		.where(eq(formMeta.userUlid, userUlid));
 
@@ -591,10 +563,10 @@ export async function getFormCount(userUlid: string) {
 
 export async function getResponsesCount(userUlid: string) {
 	const result = await db
-		.select({ count: count(sutitForms.form_meta.ulid) })
+		.select({ count: count(sutitForms.ulid) })
 		.from(formResponsesView)
-		.innerJoin(sutitForms, eq(formResponsesView.formUlid, sutitForms.form_meta.ulid))
-		.where(eq(sutitForms.form_meta.userUlid, userUlid));
+		.innerJoin(sutitForms, eq(formResponsesView.formUlid, sutitForms.ulid))
+		.where(eq(sutitForms.userUlid, userUlid));
 	return result.reduce((acc, curr) => {
 		const { count } = curr;
 		if (!count) return acc;

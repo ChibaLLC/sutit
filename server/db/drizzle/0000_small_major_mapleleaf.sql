@@ -10,8 +10,8 @@ CREATE TABLE "form_fields" (
 	"type" varchar,
 	"rules" jsonb,
 	"page" varchar(255),
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_groups" (
@@ -43,8 +43,8 @@ CREATE TABLE "form_pages" (
 	"ulid" varchar(255) PRIMARY KEY NOT NULL,
 	"form_ulid" varchar,
 	"index" varchar(255) NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "store_items" (
@@ -57,16 +57,16 @@ CREATE TABLE "store_items" (
 	"images" jsonb NOT NULL,
 	"is_infinite" boolean DEFAULT false,
 	"store_ulid" varchar(255),
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "stores" (
 	"ulid" varchar(255) PRIMARY KEY NOT NULL,
 	"form_ulid" varchar,
 	"index" varchar(255) NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "form_payments" (
@@ -116,6 +116,7 @@ CREATE TABLE "item_responses" (
 --> statement-breakpoint
 CREATE TABLE "store_responses" (
 	"ulid" varchar(255) PRIMARY KEY NOT NULL,
+	"form_response_ulid" varchar NOT NULL,
 	"price_paid" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
@@ -171,9 +172,10 @@ ALTER TABLE "form_group_responses" ADD CONSTRAINT "form_group_responses_form_gro
 ALTER TABLE "form_group_responses" ADD CONSTRAINT "form_group_responses_response_ulid_form_responses_ulid_fk" FOREIGN KEY ("response_ulid") REFERENCES "public"."form_responses"("ulid") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "item_responses" ADD CONSTRAINT "item_responses_item_ulid_store_items_ulid_fk" FOREIGN KEY ("item_ulid") REFERENCES "public"."store_items"("ulid") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "item_responses" ADD CONSTRAINT "item_responses_store_response_ulid_store_responses_ulid_fk" FOREIGN KEY ("store_response_ulid") REFERENCES "public"."store_responses"("ulid") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "store_responses" ADD CONSTRAINT "store_responses_form_response_ulid_form_responses_ulid_fk" FOREIGN KEY ("form_response_ulid") REFERENCES "public"."form_responses"("ulid") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_ulid_users_ulid_fk" FOREIGN KEY ("user_ulid") REFERENCES "public"."users"("ulid") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "token_index" ON "sessions" USING btree ("token");--> statement-breakpoint
 CREATE VIEW "public"."sutit_forms" AS (select "form_meta"."ulid", "form_meta"."form_name", "form_meta"."form_description", "form_meta"."user_ulid", "form_meta"."price_individual", "form_meta"."price_group_amount", "form_meta"."group_member_count", "form_meta"."group_invite_message", "form_meta"."allow_groups", "form_meta"."require_merch", "form_meta"."withdrawn_funds", "form_meta"."created_at", "form_meta"."updated_at", "form_field_ulid", "form_pages_page_ulid", "form_pages_formUlid", "form_elements"."label", "form_elements"."input_type", "form_fields_index", "form_elements"."description", "form_elements"."placeholder", "form_elements"."options", "form_elements"."accept", "form_elements"."type", "form_elements"."rules", "form_pages_index" from "form_meta" left join (select "form_fields"."ulid" as "form_field_ulid", "form_fields"."page" as "form_pages_page_ulid", "form_pages"."form_ulid" as "form_pages_formUlid", "form_fields"."label", "form_fields"."input_type", "form_fields"."index" as "form_fields_index", "form_fields"."description", "form_fields"."placeholder", "form_fields"."options", "form_fields"."accept", "form_fields"."type", "form_fields"."rules", "form_pages"."index" as "form_pages_index" from "form_pages" inner join "form_fields" on "form_pages"."ulid" = "form_fields"."page") "form_elements" on "form_meta"."ulid" = "form_pages_formUlid");--> statement-breakpoint
 CREATE VIEW "public"."sutit_stores" AS (select "item_ulid", "stores_ulid", "form_ulid", "store_items_index", "name", "stock", "price", "likes", "images", "is_infinite", "stores_index" from (select "store_items"."ulid" as "item_ulid", "stores"."ulid" as "stores_ulid", "stores"."form_ulid", "store_items"."index" as "store_items_index", "store_items"."name", "store_items"."stock", "store_items"."price", "store_items"."likes", "store_items"."images", "store_items"."is_infinite", "stores"."index" as "stores_index" from "stores" inner join "store_items" on "stores"."ulid" = "store_items"."store_ulid") "store_items" where "store_items"."form_ulid" is not null);--> statement-breakpoint
 CREATE VIEW "public"."form_responses_view" AS (select "form_responses"."ulid" as "response_ulid", "form_field_ulid" as "response_field_ulid", "form_elements_ulid" as "response_form_ulid", "form_field_responses"."value", "form_responses"."price_paid", "form_responses"."created_at" from "form_responses" left join (select "form_field_responses"."form_response_ulid" as "form_response_ulid", "fields_ulid" as "form_field_ulid", "form_field_responses"."value", "form_ulid" as "form_elements_ulid" from "form_field_responses" inner join (select "form_pages"."form_ulid" as "form_ulid", "form_fields"."ulid" as "fields_ulid" from "form_pages" inner join "form_fields" on "form_pages"."ulid" = "form_fields"."page") "form_elements" on "form_field_responses"."field_ulid" = "fields_ulid") "form_field_responses" on "form_responses"."ulid" = "form_response_ulid");--> statement-breakpoint
-CREATE VIEW "public"."store_responses_view" AS (select "store_responses"."ulid" as "store_response_ulid", "store_item_ulid" as "store_response_item_ulid", "store_items_ulid" as "store_response_form_ulid", "store_items_responses"."value", "store_responses"."price_paid", "store_responses"."created_at" from "store_responses" left join (select "item_responses"."store_response_ulid" as "store_response_ulid", "item_ulid_view" as "store_item_ulid", "item_responses"."value", "store_form_ulid" as "store_items_ulid" from "item_responses" inner join (select "stores"."form_ulid" as "store_form_ulid", "store_items"."ulid" as "item_ulid_view", "store_items"."likes" from "stores" inner join "store_items" on "stores"."ulid" = "store_items"."store_ulid") "store_items" on "item_responses"."item_ulid" = "item_ulid_view") "store_items_responses" on "store_responses"."ulid" = "store_response_ulid");
+CREATE VIEW "public"."store_responses_view" AS (select "store_responses"."ulid" as "store_response_ulid", "store_item_ulid" as "store_response_item_ulid", "store_items_ulid" as "store_response_form_ulid", "store_responses"."form_response_ulid", "qtty", "store_items_responses"."value", "store_responses"."price_paid", "store_responses"."created_at" from "store_responses" left join (select "item_responses"."store_response_ulid" as "store_response_ulid", "item_ulid_view" as "store_item_ulid", "item_responses"."value", "store_form_ulid" as "store_items_ulid", "item_responses"."qtty" as "qtty" from "item_responses" inner join (select "stores"."form_ulid" as "store_form_ulid", "store_items"."ulid" as "item_ulid_view", "store_items"."likes" from "stores" inner join "store_items" on "stores"."ulid" = "store_items"."store_ulid") "store_items" on "item_responses"."item_ulid" = "item_ulid_view") "store_items_responses" on "store_responses"."ulid" = "store_response_ulid");

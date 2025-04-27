@@ -1,0 +1,1 @@
+CREATE VIEW "public"."sutit_form_pages" AS (select "ulid", "form_ulid", "index", "fields", "created_at", "updated_at" from "form_pages");
