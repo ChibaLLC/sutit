@@ -30,7 +30,7 @@ import { getUserByUlId } from "../../users/utils/queries";
 import { sep } from "node:path";
 import { hasInfiniteStock, parseStock } from ".";
 
-async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }) {
+async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }, update: boolean = false) {
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
 	const updateTimeStamp = new Date();
 	for (const index in data.form.pages) {
@@ -58,25 +58,6 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			}),
 			updatedAt: updateTimeStamp,
 		});
-		// page?.forEach((field) => {
-		// 	if (!field) return log.warn("Field was null in page", page);
-		// 	if (field.fieldUlid && fieldsData.has(field.fieldUlid)) return;
-		// 	const fieldUlid = field.fieldUlid || ulid();
-		// 	fieldsData.set(fieldUlid, {
-		// 		index: field.index!,
-		// 		inputType: field.inputType!,
-		// 		label: field.label || "Unlabelled",
-		// 		pageUlid: pageUlid,
-		// 		accept: field.accept,
-		// 		description: field.description,
-		// 		options: field.options,
-		// 		placeholder: field.placeholder,
-		// 		type: field.type,
-		// 		rules: field.rules,
-		// 		ulid: fieldUlid,
-		// 		updatedAt: updateTimeStamp,
-		// 	});
-		// });
 	}
 
 	if (pagesData.size) {
@@ -85,29 +66,12 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			.values(Array.from(pagesData.values()))
 			.onConflictDoUpdate({
 				target: formPages.ulid,
-				set: updateConflictedColumns(formPages, ["updatedAt"]),
+				set: {
+					fields: sql`excluded.fields`, // Take new fields
+					updatedAt: updateTimeStamp,
+				},
 			});
 	}
-	// if (fieldsData.size) {
-	// 	await db
-	// 		.insert(formFields)
-	// 		.values(Array.from(fieldsData.values()))
-	// 		.onConflictDoUpdate({
-	// 			target: formFields.ulid,
-	// 			set: updateConflictedColumns(formFields, [
-	// 				"accept",
-	// 				"description",
-	// 				"index",
-	// 				"inputType",
-	// 				"type",
-	// 				"label",
-	// 				"options",
-	// 				"placeholder",
-	// 				"rules",
-	// 				"updatedAt",
-	// 			]),
-	// 		});
-	// }
 
 	const storesData: Map<string, Drizzle.Store.insert> = new Map();
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
