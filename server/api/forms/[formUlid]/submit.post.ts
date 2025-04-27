@@ -165,6 +165,7 @@ export default defineEventHandler(async (event) => {
 				const { formMail } = await commit({ price_paid: payment.amount });
 
 				let formData = {
+					formName: data.form.meta.formName,
 					name: data?.phone,
 					phoneNumber: data?.phone,
 					receiptNumber: receiptNumber,

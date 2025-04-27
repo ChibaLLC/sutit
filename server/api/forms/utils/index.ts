@@ -33,7 +33,7 @@ export async function processFormPayments(
 		phone: string;
 		amount: number;
 	},
-	callback?: (payment: Drizzle.Payment.select) => any
+	callback?: (payment: Drizzle.Payment.select) => any,
 ) {
 	details.phone = `254${details.phone.slice(-9)}`;
 	const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
@@ -179,7 +179,7 @@ export function generateReceiptNumber(payment: string | Drizzle.Payment.select) 
 export async function sendPaymentMailReceipt(
 	user: { userUlid?: string; email?: string },
 	amount: number | string,
-	receiptNumber: string
+	receiptNumber: string,
 ) {
 	if (!user.email && !user.userUlid) {
 		throw createError({
@@ -288,7 +288,7 @@ export async function getStats(userUlid: string) {
 export async function deleteUserForm(userUlid: string, formUlid: string) {
 	const form = await getFormByUlid(formUlid);
 	if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
-	
+
 	if (form.meta.userUlid !== userUlid)
 		throw createError({
 			status: 403,
@@ -300,7 +300,7 @@ export async function deleteUserForm(userUlid: string, formUlid: string) {
 export async function sendResponseInvites(
 	invites: Array<{ email: string } | { phone: string }>,
 	links: string[],
-	baseMessage?: string
+	baseMessage?: string,
 ) {
 	if (!baseMessage) baseMessage = "You have been invited to respond the the following form";
 	invites.forEach((invite, idx) => {
@@ -313,7 +313,7 @@ export async function sendResponseInvites(
 					email: (invite as { email: string }).email,
 				},
 				baseMessage + link,
-				"[Action Needed] Information Request"
+				"[Action Needed] Information Request",
 			);
 		}
 	});
