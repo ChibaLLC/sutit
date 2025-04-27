@@ -565,8 +565,8 @@ export async function getAllFormPayments(userUlid: string) {
 	return db
 		.select()
 		.from(sutitForms)
-		.where(eq(sutitForms.form_meta.userUlid, userUlid))
-		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.form_meta.ulid));
+		.where(eq(sutitForms.userUlid, userUlid))
+		.innerJoin(formPayments, eq(formPayments.formUlid, sutitForms.ulid));
 }
 
 export async function getAllFormPaymentsSum(userUlid: string) {
