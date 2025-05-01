@@ -55,7 +55,7 @@ export async function constructExcel(
 	rows.forEach((row, rowIndex) => {
 		let values = [];
 		fields.forEach((field) => {
-			let rowValue = row.find((r) => r.fieldUlid == field.fieldUlid);
+			let rowValue = row.find((r) => r.field.ulid == field.ulid);
 			values.push(rowValue ? (rowValue.value ?? "") : "");
 		});
 		if (_hasPayment) {

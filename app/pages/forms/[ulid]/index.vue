@@ -64,6 +64,9 @@ async function processForm() {
 }
 
 let completedForm: Form | undefined = undefined;
+
+const convertIntoArray = () => {};
+
 async function submit() {
 	if (loading.value) return window.alertInfo("Please wait for the previous submission to be processed");
 	try {
@@ -76,15 +79,7 @@ async function submit() {
 			body: {
 				form: {
 					meta: data.value?.meta,
-					pages: Object.entries(data.value?.pages || {}).reduce((acc, [index, curr]) => {
-						curr.forEach((element) => {
-							const key = element.fieldUlid;
-							if (!key) return window.alertError("An unknown error occurred");
-							// @ts-expect-error
-							acc[key] = element.value || null;
-						});
-						return acc;
-					}, {}),
+					pages: Object.values(data.value?.pages || {}).flat(),
 					stores: Object.entries(data.value?.stores || {}).reduce((acc, [index, store]) => {
 						store.forEach((item) => {
 							if (!item.carted) return;

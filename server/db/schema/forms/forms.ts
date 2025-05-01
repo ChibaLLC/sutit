@@ -13,7 +13,7 @@ import {
 import { ulid } from "ulid";
 import { users } from "../users";
 import { storeItems, stores } from "./stores";
-import { eq, sql, isNotNull } from "drizzle-orm";
+import { eq, sql, isNotNull, relations } from "drizzle-orm";
 
 export const formMeta = pgTable("form_meta", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
@@ -42,6 +42,7 @@ export const formPages = pgTable("form_pages", {
 		onDelete: "cascade",
 	}),
 	index: varchar("index", { length: 255 }).notNull(),
+	fields: jsonb("fields").notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at")
 		.defaultNow()
@@ -49,26 +50,26 @@ export const formPages = pgTable("form_pages", {
 		.notNull(),
 });
 
-export const formFields = pgTable("form_fields", {
-	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
-	label: varchar("label", { length: 255 }).notNull(),
-	inputType: varchar("input_type", { length: 40 }).notNull(),
-	index: integer("index").notNull(),
-	description: text("description"),
-	placeholder: varchar("placeholder", { length: 255 }),
-	options: jsonb("options"),
-	accept: varchar("accept", { length: 255 }),
-	type: varchar("type"),
-	rules: jsonb("rules"),
-	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
-		onDelete: "cascade",
-	}),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at")
-		.defaultNow()
-		.$onUpdate(() => new Date())
-		.notNull(),
-});
+// export const formFields = pgTable("form_fields", {
+// 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
+// 	label: varchar("label", { length: 255 }).notNull(),
+// 	inputType: varchar("input_type", { length: 40 }).notNull(),
+// 	index: integer("index").notNull(),
+// 	description: text("description"),
+// 	placeholder: varchar("placeholder", { length: 255 }),
+// 	options: jsonb("options"),
+// 	accept: varchar("accept", { length: 255 }),
+// 	type: varchar("type"),
+// 	rules: jsonb("rules"),
+// 	pageUlid: varchar("page", { length: 255 }).references(() => formPages.ulid, {
+// 		onDelete: "cascade",
+// 	}),
+// 	createdAt: timestamp("created_at").defaultNow().notNull(),
+// 	updatedAt: timestamp("updated_at")
+// 		.defaultNow()
+// 		.$onUpdate(() => new Date())
+// 		.notNull(),
+// });
 
 export type PhoneInvite = { phone: string };
 export type EmailInvite = { email: string };
@@ -84,31 +85,31 @@ export const formGroups = pgTable(
 	},
 	(table) => ({
 		uniqueGroupNameAndFormUlid: unique().on(table.groupName, table.formUlid).nullsNotDistinct(),
-	})
+	}),
 );
 
 const qb = new QueryBuilder();
-const form_elements = qb
-	.select({
-		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid") as unknown as typeof formFields.ulid,
-		pageUlid: sql<string>`${formFields.pageUlid}`.as(
-			"form_pages_page_ulid"
-		) as unknown as typeof formFields.pageUlid,
-		formUlid: sql<string>`${formPages.formUlid}`.as("form_pages_formUlid") as unknown as typeof formPages.index,
-		label: formFields.label,
-		inputType: formFields.inputType,
-		index: sql<number>`${formFields.index}`.as("form_fields_index") as unknown as typeof formFields.index,
-		description: formFields.description,
-		placeholder: formFields.placeholder,
-		options: formFields.options,
-		accept: formFields.accept,
-		type: formFields.type,
-		rules: formFields.rules,
-		page_index: sql<string>`${formPages.index}`.as("form_pages_index") as unknown as typeof formPages.index,
-	})
-	.from(formPages)
-	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
-	.as("form_elements");
+// const form_elements = qb
+// 	.select({
+// 		fieldUlid: sql<string>`${formFields.ulid}`.as("form_field_ulid") as unknown as typeof formFields.ulid,
+// 		pageUlid: sql<string>`${formFields.pageUlid}`.as(
+// 			"form_pages_page_ulid",
+// 		) as unknown as typeof formFields.pageUlid,
+// 		formUlid: sql<string>`${formPages.formUlid}`.as("form_pages_formUlid") as unknown as typeof formPages.index,
+// 		label: formFields.label,
+// 		inputType: formFields.inputType,
+// 		index: sql<number>`${formFields.index}`.as("form_fields_index") as unknown as typeof formFields.index,
+// 		description: formFields.description,
+// 		placeholder: formFields.placeholder,
+// 		options: formFields.options,
+// 		accept: formFields.accept,
+// 		type: formFields.type,
+// 		rules: formFields.rules,
+// 		page_index: sql<string>`${formPages.index}`.as("form_pages_index") as unknown as typeof formPages.index,
+// 	})
+// 	.from(formPages)
+// 	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
+// 	.as("form_elements");
 const store_items = qb
 	.select({
 		itemUlid: sql<string>`${storeItems.ulid}`.as("item_ulid") as unknown as typeof storeItems.ulid,
@@ -127,10 +128,9 @@ const store_items = qb
 	.innerJoin(storeItems, eq(stores.ulid, storeItems.storeUlid))
 	.as("store_items");
 
-export const sutitForms = pgView("sutit_forms").as(
-	qb.select().from(formMeta).leftJoin(form_elements, eq(formMeta.ulid, form_elements.formUlid))
-);
+export const sutitForms = pgView("sutit_forms").as(qb.select().from(formMeta));
+export const sutitFormPages = pgView("sutit_form_pages").as(qb.select().from(formPages));
 
 export const sutitStores = pgView("sutit_stores").as(
-	qb.select().from(store_items).where(isNotNull(store_items.formUlid))
+	qb.select().from(store_items).where(isNotNull(store_items.formUlid)),
 );

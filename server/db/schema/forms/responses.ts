@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
-import { pgTable, timestamp, varchar, text, pgView, QueryBuilder, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar, text, pgView, QueryBuilder, integer, boolean, jsonb } from "drizzle-orm/pg-core";
 import { ulid } from "ulid";
-import { formFields, formGroups, formPages } from "./forms";
+import { formGroups, formPages } from "./forms";
 import { storeItems, stores as _stores } from "./stores";
 
 export const formResponses = pgTable("form_responses", {
@@ -12,9 +12,9 @@ export const formResponses = pgTable("form_responses", {
 
 export const formFieldResponses = pgTable("form_field_responses", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
-	fieldUlid: varchar("field_ulid", { length: 255 })
-		.notNull()
-		.references(() => formFields.ulid, { onDelete: "cascade" }),
+	field: jsonb("field").notNull(),
+	fieldUlid: varchar("field_ulid", { length: 255 }), // To be removed in future
+	formUlid: varchar("form_ulid").notNull(),
 	value: text("value"),
 	formResponseUlid: varchar("form_response_ulid")
 		.references(() => formResponses.ulid, { onDelete: "cascade" })
@@ -59,14 +59,17 @@ export const itemResponses = pgTable("item_responses", {
 
 const qb = new QueryBuilder();
 
-const form_elements = qb
-	.select({
-		formUlid: sql<string>`${formPages.formUlid}`.as("form_ulid"),
-		fieldUlid: sql<string>`${formFields.ulid}`.as("fields_ulid"),
-	})
-	.from(formPages)
-	.innerJoin(formFields, eq(formPages.ulid, formFields.pageUlid))
-	.as("form_elements");
+// const form_elements = qb
+// 	.select({
+// 		formUlid: sql<string>`${formPages.formUlid}`.as("form_ulid"),
+// 		fieldUlid: sql<string>`(field ->> 'ulid')`.as("fields_ulid"),
+// 	})
+// 	.from(formPages)
+// 	// Unnest JSONB array of fields
+// 	// lateral join expands each field in the array into its own row
+// 	// so we alias it as "field"
+// 	.innerJoin(sql`jsonb_array_elements(${formPages.fields}) AS field`, sql`true`)
+// 	.as("form_elements");
 
 const store_items = qb
 	.select({
@@ -81,12 +84,11 @@ const store_items = qb
 const form_field_responses = qb
 	.select({
 		formResponseUlid: sql<string>`${formFieldResponses.formResponseUlid}`.as("form_response_ulid"),
-		fieldUlid: sql<string>`${form_elements.fieldUlid}`.as("form_field_ulid"),
+		field: formFieldResponses.field,
 		value: formFieldResponses.value,
-		formUlid: sql<string>`${form_elements.formUlid}`.as("form_elements_ulid"),
+		formUlid: sql<string>`${formFieldResponses.formUlid}`.as("form_ulid"),
 	})
 	.from(formFieldResponses)
-	.innerJoin(form_elements, eq(formFieldResponses.fieldUlid, form_elements.fieldUlid))
 	.as("form_field_responses");
 
 const store_items_responses = qb
@@ -103,12 +105,13 @@ const store_items_responses = qb
 
 export const formResponsesView = pgView("form_responses_view").as(
 	qb
+		.with(form_field_responses)
 		.select({
 			responseUlid: sql<string>`${formResponses.ulid}`.as("response_ulid"),
-			fieldUlid: sql<string>`${form_field_responses.fieldUlid}`.as("response_field_ulid"),
 			formUlid: sql<string>`${form_field_responses.formUlid}`.as("response_form_ulid"),
 			value: form_field_responses.value,
 			pricePaid: formResponses.pricePaid,
+			// field: form_field_responses.field,
 			date: formResponses.createdAt,
 		})
 		.from(formResponses)

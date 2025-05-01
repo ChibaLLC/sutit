@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
 
 	if (callback.ResultCode === 0) {
 		const transactionCode = callback.CallbackMetadata.Item.find(
-			(item) => item.Name === "MpesaReceiptNumber"
+			(item) => item.Name === "MpesaReceiptNumber",
 		)?.Value;
 		const amount = callback.CallbackMetadata.Item.find((item) => item.Name === "Amount")?.Value;
 		const date = callback.CallbackMetadata.Item.find((item) => item.Name === "TransactionDate")?.Value;
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
 		}
 
 		const payment = await insertPayment(+amount, transactionCode.toString(), phoneNumber.toString()).catch(
-			(e) => e as Error
+			(e) => e as Error,
 		);
 		if (!payment || payment instanceof Error) {
 			log.error(`Failed to insert payment: ${payment?.message} \t code: ${transactionCode}`);
@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
 	global.channels!.getChannel(channelName)?.terminate();
 	log.success(
 		"Payment processed successfully Ref: " +
-			callback.CallbackMetadata.Item.find((item) => item.Name === "MpesaReceiptNumber")?.Value
+			callback.CallbackMetadata.Item.find((item) => item.Name === "MpesaReceiptNumber")?.Value,
 	);
 	return "OK";
 });
