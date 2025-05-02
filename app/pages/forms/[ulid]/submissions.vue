@@ -151,15 +151,15 @@ interface CardData {
 	description?: string;
 	icon: string;
 }
-const cardData = ref<CardData[]>([]);
+const cardData = reactive<CardData[]>([]);
 // Add Card Data
-cardData.value.push({
+cardData.push({
 	count: rows.length,
 	title: `Total Submissions`,
 	icon: `mdi:book`,
 });
 if (hasPay) {
-	cardData.value.push({
+	cardData.push({
 		count: total.value ?? 0,
 		title: "Total Cash",
 		icon: "mdi:dollar",

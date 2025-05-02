@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
 					inputType: z.string().nullable(),
 					description: z.string().nullable(),
 					placeholder: z.string().nullable(),
-					value: z.string(),
+					value: z.any(),
 				}),
 			),
 			stores: z.record(
