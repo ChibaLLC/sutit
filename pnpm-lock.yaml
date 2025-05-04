@@ -69,6 +69,9 @@ importers:
         specifier: ^3.24.3
         version: 3.24.3
     devDependencies:
+      '@iconify-json/mdi':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@nuxt/icon':
         specifier: 1.11.0
         version: 1.11.0(magicast@0.3.5)(vite@6.3.4(@types/node@22.15.3)(jiti@2.4.2)(sass@1.87.0)(terser@5.39.0)(tsx@4.19.3)(yaml@2.7.1))(vue@3.5.13(typescript@5.8.3))
@@ -858,6 +861,9 @@ packages:
 
   '@fastify/busboy@3.1.1':
     resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
+
+  '@iconify-json/mdi@1.2.3':
+    resolution: {integrity: sha512-O3cLwbDOK7NNDf2ihaQOH5F9JglnulNDFV7WprU2dSoZu3h3cWH//h74uQAB87brHmvFVxIOkuBX2sZSzYhScg==}
 
   '@iconify/collections@1.0.544':
     resolution: {integrity: sha512-MXrA0zz0oGbFdTl7N5lrufjbE/Qk2oLI8zh+yHjjRQlh+Q7Mt8ifohu9fnpsmZhF23kJ70cV8sGIvlOqzX5cRw==}
@@ -5725,6 +5731,10 @@ snapshots:
       lodash.uniq: 4.5.0
 
   '@fastify/busboy@3.1.1': {}
+
+  '@iconify-json/mdi@1.2.3':
+    dependencies:
+      '@iconify/types': 2.0.0
 
   '@iconify/collections@1.0.544':
     dependencies:
