@@ -186,6 +186,18 @@ function showStoreResponses(responseUlid: string) {
 	purchaseResponses.value = getFormStoreResponses(responseUlid, store_response);
 	showPurchasesModal.value = true;
 }
+
+const groupedResponses = computed(() => groupByResponseId(form_responses));
+
+const getFieldValue = (response: any, fieldlabel: string) => {
+	let res = response.find(
+		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
+	);
+	if (res.value == "[object Object]") {
+		return Object.values(res.field.value)[0] || "";
+	}
+	return res.value;
+};
 </script>
 
 <template>
@@ -264,7 +276,7 @@ function showStoreResponses(responseUlid: string) {
 					</thead>
 					<tbody class="divide-y divide-slate-200 text-white border-b">
 						<tr
-							v-for="(row, index) in groupByResponseId(form_responses)"
+							v-for="(row, index) in groupedResponses"
 							:key="index"
 							class="text-sm text-slate-700 cursor-pointer hover:bg-slate-200"
 						>
@@ -274,7 +286,7 @@ function showStoreResponses(responseUlid: string) {
 								<div
 									v-html="
 										field.ulid
-											? `<div class='text-ellipsis self-start hover:max-h-fit'>${row.find((r) => r.field.ulid == field.ulid)?.value}</div>`
+											? `<div class='text-ellipsis self-start hover:max-h-fit'>${getFieldValue(row, field.label)}</div>`
 											: ''
 									"
 									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"

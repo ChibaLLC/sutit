@@ -369,7 +369,12 @@ export async function insertData(
 	const formfieldResponseInsertList: Drizzle.FormFieldResponse.insert[] = [];
 	data.pages.forEach((field, key) => {
 		formfieldResponseInsertList.push({
-			value: field.value,
+			value:
+				typeof field.value == "string"
+					? field.value
+					: typeof field.value == "object" && field.value != null
+						? Object.values(field.value)[0]
+						: "",
 			field: field,
 			fieldUlid: field.ulid,
 			formResponseUlid: formResponse.ulid,
