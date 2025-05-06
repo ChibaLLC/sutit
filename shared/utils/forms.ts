@@ -29,6 +29,7 @@ export function collectFields(form: Awaited<ReturnType<typeof getFormResponses>>
 			});
 		}
 	}
+	console.log(map);
 
 	return map;
 }

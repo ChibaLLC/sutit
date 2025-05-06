@@ -5,7 +5,15 @@ import excel from "exceljs";
 function replaceSpecialChars(input: string): string {
 	return input.replace(/[*?:\\/\[\]]/g, "_");
 }
-
+const getFieldValue = (response: any, fieldlabel: string) => {
+	let res = response.find(
+		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
+	);
+	if (res.value == "[object Object]") {
+		return Object.values(res.field.value)[0] || "";
+	}
+	return res.value;
+};
 export async function constructExcel(
 	{ form, form_responses, group_responses, store_response }: Awaited<ReturnType<typeof getFormResponses>>,
 	user: Drizzle.User.select,
@@ -55,8 +63,8 @@ export async function constructExcel(
 	rows.forEach((row, rowIndex) => {
 		let values = [];
 		fields.forEach((field) => {
-			let rowValue = row.find((r) => r.field.ulid == field.ulid);
-			values.push(rowValue ? (rowValue.value ?? "") : "");
+			let rowValue = getFieldValue(row, field.label);
+			values.push(rowValue);
 		});
 		if (_hasPayment) {
 			values.push(bubblePrice(group_responses, row.at(0)));
@@ -386,4 +394,4 @@ const findUserResponseName = (
 };
 
 // Posible Input Names(Labels) To Find User Details
-const possibleInputNames = ["email", "name", "firstname", "lastname", "phonenumber"];
+const possibleInputNames = ["email", "name", "firstname", "lastname", "phonenumber", "fullname"];
