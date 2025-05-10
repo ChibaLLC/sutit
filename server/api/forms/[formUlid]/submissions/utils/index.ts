@@ -9,6 +9,7 @@ const getFieldValue = (response: any, fieldlabel: string) => {
 	let res = response.find(
 		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
 	);
+	if (!res) return "";
 	if (res.value == "[object Object]") {
 		return Object.values(res.field.value)[0] || "";
 	}

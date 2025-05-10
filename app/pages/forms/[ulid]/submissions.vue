@@ -158,13 +158,13 @@ cardData.push({
 	title: `Total Submissions`,
 	icon: `mdi:book`,
 });
-if (hasPay) {
-	cardData.push({
-		count: total.value ?? 0,
-		title: "Total Cash",
-		icon: "mdi:dollar",
-	});
-}
+// if (hasPay) {
+// 	cardData.push({
+// 		count: total.value ?? 0,
+// 		title: "Total Cash",
+// 		icon: "mdi:dollar",
+// 	});
+// }
 
 // Add interface for purchase response
 interface PurchaseResponse {
@@ -193,117 +193,148 @@ const getFieldValue = (response: any, fieldlabel: string) => {
 	let res = response.find(
 		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
 	);
+	if (!res) return "";
 	if (res.value == "[object Object]") {
 		return Object.values(res.field.value)[0] || "";
 	}
 	return res.value;
 };
+// Add search functionality
+const searchQuery = ref("");
+
+// Filter responses based on search query
+const filteredResponses = computed(() => {
+	if (!searchQuery.value.trim()) {
+		return groupedResponses;
+	}
+
+	const query = searchQuery.value.toLowerCase();
+	return groupedResponses.filter((row) => {
+		// Search through all fields
+		return fields.some(([_, field]) => {
+			if (field.ulid) {
+				const value = getFieldValue(row, field.label);
+				return value && String(value).toLowerCase().includes(query);
+			}
+			return false;
+		});
+	});
+});
+
+// Calculate the colspan for empty state
+const calculateColspan = () => {
+	let count = 1; // Start with 1 for the # column
+	count += fields.length;
+	if (hasPay) count += 1;
+	if (store_response.length > 0) count += 1;
+	return count;
+};
 </script>
 
 <template>
-	<div class="flex min-h-screen w-full">
+	<div class="flex min-h-screen w-full bg-gray-50">
 		<Title>Submissions | {{ form.meta.formName }}</Title>
-		<main class="w-full flex flex-col items-center max-w-[1200px] mx-auto">
-			<div class="mt-4 w-full flex justify-between items-center px-10">
-				<span class="font-bold text-left uppercase" style="font-size: larger">
-					Submissions for {{ form?.meta.formName }}</span
-				>
+		<main class="w-full flex flex-col items-center max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
+			<!-- Header Section -->
+			<div class="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+				<span class="font-bold text-left uppercase text-slate-800 text-xl md:text-2xl">
+					Submissions for {{ form?.meta.formName }}
+				</span>
 
-				<div class="flex gap-1">
+				<!-- Action Buttons -->
+				<div class="flex flex-wrap gap-2">
 					<button
-						class="flex items-center space-x-2 gap-2 px-3 py-1 bg-slate-800 rounded text-white :hover:bg-gray-20 transition-colors hover:bg-slate-500"
+						class="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg text-white hover:bg-slate-600 transition-colors shadow-sm"
 						@click="downloadExcel"
-						:class="{ 'cursor-not-allowed': loadingExcel }"
+						:class="{ 'opacity-75': loadingExcel }"
 						:disabled="loadingExcel"
 					>
-						Excel
+						<span>Excel</span>
 						<Icon v-if="!loadingExcel" name="mdi:file-excel" class="w-4 h-4" />
-						<Icon
-							v-else
-							name="prime:spinner"
-							:class="{ 'animate-spin': loadingExcel }"
-							class="w-full grid place-items-center"
-						/>
+						<Icon v-else name="prime:spinner" class="w-4 h-4 animate-spin" />
 					</button>
 					<button
-						class="flex items-center space-x-2 gap-2 px-3 py-1 bg-slate-900 rounded text-white :hover:bg-gray-20 transition-colors"
 						v-if="hasPay"
+						class="flex items-center gap-2 px-3 py-2 bg-slate-900 rounded-lg text-white hover:bg-slate-700 transition-colors shadow-sm"
 						@click="showCreditMethodsModal = true"
-						:class="{ 'cursor-not-allowed': loadingCheckout }"
+						:class="{ 'opacity-75': loadingCheckout }"
 						:disabled="loadingCheckout"
 					>
-						Credit
+						<span>Credit</span>
 						<Icon v-if="!loadingCheckout" name="mdi:dollar" class="w-4 h-4" />
-
-						<Icon
-							v-else
-							name="prime:spinner"
-							:class="{ 'animate-spin': loadingExcel }"
-							class="w-full grid place-items-center"
-						/>
+						<Icon v-else name="prime:spinner" class="w-4 h-4 animate-spin" />
 					</button>
-					<span class="flex items-center space-x-2 px-3 py-1 rounded text-[#262626]" v-if="hasPay">
-						<span class="text-[#262626]">Total:</span>
-						<span class="text-[#262626] font-bold font-mono">KES {{ total }}</span>
-					</span>
+					<div
+						v-if="hasPay"
+						class="flex items-center px-3 py-2 bg-white rounded-lg shadow-sm border border-slate-200"
+					>
+						<span class="text-slate-600 mr-2">Total:</span>
+						<span class="text-slate-900 font-bold font-mono">KES {{ total }}</span>
+					</div>
 				</div>
 			</div>
 
-			<div class="w-full mt-2 px-10 relative overflow-x-auto rounded">
-				<div class="grid grid-cols-12 gap-4 mb-3">
-					<CardSummaryCard
-						v-for="dt in cardData"
-						:key="dt.title"
-						class="col-span-4"
-						:count="dt.count"
-						:title="dt.title"
-						:description="dt.description"
-						:icon="dt.icon"
-					/>
-				</div>
-				<table
-					class="w-full text-sm text-left rtl:text-right bg-gradient-to-br from-white to-slate-100 text-[#262626] rounded"
-				>
-					<thead class="text-xs text-slate-900 uppercase bg-gray-5 rounded-t">
-						<tr class="text-left border-b bg-slate-200 border-slate-200">
-							<th class="px-6 py-4">#</th>
-							<th v-for="[_, field] of fields" class="px-6 py-3">
-								{{ field.label }}
-							</th>
-							<th v-if="hasPay" class="px-6 py-3">Payment</th>
-							<th v-if="store_response.length > 0" class="px-6 py-3">Store</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-slate-200 text-white border-b">
-						<tr
-							v-for="(row, index) in groupedResponses"
-							:key="index"
-							class="text-sm text-slate-700 cursor-pointer hover:bg-slate-200"
-						>
-							<td class="px-6 py-4">{{ index + 1 }}</td>
+			<!-- Summary Cards -->
+			<div class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+				<CardSummaryCard
+					v-for="dt in cardData"
+					:key="dt.title"
+					:count="dt.count"
+					:title="dt.title"
+					:description="dt.description"
+					:icon="dt.icon"
+					class="shadow-sm"
+				/>
+			</div>
 
-							<td v-for="[_, field] in fields" class="max-w-[30px]">
-								<div
-									v-html="
-										field.ulid
-											? `<div class='text-ellipsis self-start hover:max-h-fit'>${getFieldValue(row, field.label)}</div>`
-											: ''
-									"
-									class="w-full min-h-14 max-h-14 overflow-auto no-scrollbar h-full flex items-center px-4 py-2"
-								></div>
-							</td>
-							<td v-if="hasPay" class="px-6 py-4">KES {{ bubblePrice(group_responses, row.at(0)) }}</td>
-							<td v-if="row[index]?.responseUlid && store_response.length > 0" class="px-6 py-4">
-								<button
-									@click="showStoreResponses(row[index].responseUlid)"
-									class="px-3 py-1 bg-green-600 rounded text-white hover:bg-green-500 transition-colors"
-								>
-									Show Purchases
-								</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+			<!-- Submissions Table -->
+			<div class="w-full relative overflow-x-auto rounded-lg shadow-sm border border-slate-200">
+				<div class="max-h-[70vh] overflow-auto">
+					<table class="w-full text-sm text-left bg-white text-slate-700">
+						<thead class="text-xs text-slate-700 uppercase bg-slate-100 sticky top-0 z-10">
+							<tr>
+								<th class="px-4 py-3">#</th>
+								<th v-for="[_, field] of fields" :key="field.label" class="px-4 py-3 whitespace-nowrap">
+									{{ field.label }}
+								</th>
+								<th v-if="hasPay" class="px-4 py-3">Payment</th>
+								<th v-if="store_response.length > 0" class="px-4 py-3">Store</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-slate-200">
+							<tr
+								v-for="(row, index) in groupedResponses"
+								:key="index"
+								class="hover:bg-slate-50 transition-colors"
+							>
+								<td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
+								<td v-for="[_, field] in fields" :key="`${index}-${field.label}`" class="px-4 py-3">
+									<div v-if="field.ulid" class="max-w-xs overflow-hidden text-ellipsis">
+										<div class="hover:overflow-visible hover:whitespace-normal whitespace-nowrap">
+											{{ getFieldValue(row, field.label) }}
+										</div>
+									</div>
+								</td>
+								<td v-if="hasPay" class="px-4 py-3 font-mono">
+									KES {{ bubblePrice(group_responses, row.at(0)) }}
+								</td>
+								<td v-if="row[index]?.responseUlid && store_response.length > 0" class="px-4 py-3">
+									<button
+										@click="showStoreResponses(row[index].responseUlid)"
+										class="px-3 py-1.5 bg-green-600 rounded-md text-white hover:bg-green-500 transition-colors text-xs font-medium"
+									>
+										Show Purchases
+									</button>
+								</td>
+							</tr>
+							<!-- <tr v-if="filteredResponses.length === 0"> -->
+							<!-- 	<td :colspan="calculateColspan()" class="px-4 py-8 text-center text-slate-500"> -->
+							<!-- 		No matching submissions found -->
+							<!-- 	</td> -->
+							<!-- </tr> -->
+						</tbody>
+					</table>
+				</div>
 			</div>
 
 			<Modal
