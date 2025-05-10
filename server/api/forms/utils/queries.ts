@@ -32,30 +32,42 @@ import { hasInfiniteStock, parseStock } from ".";
 
 async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }, update: boolean = false) {
 	const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
+	const fieldsData: Map<string, any> = new Map(); // Track all fields for deletion
 	const updateTimeStamp = new Date();
+
 	for (const index in data.form.pages) {
 		const page = data.form.pages[index] as DbPage & Page;
-		const pageUlid = page.at(0)?.pageUlid || ulid();
+		// Use existing pageUlid if available, otherwise generate a new one
+		const pageUlid = page[0]?.pageUlid || ulid();
+
+		const fields = page.map((field) => {
+			// Use existing field ULID if available
+			const fieldUlid = field.ulid || field.fieldUlid || ulid();
+
+			// Store field ULID to track for deletion later
+			fieldsData.set(fieldUlid, true);
+
+			return {
+				index: field.index,
+				inputType: field.inputType,
+				label: field.label || "Unlabelled",
+				pageUlid: pageUlid,
+				accept: field.accept,
+				description: field.description,
+				options: field.options,
+				placeholder: field.placeholder,
+				type: field.type,
+				rules: field.rules,
+				ulid: fieldUlid,
+				updatedAt: updateTimeStamp,
+			};
+		});
+
 		pagesData.set(pageUlid, {
 			formUlid: data.ulid,
-			index: index,
+			index: parseInt(index),
 			ulid: pageUlid,
-			fields: page.map((field) => {
-				return {
-					index: field.index!,
-					inputType: field.inputType!,
-					label: field.label || "Unlabelled",
-					pageUlid: pageUlid,
-					accept: field.accept,
-					description: field.description,
-					options: field.options,
-					placeholder: field.placeholder,
-					type: field.type,
-					rules: field.rules,
-					ulid: field.fieldUlid || ulid(),
-					updatedAt: updateTimeStamp,
-				};
-			}),
+			fields: fields,
 			updatedAt: updateTimeStamp,
 		});
 	}
@@ -68,26 +80,31 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				target: formPages.ulid,
 				set: {
 					fields: sql`excluded.fields`, // Take new fields
+					index: sql`excluded.index`,
 					updatedAt: updateTimeStamp,
 				},
 			});
 	}
 
+	// Store processing (unchanged)
 	const storesData: Map<string, Drizzle.Store.insert> = new Map();
 	const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
 
 	for (const key in data.form.stores) {
 		const store = data.form.stores[key] as unknown as DbStore & Store;
-		const storeUlid = store?.at(0)?.storeUlid || ulid();
+		const storeUlid = store?.[0]?.storeUlid || ulid();
+
 		storesData.set(storeUlid, {
 			formUlid: data.ulid,
-			index: key,
+			index: parseInt(key),
 			ulid: storeUlid,
 			updatedAt: updateTimeStamp,
 		});
+
 		store?.forEach((item) => {
 			if (item.itemUlid && itemsData.has(item.itemUlid)) return;
 			const itemUlid = item.itemUlid || ulid();
+
 			itemsData.set(itemUlid, {
 				name: item.name,
 				price: item.price,
@@ -108,9 +125,10 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			.values(Array.from(storesData.values()))
 			.onConflictDoUpdate({
 				target: stores.ulid,
-				set: updateConflictedColumns(stores, ["updatedAt"]),
+				set: updateConflictedColumns(stores, ["updatedAt", "index"]),
 			});
 	}
+
 	if (itemsData.size) {
 		await db
 			.insert(storeItems)
@@ -129,6 +147,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			});
 	}
 
+	// Clean up outdated items
 	await db
 		.delete(storeItems)
 		.where(
@@ -138,6 +157,8 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 				inArray(storeItems.storeUlid, Array.from(storesData.keys())),
 			),
 		);
+
+	// Clean up outdated stores
 	await db
 		.delete(stores)
 		.where(
@@ -148,15 +169,7 @@ async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: str
 			),
 		);
 
-	// await db
-	// 	.delete(formFields)
-	// 	.where(
-	// 		and(
-	// 			lt(formFields.updatedAt, updateTimeStamp),
-	// 			inArray(formFields.pageUlid, Array.from(pagesData.keys())),
-	// 			notInArray(formFields.ulid, Array.from(fieldsData.keys())),
-	// 		),
-	// 	);
+	// Clean up outdated pages
 	await db
 		.delete(formPages)
 		.where(
@@ -187,7 +200,7 @@ export async function createForm(data: z.infer<typeof formBodyData>, { user }: A
 	).at(0);
 
 	if (!form) throw new Error("Unable to create form");
-	insertFormFields({ ...data, ulid: form.ulid });
+	await insertFormFields({ ...data, ulid: form.ulid });
 
 	return form;
 }
@@ -202,13 +215,15 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 		});
 	}
 
-	db.update(formMeta)
+	// Update form metadata
+	await db
+		.update(formMeta)
 		.set({
 			allowGroups: data.allowGroups,
 			group_invite_message: data.payment.group_message,
 			group_member_count: data.payment.group_limit,
-			price_group: data.payment.group_amount || undefined,
-			price_individual: data.payment.amount || undefined,
+			price_group: data.payment.group_amount || 0,
+			price_individual: data.payment.amount || 0,
 			formName: data.name,
 			formDescription: data.description,
 			userUlid: user.ulid,
@@ -218,7 +233,8 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 		.where(eq(formMeta.ulid, formUlid))
 		.execute();
 
-	insertFormFields({ ...data, ulid: formUlid });
+	// Update form fields
+	await insertFormFields({ ...data, ulid: formUlid }, true);
 	return form.meta;
 }
 
