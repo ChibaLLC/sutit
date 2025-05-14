@@ -7,7 +7,7 @@ import {
 	formResponsesView,
 	storeResponsesView,
 } from "~~/server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getFormByUlid } from "../../../utils/queries";
 
 export async function getFormResponses(formUlId: string) {
@@ -44,10 +44,29 @@ export async function getFormResponses(formUlId: string) {
 			invites: formGroups.invites,
 			paymentUlid: formGroups.paymentUlid,
 			formGroupUlid: formGroups.ulid,
+			// Adding response information
+			responseCreatedAt: formResponses.createdAt,
+			responsePricePaid: formResponses.pricePaid,
+			// We'll get the field responses as an array of related records
+			fieldResponses: sql<any>`
+      (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'ulid', ffr.ulid,
+            'field', ffr.field,
+            'fieldUlid', ffr.field_ulid,
+            'value', ffr.value
+          )
+        )
+        FROM ${formFieldResponses} AS ffr
+        WHERE ffr.form_response_ulid = ${formGroupResponses.responseUlid}
+      )
+    `,
 		})
 		.from(formGroupResponses)
 		.where(eq(formGroupResponses.formUlid, formUlId))
-		.innerJoin(formGroups, eq(formGroupResponses.formGroupUlid, formGroups.ulid));
+		.innerJoin(formGroups, eq(formGroupResponses.formGroupUlid, formGroups.ulid))
+		.leftJoin(formResponses, eq(formGroupResponses.responseUlid, formResponses.ulid));
 
 	const [form_responses, store_response, group_responses] = await Promise.all([
 		form_responses_promise,
