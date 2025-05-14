@@ -189,9 +189,6 @@ function showStoreResponses(responseUlid: string) {
 
 const groupedResponses = computed(() => groupByResponseId(form_responses));
 const groupedResponsesGroup = computed(() => groupByResponseIdAsObjects(form_responses, group_responses));
-console.log(groupedResponsesGroup.value);
-console.log(fields);
-
 const getFieldValue = (response: any[], fieldlabel: string) => {
 	let res = response.find(
 		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
@@ -324,7 +321,7 @@ const calculateColspan = () => {
 									{{ row.groupName }}
 								</td>
 								<td v-if="hasPay" class="px-4 py-3 font-mono">
-									KES {{ bubblePrice(group_responses, row.at(0)) }}
+									KES {{ bubblePrice(group_responses, row.responses.at(0)) }}
 								</td>
 								<td v-if="row.responseUlid && store_response.length > 0" class="px-4 py-3">
 									<button

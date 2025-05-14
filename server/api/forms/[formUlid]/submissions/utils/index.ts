@@ -72,7 +72,7 @@ export async function constructExcel(
 			values.push(row.groupName);
 		}
 		if (_hasPayment) {
-			values.push(bubblePrice(group_responses, row.at(0)));
+			values.push(bubblePrice(group_responses, row.responses.at(0)));
 		}
 
 		const excelRow = worksheet.addRow(values);
@@ -326,7 +326,7 @@ export async function constructExcel(
 
 	if (_hasPayment) {
 		const totalRevenue = rows.reduce((sum, row) => {
-			return sum + Number(bubblePrice(group_responses, row.at(0)) || 0);
+			return sum + Number(bubblePrice(group_responses, row.responses.at(0)) || 0);
 		}, 0);
 
 		summarySheet.addRow(["Total Form Revenue", totalRevenue]);
