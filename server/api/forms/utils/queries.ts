@@ -17,6 +17,7 @@ import {
 	storeResponses,
 	sutitStores,
 	sutitFormPages,
+	formGroupResponses,
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -454,6 +455,15 @@ export async function insertData(
 		});
 
 	return formResponse;
+}
+
+export async function insertGroupResponse(formUlid: string, responseUlid: string, formGroupUlid: string) {
+	const groupResponse = await db.insert(formGroupResponses).values({
+		formUlid: formUlid,
+		responseUlid: responseUlid,
+		formGroupUlid: formGroupUlid,
+	});
+	return groupResponse;
 }
 
 export async function getFormsByUser(userUlid: string) {

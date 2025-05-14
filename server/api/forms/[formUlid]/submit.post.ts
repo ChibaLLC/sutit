@@ -1,4 +1,10 @@
-import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividualPayment } from "../utils/queries";
+import {
+	getInviteFormGroup,
+	insertData,
+	insertGroupResponse,
+	invalidateFormGroupLink,
+	needsIndividualPayment,
+} from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import {
 	generateReceiptNumber,
@@ -112,7 +118,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const [details] = await useAuth(event, false);
-	const commit = async (options: { invitee?: PhoneInvite | EmailInvite; price_paid?: number }) => {
+	const commit = async (options: { invitee?: PhoneInvite | EmailInvite; price_paid?: number; group?: object }) => {
 		if (!data) return {};
 		let formMail = (options.invitee as { email: string })?.email || details?.user.email;
 		if (!formMail) {
@@ -125,6 +131,9 @@ export default defineEventHandler(async (event) => {
 			}
 		}
 		const formResponse = await insertData(formUlid, data.form, options.price_paid);
+		if (options.invitee && options.group) {
+			await insertGroupResponse(formUlid, formResponse.ulid, options.group.ulid);
+		}
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
@@ -179,7 +188,8 @@ export default defineEventHandler(async (event) => {
 			},
 		);
 	} else if (needsPay && data.token) {
-		const { invite } = await getInviteFormGroup(formUlid, data.token);
+		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
+
 		if (!invite) {
 			throw createError({
 				statusCode: 403,
@@ -193,8 +203,27 @@ export default defineEventHandler(async (event) => {
 			});
 		}
 
-		const result = await commit({ invitee: invite });
+		const result = await commit({ invitee: invite, group: group });
 		let t = await invalidateFormGroupLink(formUlid, invite.token);
+		return result;
+	} else if (!needsPay && data.token) {
+		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
+
+		if (!invite) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token is not valid",
+			});
+		}
+		if (!invite.isValid) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token has already been used!",
+			});
+		}
+		const result = await commit({ invitee: invite, group: group });
+		let t = await invalidateFormGroupLink(formUlid, invite.token);
+		console.log(t);
 		return result;
 	} else if (!needsPay) {
 		return commit({});
