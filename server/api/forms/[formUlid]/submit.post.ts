@@ -186,9 +186,15 @@ export default defineEventHandler(async (event) => {
 				message: "The provided token is not valid",
 			});
 		}
+		if (!invite.isValid) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token has already been used!",
+			});
+		}
 
 		const result = await commit({ invitee: invite });
-		invalidateFormGroupLink(invite.token, invite.token);
+		let t = await invalidateFormGroupLink(formUlid, invite.token);
 		return result;
 	} else if (!needsPay) {
 		return commit({});

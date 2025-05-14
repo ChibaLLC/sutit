@@ -79,9 +79,9 @@ export default defineEventHandler(async (event) => {
 				sendUserMail(
 					{ email: creator!.email },
 					`Group ${data.group_name} has paid for form ${form.meta.formName} and the payment has been processesed successfully`,
-					`[Payment]: Group ${form.meta.formName}`
+					`[Payment]: Group ${form.meta.formName}`,
 				);
-			}
+			},
 		);
 	} else {
 		const group = await createFormGroup({
