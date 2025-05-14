@@ -101,4 +101,3 @@ useSeoMeta({
 	}
 }
 </style>
-
