@@ -27,9 +27,4 @@ export default defineNuxtConfig({
 	app: {
 		pageTransition: { name: "page", mode: "out-in" },
 	},
-	routeRules: {
-		"/": { prerender: true },
-		"/about": { prerender: true },
-		"/contact": { prerender: true },
-	},
 });
