@@ -109,17 +109,27 @@ export async function constructExcel(
 			{ header: "Group Name", key: "groupName", width: 30 },
 			{ header: "Email / Number", key: "invitee" },
 		];
+		const headerRow = groupWorksheet.getRow(1);
+		headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
+		headerRow.fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "4472C4" }, // Blue header background
+		};
+		headerRow.alignment = { vertical: "middle", horizontal: "center" };
 
 		groupWorksheet.columns = groupInvitesTitles;
 		rows.forEach((group) => {
+			if (!group.invites || group.invites.length === 0) return;
 			group.invites.forEach((invite) => {
 				groupWorksheet.addRow({
 					groupName: group.groupName || "N/A",
-					invitee: invite.email || invite.phoneNumber,
+					invitee: invite.email || invite.phoneNumber || "N/A",
 				});
 			});
 			groupWorksheet.addRow({});
 		});
+		groupWorksheet.views = [{ state: "frozen", xSplit: 0, ySplit: 1 }];
 	}
 
 	if (store_response && store_response.length > 0) {
