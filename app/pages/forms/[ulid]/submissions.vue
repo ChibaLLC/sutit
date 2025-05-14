@@ -188,11 +188,15 @@ function showStoreResponses(responseUlid: string) {
 }
 
 const groupedResponses = computed(() => groupByResponseId(form_responses));
+const groupedResponsesGroup = computed(() => groupByResponseIdAsObjects(form_responses, group_responses));
+console.log(groupedResponsesGroup.value);
+console.log(fields);
 
-const getFieldValue = (response: any, fieldlabel: string) => {
+const getFieldValue = (response: any[], fieldlabel: string) => {
 	let res = response.find(
 		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
 	);
+	console.log(res);
 	if (!res) return "";
 	if (res.value == "[object Object]") {
 		return Object.values(res.field.value)[0] || "";
@@ -297,46 +301,44 @@ const calculateColspan = () => {
 								<th v-for="[_, field] of fields" :key="field.label" class="px-4 py-3 whitespace-nowrap">
 									{{ field.label }}
 								</th>
+								<th v-if="group_responses.length > 0" class="px-4 py-3">Group Name</th>
 								<th v-if="hasPay" class="px-4 py-3">Payment</th>
 								<th v-if="store_response.length > 0" class="px-4 py-3">Store</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-slate-200">
 							<tr
-								v-for="(row, index) in groupedResponses"
+								v-for="(row, index) in groupedResponsesGroup"
 								:key="index"
 								class="hover:bg-slate-50 transition-colors"
 							>
 								<td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
-								<td v-for="[_, field] in fields" :key="`${index}-${field.label}`" class="px-4 py-3">
-									<div v-if="field.ulid" class="max-w-xs overflow-hidden text-ellipsis">
+								<td v-for="[_, field] in fields" :key="`${index}-${field.ulid}`" class="px-4 py-3">
+									<div class="max-w-xs overflow-hidden text-ellipsis">
 										<div class="hover:overflow-visible hover:whitespace-normal whitespace-nowrap">
-											{{ getFieldValue(row, field.label) }}
+											{{ getFieldValue(row.responses, field.label) }}
 										</div>
 									</div>
+								</td>
+								<td v-if="group_responses.length > 0" class="px-4 py-3 font-mono">
+									{{ row.groupName }}
 								</td>
 								<td v-if="hasPay" class="px-4 py-3 font-mono">
 									KES {{ bubblePrice(group_responses, row.at(0)) }}
 								</td>
-								<td v-if="row[index]?.responseUlid && store_response.length > 0" class="px-4 py-3">
+								<td v-if="row.responseUlid && store_response.length > 0" class="px-4 py-3">
 									<button
-										@click="showStoreResponses(row[index].responseUlid)"
+										@click="showStoreResponses(row.responseUlid)"
 										class="px-3 py-1.5 bg-green-600 rounded-md text-white hover:bg-green-500 transition-colors text-xs font-medium"
 									>
 										Show Purchases
 									</button>
 								</td>
 							</tr>
-							<!-- <tr v-if="filteredResponses.length === 0"> -->
-							<!-- 	<td :colspan="calculateColspan()" class="px-4 py-8 text-center text-slate-500"> -->
-							<!-- 		No matching submissions found -->
-							<!-- 	</td> -->
-							<!-- </tr> -->
 						</tbody>
 					</table>
 				</div>
 			</div>
-
 			<Modal
 				title="Choose a Credit Method"
 				:show="showCreditMethodsModal"
