@@ -14,5 +14,6 @@ export type SutitFormData = {
 		group_amount: number | null | undefined;
 		group_limit: number | null | undefined;
 		group_message: string | null;
+		group_invite_message: string | null;
 	};
 };

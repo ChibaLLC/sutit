@@ -28,6 +28,7 @@ const submitData = computed(() => {
 			group_amount: response.value.meta.price_group,
 			group_limit: response.value.meta.group_member_count,
 			group_message: response.value.meta.group_invite_message,
+			group_invite_message: response.value.meta.group_invite_message,
 		},
 		requireMerch: response.value.meta.requireMerch || false,
 	};
