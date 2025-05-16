@@ -1,147 +1,249 @@
 <template>
-    <div class="relative">
-        <div class="w-full overflow-x-auto overflow-y-hidden max-sm:py-2 isolate relative max-sm:w-[95vw] m-auto"
-            ref="carouselContainer">
-            <div class="flex items-center w-10/12 justify-around mt-12 h-auto max-sm:mt-2 max-sm:gap-4 m-auto px-4 max-sm:mx-4 carousel -z-10 max-sm:w-fit"
-                id="carousel_items">
-                <HighlightCard class="mt-5 h-56" to="/marketplace">
-                    <template #icon>
-                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M127.225 29.75C125.125 20.65 116.725 14 106.925 14H33.4251C28.7332 14.0013 24.1715 15.5431 20.4409 18.3885C16.7103 21.2339 14.0171 25.2255 12.7751 29.75L5.4251 57.75C4.0251 62.65 6.1251 67.55 10.3251 70.35L11.7251 71.4C13.8251 72.45 15.5751 73.5 17.6751 73.85V112C17.6862 115.71 19.1647 119.264 21.7878 121.887C24.4109 124.51 27.9655 125.989 31.6751 126H48.1251C51.8347 125.989 55.3892 124.51 58.0123 121.887C60.6355 119.264 62.114 115.71 62.1251 112V98H81.3751V112C81.3862 115.71 82.8647 119.264 85.4878 121.887C88.1109 124.51 91.6655 125.989 95.3751 126H108.675C112.385 125.989 115.939 124.51 118.562 121.887C121.185 119.264 122.664 115.71 122.675 112V73.85C124.661 73.5211 126.563 72.8078 128.275 71.75L129.675 70.7C131.751 69.332 133.342 67.3438 134.222 65.0185C135.102 62.6932 135.226 60.1496 134.575 57.75L127.225 29.75ZM109.375 112H95.3751V98C95.364 94.2904 93.8855 90.7359 91.2623 88.1127C88.6392 85.4896 85.0847 84.0111 81.3751 84H62.1251C58.4155 84.0111 54.861 85.4896 52.2378 88.1127C49.6147 90.7359 48.1362 94.2904 48.1251 98V112H31.6751V70C36.2251 68.25 41.1251 68.95 45.3251 71.4C47.7926 73.1097 50.7231 74.0258 53.7251 74.0258C56.7271 74.0258 59.6576 73.1097 62.1251 71.4C64.5926 69.6903 67.5231 68.7742 70.5251 68.7742C73.5271 68.7742 76.4576 69.6903 78.9251 71.4C81.3926 73.1097 84.3231 74.0258 87.3251 74.0258C90.3271 74.0258 93.2576 73.1097 95.7251 71.4C97.7117 70.0667 99.9954 69.2418 102.376 68.9977C104.756 68.7536 107.159 69.0978 109.375 70V112ZM119.525 59.85C114.784 56.6016 109.172 54.8632 103.425 54.8632C97.6782 54.8632 92.0658 56.6016 87.3251 59.85C87.2637 59.9312 87.1844 59.997 87.0933 60.0424C87.0022 60.0877 86.9018 60.1113 86.8001 60.1113C86.6983 60.1113 86.598 60.0877 86.5069 60.0424C86.4158 59.997 86.3364 59.9312 86.2751 59.85C81.5344 56.6016 75.922 54.8632 70.1751 54.8632C64.4282 54.8632 58.8158 56.6016 54.0751 59.85C54.0138 59.9312 53.9344 59.997 53.8433 60.0424C53.7522 60.0877 53.6519 60.1113 53.5501 60.1113C53.4483 60.1113 53.348 60.0877 53.2569 60.0424C53.1658 59.997 53.0864 59.9312 53.0251 59.85C48.2844 56.6016 42.672 54.8632 36.9251 54.8632C31.1782 54.8632 25.5658 56.6016 20.8251 59.85C20.7638 59.9312 20.6844 59.997 20.5933 60.0424C20.5022 60.0877 20.4019 60.1113 20.3001 60.1113C20.1983 60.1113 20.098 60.0877 20.0069 60.0424C19.9158 59.997 19.8364 59.9312 19.7751 59.85L26.4251 33.25C27.1251 30.1 29.9251 28 33.4251 28H107.275C108.816 27.9839 110.317 28.4961 111.527 29.4512C112.737 30.4064 113.583 31.747 113.925 33.25L120.575 59.85C120.575 59.85 119.875 60.2 119.525 59.85Z"
-                                fill="#3D5A80" />
-                        </svg>
-                    </template>
-                    <template #tagline>
-                        Visit Our Marketplace
-                    </template>
-                </HighlightCard>
-                <HighlightCard class="-mt-10 h-56 max-sm:mt-5" to="/dashboard">
-                    <template #icon>
-                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M23.3333 40.8333C23.3333 29.8339 23.3333 24.3342 26.7504 20.9171C30.1674 17.5 35.6671 17.5 46.6666 17.5H93.3333C104.333 17.5 109.832 17.5 113.249 20.9171C116.667 24.3342 116.667 29.8339 116.667 40.8333V87.5C116.667 103.999 116.667 112.249 111.541 117.374C106.415 122.5 98.1656 122.5 81.6666 122.5H58.3333C41.8341 122.5 33.5845 122.5 28.4589 117.374C23.3333 112.249 23.3333 103.999 23.3333 87.5V40.8333Z"
-                                stroke="#3D5A80" stroke-width="11.6667" />
-                            <path d="M87.5 105V122.5M52.5 105V122.5" stroke="#3D5A80" stroke-width="11.6667"
-                                stroke-linecap="round" />
-                            <path d="M52.5 46.6666H87.5" stroke="#3D5A80" stroke-width="11.6667"
-                                stroke-linecap="round" />
-                            <path d="M52.5 70H87.5" stroke="#3D5A80" stroke-width="11.6667" stroke-linecap="round" />
-                        </svg>
-                    </template>
-                    <template #tagline>
-                        Create Paid Forms
-                    </template>
-                </HighlightCard>
-                <HighlightCard class="mt-5 h-56" to="/whatsapp">
-                    <template #icon>
-                        <svg width="140" height="140" viewBox="0 0 140 140" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M44.0119 117.299L46.1221 113.466C45.1696 112.942 44.056 112.791 42.9983 113.043L44.0119 117.299ZM16.0417 123.958L11.7856 122.945C11.6129 123.672 11.6291 124.431 11.8327 125.149C12.0364 125.868 12.4206 126.523 12.9489 127.051C13.4771 127.579 14.1319 127.964 14.8507 128.167C15.5695 128.371 16.3284 128.387 17.0553 128.214L16.0417 123.958ZM22.7012 95.9882L26.9574 97.0017C27.2092 95.944 27.0581 94.8304 26.5337 93.878L22.7012 95.9882ZM70.0001 128.333C102.217 128.333 128.333 102.217 128.333 70H119.583C119.583 97.3838 97.3839 119.583 70.0001 119.583V128.333ZM41.9016 121.131C50.2397 125.723 59.8209 128.333 70.0001 128.333V119.583C61.3347 119.583 53.2001 117.364 46.1221 113.466L41.9016 121.131ZM17.0553 128.214L45.0247 121.555L42.9983 113.043L15.0282 119.702L17.0553 128.214ZM18.4451 94.9754L11.7856 122.945L20.2979 124.972L26.9574 97.0017L18.4451 94.9754ZM11.6667 70C11.6667 80.1784 14.2772 89.7604 18.8687 98.0984L26.5337 93.878C22.6356 86.7992 20.4167 78.6654 20.4167 70H11.6667ZM70.0001 11.6666C37.7833 11.6666 11.6667 37.7832 11.6667 70H20.4167C20.4167 42.6161 42.6162 20.4166 70.0001 20.4166V11.6666ZM128.333 70C128.333 37.7832 102.217 11.6666 70.0001 11.6666V20.4166C97.3839 20.4166 119.583 42.6161 119.583 70H128.333Z"
-                                fill="#3D5A80" />
-                            <path
-                                d="M55.4167 70V94.7917H75.1042C81.9504 94.7917 87.5001 89.242 87.5001 82.3959C87.5001 75.5497 81.9504 70 75.1042 70H55.4167ZM55.4167 70H73.6459C80.4921 70 86.0417 64.4504 86.0417 57.6042C86.0417 50.7581 80.4921 45.2084 73.6459 45.2084H55.4167V70Z"
-                                stroke="#3D5A80" stroke-width="12" stroke-linejoin="round" />
-                        </svg>
-                    </template>
-                    <template #tagline>
-                        Make Sales
-                    </template>
-                </HighlightCard>
-            </div>
-        </div>
-        <div class="flex w-full absolute top-1/2 left-0 justify-between items-center -translate-y-1/2 sm:hidden mt-4">
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"
-                class="rotate-180 w-10 h-10 opacity-50 transition-opacity" @click="scrollLeft">
-                <path
-                    d="M27.9999 55.2C33.3796 55.2 38.6384 53.6047 43.1114 50.616C47.5845 47.6272 51.0708 43.3791 53.1295 38.409C55.1882 33.4388 55.7268 27.9698 54.6773 22.6935C53.6278 17.4173 51.0372 12.5707 47.2332 8.76669C43.4293 4.96271 38.5827 2.37216 33.3064 1.32264C28.0301 0.273125 22.5611 0.811775 17.591 2.87048C12.6208 4.92918 8.37274 8.41547 5.38396 12.8885C2.39519 17.3615 0.799938 22.6203 0.799938 28C0.796993 31.5728 1.49853 35.1111 2.86441 38.4125C4.2303 41.7139 6.23372 44.7135 8.76006 47.2399C11.2864 49.7662 14.2861 51.7696 17.5875 53.1355C20.8889 54.5014 24.4272 55.2029 27.9999 55.2ZM27.9999 7.2C32.1138 7.2 36.1353 8.4199 39.5558 10.7054C42.9763 12.991 45.6423 16.2395 47.2166 20.0402C48.7909 23.8409 49.2028 28.0231 48.4003 32.0579C47.5977 36.0927 45.6167 39.7989 42.7078 42.7078C39.7988 45.6168 36.0926 47.5978 32.0578 48.4003C28.023 49.2029 23.8408 48.791 20.0401 47.2167C16.2394 45.6424 12.9909 42.9764 10.7054 39.5559C8.41983 36.1353 7.19994 32.1138 7.19994 28C7.19445 25.267 7.72872 22.5597 8.77208 20.0337C9.81543 17.5077 11.3473 15.2125 13.2799 13.2799C15.2124 11.3474 17.5076 9.81549 20.0336 8.77214C22.5597 7.72878 25.2669 7.19452 27.9999 7.2ZM22.7199 41.6C23.0089 41.9032 23.3565 42.1446 23.7415 42.3095C24.1265 42.4745 24.5411 42.5595 24.9599 42.5595C25.3788 42.5595 25.7933 42.4745 26.1784 42.3095C26.5634 42.1446 26.9109 41.9032 27.1999 41.6L36.3199 32.48C36.9278 31.8863 37.4108 31.177 37.7406 30.3939C38.0703 29.6108 38.2402 28.7697 38.2402 27.92C38.2402 27.0703 38.0703 26.2292 37.7406 25.4461C37.4108 24.663 36.9278 23.9537 36.3199 23.36L27.1999 14.24C26.6038 13.6558 25.8012 13.3305 24.9666 13.3347C24.1319 13.3389 23.3326 13.6723 22.7425 14.2625C22.1523 14.8527 21.8188 15.652 21.8146 16.4866C21.8104 17.3213 22.1357 18.1239 22.7199 18.72L31.6799 28L22.5599 37.12C21.4399 38.24 21.4399 40.32 22.7199 41.6Z"
-                    fill="#3D5A80" />
-            </svg>
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"
-                class="w-10 h-10 opacity-50 transition-opacity" @click="scrollRight">
-                <path
-                    d="M27.9999 55.2C33.3796 55.2 38.6384 53.6047 43.1114 50.616C47.5845 47.6272 51.0708 43.3791 53.1295 38.409C55.1882 33.4388 55.7268 27.9698 54.6773 22.6935C53.6278 17.4173 51.0372 12.5707 47.2332 8.76669C43.4293 4.96271 38.5827 2.37216 33.3064 1.32264C28.0301 0.273125 22.5611 0.811775 17.591 2.87048C12.6208 4.92918 8.37274 8.41547 5.38396 12.8885C2.39519 17.3615 0.799938 22.6203 0.799938 28C0.796993 31.5728 1.49853 35.1111 2.86441 38.4125C4.2303 41.7139 6.23372 44.7135 8.76006 47.2399C11.2864 49.7662 14.2861 51.7696 17.5875 53.1355C20.8889 54.5014 24.4272 55.2029 27.9999 55.2ZM27.9999 7.2C32.1138 7.2 36.1353 8.4199 39.5558 10.7054C42.9763 12.991 45.6423 16.2395 47.2166 20.0402C48.7909 23.8409 49.2028 28.0231 48.4003 32.0579C47.5977 36.0927 45.6167 39.7989 42.7078 42.7078C39.7988 45.6168 36.0926 47.5978 32.0578 48.4003C28.023 49.2029 23.8408 48.791 20.0401 47.2167C16.2394 45.6424 12.9909 42.9764 10.7054 39.5559C8.41983 36.1353 7.19994 32.1138 7.19994 28C7.19445 25.267 7.72872 22.5597 8.77208 20.0337C9.81543 17.5077 11.3473 15.2125 13.2799 13.2799C15.2124 11.3474 17.5076 9.81549 20.0336 8.77214C22.5597 7.72878 25.2669 7.19452 27.9999 7.2ZM22.7199 41.6C23.0089 41.9032 23.3565 42.1446 23.7415 42.3095C24.1265 42.4745 24.5411 42.5595 24.9599 42.5595C25.3788 42.5595 25.7933 42.4745 26.1784 42.3095C26.5634 42.1446 26.9109 41.9032 27.1999 41.6L36.3199 32.48C36.9278 31.8863 37.4108 31.177 37.7406 30.3939C38.0703 29.6108 38.2402 28.7697 38.2402 27.92C38.2402 27.0703 38.0703 26.2292 37.7406 25.4461C37.4108 24.663 36.9278 23.9537 36.3199 23.36L27.1999 14.24C26.6038 13.6558 25.8012 13.3305 24.9666 13.3347C24.1319 13.3389 23.3326 13.6723 22.7425 14.2625C22.1523 14.8527 21.8188 15.652 21.8146 16.4866C21.8104 17.3213 22.1357 18.1239 22.7199 18.72L31.6799 28L22.5599 37.12C21.4399 38.24 21.4399 40.32 22.7199 41.6Z"
-                    fill="#3D5A80" />
-            </svg>
-        </div>
-    </div>
+	<div class="relative py-8 md:py-16 px-4 md:px-8 bg-gradient-to-b from-white to-blue-50">
+		<h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">Our Features</h2>
+
+		<!-- Carousel Container -->
+		<div
+			class="w-full max-w-7xl mx-auto overflow-x-auto overflow-y-hidden relative scrollbar-hide"
+			ref="carouselContainer"
+		>
+			<!-- Carousel Items -->
+			<div
+				class="flex items-stretch gap-4 md:gap-6 lg:gap-8 px-4 md:px-0 transition-transform duration-300 ease-in-out"
+				id="carousel_items"
+				:style="{ transform: `translateX(-${currentTranslate}px)` }"
+			>
+				<HighlightCard
+					v-for="(card, index) in cards"
+					:key="index"
+					:to="card.to"
+					class="flex-shrink-0 w-[280px] md:w-[320px] lg:w-[360px] h-auto min-h-[280px] transition-all duration-300 hover:shadow-lg"
+					:class="[
+						activeItemIndex === index ? 'scale-105 shadow-md' : 'scale-100',
+						'rounded-xl shadow-sm border border-gray-100',
+					]"
+					@click="setActiveCard(index)"
+				>
+					<template #icon>
+						<div
+							class="flex justify-center items-center h-32 w-full transition-transform duration-300 hover:scale-110"
+						>
+							<component :is="card.icon" />
+						</div>
+					</template>
+					<template #tagline>
+						<div class="text-center">
+							<h3 class="text-lg font-semibold text-gray-800 mb-2">{{ card.title }}</h3>
+							<p class="text-gray-600">{{ card.tagline }}</p>
+						</div>
+					</template>
+				</HighlightCard>
+			</div>
+		</div>
+
+		<!-- Navigation Controls - Visible on all screen sizes with responsive styling -->
+		<div class="flex justify-center items-center mt-8 gap-4">
+			<!-- Dots Navigation -->
+			<div class="flex gap-2 mx-auto">
+				<button
+					v-for="(_, index) in cards"
+					:key="index"
+					@click="scrollTo(index)"
+					class="w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+					:class="activeItemIndex === index ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'"
+					:aria-label="`Go to slide ${index + 1}`"
+				></button>
+			</div>
+		</div>
+
+		<!-- Arrow Navigation - Positioned on sides -->
+		<button
+			class="absolute top-1/2 left-2 md:left-4 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 z-10"
+			@click="scrollLeft"
+			aria-label="Previous slide"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-6 w-6 text-blue-600"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+			</svg>
+		</button>
+
+		<button
+			class="absolute top-1/2 right-2 md:right-4 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 z-10"
+			@click="scrollRight"
+			aria-label="Next slide"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-6 w-6 text-blue-600"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+			</svg>
+		</button>
+	</div>
 </template>
+
+<script setup lang="ts">
+import FormIcon from "../icons/FormIcon.vue";
+import MarketPlaceIcon from "../icons/MarketPlaceIcon.vue";
+import SalesIcon from "../icons/SalesIcon.vue";
+
+// Card data
+const cards = [
+	{
+		to: "/marketplace",
+		title: "Marketplace",
+		tagline: "Visit Our Marketplace",
+		icon: MarketPlaceIcon,
+	},
+	{
+		to: "/dashboard",
+		title: "Paid Forms",
+		tagline: "Create Paid Forms",
+		icon: FormIcon,
+	},
+	{
+		to: "/whatsapp",
+		title: "Sales",
+		tagline: "Make Sales",
+		icon: SalesIcon,
+	},
+];
+
+// Component refs and state
+const carouselContainer = ref<HTMLElement | null>(null);
+const activeItemIndex = ref(0);
+const currentTranslate = ref(0);
+const cardWidth = ref(320); // Default width, will be updated on mount
+const containerWidth = ref(0);
+
+// Calculate visible cards based on container width
+const visibleCards = computed(() => {
+	if (!containerWidth.value) return 1;
+	return Math.floor(containerWidth.value / cardWidth.value);
+});
+
+// Set active card
+function setActiveCard(index: number) {
+	activeItemIndex.value = index;
+	updateTranslate();
+}
+
+// Update translation value
+function updateTranslate() {
+	if (!carouselContainer.value) return;
+
+	// Get actual card width including gap
+	const cardElement = carouselContainer.value.querySelector("#carousel_items")?.children[0] as HTMLElement;
+	if (!cardElement) return;
+
+	const actualCardWidth = cardElement.offsetWidth;
+	const gap = 16; // Approximate gap value
+
+	// Calculate translation
+	currentTranslate.value = activeItemIndex.value * (actualCardWidth + gap);
+}
+
+// Scroll to specific index
+function scrollTo(index: number) {
+	if (index < 0) {
+		index = cards.length - 1;
+	} else if (index >= cards.length) {
+		index = 0;
+	}
+
+	activeItemIndex.value = index;
+	updateTranslate();
+}
+
+// Scroll right
+function scrollRight() {
+	scrollTo(activeItemIndex.value + 1);
+}
+
+// Scroll left
+function scrollLeft() {
+	scrollTo(activeItemIndex.value - 1);
+}
+
+// Handle window resize
+function handleResize() {
+	if (!carouselContainer.value) return;
+	containerWidth.value = carouselContainer.value.offsetWidth;
+	updateTranslate();
+}
+
+// Watch for active index changes
+watch(activeItemIndex, () => {
+	updateTranslate();
+});
+
+// Component lifecycle
+onMounted(() => {
+	if (carouselContainer.value) {
+		containerWidth.value = carouselContainer.value.offsetWidth;
+
+		// Get actual card width
+		const cardElement = carouselContainer.value.querySelector("#carousel_items")?.children[0] as HTMLElement;
+		if (cardElement) {
+			cardWidth.value = cardElement.offsetWidth;
+		}
+
+		// Initialize position
+		updateTranslate();
+
+		// Add resize listener
+		window.addEventListener("resize", handleResize);
+	}
+});
+</script>
+
 <style scoped>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+/* Animation for button press */
 .squish {
-    animation: squish 0.5s infinite;
+	animation: squish 0.5s 1;
 }
 
 @keyframes squish {
-    0% {
-        scale: 1;
-    }
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(0.85);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
 
-    50% {
-        scale: 0.85;
-    }
+/* Card hover effect */
+.card-hover {
+	transition: all 0.3s ease;
+}
 
-    100% {
-        scale: 1;
-    }
+.card-hover:hover {
+	transform: translateY(-5px);
+	box-shadow:
+		0 10px 25px -5px rgba(0, 0, 0, 0.1),
+		0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 </style>
-<script setup lang="ts">
-const carouselContainer = ref<HTMLElement | null>(null);
-const items = ref<Element[]>([]);
-const activeItemIndex = ref(0);
-
-function scrollTo(index: number) {
-    if (!items.value.length) return;
-    if (index < 0) {
-        index = items.value.length - 1 
-    }
-
-    if (index >= items.value.length) {
-        index = 0
-    }
-
-    items.value[index]!.classList.add('active');
-    activeItemIndex.value = index;
-
-    const scrollWidth = carouselContainer.value!.scrollWidth;
-    carouselContainer.value!.scrollTo({
-        left: (scrollWidth / items.value.length) * index - 16,
-        behavior: 'smooth'
-    });
-}
-
-function scrollRight(event: Event) {
-    const target = event.target as HTMLElement | null;
-    if (!target) return console.warn('No target found', event);
-
-    target.classList.add('squish');
-    setTimeout(() => target.classList.remove('squish'), 500);
-
-    items.value[activeItemIndex.value]!.classList.remove('active');
-    scrollTo(activeItemIndex.value + 1);
-}
-
-function scrollLeft(event: Event) {
-    const target = event.target as HTMLElement | null;
-    if (!target) return console.warn('No target found', event);
-
-    target.classList.add('squish');
-    setTimeout(() => target.classList.remove('squish'), 500);
-
-    items.value[activeItemIndex.value]!.classList.remove('active');
-    scrollTo(activeItemIndex.value - 1);
-}
-
-onMounted(() => {
-    const carousel_items = document.getElementById("carousel_items")
-    if (carouselContainer.value && carousel_items) {
-        items.value = Array.from(carousel_items.children)
-        let activeIndex = items.value.findIndex(item => item.classList.contains('active'));
-        if (activeIndex !== -1) items.value[activeIndex]!.classList.remove('active');
-        scrollTo(activeItemIndex.value);
-    }
-})
-</script>

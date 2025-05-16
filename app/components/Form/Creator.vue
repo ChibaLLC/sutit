@@ -45,19 +45,21 @@ const data = ref<SutitFormData>(
 			group_amount: 0 as number | null | undefined,
 			group_limit: 0 as number | null | undefined,
 			group_message: "",
+			group_invite_message: "",
 		},
-	}
+	},
 );
 const groupMessage = computed({
 	get() {
-		data.value.payment.group_message = defaultGroupMessage();
+		data.value.payment.group_message = props.starter?.payment.group_invite_message || defaultGroupMessage();
 		return data.value.payment.group_message;
 	},
 	set(val) {
 		if (val) {
 			data.value.payment.group_message = val;
+			data.value.payment.group_invite_message = val;
 		} else {
-			data.value.payment.group_message = defaultGroupMessage();
+			data.value.payment.group_message = props.starter?.payment.group_invite_message || defaultGroupMessage();
 		}
 	},
 });

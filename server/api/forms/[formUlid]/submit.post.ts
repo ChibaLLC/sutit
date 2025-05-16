@@ -1,4 +1,10 @@
-import { getInviteFormGroup, insertData, invalidateFormGroupLink, needsIndividualPayment } from "../utils/queries";
+import {
+	getInviteFormGroup,
+	insertData,
+	insertGroupResponse,
+	invalidateFormGroupLink,
+	needsIndividualPayment,
+} from "../utils/queries";
 import { getUserByUlId } from "~~/server/api/users/utils/queries";
 import {
 	generateReceiptNumber,
@@ -112,7 +118,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const [details] = await useAuth(event, false);
-	const commit = async (options: { invitee?: PhoneInvite | EmailInvite; price_paid?: number }) => {
+	const commit = async (options: { invitee?: PhoneInvite | EmailInvite; price_paid?: number; group?: object }) => {
 		if (!data) return {};
 		let formMail = (options.invitee as { email: string })?.email || details?.user.email;
 		if (!formMail) {
@@ -125,6 +131,9 @@ export default defineEventHandler(async (event) => {
 			}
 		}
 		const formResponse = await insertData(formUlid, data.form, options.price_paid);
+		if (options.invitee && options.group) {
+			await insertGroupResponse(formUlid, formResponse.ulid, options.group.ulid);
+		}
 		sendUserMail(
 			{ email: creator.email },
 			`New response on form ${data.form.meta.formName}`,
@@ -179,16 +188,77 @@ export default defineEventHandler(async (event) => {
 			},
 		);
 	} else if (needsPay && data.token) {
-		const { invite } = await getInviteFormGroup(formUlid, data.token);
+		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
+
 		if (!invite) {
 			throw createError({
 				statusCode: 403,
 				message: "The provided token is not valid",
 			});
 		}
+		if (!invite.isValid) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token has already been used!",
+			});
+		}
+		// Calculate Total Amount in stores
+		function calculateTotalAmount(stores: Record<string, any>): number {
+			return Object.values(stores).reduce((total, store) => {
+				const price = typeof store.price === "string" ? parseFloat(store.price) : store.price;
+				const quantity = typeof store.qtty === "string" ? parseFloat(store.qtty) : store.qtty;
+				const amount = (isNaN(price) ? 0 : price) * (isNaN(quantity) ? 0 : quantity);
+				return total + amount;
+			}, 0);
+		}
+		console.log("Total store amount:", calculateTotalAmount(data.form.stores));
+		// Gather Store Details
+		let details = {
+			phone: data.phone,
+			amount: calculateTotalAmount(data.form.stores),
+			accountNumber: creator?.email || creator?.name || "Unknown",
+		};
+		return await processFormPayments(data.form.meta, details, async (payment) => {
+			const receiptNumber = generateReceiptNumber(payment);
 
-		const result = await commit({ invitee: invite });
-		invalidateFormGroupLink(invite.token, invite.token);
+			const { formMail } = await commit({ price_paid: payment.amount, invitee: invite, group: group });
+
+			let formData = {
+				formName: data.form.meta.formName,
+				name: data?.phone,
+				phoneNumber: data?.phone,
+				receiptNumber: receiptNumber,
+				date: new Date().toLocaleTimeString(),
+				products: generateStoreTable(data?.form.stores),
+			};
+			if (formMail) {
+				await sendUserReceipt(formMail, formData, "receipt");
+				await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
+			}
+			await invalidateFormGroupLink(formUlid, invite.token);
+		});
+
+		// const result = await commit({ invitee: invite, group: group });
+		// let t = await invalidateFormGroupLink(formUlid, invite.token);
+		// return result;
+	} else if (!needsPay && data.token) {
+		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
+
+		if (!invite) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token is not valid",
+			});
+		}
+		if (!invite.isValid) {
+			throw createError({
+				statusCode: 403,
+				message: "The provided token has already been used!",
+			});
+		}
+		const result = await commit({ invitee: invite, group: group });
+		let t = await invalidateFormGroupLink(formUlid, invite.token);
+		console.log(t);
 		return result;
 	} else if (!needsPay) {
 		return commit({});

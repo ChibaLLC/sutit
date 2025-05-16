@@ -29,7 +29,6 @@ export function collectFields(form: Awaited<ReturnType<typeof getFormResponses>>
 			});
 		}
 	}
-	console.log(map);
 
 	return map;
 }
@@ -95,6 +94,43 @@ export function groupByResponseId(responses: Awaited<ReturnType<typeof getFormRe
 		});
 		formResponses.push(group);
 	});
+	return formResponses;
+}
+export function groupByResponseIdAsObjects(
+	responses: Awaited<ReturnType<typeof getFormResponses>>["form_responses"],
+	groupResponses: any[] = [],
+) {
+	// Extract unique response IDs
+	const responseIds = [...new Set(responses.map((r) => r.responseUlid))];
+
+	// Create a map of responseUlid -> groupName for quick lookup
+	const groupNameMap = new Map();
+	groupResponses.forEach((group) => {
+		groupNameMap.set(group.responseUlid, {
+			groupName: group.groupName || null,
+			formGroupUlid: group.formGroupUlid || null,
+			invites: group.invites || [],
+		});
+	});
+
+	// Group the responses and add groupName information
+	const formResponses = responseIds.map((id) => {
+		// Find all responses with this ID
+		const responsess = responses.filter((r) => r.responseUlid === id);
+
+		// Get group info if it exists
+		const groupInfo = groupNameMap.get(id) || { groupName: null, formGroupUlid: null, invites: [] };
+
+		// Return an object with both the responses and group information
+		return {
+			responseUlid: id,
+			groupName: groupInfo.groupName,
+			formGroupUlid: groupInfo.formGroupUlid,
+			invites: groupInfo.invites,
+			responses: responsess,
+		};
+	});
+
 	return formResponses;
 }
 

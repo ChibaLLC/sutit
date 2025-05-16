@@ -17,6 +17,7 @@ import {
 	storeResponses,
 	sutitStores,
 	sutitFormPages,
+	formGroupResponses,
 } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
@@ -187,7 +188,7 @@ export async function createForm(data: z.infer<typeof formBodyData>, { user }: A
 			.insert(formMeta)
 			.values({
 				allowGroups: data.allowGroups,
-				group_invite_message: data.payment.group_message,
+				group_invite_message: data.payment.group_invite_message,
 				group_member_count: data.payment.group_limit,
 				price_group: data.payment.group_amount || undefined,
 				price_individual: data.payment.amount || undefined,
@@ -220,7 +221,7 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 		.update(formMeta)
 		.set({
 			allowGroups: data.allowGroups,
-			group_invite_message: data.payment.group_message,
+			group_invite_message: data.payment.group_invite_message,
 			group_member_count: data.payment.group_limit,
 			price_group: data.payment.group_amount || 0,
 			price_individual: data.payment.amount || 0,
@@ -456,6 +457,15 @@ export async function insertData(
 	return formResponse;
 }
 
+export async function insertGroupResponse(formUlid: string, responseUlid: string, formGroupUlid: string) {
+	const groupResponse = await db.insert(formGroupResponses).values({
+		formUlid: formUlid,
+		responseUlid: responseUlid,
+		formGroupUlid: formGroupUlid,
+	});
+	return groupResponse;
+}
+
 export async function getFormsByUser(userUlid: string) {
 	return db.select().from(formMeta).where(eq(formMeta.userUlid, userUlid)).orderBy(desc(formMeta.updatedAt));
 }
@@ -667,10 +677,12 @@ export async function getInviteFormGroup(formUlid: string, token: string) {
 export async function invalidateFormGroupLink(formUlid: string, token: string) {
 	const { group } = await getInviteFormGroup(formUlid, token);
 	if (!group) return Promise.resolve(undefined);
-	return db
+
+	// Update the invites array by setting isValid to false for the matching token
+	return await db
 		.update(formGroups)
 		.set({
-			invites: group.invites?.filter((invite) => invite.token !== token),
+			invites: group.invites?.map((invite) => (invite.token == token ? { ...invite, isValid: false } : invite)),
 		})
 		.where(eq(formGroups.ulid, group.ulid))
 		.execute();

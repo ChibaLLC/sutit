@@ -17,6 +17,34 @@ useSeoMeta({
 	twitterImage: "/favico.jpeg",
 	twitterCard: "summary",
 });
+
+const features = [
+	{
+		title: "All-in-One Data Collection",
+		content:
+			"SUTIT Forms delivers an expertly designed digital form builder with advanced logic and workflows. It allows creation of complex registration flows and multi-step processes without coding knowledge, all while maintaining brand identity.",
+	},
+	{
+		title: "Integrated Payment Processing",
+		content:
+			"SUTIT seamlessly embeds secure payment collection directly within forms, eliminating the need for separate payment systems or manual reconciliation of transactions.",
+	},
+	{
+		title: "Built-in Product Showcase and Order Management",
+		content:
+			"Showcase and sell products directly within forms using the built-in 'store' feature. Display images, pricing, and collect order details without building a separate e-commerce platform.",
+	},
+	{
+		title: "Flexible Pricing Structure",
+		content:
+			"Pay only for what you use with transaction fees between 2–7% based on volume. Small businesses benefit from zero upfront costs while larger enterprises access volume discounts.",
+	},
+	{
+		title: "Purpose-Built for Africa",
+		content:
+			"Designed specifically for African markets with local payment integrations and offline capabilities. Optimized for mobile-first users with features tailored to regional business practices.",
+	},
+];
 </script>
 
 <template>
@@ -62,6 +90,19 @@ useSeoMeta({
 				Automate Marketing/Sales, Purchase/Orders, Payments till Receipt/Order Fulfillment😋
 			</p>
 			<Highlight />
+			<div class="mt-24 max-w-7xl mx-auto">
+				<div class="flex justify-center items-center pb-10">
+					<h4 class="font-bold font-sans text-6xl sm:text-4xl">Why Choose Sutit Forms?</h4>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					<HomeFeatureCard
+						v-for="feature in features"
+						:key="feature.title"
+						:title="feature.title"
+						:content="feature.content"
+					/>
+				</div>
+			</div>
 		</div>
 	</main>
 </template>
@@ -101,4 +142,3 @@ useSeoMeta({
 	}
 }
 </style>
-

@@ -38,6 +38,7 @@ export async function constructExcel(
 	fields.forEach((field) => {
 		titles.push(field.label);
 	});
+	if (group_responses.length > 0) titles.push("Group Name");
 	if (_hasPayment) titles.push("Price");
 
 	// Define column widths and formatting
@@ -60,15 +61,18 @@ export async function constructExcel(
 	headerRow.alignment = { vertical: "middle", horizontal: "center" };
 
 	// Add data rows with alternating colors
-	const rows = groupByResponseId(form_responses);
+	const rows = groupByResponseIdAsObjects(form_responses, group_responses);
 	rows.forEach((row, rowIndex) => {
 		let values = [];
 		fields.forEach((field) => {
-			let rowValue = getFieldValue(row, field.label);
+			let rowValue = getFieldValue(row.responses, field.label);
 			values.push(rowValue);
 		});
+		if (group_responses.length > 0) {
+			values.push(row.groupName);
+		}
 		if (_hasPayment) {
-			values.push(bubblePrice(group_responses, row.at(0)));
+			values.push(bubblePrice(group_responses, row.responses.at(0)));
 		}
 
 		const excelRow = worksheet.addRow(values);
@@ -98,6 +102,36 @@ export async function constructExcel(
 	let totalPurchaseAmount = 0;
 	let purchasesByItem = {};
 
+	let groupWorksheet;
+	if (group_responses.length > 0) {
+		groupWorksheet = workbook.addWorksheet("Group Invites");
+		const groupInvitesTitles = [
+			{ header: "Group Name", key: "groupName", width: 30 },
+			{ header: "Email / Number", key: "invitee" },
+		];
+		const headerRow = groupWorksheet.getRow(1);
+		headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
+		headerRow.fill = {
+			type: "pattern",
+			pattern: "solid",
+			fgColor: { argb: "4472C4" }, // Blue header background
+		};
+		headerRow.alignment = { vertical: "middle", horizontal: "center" };
+
+		groupWorksheet.columns = groupInvitesTitles;
+		rows.forEach((group) => {
+			if (!group.invites || group.invites.length === 0) return;
+			group.invites.forEach((invite) => {
+				groupWorksheet.addRow({
+					groupName: group.groupName || "N/A",
+					invitee: invite.email || invite.phoneNumber || "N/A",
+				});
+			});
+			groupWorksheet.addRow({});
+		});
+		groupWorksheet.views = [{ state: "frozen", xSplit: 0, ySplit: 1 }];
+	}
+
 	if (store_response && store_response.length > 0) {
 		storeWorksheet = workbook.addWorksheet("Store Purchases");
 
@@ -124,9 +158,9 @@ export async function constructExcel(
 
 		// Process each response to find associated store purchases
 		rows.forEach((row, rowIndex) => {
-			if (row.length > 0) {
-				if (!row[rowIndex]?.responseUlid) return;
-				const responseId = row[rowIndex].responseUlid;
+			if (true) {
+				if (!row.responseUlid) return;
+				const responseId = row.responseUlid;
 
 				// Get store responses for this form response
 				const storeItems = getFormStoreResponses(responseId, store_response);
@@ -292,7 +326,7 @@ export async function constructExcel(
 
 	if (_hasPayment) {
 		const totalRevenue = rows.reduce((sum, row) => {
-			return sum + Number(bubblePrice(group_responses, row.at(0)) || 0);
+			return sum + Number(bubblePrice(group_responses, row.responses.at(0)) || 0);
 		}, 0);
 
 		summarySheet.addRow(["Total Form Revenue", totalRevenue]);

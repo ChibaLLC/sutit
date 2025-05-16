@@ -12,5 +12,6 @@ export const formBodyData = z.object({
 		group_amount: z.number().nullable().optional(),
 		group_limit: z.number().nullable().optional(),
 		group_message: z.string(),
+		group_invite_message: z.string(),
 	}),
 });
