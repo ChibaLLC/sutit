@@ -202,10 +202,45 @@ export default defineEventHandler(async (event) => {
 				message: "The provided token has already been used!",
 			});
 		}
+		// Calculate Total Amount in stores
+		function calculateTotalAmount(stores: Record<string, any>): number {
+			return Object.values(stores).reduce((total, store) => {
+				const price = typeof store.price === "string" ? parseFloat(store.price) : store.price;
+				const quantity = typeof store.qtty === "string" ? parseFloat(store.qtty) : store.qtty;
+				const amount = (isNaN(price) ? 0 : price) * (isNaN(quantity) ? 0 : quantity);
+				return total + amount;
+			}, 0);
+		}
+		console.log("Total store amount:", calculateTotalAmount(data.form.stores));
+		// Gather Store Details
+		let details = {
+			phone: data.phone,
+			amount: calculateTotalAmount(data.form.stores),
+			accountNumber: creator?.email || creator?.name || "Unknown",
+		};
+		return await processFormPayments(data.form.meta, details, async (payment) => {
+			const receiptNumber = generateReceiptNumber(payment);
 
-		const result = await commit({ invitee: invite, group: group });
-		let t = await invalidateFormGroupLink(formUlid, invite.token);
-		return result;
+			const { formMail } = await commit({ price_paid: payment.amount, invitee: invite, group: group });
+
+			let formData = {
+				formName: data.form.meta.formName,
+				name: data?.phone,
+				phoneNumber: data?.phone,
+				receiptNumber: receiptNumber,
+				date: new Date().toLocaleTimeString(),
+				products: generateStoreTable(data?.form.stores),
+			};
+			if (formMail) {
+				await sendUserReceipt(formMail, formData, "receipt");
+				await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
+			}
+			await invalidateFormGroupLink(formUlid, invite.token);
+		});
+
+		// const result = await commit({ invitee: invite, group: group });
+		// let t = await invalidateFormGroupLink(formUlid, invite.token);
+		// return result;
 	} else if (!needsPay && data.token) {
 		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
 

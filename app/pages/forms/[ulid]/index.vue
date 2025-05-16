@@ -40,6 +40,9 @@ function hasPrice(form?: ReconstructedDbForm): boolean {
 }
 
 function hasPhone() {
+	if (hasBoughtMerch(data.value?.stores)) {
+		return payment_details.value.phone.length >= 10;
+	}
 	return payment_details.value.token || payment_details.value.phone.length >= 10;
 }
 
