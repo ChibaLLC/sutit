@@ -402,7 +402,7 @@ export async function constructExcel(
 
 const findUserResponseName = (
 	form: Awaited<ReturnType<typeof getFormResponses>>["form"],
-	formResponses: Awaited<ReturnType<typeof getFormResponses>>["form_responses"][],
+	formResponses: ReturnType<typeof groupByResponseIdAsObjects>,
 	formResponseId: string,
 ) => {
 	// Get Fields
@@ -412,7 +412,7 @@ const findUserResponseName = (
 	let title: any = null;
 	fields.forEach((field) => {
 		if (field.label) {
-			const fieldLabel = field.label.toLowerCase().replace(/\s+/g, "");
+			const fieldLabel = field.label.toLowerCase().trim().replace(/\s+/g, "");
 			if (possibleInputNames.some((name) => fieldLabel.includes(name))) {
 				if (!title) {
 					title = field;
@@ -421,10 +421,11 @@ const findUserResponseName = (
 		}
 	});
 
-	const res = formResponses[0]?.find((r) => r.responseUlid == formResponseId);
+	const res = formResponses.find((r) => r.responseUlid == formResponseId);
+	let v = res?.responses.find((t) => t.field.label.toLowerCase().trim() == title.label.toLowerCase().trim());
 	return {
 		title: title.label,
-		value: res?.value || null,
+		value: v?.value || null,
 	};
 };
 
