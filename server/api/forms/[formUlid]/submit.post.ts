@@ -221,7 +221,6 @@ export default defineEventHandler(async (event) => {
 				return total + amount;
 			}, 0);
 		}
-		console.log("Total store amount:", calculateTotalAmount(data.form.stores));
 		// Gather Store Details
 		let details = {
 			phone: data.phone,

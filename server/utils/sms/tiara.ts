@@ -6,8 +6,6 @@ const TIARA_SENDER_ID = process.env.TIARA_SENDER_ID;
 const TIARA_BEARER_TOKEN = process.env.TIARA_SMS_API_KEY;
 
 export const sendTextSmsTiara = async (data: { phone: string; message: string }) => {
-	console.log("Phone Number: " + data.phone);
-	console.log("Beare Token: " + TIARA_BEARER_TOKEN);
 	const response = await $fetch<TiaraSmsResponse>(TIARA_SMS_API_ENDPOINT, {
 		body: {
 			from: TIARA_SENDER_ID,
