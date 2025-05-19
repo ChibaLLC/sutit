@@ -15,6 +15,7 @@ import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
 import type { Item } from "@chiballc/nuxt-form-builder";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
 
 declare global {
 	var formPaymentProcessingQueue: Map<
@@ -306,6 +307,10 @@ export async function sendResponseInvites(
 	invites.forEach((invite, idx) => {
 		const link = links[idx];
 		if ((invite as { phone: string }).phone) {
+			sendTextSmsTiara({
+				phone: (invite as { phone: string }).phone,
+				message: `SUTIT: ${baseMessage}` + link,
+			}).then();
 			log.info((invite as { phone: string }).phone, invite);
 		} else {
 			sendUserMail(

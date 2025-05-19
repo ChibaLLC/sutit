@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 function PASSWORD_RESET_TEMPLATE(link: any) {
-    return /*html*/ `<!DOCTYPE html>
+	return /*html*/ `<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -129,40 +129,39 @@ function PASSWORD_RESET_TEMPLATE(link: any) {
 }
 
 export const transporter = nodemailer.createTransport({
-    host: process.env.NODEMAILER_HOST,
-    port: parseInt(process.env.NODEMAILER_PORT || "587"),
-    secure: false,
-    auth: {
-        user: process.env.NODEMAILER_EMAIL,
-        pass: process.env.NODEMAILER_PASSWORD
-    }
-})
+	host: process.env.NODEMAILER_HOST,
+	port: parseInt(process.env.NODEMAILER_PORT || "587"),
+	secure: false,
+	auth: {
+		user: process.env.NODEMAILER_EMAIL,
+		pass: process.env.NODEMAILER_PASSWORD,
+	},
+});
 
-export async function sendMail(mailDetails: { to: string, subject: string, text?: string, html?: string }) {
-    try {
-        return await transporter.sendMail({
-            ...mailDetails,
-            from: process.env.NODEMAILER_EMAIL
-        });
-    } catch (e) {
-        console.log(e);
-        return e;
-    }
+export async function sendMail(mailDetails: { to: string; subject: string; text?: string; html?: string }) {
+	try {
+		return await transporter.sendMail({
+			...mailDetails,
+			from: process.env.NODEMAILER_EMAIL,
+		});
+	} catch (e) {
+		console.log(e);
+		return e;
+	}
 }
 
 export async function mailResetPasswordLink(email: string, origin: string, token: string, redirect?: string) {
-    const link = `${origin}/auth/update?email=${email}&token=${token}&redirect=${redirect}`
+	const link = `${origin}/auth/update?email=${email}&token=${token}&redirect=${redirect}`;
 
-    const message = "Click the link below to reset your password\n\n" + link;
-    const options = {
-        to: email,
-        subject: "Reset your password",
-        text: message,
-        html: PASSWORD_RESET_TEMPLATE(link)
-    }
+	const message = "Click the link below to reset your password\n\n" + link;
+	const options = {
+		to: email,
+		subject: "Reset your password",
+		text: message,
+		html: PASSWORD_RESET_TEMPLATE(link),
+	};
 
-    console.log(message)
-    log.info(`Sending message:\n${message}\nto: ${email}`)
+	log.info(`Sending message:\n${message}\nto: ${email}`);
 
-    return await sendMail(options)
+	return await sendMail(options);
 }

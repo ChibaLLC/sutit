@@ -18,6 +18,7 @@ import { z } from "zod";
 import type { EmailInvite, PhoneInvite } from "~~/server/db/schema";
 import { generateStoreTable, sendUserReceipt } from "../utils/email";
 import type { Item } from "@chiballc/nuxt-form-builder";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
 
 function validateOrders(
 	items: Record<
@@ -149,6 +150,9 @@ export default defineEventHandler(async (event) => {
 
 		return { formMail, formResponse };
 	};
+	const generatePaymentSms = (data: { receiptNumber: string; amount: number }) => {
+		return `SUTIT: Your payment of Ksh ${data.amount} has been received. Receipt number is ${data.receiptNumber}`;
+	};
 
 	if (needsPay && !data.token && data.phone) {
 		if (data.form.meta.price_individual < form.meta.price_individual) {
@@ -181,6 +185,12 @@ export default defineEventHandler(async (event) => {
 					date: new Date().toLocaleTimeString(),
 					products: generateStoreTable(data?.form.stores),
 				};
+				if (data?.phone) {
+					await sendTextSmsTiara({
+						phone: data.phone,
+						message: generatePaymentSms({ receiptNumber: payment.receiptNumber, amount: payment.amount }),
+					});
+				}
 				if (formMail) {
 					await sendUserReceipt(formMail, formData, "receipt");
 					await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
@@ -211,7 +221,6 @@ export default defineEventHandler(async (event) => {
 				return total + amount;
 			}, 0);
 		}
-		console.log("Total store amount:", calculateTotalAmount(data.form.stores));
 		// Gather Store Details
 		let details = {
 			phone: data.phone,
@@ -237,10 +246,6 @@ export default defineEventHandler(async (event) => {
 			}
 			await invalidateFormGroupLink(formUlid, invite.token);
 		});
-
-		// const result = await commit({ invitee: invite, group: group });
-		// let t = await invalidateFormGroupLink(formUlid, invite.token);
-		// return result;
 	} else if (!needsPay && data.token) {
 		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
 
@@ -257,8 +262,7 @@ export default defineEventHandler(async (event) => {
 			});
 		}
 		const result = await commit({ invitee: invite, group: group });
-		let t = await invalidateFormGroupLink(formUlid, invite.token);
-		console.log(t);
+		await invalidateFormGroupLink(formUlid, invite.token);
 		return result;
 	} else if (!needsPay) {
 		return commit({});

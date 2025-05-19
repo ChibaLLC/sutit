@@ -263,14 +263,20 @@ function validator(part: string) {
 		}
 		return text;
 	} else if (isPhone(text)) {
-		// invites.value.add({ phone: text })
-		window.alertError("Sorry, SMS is not yet supported");
-		return undefined;
+		// window.alertError("Sorry, SMS is not yet supported");
+		return text;
 	} else {
 		console.warn("Illegal Text Input Found: ", text);
 		return undefined;
 	}
 }
+const addInvite = (event: any) => {
+	if (isEmail(event)) {
+		invites.value.add({ email: event });
+	} else {
+		invites.value.add({ phone: event });
+	}
+};
 
 async function processInvites() {
 	loading.value = true;
@@ -422,7 +428,7 @@ async function processInvites() {
 						:delimiters="[',', 'Enter']"
 						:separator="','"
 						:transformer="validator"
-						@part="invites.add({ email: $event })"
+						@part="addInvite($event)"
 						@delete="invites.delete($event)"
 					/>
 				</div>

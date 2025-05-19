@@ -1,21 +1,30 @@
 type SMSPayloadBase = {
-    userid: string;
-    password: string;
-    senderid: string;
-    output: "json";
-    msgType: "text";
-    duplicatecheck: "true" | "false";
-}
+	userid: string;
+	password: string;
+	senderid: string;
+	output: "json";
+	msgType: "text";
+	duplicatecheck: "true" | "false";
+};
 
-type SMSBulkPayload = { sendMethod: "bulkupload"; file: string }
-export type SMSQuickPayloadSingle = { mobile: string, msg: string }
+type SMSBulkPayload = { sendMethod: "bulkupload"; file: string };
+export type SMSQuickPayloadSingle = { mobile: string; msg: string };
 export type SMSQuickPayloadMultiple = {
-    sms: {
-        mobile: string[];
-        msg: string;
-    }[];
-}
-type SMSQuickPayload = { sendMethod: "quick"; } & (SMSQuickPayloadSingle | SMSQuickPayloadMultiple)
-type SMSGroupPayload = { sendMethod: "group"; group: string; };
+	sms: {
+		mobile: string[];
+		msg: string;
+	}[];
+};
+type SMSQuickPayload = { sendMethod: "quick" } & (SMSQuickPayloadSingle | SMSQuickPayloadMultiple);
+type SMSGroupPayload = { sendMethod: "group"; group: string };
 
-export type SMSPayload = SMSPayloadBase & (SMSGroupPayload | SMSQuickPayload | SMSBulkPayload)
+export type TiaraSmsResponse = {
+	msgId: string;
+	from: string;
+	to: string;
+	refId: string;
+	status: string;
+	statusReason: string;
+	deliveryTime: string;
+};
+export type SMSPayload = SMSPayloadBase & (SMSGroupPayload | SMSQuickPayload | SMSBulkPayload);
