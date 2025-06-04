@@ -110,7 +110,10 @@ async function submit() {
 			},
 		});
 		if (hasChannelData(response)) {
-			ResolveMpesaPayment(response, loading, rerender, complete);
+			ResolveMpesaPayment(response, loading, rerender, complete, () => {
+				// Clear Phone Number After Resolving Mpesa
+				payment_details.value.phone = "";
+			});
 		} else {
 			let message = "Form submitted successfully.";
 			if (

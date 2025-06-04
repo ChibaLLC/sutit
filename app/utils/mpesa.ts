@@ -12,7 +12,8 @@ export async function ResolveMpesaPayment(
 	},
 	loading: Ref,
 	rerender: Ref,
-	complete?: Ref
+	complete?: Ref,
+	cb?: () => void,
 ) {
 	const realtime = new RealTime();
 	const channelName = createChannelName(meta.checkoutRequestID, meta.merchantRequestID);
@@ -28,14 +29,18 @@ export async function ResolveMpesaPayment(
 		const result = ParseRealTimePaymentData(data, loading, rerender, complete);
 		if (result !== "not done") realtime?.close();
 	});
-	setTimeout(() => {
-		if(realtime.status === SocketStatus.CLOSED){
-			return
-		} else {
-			console.warn("Closing realtime connection")
-			realtime.close()
-		}
-	}, 1000 * 60 * 5)
+	setTimeout(
+		() => {
+			if (realtime.status === SocketStatus.CLOSED) {
+				return;
+			} else {
+				console.warn("Closing realtime connection");
+				realtime.close();
+			}
+		},
+		1000 * 60 * 5,
+	);
+	cb?.();
 }
 
 function ParseRealTimePaymentData(data: SocketTemplate, loading: Ref, rerender: Ref, complete?: Ref) {
