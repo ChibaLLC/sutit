@@ -185,12 +185,11 @@ export default defineEventHandler(async (event) => {
 					date: new Date().toLocaleTimeString(),
 					products: generateStoreTable(data?.form.stores),
 				};
-				if (data?.phone) {
-					await sendTextSmsTiara({
-						phone: data.phone,
-						message: generatePaymentSms({ receiptNumber: payment.receiptNumber, amount: payment.amount }),
-					});
-				}
+
+				await sendTextSmsTiara({
+					phone: payment.phoneNumber,
+					message: generatePaymentSms({ receiptNumber: payment.receiptNumber, amount: payment.amount }),
+				});
 				if (formMail) {
 					await sendUserReceipt(formMail, formData, "receipt");
 					await sendPaymentMailReceipt({ email: formMail }, payment.amount, receiptNumber);
