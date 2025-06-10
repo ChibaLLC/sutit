@@ -158,24 +158,6 @@ cardData.push({
 	title: `Total Submissions`,
 	icon: `mdi:book`,
 });
-// if (hasPay) {
-// 	cardData.push({
-// 		count: total.value ?? 0,
-// 		title: "Total Cash",
-// 		icon: "mdi:dollar",
-// 	});
-// }
-
-// Add interface for purchase response
-interface PurchaseResponse {
-	responseUlid: string;
-	itemUlid: string;
-	formUlid: string;
-	qtty: number;
-	value: string;
-	pricePaid: number;
-	date: string;
-}
 
 // Add reactive state for purchases
 const purchaseResponses = ref<Awaited<ReturnType<typeof getFormResponses>>["store_response"]>([]);
@@ -193,42 +175,11 @@ const getFieldValue = (response: any[], fieldlabel: string) => {
 	let res = response.find(
 		(r: any) => r.field.label.trim().toLowerCase().toString() == fieldlabel.trim().toLowerCase().toString(),
 	);
-	console.log(res);
 	if (!res) return "";
 	if (res.value == "[object Object]") {
 		return Object.values(res.field.value)[0] || "";
 	}
 	return res.value;
-};
-// Add search functionality
-const searchQuery = ref("");
-
-// Filter responses based on search query
-const filteredResponses = computed(() => {
-	if (!searchQuery.value.trim()) {
-		return groupedResponses;
-	}
-
-	const query = searchQuery.value.toLowerCase();
-	return groupedResponses.filter((row) => {
-		// Search through all fields
-		return fields.some(([_, field]) => {
-			if (field.ulid) {
-				const value = getFieldValue(row, field.label);
-				return value && String(value).toLowerCase().includes(query);
-			}
-			return false;
-		});
-	});
-});
-
-// Calculate the colspan for empty state
-const calculateColspan = () => {
-	let count = 1; // Start with 1 for the # column
-	count += fields.length;
-	if (hasPay) count += 1;
-	if (store_response.length > 0) count += 1;
-	return count;
 };
 </script>
 
