@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<Nav />
-		<div>
+		<main class="pt-24 lg:pt-36">
 			<slot />
-		</div>
+		</main>
 	</div>
 </template>

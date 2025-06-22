@@ -1,134 +1,274 @@
 <template>
-	<div class="w-full flex justify-center items-center relative text-dark z-10">
+	<div class="fixed top-0 left-0 right-0 w-full flex justify-center items-center text-white z-50 px-4 py-4">
+		<!-- Animated background gradient -->
+		<div
+			class="absolute inset-0 bg-gradient-to-br from-[#3D5A80]/20 via-[#98C1D9]/10 to-[#F36A3E]/20 animate-gradient-x"
+		></div>
+
 		<nav
-			class="flex w-10/12 max-sm:w-11/12 justify-between items-center border-sky border text-lg px-3 max-sm:px-2 py-1 mt-4 bg-white rounded isolate relative navbar"
+			class="flex w-full max-w-7xl justify-between items-center border border-white/20 text-lg px-6 max-sm:px-4 py-3 bg-white/10 backdrop-blur-xl rounded-2xl isolate relative navbar group hover:bg-white/15 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#3D5A80]/20"
 		>
-			<!-- Logo -->
-			<div>
-				<svg class="h-12 max-sm:h-9" viewBox="0 0 65 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<!-- Animated border glow -->
+			<div
+				class="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#3D5A80] via-[#98C1D9] to-[#F36A3E] opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-sm -z-10"
+			></div>
+
+			<!-- Logo with hover animation -->
+			<div class="relative group/logo">
+				<div
+					class="absolute inset-0 bg-gradient-to-r from-[#3D5A80] to-[#98C1D9] rounded-xl opacity-0 group-hover/logo:opacity-20 transition-all duration-300 blur-lg"
+				></div>
+				<svg
+					class="h-14 max-sm:h-10 relative z-10 drop-shadow-lg group-hover/logo:scale-110 transition-transform duration-300"
+					viewBox="0 0 65 60"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<defs>
+						<linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+							<stop offset="0%" style="stop-color: #3d5a80; stop-opacity: 1" />
+							<stop offset="50%" style="stop-color: #98c1d9; stop-opacity: 1" />
+							<stop offset="100%" style="stop-color: #f36a3e; stop-opacity: 1" />
+						</linearGradient>
+					</defs>
 					<path
 						d="M0 5C0 2.23858 2.23858 0 5 0H35C51.5685 0 65 13.4315 65 30C65 46.5685 51.5685 60 35 60H5C2.23858 60 0 57.7614 0 55V5Z"
-						fill="#3D5A80"
+						fill="url(#logoGradient)"
+						class="group-hover/logo:animate-pulse"
 					/>
 				</svg>
 			</div>
 
-			<!-- Desktop Navigation -->
-			<ul class="hidden md:flex justify-center w-full font-serif gap-x-20 items-center text-xl -z-10 absolute">
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/">Home</NuxtLink>
-				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/about">About</NuxtLink>
-				</li>
-				<li>
-					<NuxtLink to="/">
-						<span class="uppercase text-3xl">sutit.</span>
+			<!-- Desktop Navigation with floating effect -->
+			<ul
+				class="hidden lg:flex justify-center w-full font-serif gap-x-16 items-center text-xl absolute left-0 right-0"
+			>
+				<li class="nav-item group/item">
+					<NuxtLink
+						to="/"
+						class="relative px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm text-black"
+					>
+						<span class="relative z-10 font-medium">Home</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+						></div>
 					</NuxtLink>
 				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/pricing">Pricing</NuxtLink>
+				<li class="nav-item group/item">
+					<NuxtLink
+						to="/about"
+						class="relative px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm text-black"
+					>
+						<span class="relative z-10 font-medium">About</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+						></div>
+					</NuxtLink>
 				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/contact">Contact</NuxtLink>
+				<li class="brand-center group/brand">
+					<NuxtLink to="/" class="relative">
+						<span
+							class="uppercase text-4xl font-bold bg-gradient-to-r from-white via-[#98C1D9] to-[#F36A3E] bg-clip-text text-transparent group-hover/brand:animate-pulse transition-all duration-300 drop-shadow-lg"
+						>
+							sutit.
+						</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/10 via-[#98C1D9]/10 to-[#F36A3E]/10 blur-xl opacity-0 group-hover/brand:opacity-100 transition-opacity duration-500"
+						></div>
+					</NuxtLink>
+				</li>
+				<li class="nav-item group/item">
+					<NuxtLink
+						to="/pricing"
+						class="relative px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm text-black"
+					>
+						<span class="relative z-10 font-medium">Pricing</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+						></div>
+					</NuxtLink>
+				</li>
+				<li class="nav-item group/item">
+					<NuxtLink
+						to="/contact"
+						class="relative px-4 py-2 rounded-lg transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm text-black"
+					>
+						<span class="relative z-10 font-medium">Contact</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+						></div>
+					</NuxtLink>
 				</li>
 			</ul>
 
-			<!-- Mobile Logo -->
-			<div class="md:hidden flex justify-center w-full absolute">
-				<NuxtLink to="/">
-					<span class="uppercase text-2xl font-serif">Sutit.</span>
+			<!-- Mobile Logo with gradient -->
+			<div class="lg:hidden flex justify-center w-full absolute left-0 right-0">
+				<NuxtLink to="/" class="group/mobile-brand">
+					<span
+						class="uppercase text-2xl max-sm:text-xl font-bold bg-gradient-to-r from-white via-[#98C1D9] to-[#F36A3E] bg-clip-text text-transparent group-hover/mobile-brand:animate-pulse transition-all duration-300"
+					>
+						Sutit.
+					</span>
 				</NuxtLink>
 			</div>
 
-			<!-- Right side actions -->
+			<!-- Right side actions with enhanced styling -->
 			<div class="isolate z-20">
-				<div>
-					<div v-if="!userIsAuthenticated()">
-						<!-- Login button (desktop) -->
-						<NuxtLink
-							class="hidden md:block bg-navy px-8 py-2 rounded-sm text-white font-bold transition-colors hover:bg-navy/90"
-							to="/auth/login"
-						>
-							<span>Login</span>
-						</NuxtLink>
-						<!-- Mobile menu toggle -->
-						<div class="md:hidden bg-navy p-2 rounded text-white cursor-pointer" @click="toggleMobileMenu">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								class="w-6 h-5"
-							>
-								<path d="M3 4H21V6H3V4ZM3 11H21V13H3V11ZM3 18H21V20H3V18Z"></path>
-							</svg>
-						</div>
-					</div>
-					<!-- Authenticated user -->
-					<div
-						class="rounded-xl max-sm:rounded-lg p-[6px] text-white font-bold bg-white border-2 border-navy relative overflow-hidden cursor-pointer"
-						v-else
-						@click="toggleDropdown"
+				<div v-if="!userIsAuthenticated()">
+					<!-- Sexy login button (desktop) -->
+					<NuxtLink
+						class="hidden lg:block relative bg-gradient-to-r from-[#3D5A80] to-[#98C1D9] px-10 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#3D5A80]/30 group/login overflow-hidden"
+						to="/auth/login"
 					>
-						<img
-							:src="pp"
-							alt="Profile Picture"
-							class="object-cover h-8 max-sm:h-6 w-10 max-sm:w-8 aspect-square opacity-80 grayscale"
-						/>
 						<div
-							class="absolute w-full h-full bg-navy/15 top-0 left-0 hover:bg-transparent transition-colors"
+							class="absolute inset-0 bg-gradient-to-r from-[#F36A3E] to-[#98C1D9] opacity-0 group-hover/login:opacity-100 transition-opacity duration-300"
 						></div>
+						<span class="relative z-10 flex items-center gap-2">
+							Login
+							<Icon
+								name="heroicons:arrow-right-20-solid"
+								class="w-4 h-4 group-hover/login:translate-x-1 transition-transform duration-300"
+							/>
+						</span>
+					</NuxtLink>
+
+					<!-- Mobile menu toggle with animation -->
+					<div
+						class="lg:hidden bg-gradient-to-r from-[#3D5A80] to-[#98C1D9] p-3 rounded-xl text-white cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-lg group/mobile-toggle"
+						@click="toggleMobileMenu"
+					>
+						<Icon
+							:name="isMobileMenuOpen ? 'heroicons:x-mark-20-solid' : 'heroicons:bars-3-20-solid'"
+							class="w-6 h-6 transition-all duration-300 group-hover/mobile-toggle:rotate-90"
+						/>
 					</div>
 				</div>
 
-				<!-- User dropdown menu -->
+				<!-- Authenticated user with glassmorphism -->
+				<div
+					class="rounded-2xl p-1 text-white font-bold bg-white/10 backdrop-blur-md border border-white/20 relative overflow-hidden cursor-pointer group/profile transition-all duration-300 hover:bg-white/20 hover:scale-105"
+					v-else
+					@click="toggleDropdown"
+				>
+					<div
+						class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 opacity-0 group-hover/profile:opacity-100 transition-opacity duration-300"
+					></div>
+					<img
+						:src="pp"
+						alt="Profile Picture"
+						class="object-cover h-10 max-sm:h-8 w-12 max-sm:w-10 aspect-square rounded-xl border border-white/20 relative z-10 transition-all duration-300 group-hover/profile:scale-110"
+					/>
+				</div>
+
+				<!-- Enhanced dropdown menu -->
 				<ul
 					ref="dropdown"
-					class="absolute border px-10 py-1 dropdown text-white bg-navy/80 mt-1 -mr-0.5 rounded-b-md backdrop-blur-lg"
+					class="absolute border border-white/20 px-8 py-3 dropdown text-white bg-black/20 backdrop-blur-xl mt-2 -mr-1 rounded-2xl shadow-2xl shadow-[#3D5A80]/20"
 				>
-					<li class="hover:text-sky w-full transition-colors py-1 initial" @click="toggleDropdown">
-						<button @click="logout" v-if="userIsAuthenticated()">Log Out</button>
+					<li
+						class="hover:bg-white/10 w-full transition-all duration-300 py-2 rounded-lg px-2 group/dropdown-item"
+						@click="toggleDropdown"
+					>
+						<button @click="logout" v-if="userIsAuthenticated()" class="flex items-center gap-2 w-full">
+							<Icon name="heroicons:arrow-right-on-rectangle-20-solid" class="w-4 h-4" />
+							Log Out
+						</button>
 					</li>
 				</ul>
 			</div>
 		</nav>
 
-		<!-- Mobile Navigation Menu -->
+		<!-- Sexy Mobile Navigation Menu -->
 		<div
 			ref="mobileMenu"
-			class="mobile-menu fixed top-0 left-0 w-full h-full bg-navy/95 backdrop-blur-md z-50 flex flex-col justify-center items-center transform translate-x-full transition-transform duration-300"
+			class="mobile-menu fixed top-0 left-0 w-full h-full bg-gradient-to-br from-[#3D5A80]/95 via-[#98C1D9]/90 to-[#F36A3E]/95 backdrop-blur-2xl z-50 flex flex-col justify-center items-center transform translate-x-full transition-all duration-500"
 		>
+			<!-- Animated background elements -->
+			<div
+				class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(61,90,128,0.3),transparent_70%)]"
+			></div>
+			<div
+				class="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(152,193,217,0.3),transparent_70%)]"
+			></div>
+			<div
+				class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(243,106,62,0.2),transparent_70%)]"
+			></div>
+
+			<!-- Close button -->
 			<button
 				@click="toggleMobileMenu"
-				class="absolute top-6 right-6 text-white hover:text-sky transition-colors"
+				class="absolute top-8 right-8 text-white hover:text-[#F36A3E] transition-all duration-300 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:scale-110 group/close"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
-					<path
-						d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
-					></path>
-				</svg>
+				<Icon
+					name="heroicons:x-mark-20-solid"
+					class="h-8 w-8 group-hover/close:rotate-90 transition-transform duration-300"
+				/>
 			</button>
 
-			<ul class="flex flex-col gap-y-6 font-serif items-center text-white text-2xl">
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/" @click="toggleMobileMenu">Home</NuxtLink>
+			<!-- Mobile menu items -->
+			<ul class="flex flex-col gap-y-8 font-serif items-center text-white text-3xl relative z-10">
+				<li class="mobile-menu-item group/mobile-item">
+					<NuxtLink
+						to="/"
+						@click="toggleMobileMenu"
+						class="relative px-8 py-4 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm block"
+					>
+						<span class="relative z-10">Home</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-2xl opacity-0 group-hover/mobile-item:opacity-100 transition-all duration-300 blur-sm"
+						></div>
+					</NuxtLink>
 				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/about" @click="toggleMobileMenu">About</NuxtLink>
+				<li class="mobile-menu-item group/mobile-item">
+					<NuxtLink
+						to="/about"
+						@click="toggleMobileMenu"
+						class="relative px-8 py-4 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm block"
+					>
+						<span class="relative z-10">About</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-2xl opacity-0 group-hover/mobile-item:opacity-100 transition-all duration-300 blur-sm"
+						></div>
+					</NuxtLink>
 				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/pricing" @click="toggleMobileMenu">Pricing</NuxtLink>
+				<li class="mobile-menu-item group/mobile-item">
+					<NuxtLink
+						to="/pricing"
+						@click="toggleMobileMenu"
+						class="relative px-8 py-4 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm block"
+					>
+						<span class="relative z-10">Pricing</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-2xl opacity-0 group-hover/mobile-item:opacity-100 transition-all duration-300 blur-sm"
+						></div>
+					</NuxtLink>
 				</li>
-				<li class="hover:text-sky transition-colors">
-					<NuxtLink to="/contact" @click="toggleMobileMenu">Contact</NuxtLink>
+				<li class="mobile-menu-item group/mobile-item">
+					<NuxtLink
+						to="/contact"
+						@click="toggleMobileMenu"
+						class="relative px-8 py-4 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm block"
+					>
+						<span class="relative z-10">Contact</span>
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80]/20 to-[#98C1D9]/20 rounded-2xl opacity-0 group-hover/mobile-item:opacity-100 transition-all duration-300 blur-sm"
+						></div>
+					</NuxtLink>
 				</li>
-				<li class="mt-6">
+				<li class="mt-8">
 					<NuxtLink
 						to="/auth/login"
-						class="bg-white px-12 py-3 rounded-sm text-navy font-bold"
+						class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#F36A3E] to-[#98C1D9] px-12 py-4 rounded-2xl text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#F36A3E]/30 relative group/mobile-login overflow-hidden"
 						@click="toggleMobileMenu"
 					>
-						Login
+						<div
+							class="absolute inset-0 bg-gradient-to-r from-[#3D5A80] to-[#98C1D9] opacity-0 group-hover/mobile-login:opacity-100 transition-opacity duration-300"
+						></div>
+						<span class="relative z-10">Login</span>
+						<Icon
+							name="heroicons:arrow-right-20-solid"
+							class="w-5 h-5 relative z-10 group-hover/mobile-login:translate-x-1 transition-transform duration-300"
+						/>
 					</NuxtLink>
 				</li>
 			</ul>
@@ -162,7 +302,7 @@ function toggleMobileMenu() {
 
 // Close mobile menu on window resize if open
 function handleWindowResize() {
-	if (window.innerWidth >= 768 && isMobileMenuOpen.value) {
+	if (window.innerWidth >= 1024 && isMobileMenuOpen.value) {
 		toggleMobileMenu();
 	}
 }
@@ -177,27 +317,63 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-.navbar {
-	filter: drop-shadow(0px 10px 10px rgba(90, 169, 230, 0.1));
-	height: 65px;
+@keyframes gradient-x {
+	0%,
+	100% {
+		transform: translateX(0%);
+	}
+	50% {
+		transform: translateX(-100%);
+	}
+}
 
-	@media screen and (max-width: 768px) {
-		height: 50px;
+.animate-gradient-x {
+	animation: gradient-x 15s ease infinite;
+	background-size: 200% 200%;
+}
+
+.navbar {
+	filter: drop-shadow(0px 20px 25px rgba(61, 90, 128, 0.15));
+	height: 70px;
+	backdrop-filter: blur(20px);
+
+	@media screen and (max-width: 1024px) {
+		height: 60px;
+	}
+
+	@media screen and (max-width: 640px) {
+		height: 55px;
+	}
+}
+
+.nav-item {
+	position: relative;
+	color: black;
+	&:hover {
+		transform: translateY(-2px);
+	}
+}
+
+.brand-center {
+	transform: scale(1);
+	transition: transform 0.3s ease;
+
+	&:hover {
+		transform: scale(1.1);
 	}
 }
 
 .dropdown {
 	transform: translateY(-100%);
 	right: 0;
-	top: 3.8rem;
+	top: 4.5rem;
 	opacity: 0;
-	transition:
-		transform 0.3s,
-		opacity 0.3s;
+	transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 	pointer-events: none;
+	backdrop-filter: blur(20px);
 
-	@media screen and (max-width: 768px) {
-		top: 2.8rem !important;
+	@media screen and (max-width: 1024px) {
+		top: 3.5rem !important;
 	}
 
 	&.active {
@@ -208,10 +384,43 @@ onBeforeUnmount(() => {
 }
 
 .mobile-menu {
-	opacity: 0.98;
+	opacity: 0;
+	backdrop-filter: blur(30px);
 
-	&.translate-x-full {
-		opacity: 0;
+	&:not(.translate-x-full) {
+		opacity: 1;
 	}
+}
+
+.mobile-menu-item {
+	animation: slideInFromRight 0.6s ease-out forwards;
+	opacity: 0;
+	transform: translateX(50px);
+
+	@for $i from 1 through 5 {
+		&:nth-child(#{$i}) {
+			animation-delay: #{$i * 0.1}s;
+		}
+	}
+}
+
+@keyframes slideInFromRight {
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+// Enhance glassmorphism effect
+.bg-white\/10 {
+	backdrop-filter: blur(10px);
+}
+
+.bg-white\/15 {
+	backdrop-filter: blur(15px);
+}
+
+.bg-white\/20 {
+	backdrop-filter: blur(20px);
 }
 </style>
