@@ -92,6 +92,7 @@ function closeFormDetailsModal() {
 	} else {
 		showFormNameModal.value = false;
 	}
+	navigateTo("/forms");
 }
 </script>
 
