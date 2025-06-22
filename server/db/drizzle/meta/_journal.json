@@ -29,6 +29,13 @@
       "when": 1745481312211,
       "tag": "0003_lively_ultimatum",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1750606076436,
+      "tag": "0004_legal_colleen_wing",
+      "breakpoints": true
     }
   ]
 }
