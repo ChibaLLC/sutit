@@ -47,7 +47,7 @@ function hasPhone() {
 }
 
 async function processForm() {
-	paymentModal.value = false;
+	//paymentModal.value = false;
 	if (group.self && data.value?.meta.requireMerch && !hasBoughtMerch(data.value.stores)) {
 		return window.alertError("You need to get something from the store section of this form!");
 	}
@@ -55,7 +55,7 @@ async function processForm() {
 		return processInvites();
 	}
 
-	if (hasPrice(data.value) && !hasPhone()) {
+	if (hasPrice(data.value) && !paymentModal.value) {
 		paymentModal.value = true;
 	} else if (hasPrice(data.value) && hasPhone()) {
 		log.info("Submitting paid form", completedForm);
@@ -110,7 +110,9 @@ async function submit() {
 			},
 		});
 		if (hasChannelData(response)) {
-			ResolveMpesaPayment(response, loading, rerender, complete);
+			ResolveMpesaPayment(response, loading, rerender, complete, () => {
+				paymentModal.value = false;
+			});
 		} else {
 			let message = "Form submitted successfully.";
 			if (
