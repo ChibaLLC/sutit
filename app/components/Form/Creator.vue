@@ -87,11 +87,7 @@ onMounted(() => {
 });
 
 function closeFormDetailsModal() {
-	if (data.value.name.trim() === "") {
-		helpText.value = true;
-	} else {
-		showFormNameModal.value = false;
-	}
+	showFormNameModal.value = false;
 	navigateTo("/forms");
 }
 </script>
