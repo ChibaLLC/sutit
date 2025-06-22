@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Pages, Stores } from "@chiballc/nuxt-form-builder";
+import { Loader2 } from "lucide-vue-next";
 
 definePageMeta({
 	middleware: ["auth"],
@@ -7,6 +8,9 @@ definePageMeta({
 });
 
 const ulid = useRoute().params?.ulid;
+const loading = ref(false);
+const nuxt = useNuxtApp();
+
 const { data: response } = await useFetch<ReconstructedDbForm>(`/api/forms/${ulid}`, {
 	onResponseError({ response }) {
 		console.log(response);
@@ -35,6 +39,9 @@ const submitData = computed(() => {
 });
 
 async function submit(data: any) {
+	loading.value = true;
+	await nuxt.callHook("page:loading:start");
+
 	const res = await $fetch(`/api/forms/${response.value?.meta.ulid}/update`, {
 		method: "POST",
 		headers: {
@@ -48,14 +55,24 @@ async function submit(data: any) {
 	});
 
 	if (res) {
-		alert("Form updated successfully");
+		window.alertSuccess("Form updated successfully");
 		await navigateTo("/forms");
 	}
+	await nuxt.callHook("page:loading:end");
+	loading.value = false;
 }
 </script>
 
 <template>
-	<FormCreator :starter="submitData" @submit="submit" />
+	<div class="relative">
+		<FormCreator :starter="submitData" @submit="submit" />
+		<div v-if="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+				<Loader2 class="animate-spin h-5 w-5 text-blue-600" />
+				<span class="">updating form...</span>
+			</div>
+		</div>
+	</div>
 </template>
 
 <style scoped></style>
