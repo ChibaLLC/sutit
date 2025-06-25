@@ -1,17 +1,7 @@
 <template>
-	<div class="relative">
-		<FormCreator @submit="submit" />
-		<div v-if="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-			<div class="bg-white rounded-lg p-6 flex items-center space-x-3">
-				<Loader2 class="animate-spin h-5 w-5 text-blue-600" />
-				<span class="">Creating form...</span>
-			</div>
-		</div>
-	</div>
+	<FormCreator @submit="submit" />
 </template>
 <script setup lang="ts">
-import { Loader2 } from "lucide-vue-next";
-
 definePageMeta({
 	middleware: ["auth"],
 	layout: "novbar",
@@ -29,10 +19,8 @@ useSeoMeta({
 	twitterCard: "summary",
 });
 const loading = ref(false);
-const nuxt = useNuxtApp();
 async function submit(data: any) {
 	if (loading.value) return alert("This form is being processed. Please wait.");
-	await nuxt.callHook("page:loading:start");
 	loading.value = true;
 	const res = await $fetch("/api/forms/create", {
 		method: "POST",
@@ -47,10 +35,10 @@ async function submit(data: any) {
 	}).catch(() => undefined);
 
 	if (res) {
-		window.alertSuccess("Form created successfully");
+		alert("Form created successfully");
 		await navigateTo("/dashboard");
 	}
-	await nuxt.callHook("page:loading:end");
+
 	loading.value = false;
 }
 </script>
