@@ -31,23 +31,92 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 <template>
 	<div>
 		<Title>Dashboard</Title>
-		<Pill />
-		<div class="container lg:flex-nowrap flex-wrap" v-if="stats">
-			<NuxtLink
-				to="/forms"
-				class="w-full lg:w-4/12 xl:w-3/12 md:w-3/12 px-4 h-[140px] hover:scale-[1.02] transition-transform duration-300"
-			>
-				<CardSummaryCard
-					title="forms"
-					:icon="`mdi:file`"
-					:count="stats.forms"
-					:description="`You have created ${stats?.forms || 0} forms so far`"
-				/>
-				<div class="h-1 w-full bg-transparent rounded -mt-1" v-if="stats.forms < 10">
+
+
+		<!-- Hero Section with Glassmorphism -->
+		<div class="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
+			<!-- Animated Background Elements -->
+			<div class="absolute inset-0">
+				<div class="absolute top-10 left-10 w-32 h-32 bg-[#3D5A80]/20 rounded-full blur-xl animate-pulse"></div>
+				<div
+					class="absolute top-32 right-20 w-48 h-48 bg-[#F36A3E]/15 rounded-full blur-2xl animate-pulse delay-1000"
+				></div>
+				<div
+					class="absolute bottom-20 left-1/3 w-40 h-40 bg-[#98C1D9]/25 rounded-full blur-xl animate-pulse delay-500"
+				></div>
+			</div>
+
+			<div class="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+				<div class="veil rounded-3xl p-8 sm:p-12 text-[#3D5A80] relative overflow-hidden">
+					<!-- Background decorations -->
 					<div
-						class="h-1 bg-sky rounded max-w-full"
-						:style="{ width: `${((stats?.forms || 0) / 10) * 100}%` }"
-					/>
+						class="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full translate-x-16 sm:translate-x-32 -translate-y-16 sm:-translate-y-32"
+					></div>
+					<div
+						class="absolute bottom-0 left-0 w-24 sm:w-48 h-24 sm:h-48 bg-[#F36A3E]/10 rounded-full -translate-x-12 sm:-translate-x-24 translate-y-12 sm:translate-y-24"
+					></div>
+
+					<div class="relative z-10">
+						<h2 class="text-2xl sm:text-3xl font-bold mb-8 flex items-center text-[#3D5A80]">
+							<Icon name="material-symbols:bolt" class="w-7 h-7 sm:w-8 sm:h-8 mr-3" />
+							Quick Actions
+						</h2>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+							<NuxtLink
+								to="/forms/create"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:add-circle-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Create Form</h3>
+										<p class="text-[#3D5A80]/70 text-sm">Start building a new form</p>
+									</div>
+								</div>
+							</NuxtLink>
+
+							<NuxtLink
+								to="/forms"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:folder-open-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Manage Forms</h3>
+										<p class="text-[#3D5A80]/70 text-sm">View and edit your forms</p>
+									</div>
+								</div>
+							</NuxtLink>
+
+							<NuxtLink
+								to="/analytics"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20 sm:col-span-2 lg:col-span-1"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:analytics-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Analytics</h3>
+										<p class="text-[#3D5A80]/70 text-sm">View performance insights</p>
+									</div>
+								</div>
+							</NuxtLink>
+						</div>
+					</div>
 				</div>
 			</NuxtLink>
 			<NuxtLink
@@ -132,38 +201,24 @@ const { data: recents } = await useFetch(`/api/forms/me/recents`, {
 							</NuxtLink>
 						</div>
 					</div>
-				</li>
-			</ul>
-			<div v-else class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto mt-2">
-				<p class="text-center text-gray-500">
-					You have not created any forms yet.
-					<NuxtLink to="/forms/create" class="text-blue-500">Create one now</NuxtLink>
-				</p>
-			</div>
+
+				</div>
+			</Card>
 		</div>
-		<div class="flex flex-col px-4 xl:px-6 mt-8">
-			<h1 class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto uppercase font-bold mt-1">
-				Actions
-			</h1>
-			<ul class="w-full xl:w-6/12 xl:px-5 lg:px-10 lg:w-full md:w-9/12 m-auto mt-2 text-center">
-				<li
-					class="py-2 bg-peach text-white rounded hover:bg-emerald-600 transition-colors w-40 font-semibold uppercase"
-					style="font-size: smaller"
-				>
-					<NuxtLink to="/forms/create">Create A Form</NuxtLink>
-				</li>
-			</ul>
-		</div>
+
+		<!-- Quick Actions Section -->
 	</div>
 </template>
-<style scoped lang="scss">
-.container {
-	max-width: 1200px;
-	margin: auto;
-	display: flex;
-	justify-content: center;
-	gap: 1rem;
-	margin-top: 4.5rem;
+
+<style scoped>
+.wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding-top: 5rem;
+	min-width: 100vw;
+	min-height: 100vh;
+	background: radial-gradient(100.76% 179.14% at -2.4% -2.78%, #ffffff 25.3%, #e0fbfc 100%);
 }
 
 .recent-list li:hover {

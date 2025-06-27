@@ -1,11 +1,30 @@
 <template>
-	<div class="w-full flex justify-center items-center relative text-dark z-10">
+
+	<div class="fixed top-0 left-0 right-0 w-full flex justify-center items-center text-white z-50 px-4 py-4">
+		<!-- Animated background gradient -->
+
 		<nav
 			class="flex w-10/12 max-sm:w-11/12 justify-between items-center border-sky border text-lg px-3 max-sm:px-2 py-1 mt-4 bg-white rounded isolate relative navbar"
 		>
-			<!-- Logo -->
-			<div>
-				<svg class="h-12 max-sm:h-9" viewBox="0 0 65 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+			<!-- Logo with hover animation -->
+			<div class="relative group/logo">
+				<div
+					class="absolute inset-0 bg-gradient-to-r from-[#3D5A80] to-[#98C1D9] rounded-xl opacity-0 group-hover/logo:opacity-20 transition-all duration-300 blur-lg"
+				></div>
+				<svg
+					class="h-14 max-sm:h-10 relative z-10 drop-shadow-lg group-hover/logo:scale-110 transition-transform duration-300"
+					viewBox="0 0 65 60"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<defs>
+						<linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+							<stop offset="0%" style="stop-color: #3d5a80; stop-opacity: 1" />
+							<stop offset="50%" style="stop-color: #98c1d9; stop-opacity: 1" />
+							<stop offset="100%" style="stop-color: #f36a3e; stop-opacity: 1" />
+						</linearGradient>
+					</defs>
 					<path
 						d="M0 5C0 2.23858 2.23858 0 5 0H35C51.5685 0 65 13.4315 65 30C65 46.5685 51.5685 60 35 60H5C2.23858 60 0 57.7614 0 55V5Z"
 						fill="#3D5A80"

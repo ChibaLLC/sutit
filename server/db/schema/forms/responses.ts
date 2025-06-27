@@ -76,6 +76,7 @@ const store_items = qb
 		formUlid: sql<string>`${_stores.formUlid}`.as("store_form_ulid"),
 		itemUlid: sql<string>`${storeItems.ulid}`.as("item_ulid_view"),
 		likes: storeItems.likes,
+		price: storeItems.price,
 	})
 	.from(_stores)
 	.innerJoin(storeItems, eq(_stores.ulid, storeItems.storeUlid))
@@ -98,6 +99,7 @@ const store_items_responses = qb
 		value: itemResponses.value,
 		formUlid: sql<string>`${store_items.formUlid}`.as("store_items_ulid"),
 		qtty: sql<string>`${itemResponses.qtty}`.as("qtty"),
+		price: sql<string>`${store_items.price}`.as("price"),
 	})
 	.from(itemResponses)
 	.innerJoin(store_items, eq(itemResponses.itemUlid, store_items.itemUlid))
@@ -129,7 +131,9 @@ export const storeResponsesView = pgView("store_responses_view").as(
 			value: store_items_responses.value,
 			pricePaid: storeResponses.pricePaid,
 			date: storeResponses.createdAt,
+			price: store_items_responses.price,
 		})
 		.from(storeResponses)
-		.leftJoin(store_items_responses, eq(storeResponses.ulid, store_items_responses.storeResponseUlid)),
+		.leftJoin(store_items_responses, eq(storeResponses.ulid, store_items_responses.storeResponseUlid))
+		.leftJoin(storeItems, eq(store_items_responses.itemUlid, storeItems.ulid)),
 );
