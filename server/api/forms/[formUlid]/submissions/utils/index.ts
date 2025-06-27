@@ -167,12 +167,14 @@ export async function constructExcel(
 
 				// Add each store item as a row
 				storeItems.forEach((item, itemIndex) => {
+					let totalPricePaid = parseFloat(item.qtty.toString()) * parseFloat(item.price.toString());
+
 					const { value } = findUserResponseName(form, rows, item.formResponseUlid);
 					const storeRow = storeWorksheet.addRow({
 						user: value,
 						qtty: item.qtty,
 						value: item.value,
-						pricePaid: item.pricePaid,
+						pricePaid: totalPricePaid,
 						date: item.date,
 					});
 
@@ -190,7 +192,7 @@ export async function constructExcel(
 
 					// Add to summary data
 					totalPurchases += item.qtty;
-					totalPurchaseAmount += item.pricePaid;
+					totalPurchaseAmount += totalPricePaid;
 
 					// Track purchases by item for the summary
 					if (!purchasesByItem[item.value]) {
@@ -200,7 +202,7 @@ export async function constructExcel(
 						};
 					}
 					purchasesByItem[item.value].count += item.qtty;
-					purchasesByItem[item.value].total += item.pricePaid;
+					purchasesByItem[item.value].total += totalPricePaid;
 				});
 			}
 		});
@@ -222,15 +224,7 @@ export async function constructExcel(
 			summaryHeaderRow.alignment = { horizontal: "center" };
 
 			// Add the total row
-			const totalRow = storeWorksheet.addRow([
-				"Total Purchases",
-				"",
-				"",
-				totalPurchases,
-				"",
-				totalPurchaseAmount,
-				"",
-			]);
+			const totalRow = storeWorksheet.addRow(["Total Purchases", totalPurchases, "", totalPurchaseAmount, ""]);
 			totalRow.font = { bold: true };
 			totalRow.getCell("pricePaid").numFmt = '"KES "#,##0.00';
 
@@ -330,13 +324,13 @@ export async function constructExcel(
 		}, 0);
 
 		summarySheet.addRow(["Total Form Revenue", totalRevenue]);
-		summarySheet.getCell("B3").numFmt = '"KES "#,##0.00';
+		summarySheet.getCell("B4").numFmt = '"KES "#,##0.00';
 	}
 
 	if (store_response && store_response.length > 0) {
 		summarySheet.addRow(["Total Store Purchases", totalPurchases]);
 		summarySheet.addRow(["Total Store Revenue", totalPurchaseAmount]);
-		summarySheet.getCell("B5").numFmt = '"KES "#,##0.00';
+		summarySheet.getCell("B6").numFmt = '"KES "#,##0.00';
 
 		// Add a small gap
 		summarySheet.addRow([]);
