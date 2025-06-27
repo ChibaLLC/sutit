@@ -66,41 +66,76 @@ const greeting = computed(() => {
 				></div>
 			</div>
 
-			<!-- Hero Content -->
-			<div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-				<div class="space-y-6">
-					<div class="space-y-2">
-						<p class="text-[#3D5A80]/70 text-lg sm:text-xl font-medium">{{ greeting }}! 👋</p>
-						<h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold text-[#3D5A80] leading-tight">
-							Forms
-							<span class="bg-gradient-to-r from-[#3D5A80] to-[#F36A3E] bg-clip-text text-transparent">
-								Dashboard
-							</span>
-						</h1>
-					</div>
-					<p class="text-xl sm:text-2xl text-[#3D5A80]/60 max-w-3xl mx-auto">
-						Create, manage, and analyze your forms with elegant simplicity
-					</p>
+			<div class="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+				<div class="veil rounded-3xl p-8 sm:p-12 text-[#3D5A80] relative overflow-hidden">
+					<!-- Background decorations -->
+					<div
+						class="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full translate-x-16 sm:translate-x-32 -translate-y-16 sm:-translate-y-32"
+					></div>
+					<div
+						class="absolute bottom-0 left-0 w-24 sm:w-48 h-24 sm:h-48 bg-[#F36A3E]/10 rounded-full -translate-x-12 sm:-translate-x-24 translate-y-12 sm:translate-y-24"
+					></div>
 
-					<!-- Quick Action Buttons -->
-					<div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
-						<NuxtLink
-							to="/forms/create"
-							class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-[#3D5A80] text-white font-semibold rounded-2xl hover:bg-[#3D5A80]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
-						>
-							<Icon
-								name="material-symbols:add-circle-outline"
-								class="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform"
-							/>
-							Create New Form
-						</NuxtLink>
-						<NuxtLink
-							to="/forms"
-							class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-white/80 backdrop-blur-sm text-[#3D5A80] font-semibold rounded-2xl hover:bg-white transition-all duration-300 shadow-md hover:shadow-lg border border-[#3D5A80]/20"
-						>
-							<Icon name="material-symbols:folder-open-outline" class="w-5 h-5 mr-2" />
-							View All Forms
-						</NuxtLink>
+					<div class="relative z-10">
+						<h2 class="text-2xl sm:text-3xl font-bold mb-8 flex items-center text-[#3D5A80]">
+							<Icon name="material-symbols:bolt" class="w-7 h-7 sm:w-8 sm:h-8 mr-3" />
+							Quick Actions
+						</h2>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+							<NuxtLink
+								to="/forms/create"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:add-circle-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Create Form</h3>
+										<p class="text-[#3D5A80]/70 text-sm">Start building a new form</p>
+									</div>
+								</div>
+							</NuxtLink>
+
+							<NuxtLink
+								to="/forms"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:folder-open-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Manage Forms</h3>
+										<p class="text-[#3D5A80]/70 text-sm">View and edit your forms</p>
+									</div>
+								</div>
+							</NuxtLink>
+
+							<NuxtLink
+								to="/analytics"
+								class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20 sm:col-span-2 lg:col-span-1"
+							>
+								<div class="flex items-center space-x-4">
+									<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+										<Icon
+											name="material-symbols:analytics-outline"
+											class="w-6 h-6 text-[#3D5A80]"
+										/>
+									</div>
+									<div>
+										<h3 class="font-semibold text-[#3D5A80]">Analytics</h3>
+										<p class="text-[#3D5A80]/70 text-sm">View performance insights</p>
+									</div>
+								</div>
+							</NuxtLink>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -313,76 +348,11 @@ const greeting = computed(() => {
 		</div>
 
 		<!-- Quick Actions Section -->
-		<div class="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-			<div class="veil rounded-3xl p-8 sm:p-12 text-[#3D5A80] relative overflow-hidden">
-				<!-- Background decorations -->
-				<div
-					class="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-white/10 rounded-full translate-x-16 sm:translate-x-32 -translate-y-16 sm:-translate-y-32"
-				></div>
-				<div
-					class="absolute bottom-0 left-0 w-24 sm:w-48 h-24 sm:h-48 bg-[#F36A3E]/10 rounded-full -translate-x-12 sm:-translate-x-24 translate-y-12 sm:translate-y-24"
-				></div>
-
-				<div class="relative z-10">
-					<h2 class="text-2xl sm:text-3xl font-bold mb-8 flex items-center text-[#3D5A80]">
-						<Icon name="material-symbols:bolt" class="w-7 h-7 sm:w-8 sm:h-8 mr-3" />
-						Quick Actions
-					</h2>
-					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-						<NuxtLink
-							to="/forms/create"
-							class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
-						>
-							<div class="flex items-center space-x-4">
-								<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-									<Icon name="material-symbols:add-circle-outline" class="w-6 h-6 text-[#3D5A80]" />
-								</div>
-								<div>
-									<h3 class="font-semibold text-[#3D5A80]">Create Form</h3>
-									<p class="text-[#3D5A80]/70 text-sm">Start building a new form</p>
-								</div>
-							</div>
-						</NuxtLink>
-
-						<NuxtLink
-							to="/forms"
-							class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20"
-						>
-							<div class="flex items-center space-x-4">
-								<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-									<Icon name="material-symbols:folder-open-outline" class="w-6 h-6 text-[#3D5A80]" />
-								</div>
-								<div>
-									<h3 class="font-semibold text-[#3D5A80]">Manage Forms</h3>
-									<p class="text-[#3D5A80]/70 text-sm">View and edit your forms</p>
-								</div>
-							</div>
-						</NuxtLink>
-
-						<NuxtLink
-							to="/analytics"
-							class="group bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300 hover:scale-105 border border-white/20 sm:col-span-2 lg:col-span-1"
-						>
-							<div class="flex items-center space-x-4">
-								<div class="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-									<Icon name="material-symbols:analytics-outline" class="w-6 h-6 text-[#3D5A80]" />
-								</div>
-								<div>
-									<h3 class="font-semibold text-[#3D5A80]">Analytics</h3>
-									<p class="text-[#3D5A80]/70 text-sm">View performance insights</p>
-								</div>
-							</div>
-						</NuxtLink>
-					</div>
-				</div>
-			</div>
-		</div>
 	</div>
 </template>
 
 <style scoped>
 .wrapper {
-	z-index: -1;
 	position: absolute;
 	top: 0;
 	left: 0;

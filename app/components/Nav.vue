@@ -1,18 +1,10 @@
 <template>
 	<div class="fixed top-0 left-0 right-0 w-full flex justify-center items-center text-white z-50 px-4 py-4">
 		<!-- Animated background gradient -->
-		<div
-			class="absolute inset-0 bg-gradient-to-br from-[#3D5A80]/20 via-[#98C1D9]/10 to-[#F36A3E]/20 animate-gradient-x"
-		></div>
 
 		<nav
 			class="flex w-full max-w-7xl justify-between items-center border border-white/20 text-lg px-6 max-sm:px-4 py-3 bg-white/10 backdrop-blur-xl rounded-2xl isolate relative navbar group hover:bg-white/15 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#3D5A80]/20"
 		>
-			<!-- Animated border glow -->
-			<div
-				class="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#3D5A80] via-[#98C1D9] to-[#F36A3E] opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-sm -z-10"
-			></div>
-
 			<!-- Logo with hover animation -->
 			<div class="relative group/logo">
 				<div

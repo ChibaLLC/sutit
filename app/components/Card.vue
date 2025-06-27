@@ -59,7 +59,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
 	variant: "primary",
 	size: "md",
-	hoverable: true,
+	hoverable: false,
 	clickable: false,
 	decorative: true,
 });
