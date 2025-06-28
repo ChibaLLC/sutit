@@ -32,7 +32,7 @@ export async function getUserByEmail(email: string): Promise<Drizzle.User.select
 }
 
 export async function createUser(data: { name?: string; email: string; password: string }) {
-	if (!data.name) data.name = useCapitalize(data.email.split("@")[0] || "anonimous");
+	if (!data.name) data.name = capitalize(data.email.split("@")[0] || "anonimous");
 	const auth = hashPassword(data.password);
 	const values = {
 		name: data.name,

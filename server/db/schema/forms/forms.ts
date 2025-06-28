@@ -13,7 +13,7 @@ import {
 import { ulid } from "ulid";
 import { users } from "../users";
 import { storeItems, stores } from "./stores";
-import { eq, sql, isNotNull, relations } from "drizzle-orm";
+import { eq, sql, isNotNull } from "drizzle-orm";
 
 export const formMeta = pgTable("form_meta", {
 	ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),

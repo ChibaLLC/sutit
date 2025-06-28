@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const url = useRoute();
 const redirect = collapseString(url.query?.redirect as string);
-const remember = ref(false);
+const remember = ref(true);
 const loading = ref(false);
 const details = reactive({
 	email: "",

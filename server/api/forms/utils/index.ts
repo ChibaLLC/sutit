@@ -15,36 +15,36 @@ import db from "~~/server/db";
 import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
 import type { Item } from "@chiballc/nuxt-form-builder";
-import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
+import { sendTextSmsTiara } from "~~/server/services/sms/tiara";
 
 declare global {
-	var formPaymentProcessingQueue: Map<
-		string,
-		{
-			form_meta: Drizzle.SutitForm["form_meta"];
-			callback?: (payment: Drizzle.Payment.select) => any;
-		}
-	>;
+  var formPaymentProcessingQueue: Map<
+    string,
+    {
+      form_meta: Drizzle.SutitForm;
+      callback?: (payment: Drizzle.Payment.select) => any;
+    }
+  >;
 }
 
 export async function processFormPayments(
-	form_meta: Drizzle.SutitForm["form_meta"],
-	details: {
-		accountNumber: string;
-		phone: string;
-		amount: number;
-	},
-	callback?: (payment: Drizzle.Payment.select) => any,
+  form_meta: Drizzle.SutitForm,
+  details: {
+    accountNumber: string;
+    phone: string;
+    amount: number;
+  },
+  callback?: (payment: Drizzle.Payment.select) => any
 ) {
-	details.phone = `254${details.phone.slice(-9)}`;
-	const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
-	const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID);
-	if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
-	global.formPaymentProcessingQueue.set(channel, { form_meta, callback });
-	return {
-		merchantRequestID: result.MerchantRequestID,
-		checkoutRequestID: result.CheckoutRequestID,
-	};
+  details.phone = `254${details.phone.slice(-9)}`;
+  const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
+  const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID);
+  if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
+  global.formPaymentProcessingQueue.set(channel, { form_meta, callback });
+  return {
+    merchantRequestID: result.MerchantRequestID,
+    checkoutRequestID: result.CheckoutRequestID,
+  };
 }
 
 async function makeSTKPush(phone: string, pay_for: string, amount: number, accountNumber: string) {

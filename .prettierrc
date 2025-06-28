@@ -1,7 +1,8 @@
 {
-  "tabWidth": 4,
-  "useTabs": true,
+  "tabWidth": 2,
+  "useTabs": false,
   "bracketSameLine": false,
   "arrowParens": "always",
-  "printWidth": 120
+  "printWidth": 120,
+  "vueIndentScriptAndStyle": false
 }
