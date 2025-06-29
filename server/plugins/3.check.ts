@@ -1,5 +1,5 @@
-import { isDevelopment } from "../utils/env"
+import { isDevelopment } from "#build/types/nitro-imports";
 
 export default defineNitroPlugin(() => {
-    log.info(`Running in ${isDevelopment ? "development" : "production"} mode`)
-})
+  log.info(`Running in ${isDevelopment ? "development" : "production"} mode`);
+});

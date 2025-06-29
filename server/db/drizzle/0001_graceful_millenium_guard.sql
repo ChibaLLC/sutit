@@ -1,9 +1,0 @@
-ALTER TABLE "form_fields" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-DROP VIEW "public"."sutit_forms";--> statement-breakpoint
-DROP VIEW "public"."form_responses_view";--> statement-breakpoint
-DROP TABLE "form_fields" CASCADE;--> statement-breakpoint
-ALTER TABLE "form_field_responses" DROP CONSTRAINT "form_field_responses_field_ulid_form_fields_ulid_fk";
---> statement-breakpoint
-ALTER TABLE "form_pages" ADD COLUMN "fields" jsonb NOT NULL;--> statement-breakpoint
-CREATE VIEW "public"."sutit_forms" AS (select "ulid", "form_name", "form_description", "user_ulid", "price_individual", "price_group_amount", "group_member_count", "group_invite_message", "allow_groups", "require_merch", "withdrawn_funds", "created_at", "updated_at" from "form_meta");--> statement-breakpoint
-CREATE VIEW "public"."form_responses_view" AS (select "form_responses"."ulid" as "response_ulid", "form_field_ulid" as "response_field_ulid", "form_elements_ulid" as "response_form_ulid", "form_field_responses"."value", "form_responses"."price_paid", "form_responses"."created_at" from "form_responses" left join (select "form_field_responses"."form_response_ulid" as "form_response_ulid", "fields_ulid" as "form_field_ulid", "form_field_responses"."value", "form_ulid" as "form_elements_ulid" from "form_field_responses" inner join (select "form_pages"."form_ulid" as "form_ulid", (field ->> 'ulid') as "fields_ulid" from "form_pages" inner join jsonb_array_elements("form_pages"."fields") AS field on true) "form_elements" on "form_field_responses"."field_ulid" = "fields_ulid") "form_field_responses" on "form_responses"."ulid" = "form_response_ulid");

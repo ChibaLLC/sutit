@@ -6,56 +6,6 @@ export interface Response {
 	body?: any;
 }
 
-export type CloudAPI = {
-	object: "whatsapp_business_account";
-	entry: Array<{
-		id: string;
-		changes: Array<{
-			value: {
-				messaging_product: "whatsapp";
-				metadata: {
-					display_phone_number: string;
-					phone_number_id: string;
-				};
-				contacts: Array<{
-					profile: {
-						name: string;
-					};
-					wa_id: string;
-				}>;
-				messages: Array<{
-					from: string;
-					id: string;
-					timestamp: string;
-					text: {
-						body: string;
-					};
-					type: "text";
-				}>;
-			};
-			field: "messages";
-		}>;
-	}>;
-};
-
-export type OnPremisesAPI = {
-	contacts: Array<{
-		profile: {
-			name: string;
-		};
-		wa_id: string;
-	}>;
-	messages: Array<{
-		from: string;
-		id: string;
-		timestamp: string;
-		text: {
-			body: string;
-		};
-		type: "text";
-	}>;
-};
-
 export type MpesaStkRequest = {
 	BusinessShortCode: number;
 	Password: string;
@@ -128,58 +78,6 @@ export interface GoogleCredential {
 	credential: string;
 	select_by: string;
 }
-
-type ResultParameter = {
-	Key: string;
-	Value: string | number;
-};
-
-type ReferenceItem = {
-	Key: string;
-	Value: string;
-};
-
-type ResultParameters = {
-	ResultParameter: ResultParameter[];
-};
-
-type ReferenceData = {
-	ReferenceItem: ReferenceItem[];
-};
-
-type Result = {
-	ResultType: string;
-	ResultCode: string;
-	ResultDesc: string;
-	OriginatorConversationID: string;
-	ConversationID: string;
-	TransactionID: string;
-	ResultParameters: ResultParameters;
-	ReferenceData: ReferenceData;
-};
-
-export type PayBillCreditMethod = {
-	paybill_no: string;
-	account_no: string;
-};
-
-export type BuyGoodsCreditMethod = {
-	till_no: string;
-};
-
-export type PhoneCreditMethod = {
-	phone: string;
-};
-
-export type CreditMethod = OneOf<[PayBillCreditMethod, BuyGoodsCreditMethod, PhoneCreditMethod]>;
-
-export type BusinessPaybillResponse = {
-	Result: Result;
-};
-
-export interface BusinessPaybillRequest {}
-
-export type BusinessBuyGoodsRequest = BusinessPaybillRequest;
 
 export type NotificationOptions = {
 	timeout?: number | "never";

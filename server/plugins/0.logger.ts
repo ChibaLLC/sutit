@@ -1,10 +1,15 @@
-import {Logger} from "~~/server/utils/logger";
+import createLogger from "@@/server/extra/consola";
 
-export default defineNitroPlugin((app) => {
-    Object.defineProperty(global, 'log', {
-        value: new Logger(app).logger,
-        writable: false,
-        enumerable: true,
-        configurable: false
-    })
-})
+declare global {
+  var consola: Logger;
+}
+
+export default defineNitroPlugin(async () => {
+  const logger = await createLogger();
+  Object.defineProperty(global, "consola", {
+    value: logger,
+    writable: false,
+    enumerable: true,
+    configurable: false,
+  });
+});
