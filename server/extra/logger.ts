@@ -12,8 +12,7 @@ import { createInterface } from "node:readline";
 import { consola, type LogObject, type LogType } from "consola";
 import { execSync } from "node:child_process";
 import type { NitroApp } from "nitropack/types";
-import { isVercel } from "#build/types/nitro-imports";
-import { getCommand } from "@@/server/utils/platform";
+import { getCommand } from "../utils/platform";
 
 export class Logger {
   private logs = new Set<string>(["log", "info", "success", "warn", "debug", "error", "fatal", "master"]);
@@ -26,7 +25,7 @@ export class Logger {
     app?: NitroApp,
     options?: {
       environment?: "client" | "server";
-    }
+    },
   ) {
     app?.hooks.hookOnce("close", () => {
       this.dispose();
@@ -47,7 +46,7 @@ export class Logger {
   }
 
   private loadLogFiles() {
-    if (this.environment === "client" || isVercel) {
+    if (this.environment === "client") {
       this.streams = {} as typeof this.streams;
       return;
     }
@@ -81,7 +80,7 @@ export class Logger {
   }
 
   public async log(logObj: LogObject): Promise<void> {
-    if (this.environment === "client" || isVercel) {
+    if (this.environment === "client") {
       return;
     }
 
