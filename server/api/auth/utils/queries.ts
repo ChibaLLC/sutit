@@ -1,10 +1,10 @@
 import { eq, and } from "drizzle-orm";
 import db from "~~/server/db";
-import { session } from "~~/server/db/schema";
+import { sessions } from "~~/server/db/schema";
 import { v4 } from "uuid";
 import type { Drizzle } from "~~/server/db/types";
 import { getUserByEmail } from "~~/server/api/users/utils/queries";
-import { user } from "~~/server/db/schema";
+import { users } from "~~/server/db/schema";
 
 export async function createToken(user: { userUlid?: string; email?: string }): Promise<string> {
   const uuid = v4();
@@ -20,15 +20,15 @@ export async function createToken(user: { userUlid?: string; email?: string }): 
     userUlid: user.userUlid!,
   } satisfies Drizzle.Session.insert;
   return await db
-    .insert(session)
+    .insert(sessions)
     .values(values)
     .then(() => uuid);
 }
 
 export async function revokeToken(token: string) {
   return await db
-    .delete(session)
-    .where(and(eq(session.token, token)))
+    .delete(sessions)
+    .where(and(eq(sessions.token, token)))
     .catch((err) => {
       console.error(err);
       throw new Error("Unable to revoke token");
@@ -37,8 +37,8 @@ export async function revokeToken(token: string) {
 
 export async function revokeAllTokens(userUlid: string) {
   return await db
-    .delete(session)
-    .where(eq(session.userUlid, userUlid))
+    .delete(sessions)
+    .where(eq(sessions.userUlid, userUlid))
     .catch((err) => {
       console.error(err);
       throw new Error("Unable to revoke token");
@@ -48,8 +48,8 @@ export async function revokeAllTokens(userUlid: string) {
 export async function verifyToken(token: string): Promise<boolean> {
   const rows = await db
     .select()
-    .from(session)
-    .where(eq(session.token, token))
+    .from(sessions)
+    .where(eq(sessions.token, token))
     .catch((err) => {
       console.error(err);
       throw new Error("Unable to verify token");
@@ -82,7 +82,6 @@ export async function updatePassword(user: Drizzle.User.select, password: string
     .set({
       password: auth.hash,
       salt: auth.salt,
-      
     })
     .where(eq(user.ulid, user.ulid));
 }

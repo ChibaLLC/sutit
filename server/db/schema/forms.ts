@@ -13,6 +13,7 @@ export interface FormMeta {
       | false;
   };
   glossary: {
+    name: string;
     inviteMessage?: string;
     description: string;
   };
@@ -22,7 +23,7 @@ export interface FormMeta {
   };
 }
 
-export const form = pgTable("forms", {
+export const forms = pgTable("forms", {
   ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
   meta: jsonb("meta").$type<FormMeta>().notNull(),
   blob: jsonb("pages").$type<Pages>(),
@@ -38,11 +39,11 @@ export interface Group {
   name: string;
   members: Record<Contact, ResponseULID | undefined>;
 }
-export const group = pgTable("groups", {
+export const groups = pgTable("groups", {
   ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
   meta: jsonb().$type<Group>(),
   formUlid: varchar("ulid", { length: 255 })
-    .references(() => form.ulid)
+    .references(() => forms.ulid)
     .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

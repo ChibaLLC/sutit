@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: false },
-  css: ["~/assets/scss/main.scss"],
+  css: ["~/assets/scss/main.scss", "~/assets/tailwind.css"],
   modules: ["@chiballc/nuxt-form-builder", "@nuxt/scripts", "@nuxt/icon", "@pinia/nuxt"],
   runtimeConfig: {
     public: {

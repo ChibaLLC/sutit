@@ -1,7 +1,7 @@
 import { boolean, index, pgTable, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 import { ulid } from "ulid";
 
-export const user = pgTable(
+export const users = pgTable(
   "users",
   {
     ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
@@ -15,13 +15,13 @@ export const user = pgTable(
   (table) => [unique("users_email_key").on(table.email)]
 );
 
-export const session = pgTable(
+export const sessions = pgTable(
   "sessions",
   {
     ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
     userUlid: varchar("user_ulid", { length: 255 })
       .notNull()
-      .references(() => user.ulid, { onDelete: "cascade" }),
+      .references(() => users.ulid, { onDelete: "cascade" }),
     token: varchar("token", { length: 255 }).notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
   },

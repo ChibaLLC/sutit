@@ -16,6 +16,12 @@ import { payments } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
 import type { Item } from "@chiballc/nuxt-form-builder";
 import { sendTextSmsTiara } from "~~/server/services/sms/tiara";
+import type {
+  BuyGoodsCreditMethod,
+  CreditMethod,
+  PayBillCreditMethod,
+  PhoneCreditMethod,
+} from "~~/shared/types/transactions";
 
 declare global {
   var formPaymentProcessingQueue: Map<
@@ -28,7 +34,7 @@ declare global {
 }
 
 export async function processFormPayments(
-  form_meta: Drizzle.SutitForm,
+  form: Drizzle.SutitForm,
   details: {
     accountNumber: string;
     phone: string;
@@ -37,10 +43,10 @@ export async function processFormPayments(
   callback?: (payment: Drizzle.Payment.select) => any
 ) {
   details.phone = `254${details.phone.slice(-9)}`;
-  const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
+  const result = await makeSTKPush(details.phone, form.meta.glossary.name, details.amount, details.accountNumber);
   const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID);
   if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
-  global.formPaymentProcessingQueue.set(channel, { form_meta, callback });
+  global.formPaymentProcessingQueue.set(channel, { form_meta: form, callback });
   return {
     merchantRequestID: result.MerchantRequestID,
     checkoutRequestID: result.CheckoutRequestID,
@@ -48,32 +54,32 @@ export async function processFormPayments(
 }
 
 async function makeSTKPush(phone: string, pay_for: string, amount: number, accountNumber: string) {
-	return await call_stk(+phone, amount, `Payment for ${pay_for} form`, accountNumber);
+  return await call_stk(+phone, amount, `Payment for ${pay_for} form`, accountNumber);
 }
 
 export async function sendUserMail(user: { userUlid: string } | { email: string }, message: string, subject: string) {
-	let email: string | undefined = (user as { email: string }).email;
-	if (!email) {
-		await getUserByUlId((user as { userUlid: string }).userUlid).then((data) => {
-			email = data?.email;
-		});
-	}
+  let email: string | undefined = (user as { email: string }).email;
+  if (!email) {
+    await getUserByUlId((user as { userUlid: string }).userUlid).then((data) => {
+      email = data?.email;
+    });
+  }
 
-	if (!email) return log.warn("User has no email");
-	return sendMail({
-		to: email,
-		text: message,
-		subject: subject,
-	});
+  if (!email) return log.warn("User has no email");
+  return sendMail({
+    to: email,
+    text: message,
+    subject: subject,
+  });
 }
 
 const PAYMENT_RECEIPT_HTML = (details: {
-	user: { name: string; email: string };
-	amount: number | string;
-	time: string;
-	receiptNumber?: string;
+  user: { name: string; email: string };
+  amount: number | string;
+  time: string;
+  receiptNumber?: string;
 }) => {
-	return /*html*/ `
+  return /*html*/ `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,189 +169,189 @@ const PAYMENT_RECEIPT_HTML = (details: {
 };
 
 export function generateReceiptNumber(payment: string | Drizzle.Payment.select) {
-	if (typeof payment === "object") {
-		payment = payment.ulid;
-	}
+  if (typeof payment === "object") {
+    payment = payment.ulid;
+  }
 
-	const number = v4();
-	db.update(payments)
-		.set({
-			receiptNumber: number,
-		})
-		.where(eq(payments.ulid, payment))
-		.execute();
-	return number;
+  const number = v4();
+  db.update(payment)
+    .set({
+      receiptNumber: number,
+    })
+    .where(eq(payment.ulid, payment))
+    .execute();
+  return number;
 }
 
 export async function sendPaymentMailReceipt(
-	user: { userUlid?: string; email?: string },
-	amount: number | string,
-	receiptNumber: string,
+  user: { userUlid?: string; email?: string },
+  amount: number | string,
+  receiptNumber: string
 ) {
-	if (!user.email && !user.userUlid) {
-		throw createError({
-			statusCode: 500,
-			message: "No userUlid or email provided",
-		});
-	}
-	if (user.userUlid) {
-		const _user = await getUserByUlId(user.userUlid);
-		var email = _user?.email;
-		var name = _user?.name;
-	} else {
-		email = user.email;
-		name = email?.split("@").at(0);
-	}
+  if (!user.email && !user.userUlid) {
+    throw createError({
+      statusCode: 500,
+      message: "No userUlid or email provided",
+    });
+  }
+  if (user.userUlid) {
+    const _user = await getUserByUlId(user.userUlid);
+    var email = _user?.email;
+    var name = _user?.name;
+  } else {
+    email = user.email;
+    name = email?.split("@").at(0);
+  }
 
-	if (!email)
-		throw createError({
-			statusCode: 500,
-			message: "User has no email",
-		});
+  if (!email)
+    throw createError({
+      statusCode: 500,
+      message: "User has no email",
+    });
 
-	let subject = "[Payment]: Payment Receipt for " + name;
-	return sendMail({
-		to: email,
-		subject: subject,
-		html: PAYMENT_RECEIPT_HTML({
-			user: { name: name!, email: email },
-			amount: amount,
-			time: new Date().toLocaleDateString(),
-			receiptNumber,
-		}),
-	});
+  let subject = "[Payment]: Payment Receipt for " + name;
+  return sendMail({
+    to: email,
+    subject: subject,
+    html: PAYMENT_RECEIPT_HTML({
+      user: { name: name!, email: email },
+      amount: amount,
+      time: new Date().toLocaleDateString(),
+      receiptNumber,
+    }),
+  });
 }
 
 function isPhoneCreditMethod(creditMethod: CreditMethod): creditMethod is PhoneCreditMethod {
-	return !!creditMethod?.phone;
+  return !!creditMethod?.phone;
 }
 
 function isPayBillCreditMethod(creditMethod: CreditMethod): creditMethod is PayBillCreditMethod {
-	return !!creditMethod?.paybill_no && !!creditMethod?.account_no;
+  return !!creditMethod?.paybill_no && !!creditMethod?.account_no;
 }
 
 function isBuyGoodsCreditMethod(creditMethod: CreditMethod): creditMethod is BuyGoodsCreditMethod {
-	return !!creditMethod?.till_no;
+  return !!creditMethod?.till_no;
 }
 
 export async function withdrawFunds(data: {
-	formUlid: string;
-	creditMethod: CreditMethod;
-	reason: string;
-	requester?: string;
+  formUlid: string;
+  creditMethod: CreditMethod;
+  reason: string;
+  requester?: string;
 }) {
-	const total = await getFormPaymentsSum(data.formUlid);
-	if (!total) return log.error("No payments found");
+  const total = await getFormPaymentsSum(data.formUlid);
+  if (!total) return log.error("No payments found");
 
-	switch (true) {
-		case isPhoneCreditMethod(data.creditMethod):
-			data.creditMethod.phone = `254${data.creditMethod.phone.slice(-9)}`;
-			var result = await call_b2c({
-				phone_number: data.creditMethod.phone,
-				amount: total,
-				reason: `Withdrawal for ${data.reason} by ${data.requester}`,
-			});
-			if (!result) return log.error("Failed to send funds");
-			break;
-		case isPayBillCreditMethod(data.creditMethod):
-			var result = await call_b2b({
-				paybill: {
-					business_no: data.creditMethod.paybill_no,
-					account_no: data.creditMethod.account_no,
-				},
-				amount: total,
-				requester: data.requester,
-			});
-			if (!result) return log.error("Failed to send funds");
-			break;
-		case isBuyGoodsCreditMethod(data.creditMethod):
-			var result = await call_b2b({
-				till_number: data.creditMethod.till_no,
-				amount: total,
-				requester: data.requester,
-			});
-			if (!result) return log.error("Failed to send funds");
-			break;
-		default:
-			return log.error("Invalid credit method");
-	}
+  switch (true) {
+    case isPhoneCreditMethod(data.creditMethod):
+      data.creditMethod.phone = `254${data.creditMethod.phone.slice(-9)}`;
+      var result = await call_b2c({
+        phone_number: data.creditMethod.phone,
+        amount: total,
+        reason: `Withdrawal for ${data.reason} by ${data.requester}`,
+      });
+      if (!result) return log.error("Failed to send funds");
+      break;
+    case isPayBillCreditMethod(data.creditMethod):
+      var result = await call_b2b({
+        paybill: {
+          business_no: data.creditMethod.paybill_no,
+          account_no: data.creditMethod.account_no,
+        },
+        amount: total,
+        requester: data.requester,
+      });
+      if (!result) return log.error("Failed to send funds");
+      break;
+    case isBuyGoodsCreditMethod(data.creditMethod):
+      var result = await call_b2b({
+        till_number: data.creditMethod.till_no,
+        amount: total,
+        requester: data.requester,
+      });
+      if (!result) return log.error("Failed to send funds");
+      break;
+    default:
+      return log.error("Invalid credit method");
+  }
 
-	await updateFormWithdrawnFunds(data.formUlid, total);
+  await updateFormWithdrawnFunds(data.formUlid, total);
 
-	return result;
+  return result;
 }
 
 export async function getStats(userUlid: string) {
-	const formsCount = await getFormCount(userUlid);
-	const responsesCount = await getResponsesCount(userUlid);
-	const totalPayments = await getAllFormPaymentsSum(userUlid);
-	return {
-		forms: formsCount,
-		responses: responsesCount,
-		earnings: totalPayments,
-	};
+  const formsCount = await getFormCount(userUlid);
+  const responsesCount = await getResponsesCount(userUlid);
+  const totalPayments = await getAllFormPaymentsSum(userUlid);
+  return {
+    forms: formsCount,
+    responses: responsesCount,
+    earnings: totalPayments,
+  };
 }
 
 export async function deleteUserForm(userUlid: string, formUlid: string) {
-	const form = await getFormByUlid(formUlid);
-	if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
+  const form = await getFormByUlid(formUlid);
+  if (!form) throw new Error(`Form with ULID ${formUlid} was not found`);
 
-	if (form.meta.userUlid !== userUlid)
-		throw createError({
-			status: 403,
-			message: `Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`,
-		});
-	return deleteForm(formUlid);
+  if (form.meta.userUlid !== userUlid)
+    throw createError({
+      status: 403,
+      message: `Form ${formUlid} does not belong to user ${userUlid} and therefore cannot be deleted by them`,
+    });
+  return deleteForm(formUlid);
 }
 
 export async function sendResponseInvites(
-	invites: Array<{ email: string } | { phone: string }>,
-	links: string[],
-	baseMessage?: string,
+  invites: Array<{ email: string } | { phone: string }>,
+  links: string[],
+  baseMessage?: string
 ) {
-	if (!baseMessage) baseMessage = "You have been invited to respond the the following form";
-	invites.forEach((invite, idx) => {
-		const link = links[idx];
-		if ((invite as { phone: string }).phone) {
-			sendTextSmsTiara({
-				phone: (invite as { phone: string }).phone,
-				message: `SUTIT: ${baseMessage}` + link,
-			}).then();
-			log.info((invite as { phone: string }).phone, invite);
-		} else {
-			sendUserMail(
-				{
-					email: (invite as { email: string }).email,
-				},
-				baseMessage + link,
-				"[Action Needed] Information Request",
-			);
-		}
-	});
+  if (!baseMessage) baseMessage = "You have been invited to respond the the following form";
+  invites.forEach((invite, idx) => {
+    const link = links[idx];
+    if ((invite as { phone: string }).phone) {
+      sendTextSmsTiara({
+        phone: (invite as { phone: string }).phone,
+        message: `SUTIT: ${baseMessage}` + link,
+      }).then();
+      log.info((invite as { phone: string }).phone, invite);
+    } else {
+      sendUserMail(
+        {
+          email: (invite as { email: string }).email,
+        },
+        baseMessage + link,
+        "[Action Needed] Information Request"
+      );
+    }
+  });
 }
 
-export function hasInfiniteStock(item: Partial<Item | DbStore[number]>) {
-	return `${item.stock}`.includes("infinit") || (item as DbStore[number]).isInfinite === true;
+export function hasInfiniteStock(item: OneOf<[Item, DbStore[number]]>) {
+  return `${item.stock}`.includes("infinit") || isNone(item.itemStock);
 }
 
-export function parseStock(item: Partial<Item | DbStore[number]>) {
-	if (hasInfiniteStock(item)) {
-		(item as DbStore[number]).isInfinite = true;
-		item.stock = 0;
-	} else {
-		try {
-			if (typeof item.stock !== "number") {
-				item.stock = parseInt(item.stock || "0");
-			}
-		} catch (_) {}
+export function parseStock(item: OneOf<[Item, DbStore[number]]>) {
+  if (hasInfiniteStock(item)) {
+    item.itemStock = null;
+    item.stock = "infinity";
+  } else {
+    try {
+      if (typeof item.stock !== "number") {
+        item.stock = parseInt(item.stock || "0");
+      }
+    } catch (_) {}
 
-		if (isNaN(item.stock as any)) {
-			item.stock = 0;
-			(item as DbStore[number]).isInfinite = true;
-		} else {
-			(item as DbStore[number]).isInfinite = false;
-		}
-	}
+    if (item.stock && isNaN(item.stock as number)) {
+      item.stock = 0;
+      item.itemStock = null;
+    } else {
+      item.stock = item.itemStock || item.stock;
+    }
+  }
 
-	return item.stock as number;
+  return item.stock as number;
 }

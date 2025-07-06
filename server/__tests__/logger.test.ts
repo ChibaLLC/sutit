@@ -47,6 +47,6 @@ test("should log multiple messages and retrieve them with logger.tail", async ()
   const content = logger.tail("log", 5);
   expect(content).toHaveLength(5);
   items.forEach((item, idx) => {
-    expect(content[idx].args.join(" ")).toContain(item.message);
+    expect(content[idx]?.args.join(" ")).toContain(item.message);
   });
 });

@@ -1,4 +1,5 @@
 import createLogger from "@@/server/extra/consola";
+import type { Logger } from "../extra/logger";
 
 declare global {
   var consola: Logger;

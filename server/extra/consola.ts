@@ -1,4 +1,5 @@
 import { createConsola, type LogObject, consola, type ConsolaReporter } from "consola";
+import { Logger } from "../extra/logger";
 
 export default async function createLogger({
   logger,

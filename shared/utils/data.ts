@@ -127,50 +127,50 @@ export function getMimeType(extension: string) {
  * @returns A promise resolving to an object containing the Blob and the inferred MIME type.
  */
 export async function parseBase64Data(base64String: string | undefined, mimeType?: MimeType) {
-	if (!base64String) {
-		return {
-			blob: undefined,
-			mimeType: undefined,
-			extension: undefined,
-		};
-	}
-	const sliceSize = 512;
-	const byteCharacters = atob(base64String);
-	const byteArrays = [];
+  if (!base64String) {
+    return {
+      blob: undefined,
+      mimeType: undefined,
+      extension: undefined,
+    };
+  }
+  const sliceSize = 512;
+  const byteCharacters = atob(base64String);
+  const byteArrays = [];
 
-	for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-		const slice = byteCharacters.slice(offset, offset + sliceSize);
-		const byteNumbers = new Array(slice.length);
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Array(slice.length);
 
-		for (let i = 0; i < slice.length; i++) {
-			byteNumbers[i] = slice.charCodeAt(i);
-		}
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
 
-		const byteArray = new Uint8Array(byteNumbers);
-		byteArrays.push(byteArray);
-	}
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
 
-	if (!mimeType) {
-		var result = await fileTypeFromBuffer(mergeUint8Arrays(byteArrays));
-	}
-	const detectedType = mimeType || result?.mime || "application/octet-stream";
-	const blob = new Blob(byteArrays, { type: mimeType });
+  if (!mimeType) {
+    var result = await fileTypeFromBuffer(mergeUint8Arrays(byteArrays));
+  }
+  const detectedType = mimeType || result?.mime || "application/octet-stream";
+  const blob = new Blob(byteArrays, { type: detectedType as any });
 
-	return {
-		blob,
-		mimeType: detectedType,
-		extension: result?.ext || inferFileExtentionFromMime(detectedType) || "bin",
-	};
+  return {
+    blob,
+    mimeType: detectedType,
+    extension: result?.ext || inferFileExtentionFromMime(detectedType as any) || "bin",
+  };
 }
 
 export function base64ToBlob(base64Data: string) {
-	const base64 = base64Data.split(",");
-	let mimeType = undefined;
-	if (isBase64DataEncodedString(base64[0])) {
-		const [prefix, encodingFormat] = base64[0].split(";");
-		mimeType = prefix?.replace(/^data:/, "") as MimeType;
-	}
-	return parseBase64Data(base64[1] || base64[0], mimeType);
+  const base64 = base64Data.split(",");
+  let mimeType = undefined;
+  if (isBase64DataEncodedString(base64[0])) {
+    const [prefix, encodingFormat] = base64[0].split(";");
+    mimeType = prefix?.replace(/^data:/, "") as any;
+  }
+  return parseBase64Data(base64[1] || base64[0], mimeType);
 }
 
 export type Base64EncodedDataString = `data:${string};base64,`;
@@ -178,5 +178,10 @@ export function isBase64DataEncodedString(input?: string): input is Base64Encode
 	if (!input) return false;
 	const regex = /^data:[a-zA-Z0-9.-]+\/[a-zA-Z0-9.+-]+;base64,/;
 	return regex.test(input);
+}
+
+export type None = null | undefined;
+export function isNone<T>(data: T | None) {
+  return data === undefined || data === null;
 }
 

@@ -85,9 +85,4 @@ export type NotificationOptions = {
 };
 
 export type DbPage = Drizzle.SutitForm[];
-export type DbStore = ((Omit<Drizzle.SutitStore, "stock"> & Omit<Item, "stock">) & { stock: Item["stock"] })[];
-export type ReconstructedDbForm = {
-  meta: Drizzle.SutitForm;
-  pages: Record<number | string, DbPage>;
-  stores: Record<number | string, DbStore>;
-};
+export type DbStore = Prettify<(Omit<Drizzle.SutitStore, "stock"> & Omit<Item, "stock">) & { stock: Item["stock"] }>[];
