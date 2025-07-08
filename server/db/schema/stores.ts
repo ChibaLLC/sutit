@@ -35,7 +35,7 @@ export const storeItems = pgTable("store_items", {
 
 export const storesView = pgView("stores_with_items").as((db) =>
   db
-    .select({
+    .select({  
       storeUlid: stores.ulid,
       storeIndex: stores.index,
       storeCreatedAt: stores.createdAt,

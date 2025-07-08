@@ -17,5 +17,10 @@ export default defineNuxtConfig({
   app: {
     pageTransition: { name: "page", mode: "out-in" },
   },
-  extends: ["github:kgarchie/nuxt-starter#6"],
+  extends: ["github:kgarchie/nuxt-starter#7"],
+  nitro: {
+    experimental: {
+      websocket: true,
+    },
+  },
 });

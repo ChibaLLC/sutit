@@ -1,24 +1,4 @@
-import {
-  formPayments,
-  payments,
-  formFieldResponses,
-  itemResponses,
-  stores,
-  formGroups,
-  formMeta,
-  formPages,
-  storeItems,
-  sutitForms,
-  type FormGroupInvite,
-  type PhoneInvite,
-  type EmailInvite,
-  formResponsesView,
-  formResponses,
-  storeResponses,
-  sutitStores,
-  sutitFormPages,
-  formGroupResponses,
-} from "~~/server/db/schema";
+import { payments, stores, storeItems, forms, storesView } from "~~/server/db/schema";
 import db from "../../../db";
 import { type Drizzle } from "~~/server/db/types";
 import { and, eq, desc, sum, count, sql, lt, notInArray, inArray } from "drizzle-orm";
@@ -31,184 +11,46 @@ import { getUserByUlId } from "../../users/utils/queries";
 import { sep } from "node:path";
 import { hasInfiniteStock, parseStock } from ".";
 
-async function insertFormFields(data: z.infer<typeof formBodyData> & { ulid: string }, update: boolean = false) {
-  const pagesData: Map<string, Drizzle.FormPages.insert> = new Map();
-  const fieldsData: Map<string, any> = new Map(); // Track all fields for deletion
-  const updateTimeStamp = new Date();
-
-  for (const index in data.form.pages) {
-    const page = data.form.pages[index] as DbPage & Page;
-    // Use existing pageUlid if available, otherwise generate a new one
-    const pageUlid = page[0]?.pageUlid || ulid();
-
-    const fields = page.map((field) => {
-      // Use existing field ULID if available
-      const fieldUlid = field.ulid || field.fieldUlid || ulid();
-
-      // Store field ULID to track for deletion later
-      fieldsData.set(fieldUlid, true);
-
-      return {
-        index: field.index,
-        inputType: field.inputType,
-        label: field.label || "Unlabelled",
-        pageUlid: pageUlid,
-        accept: field.accept,
-        description: field.description,
-        options: field.options,
-        placeholder: field.placeholder,
-        type: field.type,
-        rules: field.rules,
-        ulid: fieldUlid,
-        updatedAt: updateTimeStamp,
-      };
-    });
-
-    pagesData.set(pageUlid, {
-      formUlid: data.ulid,
-      index: parseInt(index),
-      ulid: pageUlid,
-      fields: fields,
-      updatedAt: updateTimeStamp,
-    });
-  }
-
-  if (pagesData.size) {
-    await db
-      .insert(formPages)
-      .values(Array.from(pagesData.values()))
-      .onConflictDoUpdate({
-        target: formPages.ulid,
-        set: {
-          fields: sql`excluded.fields`, // Take new fields
-          index: sql`excluded.index`,
-          updatedAt: updateTimeStamp,
-        },
-      });
-  }
-
-  // Store processing (unchanged)
-  const storesData: Map<string, Drizzle.Store.insert> = new Map();
-  const itemsData: Map<string, Drizzle.StoreItem.insert> = new Map();
-
-  for (const key in data.form.stores) {
-    const store = data.form.stores[key] as unknown as DbStore & Store;
-    const storeUlid = store?.[0]?.storeUlid || ulid();
-
-    storesData.set(storeUlid, {
-      formUlid: data.ulid,
-      index: parseInt(key),
-      ulid: storeUlid,
-      updatedAt: updateTimeStamp,
-    });
-
-    store?.forEach((item) => {
-      if (item.itemUlid && itemsData.has(item.itemUlid)) return;
-      const itemUlid = item.itemUlid || ulid();
-
-      itemsData.set(itemUlid, {
-        name: item.name,
-        price: item.price,
-        images: item.images,
-        stock: parseStock(item),
-        index: item.index,
-        storeUlid: storeUlid,
-        ulid: itemUlid,
-        updatedAt: updateTimeStamp,
-        isInfinite: hasInfiniteStock(item),
-      });
-    });
-  }
-
-  if (storesData.size) {
-    await db
-      .insert(stores)
-      .values(Array.from(storesData.values()))
-      .onConflictDoUpdate({
-        target: stores.ulid,
-        set: updateConflictedColumns(stores, ["updatedAt", "index"]),
-      });
-  }
-
-  if (itemsData.size) {
-    await db
-      .insert(storeItems)
-      .values(Array.from(itemsData.values()))
-      .onConflictDoUpdate({
-        target: storeItems.ulid,
-        set: updateConflictedColumns(storeItems, [
-          "images",
-          "index",
-          "name",
-          "price",
-          "stock",
-          "isInfinite",
-          "updatedAt",
-        ]),
-      });
-  }
-
-  // Clean up outdated items
-  await db
-    .delete(storeItems)
-    .where(
-      and(
-        lt(storeItems.updatedAt, updateTimeStamp),
-        notInArray(storeItems.ulid, Array.from(itemsData.keys())),
-        inArray(storeItems.storeUlid, Array.from(storesData.keys()))
-      )
-    );
-
-  // Clean up outdated stores
-  await db
-    .delete(stores)
-    .where(
-      and(
-        lt(stores.updatedAt, updateTimeStamp),
-        eq(stores.formUlid, data.ulid),
-        notInArray(stores.ulid, Array.from(storesData.keys()))
-      )
-    );
-
-  // Clean up outdated pages
-  await db
-    .delete(formPages)
-    .where(
-      and(
-        lt(formPages.updatedAt, updateTimeStamp),
-        eq(formPages.formUlid, data.ulid),
-        notInArray(formPages.ulid, Array.from(pagesData.keys()))
-      )
-    );
-}
-
 export async function createForm(data: z.infer<typeof formBodyData>, { user }: AuthData) {
   const form = (
     await db
-      .insert(formMeta)
+      .insert(forms)
       .values({
-        allowGroups: data.allowGroups,
-        group_invite_message: data.payment.group_invite_message,
-        group_member_count: data.payment.group_limit,
-        price_group: data.payment.group_amount || undefined,
-        price_individual: data.payment.amount || undefined,
-        formName: data.name,
-        ulid: ulid(),
-        formDescription: data.description,
+        blob: data.form.pages,
+        meta: {
+          glossary: {
+            description: data.description,
+            inviteMessage: data.payment.group_invite_message,
+          },
+          price: data.payment.amount
+            ? {
+                individual: data.payment.amount,
+                group: data.payment.group_amount
+                  ? {
+                      price: data.payment.group_amount,
+                      limit: data.payment.group_limit,
+                    }
+                  : undefined,
+              }
+            : undefined,
+        },
+        name: data.name,
         userUlid: user.ulid,
       })
       .returning()
   ).at(0);
-
-  if (!form) throw new Error("Unable to create form");
-  await insertFormFields({ ...data, ulid: form.ulid });
-
   return form;
 }
 
 export async function updateForm(formUlid: string, data: z.infer<typeof formBodyData>, user: Drizzle.User.select) {
   const form = await getFormByUlid(formUlid);
-  if (!form) throw new Error("Unable to find the initial form to edit");
+  if (!form) {
+    throw createError({
+      statusCode: 404,
+      message: "Unable to find the initial form to edit",
+    });
+  }
+
   if (form.meta.userUlid !== user.ulid) {
     throw createError({
       statusCode: 403,
@@ -218,105 +60,36 @@ export async function updateForm(formUlid: string, data: z.infer<typeof formBody
 
   // Update form metadata
   await db
-    .update(formMeta)
+    .update(forms)
     .set({
-      allowGroups: data.allowGroups,
-      group_invite_message: data.payment.group_invite_message,
-      group_member_count: data.payment.group_limit,
-      price_group: data.payment.group_amount || 0,
-      price_individual: data.payment.amount || 0,
-      formName: data.name,
-      formDescription: data.description,
-      userUlid: user.ulid,
-      requireMerch: data.requireMerch,
-      updatedAt: new Date(),
+      // allowGroups: data.allowGroups,
+      // group_invite_message: data.payment.group_invite_message,
+      // group_member_count: data.payment.group_limit,
+      // price_group: data.payment.group_amount || 0,
+      // price_individual: data.payment.amount || 0,
+      // formName: data.name,
+      // formDescription: data.description,
+      // userUlid: user.ulid,
+      // requireMerch: data.requireMerch,
+      // updatedAt: new Date(),
     })
-    .where(eq(formMeta.ulid, formUlid))
+    .where(eq(forms.ulid, formUlid))
     .execute();
-
-  // Update form fields
-  await insertFormFields({ ...data, ulid: formUlid }, true);
   return form.meta;
 }
 
 export async function deleteForm(formUlid: string) {
-  return (await db.delete(formMeta).where(eq(formMeta.ulid, formUlid)).returning()).at(0);
+  return (await db.delete(forms).where(eq(forms.ulid, formUlid)).returning()).at(0);
 }
 
-// TODO: @blocked remove email dependancy
-async function offloadStoreImages(items: Drizzle.SutitStore[], form_meta: Drizzle.SutitForm) {
-  const editedItems: Drizzle.SutitStore[] = [];
-  const promises = items.map(async (item) => {
-    await Promise.all(
-      item.images?.map(async (image, index) => {
-        if (isBase64DataEncodedString(image)) {
-          try {
-            const { blob, extension } = await base64ToBlob(image);
-            if (!blob) return;
-
-            let filename = `${item.name}-image-${index}`;
-            const folder = `${form_meta.userUlid}${sep}${form_meta.ulid}`;
-            const destination = `${folder}${sep}${filename}.${extension}`;
-
-            await $storage.file.setItemRaw(destination, blob);
-            const path = `/files/${destination}`;
-            item.images[index] = path;
-            editedItems.push(item);
-          } catch (e) {
-            log.error(e);
-          }
-        }
-      })
-    );
-    return item;
-  });
-
-  await Promise.all(promises.flat());
-  // TODO: @blocked Uncomment once store images fix
-  // if (editedItems.length) {
-  // 	db.insert(storeItems)
-  // 		.values(
-  // 			editedItems.map((item) => ({
-  // 				images: item.images,
-  // 				index: item.index,
-  // 				name: item.name,
-  // 				price: item.price,
-  // 				ulid: item.itemUlid,
-  // 				isInfinite: item.isInfinite,
-  // 				likes: item.likes,
-  // 				storeUlid: item.storeUlid,
-  // 				stock: item.stock,
-  // 			}))
-  // 		)
-  // 		.onConflictDoUpdate({
-  // 			target: storeItems.ulid,
-  // 			set: updateConflictedColumns(storeItems, ["images"]),
-  // 		})
-  // 		.execute();
-  // }
-}
-
-export async function reconstructDbForm(results: any): Promise<ReconstructedDbForm> {
-  const form_meta = results[0];
-  const pages = await db.select().from(sutitFormPages).where(eq(sutitFormPages.formUlid, form_meta.ulid));
-  // Formart Pages into an Object
-  const formartPages = {};
-  // Loop Through Pages
-  pages.forEach((page, index) => {
-    formartPages[index] = page.fields;
-  });
-
-  const stores = await db.select().from(sutitStores).where(eq(sutitStores.formUlid, form_meta.ulid));
-  const user = await getUserByUlId(form_meta.userUlid);
-  if (user && user.email) {
-    await offloadStoreImages(stores, form_meta);
-  } else {
-    console.warn("User email not found during image optimisation");
+export async function reconstructDbForm(form: Drizzle.SutitForm) {
+  if (form.meta.store) {
+    var store = (await db.select().from(storesView).where(eq(storesView.storeUlid, form.meta.store.ulid))).at(0);
   }
 
   return {
-    meta: form_meta,
-    pages: formartPages,
+    meta: form.meta,
+    pages: form.blob,
     stores: stores.reduce((acc, curr) => {
       const store = acc[curr.store_index];
       const item = {
@@ -333,12 +106,12 @@ export async function reconstructDbForm(results: any): Promise<ReconstructedDbFo
         acc[curr.store_index] = [item];
       }
       return acc;
-    }, {} as ReconstructedDbForm["stores"]),
+    }, {},
   };
 }
 
 export async function getFormByUlid(formUlid: string) {
-  const results = await db.select().from(sutitForms).where(eq(sutitForms.ulid, formUlid));
+  const results = (await db.select().from(forms).where(eq(forms.ulid, formUlid))).at(0);
   if (results) {
     return reconstructDbForm(results);
   } else {

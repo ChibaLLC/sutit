@@ -1,6 +1,7 @@
 import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { ulid, type ULID } from "ulid";
 import type { Pages } from "@chiballc/nuxt-form-builder";
+import { users } from "./users";
 
 export interface FormMeta {
   price?: {
@@ -13,20 +14,21 @@ export interface FormMeta {
       | false;
   };
   glossary: {
-    name: string;
     inviteMessage?: string;
     description: string;
   };
   store?: {
-    link: string;
+    ulid: string;
     exclusive: boolean;
   };
+  name: string;
 }
 
 export const forms = pgTable("forms", {
   ulid: varchar("ulid", { length: 255 }).primaryKey().$defaultFn(ulid).notNull(),
   meta: jsonb("meta").$type<FormMeta>().notNull(),
   blob: jsonb("pages").$type<Pages>(),
+  userUlid: varchar("ulid", { length: 255 }).references(() => users.ulid),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

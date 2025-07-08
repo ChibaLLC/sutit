@@ -3,12 +3,16 @@ import { resetPassword } from "~~/server/api/auth/utils";
 import { authenticate } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
 
+const query_schema = z.object({
+	email: z.string(),
+	token: z.string(),
+});
+const body_schema = z.object({
+  password: z.string(),
+  origin: z.string(),
+});
 export default defineEventHandler(async (event) => {
-	const qSchema = z.object({
-		email: z.string(),
-		token: z.string(),
-	});
-	const { data: query, error: qError } = await getValidatedQuery(event, qSchema.safeParse);
+	const { data: query, error: qError } = await getValidatedQuery(event, query_schema.safeParse);
 	if (qError) {
 		throw createError({
 			statusCode: 400,
@@ -16,11 +20,8 @@ export default defineEventHandler(async (event) => {
 			data: qError,
 		});
 	}
-	const shema = z.object({
-		password: z.string(),
-		origin: z.string(),
-	});
-	const { data: body, error } = await readValidatedBody(event, shema.safeParse);
+	
+	const { data: body, error } = await readValidatedBody(event, body_schema.safeParse);
 	if (error) {
 		throw createError({
 			statusCode: 400,

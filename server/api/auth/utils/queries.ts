@@ -8,12 +8,19 @@ import { users } from "~~/server/db/schema";
 
 export async function createToken(user: { userUlid?: string; email?: string }): Promise<string> {
   const uuid = v4();
-  if (!user.userUlid && !user.email) throw new Error("User not found");
-  if (!user.userUlid) {
-    const _user = await getUserByEmail(user.email!);
-    if (!_user) throw new Error("User not found");
-    user.userUlid = _user.ulid;
+  if (!user.userUlid && !user.email) {
+    throw createError("User not found: Malformed arguments");
   }
+
+  if (user.email) {
+    const _user = await getUserByEmail(user.email);
+    if (!_user) {
+      throw createError("User not found");
+    }
+
+    user.userUlid = _user.ulid as any;
+  }
+
   const values = {
     ulid: uuid,
     token: uuid,
@@ -59,18 +66,20 @@ export async function verifyToken(token: string): Promise<boolean> {
 
 export async function authenticate(data: { email: string; password: string }): Promise<string> {
   const user = await getUserByEmail(data.email);
-  if (!user)
+  if (!user) {
     throw createError({
       status: 404,
       message: "User not found",
     });
+  }
 
   const valid = verifyPassword(data.password, user.salt, user.password);
-  if (!valid)
+  if (!valid) {
     throw createError({
       status: 403,
       message: "Invalid password",
     });
+  }
 
   return await createToken({ userUlid: user.ulid, email: user.email });
 }
@@ -78,10 +87,10 @@ export async function authenticate(data: { email: string; password: string }): P
 export async function updatePassword(user: Drizzle.User.select, password: string) {
   const auth = hashPassword(password);
   return await db
-    .update(user)
+    .update(users)
     .set({
       password: auth.hash,
       salt: auth.salt,
     })
-    .where(eq(user.ulid, user.ulid));
+    .where(eq(users.ulid, user.ulid));
 }

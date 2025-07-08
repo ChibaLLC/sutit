@@ -1,11 +1,11 @@
 import { revokeAuthToken } from "~~/server/api/auth/utils";
 import { authenticate } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
+const schema = z.object({
+	password: z.string(),
+	email: z.string(),
+});
 export default defineEventHandler(async (event) => {
-	const schema = z.object({
-		password: z.string(),
-		email: z.string(),
-	});
 	const { data, error } = await readValidatedBody(event, schema.safeParse);
 	if (error) {
 		throw createError({
