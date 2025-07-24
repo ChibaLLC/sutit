@@ -10,9 +10,6 @@ export default defineNuxtConfig({
       googleClientId: process.env.GOOGLE_CLIENT_ID,
     },
   },
-  future: {
-    compatibilityVersion: 4,
-  },
   compatibilityDate: "2025-06-28",
   app: {
     pageTransition: { name: "page", mode: "out-in" },
