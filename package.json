@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "nuxt build",
-		"dev": "nuxt dev --host",
+		"dev": "nuxt dev",
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
 		"postinstall": "nuxt prepare",
@@ -16,26 +16,29 @@
 	},
 	"devDependencies": {
 		"@iconify-json/mdi": "^1.2.3",
-		"@nuxt/icon": "1.13.0",
-		"@nuxt/scripts": "0.11.7",
-		"@nuxtjs/tailwindcss": "^6.14.0",
+		"@nuxt/icon": "1.14.0",
+		"@nuxt/scripts": "0.11.10",
+		"@nuxt/test-utils": "^3.19.2",
+		"@pinia/nuxt": "0.11.1",
+		"@tailwindcss/vite": "^4.1.11",
 		"@types/formidable": "^3.4.5",
-		"@types/mime-db": "^1.43.5",
+		"@types/mime-db": "^1.43.6",
 		"@types/nodemailer": "^6.4.17",
 		"@types/uuid": "^10.0.0",
-		"dotenv": "^16.5.0",
-		"nuxt": "^3.17.3",
-		"sass": "^1.89.0",
-		"vitest": "^3.1.3",
-		"vue": "^3.5.14",
+		"@vue/test-utils": "^2.4.6",
+		"happy-dom": "^18.0.1",
+		"nuxt": "^4.0.1",
+		"playwright-core": "^1.53.1",
+		"sass": "^1.89.2",
+		"vitest": "^3.2.4",
+		"vue": "^3.5.17",
 		"vue-router": "^4.5.1"
 	},
 	"dependencies": {
 		"@chiballc/nuxt-form-builder": "0.1.21",
-		"@vueuse/integrations": "^13.2.0",
-		"crossws": "^0.3.5",
+		"@vueuse/integrations": "^13.4.0",
 		"daraja.js": "github:ChibaLLC/daraja.js#42e371dedfabbbca6b73895f26bd62f64e77ac14",
-		"drizzle-kit": "^0.31.1",
+		"drizzle-kit": "^0.31.4",
 		"drizzle-orm": "^0.43.1",
 		"exceljs": "^4.4.0",
 		"fast-glob": "^3.3.3",
@@ -45,15 +48,16 @@
 		"lucide-vue-next": "^0.511.0",
 		"mime-db": "^1.54.0",
 		"nodemailer": "^7.0.3",
-		"postgres": "^3.4.5",
+		"pinia": "^3.0.3",
+		"postgres": "^3.4.7",
 		"qrcode": "^1.5.4",
 		"std-env": "^3.9.0",
-		"ulid": "^3.0.0",
+		"ulid": "^3.0.1",
 		"uuid": "^11.1.0",
-		"zod": "^3.24.4"
+		"zod": "^3.25.67"
 	},
 	"engines": {
 		"node": "22.x"
 	},
-	"packageManager": "pnpm@10.11.0"
+	"packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
 }

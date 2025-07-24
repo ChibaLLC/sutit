@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Colors */
+    --navy: #3d5a80;
+    --sky: #98c1d9;
+    --light: #e0fbfc;
+    --peach: #ee6c4d;
+    --dark: #293241;
+
+    /* Font Families */
+    --font-mulish: "Mulish", sans-serif;
+    --font-serif: "DM Serif Display", serif;
+    --font-sans: "DM Sans", sans-serif;
+    --font-mono: "DM Mono", monospace;
+
+    @theme {
+      /* Colors */
+      --color-navy: var(--navy);
+      --color-sky: var(--sky);
+      --color-light: var(--light);
+      --color-peach: var(--peach);
+      --color-dark: var(--dark);
+
+      /* Fonts */
+      --font-family-mulish: var(--font-mulish);
+      --font-family-serif: var(--font-serif);
+      --font-family-sans: var(--font-sans);
+      --font-family-mono: var(--font-mono);
+    }
+  }
+}

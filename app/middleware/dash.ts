@@ -1,5 +1,6 @@
-export default defineNuxtRouteMiddleware((from, to) => {
-    if (userIsAuthenticated() && from.path === "/") {
-        return navigateTo("/dashboard")
-    }
-})
+export default defineNuxtRouteMiddleware(async (from) => {
+  const { user } = await userStore();
+  if (user && from.path === "/") {
+    return navigateTo("/dashboard");
+  }
+});

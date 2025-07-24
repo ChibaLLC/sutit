@@ -2,13 +2,13 @@ import { getUserByEmail } from "~~/server/api/users/utils/queries";
 import { createToken } from "~~/server/api/auth/utils/queries";
 import { z } from "zod";
 
+const schema = z.object({
+	email: z.string(),
+	origin: z.string(),
+	redirect: z.string().optional(),
+});
 export default defineEventHandler(async (event) => {
-	const qSchema = z.object({
-		email: z.string(),
-		origin: z.string(),
-		redirect: z.string().optional(),
-	});
-	const { data, error } = await getValidatedQuery(event, qSchema.safeParse);
+	const { data, error } = await getValidatedQuery(event, schema.safeParse);
 	if (error) {
 		throw createError({
 			statusCode: 400,
