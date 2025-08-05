@@ -38,6 +38,7 @@ export async function processFormPayments(
 ) {
 	details.phone = `254${details.phone.slice(-9)}`;
 	const result = await makeSTKPush(details.phone, form_meta.formName, details.amount, details.accountNumber);
+	console.log("Result: " + JSON.stringify(result));
 	const channel = createChannelName(result.MerchantRequestID, result.CheckoutRequestID);
 	if (!global.formPaymentProcessingQueue) global.formPaymentProcessingQueue = new Map();
 	global.formPaymentProcessingQueue.set(channel, { form_meta, callback });

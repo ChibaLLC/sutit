@@ -165,6 +165,8 @@ export default defineEventHandler(async (event) => {
 				},
 			});
 		}
+		console.log("[NEEDS PAY: ]", needsPay);
+
 		return await processFormPayments(
 			data.form.meta,
 			{
