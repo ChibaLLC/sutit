@@ -179,6 +179,9 @@ const getFieldValue = (response: any[], fieldlabel: string) => {
 	if (res.value == "[object Object]") {
 		return Object.values(res.field.value)[0] || "";
 	}
+	if (res.value == "") {
+		return res.field.value;
+	}
 	return res.value;
 };
 </script>
