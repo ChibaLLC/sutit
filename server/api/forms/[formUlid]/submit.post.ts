@@ -153,6 +153,16 @@ export default defineEventHandler(async (event) => {
 	const generatePaymentSms = (data: { receiptNumber: string; amount: number }) => {
 		return `SUTIT: Your payment of Ksh ${data.amount} has been received. Receipt number is ${data.receiptNumber}`;
 	};
+	// Calculate Total Amount in stores
+	function calculateTotalAmount(stores: Record<string, any>): number {
+		return Object.values(stores).reduce((total, store) => {
+			const price = typeof store.price === "string" ? parseFloat(store.price) : store.price;
+			const quantity = typeof store.qtty === "string" ? parseFloat(store.qtty) : store.qtty;
+			const amount = (isNaN(price) ? 0 : price) * (isNaN(quantity) ? 0 : quantity);
+			return total + amount;
+		}, 0);
+	}
+	let storeAmount = calculateTotalAmount(data.form.stores);
 
 	if (needsPay && !data.token && data.phone) {
 		if (data.form.meta.price_individual < form.meta.price_individual) {
@@ -198,7 +208,7 @@ export default defineEventHandler(async (event) => {
 				}
 			},
 		);
-	} else if (needsPay && data.token) {
+	} else if (storeAmount > 0 && data.token) {
 		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
 
 		if (!invite) {
@@ -213,19 +223,11 @@ export default defineEventHandler(async (event) => {
 				message: "The provided token has already been used!",
 			});
 		}
-		// Calculate Total Amount in stores
-		function calculateTotalAmount(stores: Record<string, any>): number {
-			return Object.values(stores).reduce((total, store) => {
-				const price = typeof store.price === "string" ? parseFloat(store.price) : store.price;
-				const quantity = typeof store.qtty === "string" ? parseFloat(store.qtty) : store.qtty;
-				const amount = (isNaN(price) ? 0 : price) * (isNaN(quantity) ? 0 : quantity);
-				return total + amount;
-			}, 0);
-		}
+
 		// Gather Store Details
 		let details = {
 			phone: data.phone,
-			amount: calculateTotalAmount(data.form.stores),
+			amount: storeAmount,
 			accountNumber: creator?.email || creator?.name || "Unknown",
 		};
 		return await processFormPayments(data.form.meta, details, async (payment) => {
@@ -247,7 +249,7 @@ export default defineEventHandler(async (event) => {
 			}
 			await invalidateFormGroupLink(formUlid, invite.token);
 		});
-	} else if (!needsPay && data.token) {
+	} else if (storeAmount <= 0 && data.token) {
 		const { invite, group } = await getInviteFormGroup(formUlid, data.token);
 
 		if (!invite) {

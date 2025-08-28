@@ -54,6 +54,10 @@ async function processForm() {
 	if (data.value?.meta?.allowGroups && !group.self) {
 		return processInvites();
 	}
+	if (token && !hasBoughtMerch(data.value?.stores)) {
+		await submit();
+		return;
+	}
 
 	if (hasPrice(data.value) && !paymentModal.value) {
 		paymentModal.value = true;
@@ -105,7 +109,7 @@ async function submit() {
 				token: payment_details.value.token,
 			},
 			onResponseError({ response }) {
-				log.error(response);
+				console.error(response);
 				window.alertError(unWrapFetchError(response));
 			},
 		});
