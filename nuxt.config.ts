@@ -1,30 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-	devtools: { enabled: false },
-	nitro: {
-		experimental: {
-			websocket: true,
-		},
-		imports: {
-			dirs: ["./shared/utils", "./shared/types"],
-		},
-	},
-	css: ["~/assets/scss/main.scss"],
-	modules: ["@nuxtjs/tailwindcss", "@chiballc/nuxt-form-builder", "@nuxt/scripts", "@nuxt/icon"],
-	runtimeConfig: {
-		public: {
-			githubClientId: process.env.GITHUB_CLIENT_ID,
-			googleClientId: process.env.GOOGLE_CLIENT_ID,
-		},
-	},
-	future: {
-		compatibilityVersion: 4,
-	},
-	imports: {
-		dirs: ["../shared/types", "../shared/utils"],
-	},
-	compatibilityDate: "2024-11-09",
-	app: {
-		pageTransition: { name: "page", mode: "out-in" },
-	},
-});
+  compatibilityDate: '2025-07-15',
+  devtools: { enabled: true },
+
+  modules: [
+    '@nuxt/fonts',
+    '@nuxt/icon',
+    '@nuxt/scripts',
+    '@nuxt/image'
+  ]
+})

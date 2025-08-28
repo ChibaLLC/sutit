@@ -1,5 +1,0 @@
-DROP VIEW "public"."form_responses_view";--> statement-breakpoint
-ALTER TABLE "form_field_responses" ALTER COLUMN "field_ulid" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "form_field_responses" ADD COLUMN "field" jsonb NOT NULL;--> statement-breakpoint
-ALTER TABLE "form_field_responses" ADD COLUMN "form_ulid" varchar NOT NULL;--> statement-breakpoint
-CREATE VIEW "public"."form_responses_view" AS (select "form_responses"."ulid" as "response_ulid", "form_field_responses"."field" as "response_field", "form_elements_ulid" as "response_form_ulid", "form_field_responses"."value", "form_responses"."price_paid", "form_responses"."created_at" from "form_responses" left join (select "form_response_ulid" as "form_response_ulid", "field", "value", "form_ulid" as "form_elements_ulid" from "form_field_responses") "form_field_responses" on "form_responses"."ulid" = "form_response_ulid");
