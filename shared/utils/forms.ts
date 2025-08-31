@@ -6,6 +6,7 @@ export function bubblePrice(
 ) {
 	if (!response) return "UNKNOWN";
 	const group = group_responses.find((group_response) => group_response.responseUlid === response.responseUlid);
+
 	if (group) {
 		return `Via group ${group.groupName}`;
 	} else {

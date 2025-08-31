@@ -1,6 +1,7 @@
 import type { Drizzle } from "~~/server/db/types";
 import { getFormResponses } from "./queries";
 import excel from "exceljs";
+import { getFormPaymentsSum } from "../../../utils/queries";
 
 function replaceSpecialChars(input: string): string {
 	return input.replace(/[*?:\\/\[\]]/g, "_");
@@ -191,7 +192,7 @@ export async function constructExcel(
 					}
 
 					// Format currency cell
-					storeRow.getCell("pricePaid").numFmt = '"KES "#,##0.00';
+					//storeRow.getCell("pricePaid").numFmt = '"KES "#,##0.00';
 
 					// Add to summary data
 					totalPurchases += item.qtty;
@@ -322,9 +323,7 @@ export async function constructExcel(
 	summarySheet.addRow(["Total Submissions", rows.length]);
 
 	if (_hasPayment) {
-		const totalRevenue = rows.reduce((sum, row) => {
-			return sum + Number(bubblePrice(group_responses, row.responses.at(0)) || 0);
-		}, 0);
+		const totalRevenue = await getFormPaymentsSum(form.meta.ulid);
 
 		summarySheet.addRow(["Total Form Revenue", totalRevenue]);
 		summarySheet.getCell("B4").numFmt = '"KES "#,##0.00';
