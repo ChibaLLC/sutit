@@ -347,6 +347,7 @@ const navItems = [
   { label: "Forms", href: "/forms" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Submissions", href: "/forms/12/submissions" },
+  { label: "New Forms", href: "/forms/new" },
 ];
 
 const logout = () => {

@@ -23,10 +23,17 @@ const form = ref<FormSchema>(<FormSchema>{
   ] as PageSchema[],
   stores: [] as Store[],
 });
+const emits = defineEmits<{
+  preview: [form: FormSchema];
+  "go-back": [];
+}>();
 const currentPage = ref(form.value.pages[0]);
 const currentStore = ref(null);
 const selectedElement = ref<FormField | null>(null);
 
+const togglePreviewMode = () => {
+  previewMode.value = !previewMode.value;
+};
 const selectField = (field: FormField) => {
   selectedElement.value = field;
 };
@@ -63,7 +70,12 @@ const removePage = (index: number) => {
 </script>
 <template>
   <div class="min-h-screen bg-background text-foreground p-3">
-    <BuilderHeader :previewMode="previewMode" :isDark="isDark" />
+    <BuilderHeader
+      :previewMode="previewMode"
+      :isDark="isDark"
+      @preview="togglePreviewMode()"
+      @go-back="$emit('go-back')"
+    />
     <BuilderNavigator>
       <template #pages>
         <div class="flex h-[calc(100vh-120px)]">
@@ -300,5 +312,10 @@ const removePage = (index: number) => {
         </div>
       </template>
     </BuilderNavigator>
+    <BuilderPreviewFormPreview
+      :isOpen="previewMode"
+      :form="form"
+      @close="togglePreviewMode()"
+    />
   </div>
 </template>
