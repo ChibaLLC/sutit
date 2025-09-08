@@ -14,11 +14,11 @@
 		{
 			"path": "./.nuxt/tsconfig.node.json"
 		}
-	]
-	// "compilerOptions": {
-	//   "baseUrl": ".",
-	//   "paths": {
-	//     "@/*": ["./app/*"]
-	//   }
-	// }
+	],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./app/*"]
+		}
+	}
 }
