@@ -11,6 +11,8 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@nuxt/scripts",
     "shadcn-nuxt",
+    "@pinia/nuxt",
+    "pinia-plugin-persistedstate",
   ],
   css: ["~/assets/css/tailwind.css"],
   vite: {

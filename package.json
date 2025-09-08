@@ -8,7 +8,10 @@
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
 		"postinstall": "nuxt prepare",
-		"start": "node .output/server/index.mjs"
+		"start": "node .output/server/index.mjs",
+		"introspect": "drizzle-kit introspect",
+		"migrate": "drizzle-kit generate && drizzle-kit push",
+		"reset": "drizzle-kit reset"
 	},
 	"dependencies": {
 		"@kemboi22/form-builder": "^0.2.1",
@@ -16,6 +19,7 @@
 		"@nuxt/icon": "2.0.0",
 		"@nuxt/image": "1.11.0",
 		"@nuxt/scripts": "0.11.13",
+		"@pinia/nuxt": "0.11.2",
 		"@tailwindcss/vite": "^4.1.12",
 		"@tanstack/vue-table": "^8.21.3",
 		"@unhead/vue": "^2.0.14",
@@ -32,6 +36,8 @@
 		"nanoid": "^5.1.5",
 		"nuxt": "^4.1.0",
 		"pg": "^8.16.3",
+		"pinia": "^3.0.3",
+		"pinia-plugin-persistedstate": "4.5.0",
 		"reka-ui": "^2.5.0",
 		"shadcn-nuxt": "2.2.0",
 		"tailwind-merge": "^3.3.1",
