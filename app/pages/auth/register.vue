@@ -1,3 +1,40 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import { Shield, Lock, CheckCircle } from "lucide-vue-next";
+import { authClient } from "~/lib/auth-client";
+import { toast } from "vue-sonner";
+
+const isLoading = ref(false);
+const form = ref({
+  name: "",
+  email: "",
+  password: "",
+  rememberMe: false,
+});
+const authStore = useAuthStore();
+
+// Methods
+const signInWithGoogle = async () => {
+  isLoading.value = true;
+  try {
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const signUpWithEmail = async () => {
+  isLoading.value = true;
+  try {
+    await authStore.signUpWithEmail(form.value);
+  } catch (error) {
+    console.log("Email sign-in failed:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
 <template>
   <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
     <!-- Shared Navigation -->
@@ -26,7 +63,7 @@
                 Welcome Back
               </h1>
               <p class="text-muted-foreground">
-                Sign in to your account to continue building amazing forms
+                Sign up to your account to continue building amazing forms
               </p>
             </div>
 
@@ -71,14 +108,24 @@
             </div>
 
             <!-- Email/Password Form -->
-            <form @submit.prevent="signInWithEmail" class="space-y-4">
+            <form @submit.prevent="signUpWithEmail" class="space-y-4">
+              <div class="space-y-2">
+                <Label for="email">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your name"
+                  v-model="form.name"
+                  required
+                />
+              </div>
               <div class="space-y-2">
                 <Label for="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
-                  v-model="email"
+                  v-model="form.email"
                   required
                 />
               </div>
@@ -89,14 +136,14 @@
                   id="password"
                   type="password"
                   placeholder="Enter your password"
-                  v-model="password"
+                  v-model="form.password"
                   required
                 />
               </div>
 
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                  <Checkbox id="remember" v-model="rememberMe" />
+                  <Checkbox id="remember" v-model="form.rememberMe" />
                   <Label
                     for="remember"
                     class="text-sm font-normal cursor-pointer"
@@ -115,7 +162,7 @@
                 class="w-full group"
                 :disabled="isLoading"
               >
-                <span v-if="!isLoading">Sign In</span>
+                <span v-if="!isLoading">Sign Up</span>
                 <span v-else class="flex items-center">
                   <svg
                     class="animate-spin -ml-1 mr-2 h-4 w-4"
@@ -136,7 +183,7 @@
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Signing in...
+                  Signing up...
                 </span>
               </Button>
             </form>
@@ -144,10 +191,13 @@
             <!-- Sign Up Link -->
             <div class="text-center mt-6 pt-6 border-t border-border">
               <p class="text-sm text-muted-foreground">
-                Don't have an account?
-                <a href="#" class="text-primary hover:underline font-medium">
-                  Sign up for free
-                </a>
+                Already have an account?
+                <NuxtLink
+                  :to="`/auth/login`"
+                  class="text-primary hover:underline font-medium"
+                >
+                  Sign in
+                </NuxtLink>
               </p>
             </div>
           </Card>
@@ -198,45 +248,3 @@
     </footer>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from "vue";
-import { Shield, Lock, CheckCircle } from "lucide-vue-next";
-
-// Form state
-const email = ref("");
-const password = ref("");
-const rememberMe = ref(false);
-const isLoading = ref(false);
-
-// Methods
-const signInWithGoogle = async () => {
-  isLoading.value = true;
-  try {
-    // Integrate with your Google OAuth implementation
-    console.log("Signing in with Google...");
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Redirect to dashboard or handle success
-  } catch (error) {
-    console.error("Google sign-in failed:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const signInWithEmail = async () => {
-  isLoading.value = true;
-  try {
-    // Integrate with your email/password authentication
-    console.log("Signing in with email:", email.value);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Redirect to dashboard or handle success
-  } catch (error) {
-    console.error("Email sign-in failed:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>

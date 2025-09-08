@@ -1,3 +1,36 @@
+<script setup lang="ts">
+import { Shield, Lock, CheckCircle } from "lucide-vue-next";
+
+const form = ref({
+  email: "",
+  password: "",
+  rememberMe: false,
+});
+
+const isLoading = ref(false);
+const authStore = useAuthStore();
+// Methods
+const signInWithGoogle = async () => {
+  isLoading.value = true;
+  try {
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const signInWithEmail = async () => {
+  isLoading.value = true;
+  try {
+    await authStore.signInWithEmail(form.value);
+  } catch (error) {
+    console.error("Email sign-in failed:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+</script>
 <template>
   <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
     <!-- Shared Navigation -->
@@ -78,7 +111,7 @@
                   id="email"
                   type="email"
                   placeholder="Enter your email"
-                  v-model="email"
+                  v-model="form.email"
                   required
                 />
               </div>
@@ -89,14 +122,14 @@
                   id="password"
                   type="password"
                   placeholder="Enter your password"
-                  v-model="password"
+                  v-model="form.password"
                   required
                 />
               </div>
 
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                  <Checkbox id="remember" v-model="rememberMe" />
+                  <Checkbox id="remember" v-model="form.rememberMe" />
                   <Label
                     for="remember"
                     class="text-sm font-normal cursor-pointer"
@@ -145,9 +178,12 @@
             <div class="text-center mt-6 pt-6 border-t border-border">
               <p class="text-sm text-muted-foreground">
                 Don't have an account?
-                <a href="#" class="text-primary hover:underline font-medium">
+                <NuxtLink
+                  href="/auth/register"
+                  class="text-primary hover:underline font-medium"
+                >
                   Sign up for free
-                </a>
+                </NuxtLink>
               </p>
             </div>
           </Card>
@@ -198,45 +234,3 @@
     </footer>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from "vue";
-import { Shield, Lock, CheckCircle } from "lucide-vue-next";
-
-// Form state
-const email = ref("");
-const password = ref("");
-const rememberMe = ref(false);
-const isLoading = ref(false);
-
-// Methods
-const signInWithGoogle = async () => {
-  isLoading.value = true;
-  try {
-    // Integrate with your Google OAuth implementation
-    console.log("Signing in with Google...");
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Redirect to dashboard or handle success
-  } catch (error) {
-    console.error("Google sign-in failed:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const signInWithEmail = async () => {
-  isLoading.value = true;
-  try {
-    // Integrate with your email/password authentication
-    console.log("Signing in with email:", email.value);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Redirect to dashboard or handle success
-  } catch (error) {
-    console.error("Email sign-in failed:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
