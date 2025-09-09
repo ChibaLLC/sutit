@@ -59,6 +59,7 @@ export const fieldTypeEnum = pgEnum("field_type", [
 	"number",
 	"email",
 	"phone",
+	"url",
 	"date",
 	"time",
 	"datetime",
@@ -66,6 +67,7 @@ export const fieldTypeEnum = pgEnum("field_type", [
 	"multiselect",
 	"radio",
 	"checkbox",
+	"toggle",
 	"file",
 	"image",
 	"signature",
@@ -76,7 +78,6 @@ export const fieldTypeEnum = pgEnum("field_type", [
 	"payment",
 	"hidden",
 	"calculated",
-	"url",
 ]);
 export const workflowStatusEnum = pgEnum("workflow_status", [
 	"active",

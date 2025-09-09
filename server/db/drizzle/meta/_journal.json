@@ -8,6 +8,13 @@
       "when": 1757374858273,
       "tag": "0000_violet_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757444930577,
+      "tag": "0001_broken_red_ghost",
+      "breakpoints": true
     }
   ]
 }
