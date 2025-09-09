@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import {
   Search,
   FileSpreadsheet,
@@ -20,7 +20,7 @@ import {
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 
-const route = useRoute(); // Using Nuxt's auto-imported version
+const route = useRoute();
 const acceptingResponses = ref(true);
 
 const filters = ref({
@@ -38,7 +38,15 @@ const filters = ref({
   sortBy: "submittedAt",
   sortOrder: "desc",
 });
-const { data: submissions } = await useFetch(
+
+const { data: form } = await useFetch(`/api/forms/${route.params.id}`, {
+  method: "get",
+  headers: {
+    ...(await authHeaders()),
+  },
+});
+// Reactive fetch with filters
+const { data: submissions, refresh } = await useFetch(
   `/api/forms/${route.params.id}/submissions`,
   {
     method: "get",
@@ -46,23 +54,153 @@ const { data: submissions } = await useFetch(
       ...(await authHeaders()),
     },
     query: filters,
+    server: false,
   },
 );
-const stats = computed(() => {
-  const total = submissions.value?.data.length;
-  const completed = submissions.value?.data.filter(
-    (s) => s.status === "completed",
-  ).length;
-  const pending = submissions.value?.data.filter(
-    (s) => s.status === "pending",
-  ).length;
-  const totalRevenue = submissions.value?.data.reduce(
-    (sum, s) => sum + (s.pricePaid ?? 0),
-    0,
+
+// Get unique form fields from all submissions
+const formFields = computed(() => {
+  if (!submissions.value?.data?.length) return [];
+
+  const fieldsMap = new Map();
+
+  submissions.value.data.forEach((submission) => {
+    if (submission.responses) {
+      submission.responses.forEach((response) => {
+        if (!fieldsMap.has(response.field.id)) {
+          fieldsMap.set(response.field.id, {
+            id: response.field.id,
+            label: response.field.label,
+            name: response.field.name,
+            type: response.field.type,
+            orderIndex: response.field.orderIndex || 0,
+          });
+        }
+      });
+    }
+  });
+
+  return Array.from(fieldsMap.values()).sort(
+    (a, b) => a.orderIndex - b.orderIndex,
   );
-  const storeRevenue = submissions.value?.data.reduce(
+});
+
+// Function to get field response value for a submission
+const getFieldValue = (submission, fieldId) => {
+  if (!submission.responses) return "";
+  const response = submission.responses.find((r) => r.fieldId === fieldId);
+  return response?.value || "";
+};
+
+// Enhanced filtered submissions with field-based search
+const filteredSubmissions = computed(() => {
+  if (!submissions.value?.data) return [];
+
+  let filtered = [...submissions.value.data];
+
+  // Search filter - now searches across all field values
+  if (filters.value.search) {
+    const searchTerm = filters.value.search.toLowerCase();
+    filtered = filtered.filter((submission) => {
+      // Search in basic submission data
+      const basicMatch =
+        submission.submitter.name?.toLowerCase().includes(searchTerm) ||
+        submission.submitter.email?.toLowerCase().includes(searchTerm) ||
+        submission.id.toLowerCase().includes(searchTerm) ||
+        submission.status.toLowerCase().includes(searchTerm);
+
+      // Search in form field responses
+      const fieldMatch =
+        submission.responses?.some((response) =>
+          response.value?.toString().toLowerCase().includes(searchTerm),
+        ) || false;
+
+      return basicMatch || fieldMatch;
+    });
+  }
+
+  // Status filter
+  if (filters.value.status !== "all") {
+    filtered = filtered.filter((s) => s.status === filters.value.status);
+  }
+
+  // Date range filter
+  if (filters.value.dateRange.start) {
+    const startDate = new Date(filters.value.dateRange.start);
+    filtered = filtered.filter((s) => new Date(s.submittedAt) >= startDate);
+  }
+
+  if (filters.value.dateRange.end) {
+    const endDate = new Date(filters.value.dateRange.end);
+    endDate.setHours(23, 59, 59, 999);
+    filtered = filtered.filter((s) => new Date(s.submittedAt) <= endDate);
+  }
+
+  // Price range filter
+  if (filters.value.priceRange.min) {
+    filtered = filtered.filter(
+      (s) => (s.pricePaid || 0) >= parseFloat(filters.value.priceRange.min),
+    );
+  }
+
+  if (filters.value.priceRange.max) {
+    filtered = filtered.filter(
+      (s) => (s.pricePaid || 0) <= parseFloat(filters.value.priceRange.max),
+    );
+  }
+
+  // Store items filter
+  if (filters.value.hasStoreItems !== "all") {
+    const hasItems = filters.value.hasStoreItems === "yes";
+    filtered = filtered.filter((s) => {
+      const hasStoreItems = s.storeResponses?.length > 0;
+      return hasItems ? hasStoreItems : !hasStoreItems;
+    });
+  }
+
+  // Sorting
+  filtered.sort((a, b) => {
+    let aValue, bValue;
+
+    switch (filters.value.sortBy) {
+      case "submittedAt":
+        aValue = new Date(a.submittedAt);
+        bValue = new Date(b.submittedAt);
+        break;
+      case "pricePaid":
+        aValue = a.pricePaid || 0;
+        bValue = b.pricePaid || 0;
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      default:
+        aValue = a.submittedAt;
+        bValue = b.submittedAt;
+    }
+
+    if (aValue < bValue) return filters.value.sortOrder === "asc" ? -1 : 1;
+    if (aValue > bValue) return filters.value.sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  return filtered;
+});
+
+const stats = computed(() => {
+  const data = filteredSubmissions.value;
+  const total = data.length;
+  const completed = data.filter((s) => s.status === "completed").length;
+  const pending = data.filter((s) => s.status === "pending").length;
+  const totalRevenue = data.reduce((sum, s) => sum + (s.pricePaid ?? 0), 0);
+  const storeRevenue = data.reduce(
     (sum, s) =>
-      sum + s.storeResponses.reduce((storeSum, sr) => storeSum + sr.total, 0),
+      sum +
+      (s.storeResponses?.reduce(
+        (storeSum, sr) => storeSum + (sr.total || 0),
+        0,
+      ) || 0),
     0,
   );
 
@@ -77,15 +215,26 @@ const stats = computed(() => {
 
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
-const totalPages = computed(() =>
-  Math.ceil(submissions.value?.data.length / itemsPerPage.value),
-);
 
 const paginatedSubmissions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return submissions.value?.data.slice(start, end);
+  return filteredSubmissions.value.slice(start, end);
 });
+
+const totalPages = computed(() =>
+  Math.ceil(filteredSubmissions.value.length / itemsPerPage.value),
+);
+
+// Watch for filter changes to refresh data
+watch(
+  filters,
+  () => {
+    currentPage.value = 1; // Reset to first page when filters change
+    refresh();
+  },
+  { deep: true },
+);
 
 const formatCurrency = (amount: number) => {
   return `Kes ${amount.toLocaleString()}`;
@@ -103,9 +252,25 @@ const clearFilters = () => {
   };
 };
 
-const getResponseValue = (responses: any[], fieldId: string) => {
-  const response = responses.find((r) => r.fieldId === fieldId);
-  return response?.value || "-";
+// Format field value based on type
+const formatFieldValue = (value, fieldType) => {
+  if (!value) return "-";
+
+  switch (fieldType) {
+    case "date":
+      return new Date(value).toLocaleDateString();
+    case "email":
+      return value;
+    case "phone":
+      return value;
+    case "select":
+    case "radio":
+      return value;
+    case "textarea":
+      return value.length > 50 ? value.substring(0, 50) + "..." : value;
+    default:
+      return value;
+  }
 };
 </script>
 
@@ -162,17 +327,20 @@ const getResponseValue = (responses: any[], fieldId: string) => {
       <!-- Form Title -->
       <Card class="mb-6 p-6">
         <h2 class="text-2xl font-bold text-foreground">
-          {{ submissions?.data[0].form.title || "Form Submissions" }}
+          {{ form?.title }}
         </h2>
+        <p class="text-muted-foreground mt-1">
+          {{ formFields.length }} fields • {{ stats.total }} submissions
+        </p>
       </Card>
 
-      <!-- Enhanced Stats Grid with better responsive design -->
+      <!-- Stats Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <Card
-          class="p-4 hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500"
+          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-blue-500"
         >
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+            <div class="p-2 bg-blue-50 dark:bg-blue-950/50 rounded-lg">
               <FileSpreadsheet
                 class="w-5 h-5 text-blue-600 dark:text-blue-400"
               />
@@ -189,10 +357,10 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </Card>
 
         <Card
-          class="p-4 hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500"
+          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-green-500"
         >
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+            <div class="p-2 bg-green-50 dark:bg-green-950/50 rounded-lg">
               <CheckCircle class="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
@@ -207,10 +375,10 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </Card>
 
         <Card
-          class="p-4 hover:shadow-lg transition-all duration-200 border-l-4 border-l-yellow-500"
+          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-yellow-500"
         >
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+            <div class="p-2 bg-yellow-50 dark:bg-yellow-950/50 rounded-lg">
               <Clock class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
@@ -225,10 +393,10 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </Card>
 
         <Card
-          class="p-4 hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500 col-span-2 sm:col-span-1"
+          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-purple-500 col-span-2 sm:col-span-1"
         >
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+            <div class="p-2 bg-purple-50 dark:bg-purple-950/50 rounded-lg">
               <DollarSign
                 class="w-5 h-5 text-purple-600 dark:text-purple-400"
               />
@@ -245,10 +413,10 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </Card>
 
         <Card
-          class="p-4 hover:shadow-lg transition-all duration-200 border-l-4 border-l-indigo-500 col-span-2 sm:col-span-2 lg:col-span-1"
+          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-indigo-500 col-span-2 sm:col-span-2 lg:col-span-1"
         >
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+            <div class="p-2 bg-indigo-50 dark:bg-indigo-950/50 rounded-lg">
               <CreditCard
                 class="w-5 h-5 text-indigo-600 dark:text-indigo-400"
               />
@@ -265,7 +433,7 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </Card>
       </div>
 
-      <!-- Enhanced Filters Section with comprehensive filtering -->
+      <!-- Enhanced Filters Section -->
       <Card class="mb-6 p-6">
         <div class="space-y-6">
           <!-- Filter Header -->
@@ -296,7 +464,7 @@ const getResponseValue = (responses: any[], fieldId: string) => {
                 />
                 <Input
                   v-model="filters.search"
-                  placeholder="Search submissions..."
+                  placeholder="Search in all fields..."
                   class="pl-10"
                 />
               </div>
@@ -344,84 +512,6 @@ const getResponseValue = (responses: any[], fieldId: string) => {
                   type="date"
                   class="pl-10"
                 />
-              </div>
-            </div>
-
-            <!-- Price Range Min -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Min Price</Label>
-              <div class="relative">
-                <DollarSign
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.priceRange.min"
-                  type="number"
-                  placeholder="0"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-
-            <!-- Price Range Max -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Max Price</Label>
-              <div class="relative">
-                <DollarSign
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.priceRange.max"
-                  type="number"
-                  placeholder="10000"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-
-            <!-- Store Items Filter -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Store Items</Label>
-              <Select v-model="filters.hasStoreItems">
-                <SelectTrigger>
-                  <SelectValue placeholder="All submissions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Submissions</SelectItem>
-                  <SelectItem value="yes">With Store Items</SelectItem>
-                  <SelectItem value="no">Without Store Items</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <!-- Sort Options -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Sort By</Label>
-              <div class="flex gap-2">
-                <Select v-model="filters.sortBy" class="flex-1">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="submittedAt">Date</SelectItem>
-                    <SelectItem value="pricePaid">Price</SelectItem>
-                    <SelectItem value="status">Status</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  @click="
-                    filters.sortOrder =
-                      filters.sortOrder === 'asc' ? 'desc' : 'asc'
-                  "
-                  class="px-3"
-                >
-                  <ChevronDown
-                    :class="{ 'rotate-180': filters.sortOrder === 'asc' }"
-                    class="w-4 h-4 transition-transform"
-                  />
-                </Button>
               </div>
             </div>
           </div>
@@ -477,57 +567,81 @@ const getResponseValue = (responses: any[], fieldId: string) => {
         </div>
       </Card>
 
-      <!-- Enhanced Table Section with better responsive design -->
+      <!-- Enhanced Table Section with Dynamic Columns -->
       <Card class="overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[800px]">
-            <thead class="bg-muted/50 border-b">
+          <table class="w-full min-w-[1000px]">
+            <thead class="bg-muted/30 border-b">
               <tr>
-                <th class="text-left px-4 py-3 font-medium text-sm">
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                >
                   Submission ID
                 </th>
-                <th class="text-left px-4 py-3 font-medium text-sm">
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[150px]"
+                >
                   Submitter
                 </th>
-                <th class="text-left px-4 py-3 font-medium text-sm">Email</th>
-                <th class="text-left px-4 py-3 font-medium text-sm">Status</th>
-                <th class="text-left px-4 py-3 font-medium text-sm">
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[80px]"
+                >
+                  Status
+                </th>
+                <!-- Dynamic form field headers -->
+                <th
+                  v-for="field in formFields"
+                  :key="field.id"
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                  :title="field.name"
+                >
+                  {{ field.label }}
+                </th>
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
+                >
                   Price Paid
                 </th>
-                <th class="text-left px-4 py-3 font-medium text-sm">
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                >
                   Store Items
                 </th>
-                <th class="text-left px-4 py-3 font-medium text-sm">Date</th>
-                <th class="text-right px-4 py-3 font-medium text-sm">
+                <th
+                  class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
+                >
+                  Submitted At
+                </th>
+                <th
+                  class="text-right px-4 py-3 font-medium text-sm min-w-[100px]"
+                >
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="submission in submissions?.data"
+                v-for="submission in paginatedSubmissions"
                 :key="submission.id"
-                class="border-b hover:bg-muted/30 transition-colors"
+                class="border-b hover:bg-muted/20 transition-colors"
               >
                 <td class="px-4 py-4">
-                  <span class="font-medium text-primary text-sm"
-                    >{{ submission.id.slice(0, 8) }}...</span
+                  <span
+                    class="font-medium text-primary text-sm"
+                    :title="submission.id"
                   >
+                    {{ submission.id.slice(0, 8) }}...
+                  </span>
                 </td>
                 <td class="px-4 py-4">
                   <div>
-                    <p class="font-medium">{{ submission.submitter.name }}</p>
+                    <p class="font-medium">
+                      {{ submission.submitter.name || "N/A" }}
+                    </p>
                     <p class="text-xs text-muted-foreground">
-                      {{
-                        submission.metadata.paymentData?.phoneNumber || "N/A"
-                      }}
+                      {{ submission.submitter.email || "N/A" }}
                     </p>
                   </div>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="text-sm text-muted-foreground">{{
-                    submission.submitter.email
-                  }}</span>
                 </td>
                 <td class="px-4 py-4">
                   <Badge
@@ -536,52 +650,88 @@ const getResponseValue = (responses: any[], fieldId: string) => {
                         ? 'default'
                         : 'secondary'
                     "
+                    class="capitalize"
                   >
                     {{ submission.status }}
                   </Badge>
                 </td>
+                <!-- Dynamic form field values -->
+                <td
+                  v-for="field in formFields"
+                  :key="field.id"
+                  class="px-4 py-4 text-sm"
+                  :title="getFieldValue(submission, field.id)"
+                >
+                  <span class="text-muted-foreground">
+                    {{
+                      formatFieldValue(
+                        getFieldValue(submission, field.id),
+                        field.type,
+                      )
+                    }}
+                  </span>
+                </td>
                 <td class="px-4 py-4">
-                  <span class="font-medium">{{
-                    formatCurrency(submission.pricePaid)
-                  }}</span>
+                  <span class="font-medium">
+                    {{ formatCurrency(submission.pricePaid || 0) }}
+                  </span>
                 </td>
                 <td class="px-4 py-4">
                   <div
-                    v-if="submission.storeResponses.length > 0"
+                    v-if="submission.storeResponses?.length > 0"
                     class="space-y-1"
                   >
                     <div
-                      v-for="item in submission.storeResponses"
-                      :key="item.item.name"
+                      v-for="item in submission.storeResponses.slice(0, 2)"
+                      :key="item.item?.name || 'item'"
                       class="text-sm"
                     >
-                      <span class="font-medium">{{ item.item.name }}</span>
+                      <span class="font-medium">{{
+                        item.item?.name || "Item"
+                      }}</span>
                       <span class="text-muted-foreground">
-                        ({{ item.quantity }}x)</span
+                        ({{ item.quantity || 0 }}x)</span
                       >
                     </div>
+                    <span
+                      v-if="submission.storeResponses.length > 2"
+                      class="text-xs text-muted-foreground"
+                    >
+                      +{{ submission.storeResponses.length - 2 }} more
+                    </span>
                   </div>
                   <span v-else class="text-muted-foreground text-sm"
                     >No items</span
                   >
                 </td>
                 <td class="px-4 py-4">
-                  <span class="text-sm text-muted-foreground">{{
-                    formatDate(submission.submittedAt)
-                  }}</span>
+                  <span class="text-sm text-muted-foreground">
+                    {{ formatDate(submission.submittedAt) }}
+                  </span>
                 </td>
                 <td class="px-4 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
-                    <Button size="sm" variant="ghost" class="h-8 w-8 p-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      class="h-8 w-8 p-0"
+                      title="View"
+                    >
                       <Eye class="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" class="h-8 w-8 p-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      class="h-8 w-8 p-0"
+                      title="Edit"
+                    >
                       <Edit class="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      title="Delete"
                     >
                       <Trash2 class="h-4 w-4" />
                     </Button>
@@ -592,20 +742,20 @@ const getResponseValue = (responses: any[], fieldId: string) => {
           </table>
         </div>
 
-        <!-- Enhanced Pagination with better responsive design -->
+        <!-- Enhanced Pagination -->
         <div
           class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t gap-4"
         >
           <div class="flex items-center gap-4">
             <p class="text-sm text-muted-foreground">
-              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-              {{
-                Math.min(currentPage * itemsPerPage, submissions?.data.length)
-              }}
-              of {{ submissions?.data.length }} results
+              Showing
+              {{ Math.min((currentPage - 1) * itemsPerPage + 1, stats.total) }}
+              to
+              {{ Math.min(currentPage * itemsPerPage, stats.total) }}
+              of {{ stats.total }} results
             </p>
-            <Select v-model="itemsPerPage" class="w-20">
-              <SelectTrigger>
+            <Select v-model="itemsPerPage">
+              <SelectTrigger class="w-20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
