@@ -1,3 +1,39 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import {
+  Menu,
+  X,
+  User,
+  Sun,
+  Moon,
+  UserCircle,
+  Settings,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+} from "lucide-vue-next";
+import { useDark, useToggle } from "@vueuse/core";
+
+const mobileMenuOpen = ref(false);
+const userMenuOpen = ref(false);
+const authStore = useAuthStore();
+
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+
+const navItems = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Forms", href: "/forms" },
+  { label: "Analytics", href: "/dashboard/analytics" },
+  { label: "Submissions", href: "/forms/12/submissions" },
+  { label: "New Forms", href: "/forms/new" },
+];
+
+const logout = async () => {
+  userMenuOpen.value = false;
+  await authStore.logout();
+};
+</script>
 <template>
   <nav
     class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
@@ -30,7 +66,7 @@
 
           <!-- Desktop Navigation (only show when authenticated) -->
           <nav
-            v-if="isAuthenticated"
+            v-if="authStore.isAuthenticated"
             class="hidden lg:flex items-center space-x-1"
           >
             <NuxtLink
@@ -65,10 +101,13 @@
           </button>
 
           <!-- Auth Section -->
-          <div v-if="!isAuthenticated" class="flex items-center gap-2">
+          <div
+            v-if="!authStore.isAuthenticated"
+            class="flex items-center gap-2"
+          >
             <!-- Login Button -->
             <NuxtLink
-              to="/login"
+              to="/auth/login"
               class="hidden sm:inline-flex h-9 px-4 py-2 items-center justify-center rounded-md text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:scale-105 active:scale-95"
             >
               Log in
@@ -76,7 +115,7 @@
 
             <!-- Sign Up Button -->
             <NuxtLink
-              to="/signup"
+              to="/auth/register"
               class="inline-flex h-9 px-4 py-2 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium transition-all duration-200 hover:bg-primary/90 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
             >
               <span class="hidden sm:inline">Sign up</span>
@@ -113,9 +152,9 @@
               >
                 <!-- User Info Header -->
                 <div class="px-4 py-3 border-b border-border/50">
-                  <p class="text-sm font-medium">John Doe</p>
+                  <p class="text-sm font-medium">{{ authStore.user?.name }}</p>
                   <p class="text-xs text-muted-foreground truncate">
-                    john.doe@example.com
+                    {{ authStore.user?.email }}
                   </p>
                 </div>
 
@@ -223,19 +262,19 @@
 
           <!-- Mobile Auth Section (when not authenticated) -->
           <div
-            v-if="!isAuthenticated"
+            v-if="!authStore.isAuthenticated"
             class="pb-4 mb-4 border-b border-border/50"
           >
             <div class="flex flex-col gap-2">
               <NuxtLink
-                to="/login"
+                to="/auth/login"
                 @click="mobileMenuOpen = false"
                 class="flex h-10 w-full items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
               >
                 Log in
               </NuxtLink>
               <NuxtLink
-                to="/signup"
+                to="/auth/register"
                 @click="mobileMenuOpen = false"
                 class="flex h-10 w-full items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium transition-colors hover:bg-primary/90"
               >
@@ -244,9 +283,8 @@
             </div>
           </div>
 
-          <!-- Mobile Navigation Links (when authenticated) -->
           <div
-            v-if="isAuthenticated"
+            v-if="authStore.isAuthenticated"
             class="space-y-1 pb-4 mb-4 border-b border-border/50"
           >
             <NuxtLink
@@ -260,11 +298,12 @@
             </NuxtLink>
           </div>
 
-          <!-- Mobile User Menu (when authenticated) -->
-          <div v-if="isAuthenticated" class="space-y-1">
+          <div v-if="authStore.isAuthenticated" class="space-y-1">
             <div class="px-3 py-2">
-              <p class="text-sm font-medium">John Doe</p>
-              <p class="text-xs text-muted-foreground">john.doe@example.com</p>
+              <p class="text-sm font-medium">{{ authStore.user?.name }}</p>
+              <p class="text-xs text-muted-foreground">
+                {{ authStore.user?.email }}
+              </p>
             </div>
 
             <a
@@ -316,54 +355,3 @@
     </transition>
   </nav>
 </template>
-
-<script setup lang="ts">
-import { ref } from "vue";
-import {
-  Menu,
-  X,
-  User,
-  Sun,
-  Moon,
-  UserCircle,
-  Settings,
-  CreditCard,
-  HelpCircle,
-  LogOut,
-} from "lucide-vue-next";
-import { useDark, useToggle } from "@vueuse/core";
-
-const mobileMenuOpen = ref(false);
-const userMenuOpen = ref(false);
-
-// Auth state - set this to true to test authenticated state
-const isAuthenticated = ref(true); // Change to true to test authenticated state
-
-const isDark = useDark();
-const toggleDark = useToggle(isDark);
-
-const navItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Forms", href: "/forms" },
-  { label: "Analytics", href: "/dashboard/analytics" },
-  { label: "Submissions", href: "/forms/12/submissions" },
-  { label: "New Forms", href: "/forms/new" },
-];
-
-const logout = () => {
-  // Handle logout logic here
-  isAuthenticated.value = false;
-  userMenuOpen.value = false;
-  console.log("Logging out...");
-};
-
-// Close mobile menu when clicking outside
-const closeMobileMenu = () => {
-  mobileMenuOpen.value = false;
-};
-
-// Close user menu when clicking outside
-const closeUserMenu = () => {
-  userMenuOpen.value = false;
-};
-</script>
