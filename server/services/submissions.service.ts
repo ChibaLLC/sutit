@@ -104,7 +104,11 @@ export const getFormSubmissions = async (formId: string) => {
 		where: eq(formSubmissions.formId, formId),
 		with: {
 			form: true,
-			responses: true,
+			responses: {
+				with: {
+					field: true,
+				},
+			},
 			storeResponses: {
 				with: {
 					item: true,
