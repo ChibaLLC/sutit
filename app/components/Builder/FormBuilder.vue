@@ -19,13 +19,16 @@ const form = ref<FormSchema>(<FormSchema>{
       title: "Page 1",
       description: "",
       fields: [] as FormField[],
+      orderIndex: 1,
     },
   ] as PageSchema[],
   stores: [] as Store[],
+  tags: [] as string[],
 });
 const emits = defineEmits<{
   preview: [form: FormSchema];
   "go-back": [];
+  publish: [form: FormSchema];
 }>();
 const currentPage = ref(form.value.pages[0]);
 const currentStore = ref(null);
@@ -54,11 +57,13 @@ const removeStore = (store: Store) => {
   }
 };
 const addPage = () => {
+  let id = form.value.pages.length + 1;
   form.value.pages.push({
-    id: form.value.pages.length + 1,
+    id: id,
     title: "New Page",
     description: "",
     fields: [] as FormField[],
+    orderIndex: id,
   });
 };
 const removePage = (index: number) => {
@@ -66,6 +71,9 @@ const removePage = (index: number) => {
     return;
   }
   form.value.pages.splice(index, 1);
+};
+const submit = () => {
+  emits("publish", form.value);
 };
 </script>
 <template>
@@ -75,6 +83,7 @@ const removePage = (index: number) => {
       :isDark="isDark"
       @preview="togglePreviewMode()"
       @go-back="$emit('go-back')"
+      @publish="submit"
     />
     <BuilderNavigator>
       <template #pages>

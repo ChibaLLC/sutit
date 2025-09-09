@@ -5,21 +5,24 @@ import {
   Edit,
   Eye,
   Moon,
+  SaveIcon,
   Sun,
   Upload,
 } from "lucide-vue-next";
+import type { FormSchema } from "~~/shared/types";
 
 const props = defineProps<{
   previewMode: boolean;
   isDark: boolean;
 }>();
-const emits = defineEmits([
-  "toggleTheme",
-  "exit",
-  "preview",
-  "import",
-  "export",
-]);
+const emits = defineEmits<{
+  publish: [];
+  toggleTheme: [];
+  exit: [];
+  preview: [];
+  import: [];
+  export: [];
+}>();
 </script>
 <template>
   <header
@@ -63,6 +66,14 @@ const emits = defineEmits([
           <Eye v-if="!previewMode" class="h-4 w-4" />
           <Edit v-else class="h-4 w-4" />
           {{ previewMode ? "Edit" : "Preview" }}
+        </Button>
+        <Button
+          class="cursor-pointer"
+          variant="default"
+          @click.prevent="$emit('publish')"
+        >
+          <SaveIcon class="h-4 w-4" />
+          Publish Form
         </Button>
       </div>
     </div>

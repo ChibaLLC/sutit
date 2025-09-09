@@ -66,22 +66,206 @@
             />
           </div>
 
+          <!-- Added slug field -->
           <div class="space-y-2">
-            <Label for="price" class="text-sm font-medium">Price</Label>
+            <Label for="slug" class="text-sm font-medium">URL Slug</Label>
             <div class="relative">
-              <DollarSign
+              <Link
                 class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
               />
               <Input
-                id="price"
-                v-model.number="form.price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
+                id="slug"
+                v-model="form.slug"
+                placeholder="form-url-slug"
                 class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
               />
             </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="space-y-2">
+              <Label for="price" class="text-sm font-medium">Price</Label>
+              <div class="relative">
+                <DollarSign
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                />
+                <Input
+                  id="price"
+                  v-model.number="form.price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                />
+              </div>
+            </div>
+
+            <!-- Added status field -->
+            <div class="space-y-2">
+              <Label for="status" class="text-sm font-medium">Status</Label>
+              <Select v-model="form.status">
+                <SelectTrigger
+                  class="transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                >
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <!-- Added tags field -->
+          <div class="space-y-2">
+            <Label for="tags" class="text-sm font-medium">Tags</Label>
+            <div class="relative">
+              <Tag
+                class="absolute left-3 top-3 h-4 w-4 text-muted-foreground"
+              />
+              <Textarea
+                id="tags"
+                :value="form.tags.join(', ')"
+                @input="updateTags"
+                placeholder="Enter tags separated by commas"
+                rows="2"
+                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+              />
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Separate multiple tags with commas
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Access & Permissions Card -->
+      <!-- Added new card for access and permissions settings -->
+      <Card class="overflow-hidden">
+        <CardHeader class="bg-card border-b">
+          <div class="flex items-center gap-3">
+            <div
+              class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center"
+            >
+              <Shield class="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <CardTitle class="text-xl">Access & Permissions</CardTitle>
+              <CardDescription
+                >Control who can access and submit your form</CardDescription
+              >
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent class="p-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div
+              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+            >
+              <div class="space-y-1">
+                <Label class="text-sm font-medium">Public Form</Label>
+                <p class="text-xs text-muted-foreground">
+                  Make form publicly accessible
+                </p>
+              </div>
+              <Switch
+                v-model="form.isPublic"
+                class="transition-all duration-200"
+              />
+            </div>
+
+            <div
+              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+            >
+              <div class="space-y-1">
+                <Label class="text-sm font-medium">Require Login</Label>
+                <p class="text-xs text-muted-foreground">
+                  Users must be logged in to submit
+                </p>
+              </div>
+              <Switch
+                v-model="form.requiresLogin"
+                class="transition-all duration-200"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Submission Settings Card -->
+      <!-- Added new card for submission settings -->
+      <Card class="overflow-hidden">
+        <CardHeader class="bg-card border-b">
+          <div class="flex items-center gap-3">
+            <div
+              class="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"
+            >
+              <Send class="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <CardTitle class="text-xl">Submission Settings</CardTitle>
+              <CardDescription
+                >Configure how users can submit responses</CardDescription
+              >
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent class="p-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div
+              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+            >
+              <div class="space-y-1">
+                <Label class="text-sm font-medium">Multiple Submissions</Label>
+                <p class="text-xs text-muted-foreground">
+                  Allow users to submit multiple times
+                </p>
+              </div>
+              <Switch
+                v-model="form.allowMultipleSubmissions"
+                class="transition-all duration-200"
+              />
+            </div>
+
+            <div
+              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+            >
+              <div class="space-y-1">
+                <Label class="text-sm font-medium">Registration Reuse</Label>
+                <p class="text-xs text-muted-foreground">
+                  Allow reusing registration data
+                </p>
+              </div>
+              <Switch
+                v-model="form.allowRegistrationReuse"
+                class="transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label for="submissionLimit" class="text-sm font-medium"
+              >Submission Limit</Label
+            >
+            <div class="relative">
+              <Hash
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              />
+              <Input
+                id="submissionLimit"
+                v-model.number="form.submissionLimit"
+                type="number"
+                min="1"
+                placeholder="No limit"
+                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+              />
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Leave empty for unlimited submissions
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -233,6 +417,47 @@
         </CardContent>
       </Card>
 
+      <!-- Publishing Settings Card -->
+      <!-- Added new card for publishing settings -->
+      <Card class="overflow-hidden">
+        <CardHeader class="bg-card border-b">
+          <div class="flex items-center gap-3">
+            <div
+              class="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center"
+            >
+              <Calendar class="h-5 w-5 text-purple-500" />
+            </div>
+            <div>
+              <CardTitle class="text-xl">Publishing Settings</CardTitle>
+              <CardDescription
+                >Control when and how your form is published</CardDescription
+              >
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent class="p-6 space-y-6">
+          <div class="space-y-2">
+            <Label for="publishedAt" class="text-sm font-medium"
+              >Published Date</Label
+            >
+            <div class="relative">
+              <Calendar
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              />
+              <Input
+                id="publishedAt"
+                v-model="form.publishedAt"
+                type="datetime-local"
+                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+              />
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Set when the form should be published
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <!-- Action Buttons -->
       <div
         class="flex items-center justify-between p-6 bg-card rounded-xl border"
@@ -271,9 +496,14 @@ import {
   DollarSign,
   Save,
   RotateCcw,
+  Link,
+  Tag,
+  Shield,
+  Send,
+  Hash,
+  Calendar,
 } from "lucide-vue-next";
 import type { FormSchema } from "~~/shared/types";
-
 interface Props {
   form: FormSchema;
 }
@@ -283,11 +513,17 @@ const emit = defineEmits<{
   update: [form: FormSchema];
 }>();
 
-// Reset form to original values
-const resetForm = () => {};
+const updateTags = (event: Event) => {
+  const target = event.target as HTMLTextAreaElement;
+  const tagsString = target.value;
+  props.form.tags = tagsString
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+};
 
-// Save form (placeholder for actual save logic)
 const saveForm = () => {
+  emit("update", props.form);
   // Here you would typically call an API to save the form
 };
 </script>

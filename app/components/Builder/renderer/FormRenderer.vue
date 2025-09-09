@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-background py-8 px-4">
     <div class="max-w-6xl mx-auto">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Made stepper header vertical and moved to sidebar -->
         <!-- Vertical Stepper Navigation -->
         <div class="lg:col-span-1">
           <Card class="sticky top-8">
@@ -91,10 +90,7 @@
                   </div>
 
                   <!-- Preview Step -->
-                  <div
-                    v-if="shouldShowPreviewStep"
-                    class="flex items-center gap-3"
-                  >
+                  <div class="flex items-center gap-3">
                     <div
                       class="flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0"
                       :class="getPreviewStepClasses()"
@@ -162,22 +158,22 @@
           <div class="text-center mb-8">
             <Badge v-if="form.price > 0" variant="secondary" class="mb-4">
               <CreditCard class="w-3 h-3 mr-1" />
-              Paid Form - KSh {{ (form.price * 130).toFixed(2) }}
+              Paid Form - KSh {{ (form.price * 1).toFixed(2) }}
             </Badge>
-            <h1 class="text-4xl font-bold text-foreground mb-3 text-balance">
+            <h1 class="text-2xl md:text-4xl font-bold text-foreground mb-3">
               {{ form.title }}
             </h1>
             <p
               v-if="form.description"
-              class="text-muted-foreground text-lg max-w-2xl mx-auto text-pretty"
+              class="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto"
             >
               {{ form.description }}
             </p>
           </div>
 
           <!-- Form Content -->
-          <Card class="shadow-2xl border-0 bg-card backdrop-blur-sm">
-            <CardContent class="p-8">
+          <Card class="shadow-lg border bg-card">
+            <CardContent class="p-4 md:p-8">
               <!-- Form Pages -->
               <div v-if="currentStep < form.pages.length" class="space-y-8">
                 <!-- Page Header -->
@@ -186,13 +182,13 @@
                     Page {{ currentStep + 1 }}
                   </Badge>
                   <h2
-                    class="text-3xl font-semibold text-card-foreground text-balance"
+                    class="text-2xl md:text-3xl font-semibold text-card-foreground"
                   >
                     {{ currentPage.title }}
                   </h2>
                   <p
                     v-if="currentPage.description"
-                    class="text-muted-foreground text-lg max-w-xl mx-auto text-pretty"
+                    class="text-muted-foreground text-base md:text-lg max-w-xl mx-auto"
                   >
                     {{ currentPage.description }}
                   </p>
@@ -202,16 +198,20 @@
 
                 <form @submit.prevent="handleNext" class="space-y-8">
                   <!-- Field Grid -->
-                  <div class="grid gap-6" :class="getGridClasses()">
+                  <div class="grid gap-6 grid-cols-1">
                     <div
                       v-for="field in currentPage.fields"
                       :key="field.id"
-                      :class="getFieldClasses(field)"
                       class="group"
+                      :class="getFieldClasses(field)"
                     >
                       <!-- Text Input -->
                       <div
-                        v-if="field.type === 'text' || field.type === 'email'"
+                        v-if="
+                          field.type === 'text' ||
+                          field.type === 'email' ||
+                          field.type === 'phone'
+                        "
                         class="space-y-3"
                       >
                         <Label
@@ -229,10 +229,10 @@
                         <Input
                           :id="field.id"
                           v-model="formData[field.id]"
-                          :type="field.type"
+                          :type="getInputType(field.type)"
                           :placeholder="field.placeholder"
                           :required="field.required"
-                          class="h-12 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          class="h-12 transition-all duration-200"
                         />
                       </div>
 
@@ -258,7 +258,7 @@
                           v-model="formData[field.id]"
                           :placeholder="field.placeholder"
                           :required="field.required"
-                          class="min-h-[120px] transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                          class="min-h-[120px] transition-all duration-200 resize-none"
                         />
                       </div>
 
@@ -279,12 +279,9 @@
                             >Required</Badge
                           >
                         </Label>
-                        <Select
-                          v-model="formData[field.id]"
-                          :required="field.required"
-                        >
+                        <Select v-model="formData[field.id]">
                           <SelectTrigger
-                            class="h-12 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                            class="h-12 transition-all duration-200"
                           >
                             <SelectValue
                               :placeholder="
@@ -313,7 +310,6 @@
                         <Checkbox
                           :id="field.id"
                           v-model:checked="formData[field.id]"
-                          :required="field.required"
                           class="mt-0.5"
                         />
                         <div class="space-y-1">
@@ -371,26 +367,27 @@
 
                   <Separator />
 
-                  <!-- Fixed navigation buttons to use proper step flow -->
                   <!-- Navigation Buttons -->
-                  <div class="flex justify-between items-center">
+                  <div
+                    class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
+                  >
                     <Button
                       v-if="currentStep > 0"
                       type="button"
                       variant="outline"
                       size="lg"
                       @click="handlePrevious"
-                      class="flex items-center gap-2 hover:scale-105 transition-all duration-200"
+                      class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
                     >
                       <ChevronLeft class="w-4 h-4" />
                       Previous
                     </Button>
-                    <div v-else></div>
+                    <div v-else class="hidden sm:block"></div>
 
                     <Button
                       type="submit"
                       size="lg"
-                      class="flex items-center gap-2 hover:scale-105 transition-all duration-200 bg-primary hover:bg-primary/90"
+                      class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
                     >
                       {{ getNextButtonText() }}
                       <ChevronRight class="w-4 h-4" />
@@ -409,11 +406,11 @@
                   </div>
                   <div>
                     <h2
-                      class="text-3xl font-semibold text-card-foreground mb-2"
+                      class="text-2xl md:text-3xl font-semibold text-card-foreground mb-2"
                     >
                       Select Products
                     </h2>
-                    <p class="text-muted-foreground text-lg">
+                    <p class="text-muted-foreground text-base md:text-lg">
                       Choose products from our available stores
                     </p>
                   </div>
@@ -486,7 +483,7 @@
 
                             <div class="flex items-center justify-between">
                               <Badge variant="secondary" class="text-sm">
-                                KSh {{ (product.price * 130).toFixed(2) }}
+                                KSh {{ (product.price * 1).toFixed(2) }}
                               </Badge>
 
                               <div class="flex items-center gap-2">
@@ -496,8 +493,9 @@
                                   @click="
                                     updateProductQuantity(
                                       product.id,
-                                      store.id,
+                                      store.id.toString(),
                                       -1,
+                                      product.price,
                                     )
                                   "
                                   :disabled="
@@ -520,8 +518,9 @@
                                   @click="
                                     updateProductQuantity(
                                       product.id,
-                                      store.id,
+                                      store.id.toString(),
                                       1,
+                                      product.price,
                                     )
                                   "
                                   class="h-8 w-8 p-0"
@@ -556,15 +555,16 @@
 
                 <Separator />
 
-                <!-- Fixed navigation for product selection -->
                 <!-- Navigation Buttons -->
-                <div class="flex justify-between items-center">
+                <div
+                  class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
+                >
                   <Button
                     type="button"
                     variant="outline"
                     size="lg"
                     @click="handlePrevious"
-                    class="flex items-center gap-2 hover:scale-105 transition-all duration-200"
+                    class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
                   >
                     <ChevronLeft class="w-4 h-4" />
                     Previous
@@ -574,7 +574,7 @@
                     type="button"
                     size="lg"
                     @click="handleNext"
-                    class="flex items-center gap-2 hover:scale-105 transition-all duration-200 bg-primary hover:bg-primary/90"
+                    class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
                   >
                     {{ getNextButtonText() }}
                     <ChevronRight class="w-4 h-4" />
@@ -582,7 +582,7 @@
                 </div>
               </div>
 
-              <!-- Added Preview Page -->
+              <!-- Preview Page -->
               <div v-else-if="isPreviewStep" class="space-y-8">
                 <div class="text-center space-y-4">
                   <div
@@ -592,11 +592,11 @@
                   </div>
                   <div>
                     <h2
-                      class="text-3xl font-semibold text-card-foreground mb-2"
+                      class="text-2xl md:text-3xl font-semibold text-card-foreground mb-2"
                     >
                       Review Your Submission
                     </h2>
-                    <p class="text-muted-foreground text-lg">
+                    <p class="text-muted-foreground text-base md:text-lg">
                       Please review your information before submitting
                     </p>
                   </div>
@@ -624,9 +624,9 @@
                           <div
                             v-for="field in page.fields"
                             :key="field.id"
-                            class="flex justify-between items-start"
+                            class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2"
                           >
-                            <div class="space-y-1">
+                            <div class="space-y-1 flex-1">
                               <Label
                                 class="text-sm font-medium text-muted-foreground"
                                 >{{ field.label }}</Label
@@ -634,13 +634,9 @@
                               <div class="text-sm">
                                 <span
                                   v-if="formData[field.id]"
-                                  class="font-medium"
+                                  class="font-medium break-words"
                                 >
-                                  {{
-                                    Array.isArray(formData[field.id])
-                                      ? formData[field.id].join(", ")
-                                      : formData[field.id]
-                                  }}
+                                  {{ formData[field.id] }}
                                 </span>
                                 <span
                                   v-else
@@ -668,7 +664,7 @@
                           <div
                             v-for="(productData, productId) in selectedProducts"
                             :key="productId"
-                            class="flex justify-between items-center"
+                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
                           >
                             <div class="space-y-1">
                               <div class="font-medium">
@@ -678,313 +674,184 @@
                                 Quantity: {{ productData.quantity }}
                               </div>
                             </div>
-                            <Badge variant="secondary">
+                            <Badge
+                              variant="secondary"
+                              class="self-start sm:self-center"
+                            >
                               KSh
                               {{
                                 (
                                   getProductPrice(productId) *
                                   productData.quantity *
-                                  130
+                                  1
                                 ).toFixed(2)
                               }}
                             </Badge>
                           </div>
                           <Separator />
                           <div
-                            class="flex justify-between items-center font-semibold"
-                          >
-                            <span>Total Products</span>
-                            <span class="text-primary"
-                              >KSh
-                              {{
-                                (getTotalProductsPrice * 130).toFixed(2)
-                              }}</span
-                            >
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <!-- Order Summary -->
-                  <div v-if="form.price > 0" class="space-y-4">
-                    <div class="flex items-center gap-3">
-                      <Badge variant="outline" class="text-sm">Summary</Badge>
-                      <h3 class="text-xl font-semibold">Order Total</h3>
-                    </div>
-
-                    <Card class="bg-primary/5 border-primary/20">
-                      <CardContent class="p-4">
-                        <div class="space-y-3">
-                          <div class="flex justify-between items-center">
-                            <span>Form Fee</span>
-                            <span>KSh {{ (form.price * 130).toFixed(2) }}</span>
-                          </div>
-                          <div
-                            v-if="getTotalProductsPrice > 0"
-                            class="flex justify-between items-center"
-                          >
-                            <span>Products</span>
-                            <span
-                              >KSh
-                              {{
-                                (getTotalProductsPrice * 130).toFixed(2)
-                              }}</span
-                            >
-                          </div>
-                          <Separator />
-                          <div
                             class="flex justify-between items-center text-lg font-semibold"
                           >
-                            <span>Total</span>
+                            <span>Total Amount</span>
                             <span class="text-primary"
-                              >KSh {{ (getTotalAmount * 130).toFixed(2) }}</span
+                              >KSh {{ (getTotalAmount * 1).toFixed(2) }}</span
                             >
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
-                </div>
 
-                <Separator />
-
-                <!-- Fixed navigation for preview step -->
-                <!-- Navigation Buttons -->
-                <div class="flex justify-between items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    @click="handlePrevious"
-                    class="flex items-center gap-2 hover:scale-105 transition-all duration-200"
-                  >
-                    <ChevronLeft class="w-4 h-4" />
-                    Previous
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="lg"
-                    @click="handleNext"
-                    class="flex items-center gap-2 hover:scale-105 transition-all duration-200 bg-primary hover:bg-primary/90"
-                  >
-                    {{ getNextButtonText() }}
-                    <ChevronRight class="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <!-- Updated Checkout Page to use M-Pesa -->
-              <div v-else-if="isCheckoutStep" class="space-y-8">
-                <div class="text-center space-y-4">
-                  <div
-                    class="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto"
-                  >
-                    <div
-                      class="text-2xl font-bold text-green-600 dark:text-green-400"
+                    <!-- M-Pesa Payment Form -->
+                    <form
+                      v-if="form.price"
+                      @submit.prevent="handleSubmit()"
+                      class="space-y-6"
                     >
-                      M
-                    </div>
-                  </div>
-                  <div>
-                    <h2
-                      class="text-3xl font-semibold text-card-foreground mb-2"
-                    >
-                      M-Pesa Payment
-                    </h2>
-                    <p class="text-muted-foreground text-lg">
-                      Complete your payment via M-Pesa
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <!-- Order Summary -->
-                <Card class="bg-muted/30 border-2">
-                  <CardContent class="p-6">
-                    <h3
-                      class="font-semibold text-lg mb-4 flex items-center gap-2"
-                    >
-                      <Receipt class="w-5 h-5" />
-                      Payment Summary
-                    </h3>
-                    <div class="space-y-3">
-                      <div class="flex justify-between items-center">
-                        <span class="font-medium">{{ form.title }}</span>
-                        <Badge variant="secondary" class="text-lg px-3 py-1">
-                          KSh {{ (form.price * 130).toFixed(2) }}
-                        </Badge>
-                      </div>
-                      <div
-                        v-if="getTotalProductsPrice > 0"
-                        class="flex justify-between items-center"
-                      >
-                        <span>Products</span>
-                        <span
-                          >KSh
-                          {{ (getTotalProductsPrice * 130).toFixed(2) }}</span
-                        >
-                      </div>
-                      <Separator />
-                      <div
-                        class="flex justify-between items-center text-lg font-semibold"
-                      >
-                        <span>Total Amount</span>
-                        <span class="text-primary"
-                          >KSh {{ (getTotalAmount * 130).toFixed(2) }}</span
-                        >
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <!-- M-Pesa Payment Form -->
-                <form @submit.prevent="handleMpesaPayment" class="space-y-6">
-                  <div class="space-y-4">
-                    <div class="space-y-3">
-                      <Label
-                        for="phoneNumber"
-                        class="text-sm font-semibold flex items-center gap-2"
-                      >
-                        <div
-                          class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center"
-                        >
-                          <span class="text-white text-xs font-bold">M</span>
-                        </div>
-                        M-Pesa Phone Number
-                      </Label>
-                      <Input
-                        id="phoneNumber"
-                        v-model="paymentData.phoneNumber"
-                        placeholder="254712345678"
-                        required
-                        class="h-12 text-lg transition-all duration-200 focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
-                      />
-                      <p class="text-sm text-muted-foreground">
-                        Enter your M-Pesa registered phone number
-                      </p>
-                    </div>
-
-                    <Card
-                      class="bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
-                    >
-                      <CardContent class="p-4">
-                        <div class="flex items-start gap-3">
-                          <div
-                            class="w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center shrink-0"
+                      <div class="space-y-4">
+                        <div class="space-y-3">
+                          <Label
+                            for="phoneNumber"
+                            class="text-sm font-semibold flex items-center gap-2"
                           >
-                            <span
-                              class="text-green-600 dark:text-green-400 text-sm"
-                              >ℹ</span
+                            <div
+                              class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center"
                             >
-                          </div>
-                          <div class="space-y-2">
-                            <h4
-                              class="font-semibold text-green-800 dark:text-green-200"
-                            >
-                              Payment Instructions
-                            </h4>
-                            <ol
-                              class="text-sm text-green-700 dark:text-green-300 space-y-1 list-decimal list-inside"
-                            >
-                              <li>Click "Pay with M-Pesa" below</li>
-                              <li>
-                                You'll receive an STK push notification on your
-                                phone
-                              </li>
-                              <li>
-                                Enter your M-Pesa PIN to complete the payment
-                              </li>
-                              <li>Wait for payment confirmation</li>
-                            </ol>
-                          </div>
+                              <span class="text-white text-xs font-bold"
+                                >M</span
+                              >
+                            </div>
+                            M-Pesa Phone Number
+                          </Label>
+                          <Input
+                            id="phoneNumber"
+                            v-model="paymentData.phoneNumber"
+                            placeholder="254712345678"
+                            required
+                            class="h-12 text-lg transition-all duration-200"
+                          />
+                          <p class="text-sm text-muted-foreground">
+                            Enter your M-Pesa registered phone number
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
+
+                        <Card class="bg-green-50 border-green-200">
+                          <CardContent class="p-4">
+                            <div class="flex items-start gap-3">
+                              <div
+                                class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0"
+                              >
+                                <span class="text-green-600 text-sm">ℹ</span>
+                              </div>
+                              <div class="space-y-2">
+                                <h4 class="font-semibold text-green-800">
+                                  Payment Instructions
+                                </h4>
+                                <ol
+                                  class="text-sm text-green-700 space-y-1 list-decimal list-inside"
+                                >
+                                  <li>Click "Pay with M-Pesa" below</li>
+                                  <li>
+                                    You'll receive an STK push notification on
+                                    your phone
+                                  </li>
+                                  <li>
+                                    Enter your M-Pesa PIN to complete the
+                                    payment
+                                  </li>
+                                  <li>Wait for payment confirmation</li>
+                                </ol>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <Separator />
+
+                      <div
+                        class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
+                      >
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          @click="handlePrevious"
+                          class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
+                        >
+                          <ChevronLeft class="w-4 h-4" />
+                          Back to Review
+                        </Button>
+
+                        <Button
+                          type="submit"
+                          size="lg"
+                          :disabled="isProcessing"
+                          class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                        >
+                          <Loader2
+                            v-if="isProcessing"
+                            class="w-5 h-5 animate-spin"
+                          />
+                          <div
+                            v-else
+                            class="w-5 h-5 bg-white rounded-full flex items-center justify-center"
+                          >
+                            <span class="text-green-600 text-xs font-bold"
+                              >M</span
+                            >
+                          </div>
+                          {{
+                            isProcessing
+                              ? "Processing Payment..."
+                              : `Pay KSh ${getTotalAmount}`
+                          }}
+                        </Button>
+                      </div>
+                    </form>
                   </div>
 
-                  <Separator />
+                  <!-- Success Page -->
+                  <div v-else class="text-center space-y-8">
+                    <div class="space-y-4">
+                      <div
+                        class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto"
+                      >
+                        <CheckCircle class="w-12 h-12 text-green-600" />
+                      </div>
+                      <div class="space-y-2">
+                        <h2
+                          class="text-2xl md:text-3xl font-semibold text-card-foreground"
+                        >
+                          {{
+                            form.price > 0
+                              ? "Payment Successful!"
+                              : "Form Submitted!"
+                          }}
+                        </h2>
+                        <p
+                          class="text-muted-foreground text-base md:text-lg max-w-md mx-auto"
+                        >
+                          {{
+                            form.price > 0
+                              ? "Your payment has been processed successfully and your form has been submitted."
+                              : "Thank you for your submission. We'll get back to you soon."
+                          }}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div class="flex justify-between items-center">
+                    <Separator class="max-w-xs mx-auto" />
+
                     <Button
-                      type="button"
+                      @click="resetForm"
                       variant="outline"
                       size="lg"
-                      @click="handlePrevious"
-                      class="flex items-center gap-2 hover:scale-105 transition-all duration-200"
+                      class="hover:scale-105 transition-all duration-200"
                     >
-                      <ChevronLeft class="w-4 h-4" />
-                      Back to Review
+                      Submit Another Form
                     </Button>
-
-                    <Button
-                      type="submit"
-                      size="lg"
-                      :disabled="isProcessing"
-                      class="flex items-center gap-2 hover:scale-105 transition-all duration-200 bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                    >
-                      <Loader2
-                        v-if="isProcessing"
-                        class="w-5 h-5 animate-spin"
-                      />
-                      <div
-                        v-else
-                        class="w-5 h-5 bg-white rounded-full flex items-center justify-center"
-                      >
-                        <span class="text-green-600 text-xs font-bold">M</span>
-                      </div>
-                      {{
-                        isProcessing
-                          ? "Processing Payment..."
-                          : `Pay KSh ${(getTotalAmount * 130).toFixed(2)}`
-                      }}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Success Page -->
-              <div v-else class="text-center space-y-8">
-                <div class="space-y-4">
-                  <div
-                    class="w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto"
-                  >
-                    <CheckCircle
-                      class="w-12 h-12 text-green-600 dark:text-green-400"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <h2 class="text-3xl font-semibold text-card-foreground">
-                      {{
-                        form.price > 0
-                          ? "Payment Successful!"
-                          : "Form Submitted!"
-                      }}
-                    </h2>
-                    <p
-                      class="text-muted-foreground text-lg max-w-md mx-auto text-pretty"
-                    >
-                      {{
-                        form.price > 0
-                          ? "Your payment has been processed successfully and your form has been submitted."
-                          : "Thank you for your submission. We'll get back to you soon."
-                      }}
-                    </p>
                   </div>
                 </div>
-
-                <Separator class="max-w-xs mx-auto" />
-
-                <Button
-                  @click="resetForm"
-                  variant="outline"
-                  size="lg"
-                  class="hover:scale-105 transition-all duration-200"
-                >
-                  Submit Another Form
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -998,9 +865,8 @@
 import {
   ChevronLeft,
   ChevronRight,
-  Check,
-  CreditCard,
   CheckCircle,
+  CreditCard,
   Receipt,
   Loader2,
   ShoppingCart,
@@ -1008,28 +874,29 @@ import {
   Plus,
   Minus,
 } from "lucide-vue-next";
+import type { FormSchema, FormField } from "~~/shared/types";
 
-const props = defineProps<{
+interface Props {
   form: FormSchema;
-}>();
+}
 
-const emit = defineEmits<{
-  submit: [
-    data: {
-      schema: FormSchema;
-      formData: Record<string, any>;
-      selectedProducts: Record<string, { quantity: number; storeId: number }>;
-    },
-  ];
-  payment: [
+interface Emits {
+  (
+    e: "submit",
     data: {
       schema: FormSchema;
       formData: Record<string, any>;
       paymentData: Record<string, any>;
-      selectedProducts: Record<string, { quantity: number; storeId: number }>;
+      selectedProducts: Record<
+        string,
+        { quantity: number; storeId: string; price: number }
+      >;
     },
-  ];
-}>();
+  ): void;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const currentStep = ref(0);
 const formData = reactive<Record<string, any>>({});
@@ -1037,14 +904,14 @@ const paymentData = reactive({
   phoneNumber: "",
 });
 const selectedProducts = reactive<
-  Record<string, { quantity: number; storeId: number }>
+  Record<string, { quantity: number; storeId: string; price: number }>
 >({});
 const isProcessing = ref(false);
 
 const totalSteps = computed(() => {
   let steps = props.form.pages.length;
   if (props.form.stores && props.form.stores.length > 0) steps += 1; // Product selection step
-  if (shouldShowPreviewStep.value) steps += 1; // Preview step
+  steps += 1; // Preview step (always show)
   if (props.form.price > 0) steps += 1; // Checkout step
   return steps;
 });
@@ -1061,10 +928,21 @@ const isProductSelectionStep = computed(() => {
   );
 });
 
+const getPreviewStepIndex = () => {
+  let index = props.form.pages.length;
+  if (props.form.stores && props.form.stores.length > 0) index += 1;
+  return index;
+};
+
+const getCheckoutStepIndex = () => {
+  let index = props.form.pages.length;
+  if (props.form.stores && props.form.stores.length > 0) index += 1;
+  index += 1; // Preview step
+  return index;
+};
+
 const isPreviewStep = computed(() => {
-  return (
-    shouldShowPreviewStep.value && currentStep.value === getPreviewStepIndex()
-  );
+  return currentStep.value === getPreviewStepIndex();
 });
 
 const isCheckoutStep = computed(() => {
@@ -1092,23 +970,6 @@ const getProductStepClasses = () => {
   }
 };
 
-const getPreviewStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  return index;
-};
-
-const getCheckoutStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  if (shouldShowPreviewStep.value) index += 1;
-  return index;
-};
-
-const shouldShowPreviewStep = computed(() => {
-  return true; // Always show preview step
-});
-
 const getPreviewStepClasses = () => {
   const previewStepIndex = getPreviewStepIndex();
   if (currentStep.value > previewStepIndex) {
@@ -1131,37 +992,33 @@ const getCheckoutStepClasses = () => {
   }
 };
 
-const getGridClasses = () => {
-  const maxCols = Math.max(
-    ...currentPage.value.fields.map((f) => f.columnSpan || 1),
-  );
-  return `grid-cols-1 md:grid-cols-${Math.min(maxCols, 2)}`;
+const getFieldClasses = (field: FormField) => {
+  // You can add field-specific classes here if needed
+  return "";
 };
 
-const getFieldClasses = (field: FormField) => {
-  const span = field.columnSpan || 1;
-  return span > 1 ? "md:col-span-2" : "";
+const getInputType = (fieldType: string) => {
+  switch (fieldType) {
+    case "email":
+      return "email";
+    case "phone":
+      return "tel";
+    default:
+      return "text";
+  }
 };
 
 const getNextButtonText = () => {
   if (currentStep.value < props.form.pages.length - 1) {
     return "Continue";
   } else if (isProductSelectionStep.value) {
-    return shouldShowPreviewStep.value
-      ? "Review Order"
-      : props.form.price > 0
-        ? "Proceed to Payment"
-        : "Submit Form";
+    return "Review Order";
   } else if (isPreviewStep.value) {
     return props.form.price > 0 ? "Proceed to Payment" : "Submit Form";
   } else if (isCheckoutStep.value) {
-    return `Pay KSh ${(getTotalAmount.value * 130).toFixed(2)}`;
+    return `Pay KSh ${(getTotalAmount.value * 1).toFixed(2)}`;
   } else {
-    return shouldShowPreviewStep.value
-      ? "Review Order"
-      : props.form.price > 0
-        ? "Proceed to Payment"
-        : "Submit Form";
+    return "Review Order";
   }
 };
 
@@ -1173,22 +1030,12 @@ const handleNext = () => {
     // Last form page - move to products or preview or checkout
     if (props.form.stores && props.form.stores.length > 0) {
       currentStep.value++; // Move to product selection
-    } else if (shouldShowPreviewStep.value) {
-      currentStep.value = getPreviewStepIndex(); // Move to preview
-    } else if (props.form.price > 0) {
-      currentStep.value = getCheckoutStepIndex(); // Move to checkout
     } else {
-      handleSubmit(); // Submit form
+      currentStep.value = getPreviewStepIndex(); // Move to preview
     }
   } else if (isProductSelectionStep.value) {
-    // Product selection - move to preview or checkout
-    if (shouldShowPreviewStep.value) {
-      currentStep.value = getPreviewStepIndex();
-    } else if (props.form.price > 0) {
-      currentStep.value = getCheckoutStepIndex();
-    } else {
-      handleSubmit();
-    }
+    // Product selection - move to preview
+    currentStep.value = getPreviewStepIndex();
   } else if (isPreviewStep.value) {
     // Preview - move to checkout or submit
     if (props.form.price > 0) {
@@ -1212,24 +1059,9 @@ const handleSubmit = () => {
     schema: props.form,
     formData,
     selectedProducts,
-  });
-  currentStep.value = totalSteps.value;
-};
-
-const handleMpesaPayment = async () => {
-  isProcessing.value = true;
-
-  // Simulate M-Pesa STK push
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  emit("payment", {
-    schema: props.form,
-    formData,
     paymentData,
-    selectedProducts,
   });
-  isProcessing.value = false;
-  currentStep.value = totalSteps.value;
+  // currentStep.value = totalSteps.value;
 };
 
 const resetForm = () => {
@@ -1241,11 +1073,12 @@ const resetForm = () => {
 
 const updateProductQuantity = (
   productId: string,
-  storeId: number,
+  storeId: string,
   change: number,
+  price: number,
 ) => {
   if (!selectedProducts[productId]) {
-    selectedProducts[productId] = { quantity: 0, storeId };
+    selectedProducts[productId] = { quantity: 0, storeId, price: price };
   }
 
   const newQuantity = selectedProducts[productId].quantity + change;
@@ -1290,6 +1123,9 @@ const getTotalProductsPrice = computed(() => {
 });
 
 const getTotalAmount = computed(() => {
-  return props.form.price + getTotalProductsPrice.value;
+  return (
+    parseInt(props.form.price.toString()) +
+    parseInt(getTotalProductsPrice.value.toString())
+  );
 });
 </script>

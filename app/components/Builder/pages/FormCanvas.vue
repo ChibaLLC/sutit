@@ -17,7 +17,7 @@ const onDrop = (event: DragEvent) => {
   const elementData = JSON.parse(
     event.dataTransfer?.getData("application/json") || "{}",
   );
-
+  let unique = Date.now().toString();
   const newElement: FormField = {
     id: Date.now().toString(),
     type: elementData.type,
@@ -27,6 +27,8 @@ const onDrop = (event: DragEvent) => {
     options: ["select", "multiselect", "radio"].includes(elementData.type)
       ? ["Option 1", "Option 2"]
       : undefined,
+    orderIndex: props.currentPage.fields.length + 1,
+    name: unique,
   };
 
   if (props.currentPage) {
@@ -139,7 +141,11 @@ const removeElement = (index: number) => {
 
               <div class="pointer-events-none">
                 <input
-                  v-if="['text', 'email', 'tel', 'url'].includes(element.type)"
+                  v-if="
+                    ['text', 'email', 'tel', 'url', 'phone', 'number'].includes(
+                      element.type,
+                    )
+                  "
                   :type="element.type"
                   :placeholder="element.placeholder"
                   class="w-full px-4 py-3 border border-input bg-background/80 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-all"
