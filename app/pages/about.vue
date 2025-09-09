@@ -1,8 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
-
+  <div>
     <!-- Story Section -->
     <section class="py-20 lg:py-32">
       <div class="container mx-auto px-4">

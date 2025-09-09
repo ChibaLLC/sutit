@@ -36,10 +36,7 @@ const signUpWithEmail = async () => {
 };
 </script>
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
-
+  <div>
     <!-- Login Section -->
     <section class="relative overflow-hidden">
       <div

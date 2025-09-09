@@ -1,8 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
-
+  <div>
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
       <div

@@ -1,10 +1,75 @@
-<template>
-  <div
-    class="min-h-screen bg-gradient-to-br from-background via-background to-muted/20"
-  >
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
+<script setup lang="ts">
+import type { VariantProps } from "class-variance-authority";
+import {
+  FileText,
+  Eye,
+  Zap,
+  Activity,
+  BarChart3,
+  TrendingUp,
+  Plus,
+  Settings,
+  Download,
+} from "lucide-vue-next";
+import type { Component } from "vue";
+import { buttonVariants } from "~/components/ui/button";
+type QuickActions = {
+  name: string;
+  href: string;
+  icon: Component;
+  variant: string;
+};
 
+type DashboardCard = {
+  name: string;
+  count: number;
+  icon: Component;
+  description?: string;
+};
+const dashboardCards: DashboardCard[] = [
+  {
+    name: "Total Forms",
+    count: 10,
+    icon: FileText,
+    description: "",
+  },
+  {
+    name: "Total Responses",
+    count: 10,
+    icon: Eye,
+    description: "",
+  },
+  {
+    name: "Active Forms",
+    count: 10,
+    icon: Zap,
+    description: "",
+  },
+  {
+    name: "Completion Rate",
+    count: 10,
+    icon: Activity,
+    description: "",
+  },
+];
+
+const quickActions: QuickActions[] = [
+  {
+    name: "Create New Form",
+    href: "/forms/new",
+    icon: Plus,
+    variant: "default",
+  },
+  {
+    name: "Manage Forms",
+    href: "/forms",
+    icon: Settings,
+    variant: "outline",
+  },
+];
+</script>
+<template>
+  <div>
     <main class="container mx-auto px-4 py-8 max-w-7xl">
       <!-- Welcome Section with gradient background -->
       <div class="mb-8 relative">
@@ -26,92 +91,29 @@
       <!-- Stats Grid with enhanced styling -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <Card
+          v-for="card in dashboardCards"
+          :key="card.name"
           class="group hover:shadow-lg hover:border-primary/20 transition-all duration-300"
         >
           <div class="p-6">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-muted-foreground"
-                >Total Forms</span
-              >
+              <span class="text-sm font-medium text-muted-foreground">{{
+                card.name
+              }}</span>
               <div
                 class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
               >
-                <FileText class="w-5 h-5 text-primary" />
+                <component :is="card.icon" class="w-5 h-5 text-primary" />
               </div>
             </div>
-            <div class="text-3xl font-bold text-foreground">24</div>
-            <div class="flex items-center mt-2 text-sm">
+            <div class="text-3xl font-bold text-foreground">
+              {{ card.count }}
+            </div>
+            <div class="flex items-center mt-2 text-sm" v-if="card.description">
               <TrendingUp class="w-4 h-4 text-green-500 mr-1" />
-              <span class="text-green-600 font-medium">+12%</span>
-              <span class="text-muted-foreground ml-1">from last month</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="group hover:shadow-lg hover:border-primary/20 transition-all duration-300"
-        >
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-muted-foreground"
-                >Total Responses</span
-              >
-              <div
-                class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
-              >
-                <Eye class="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div class="text-3xl font-bold text-foreground">1,234</div>
-            <div class="flex items-center mt-2 text-sm">
-              <TrendingUp class="w-4 h-4 text-green-500 mr-1" />
-              <span class="text-green-600 font-medium">+5%</span>
-              <span class="text-muted-foreground ml-1">from last week</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="group hover:shadow-lg hover:border-primary/20 transition-all duration-300"
-        >
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-muted-foreground"
-                >Active Forms</span
-              >
-              <div
-                class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
-              >
-                <Zap class="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div class="text-3xl font-bold text-foreground">18</div>
-            <div class="flex items-center mt-2 text-sm">
-              <Activity class="w-4 h-4 text-muted-foreground mr-1" />
-              <span class="text-muted-foreground">6 inactive</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="group hover:shadow-lg hover:border-primary/20 transition-all duration-300"
-        >
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-muted-foreground"
-                >Completion Rate</span
-              >
-              <div
-                class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
-              >
-                <BarChart3 class="w-5 h-5 text-primary" />
-              </div>
-            </div>
-            <div class="text-3xl font-bold text-foreground">87%</div>
-            <div class="flex items-center mt-2 text-sm">
-              <TrendingUp class="w-4 h-4 text-green-500 mr-1" />
-              <span class="text-green-600 font-medium">+3%</span>
-              <span class="text-muted-foreground ml-1">improvement</span>
+              <span class="text-muted-foreground ml-1">{{
+                card.description
+              }}</span>
             </div>
           </div>
         </Card>
@@ -123,38 +125,26 @@
           Quick Actions
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button size="lg" class="h-auto py-6 group">
+          <NuxtLink
+            v-for="action in quickActions"
+            :id="action.href"
+            :to="action.href"
+            :class="
+              buttonVariants({
+                variant: action.variant,
+                class: 'h-auto py-6 group',
+              })
+            "
+          >
             <div class="flex flex-col items-center gap-2">
               <div
                 class="p-2 rounded-lg bg-primary-foreground/10 group-hover:bg-primary-foreground/20 transition-colors"
               >
-                <Plus class="w-6 h-6" />
+                <component :is="action.icon" class="w-6 h-6" />
               </div>
-              <span class="font-medium">Create New Form</span>
+              <span class="font-medium">{{ action.name }}</span>
             </div>
-          </Button>
-
-          <Button variant="outline" size="lg" class="h-auto py-6 group">
-            <div class="flex flex-col items-center gap-2">
-              <div
-                class="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors"
-              >
-                <Settings class="w-6 h-6 text-primary" />
-              </div>
-              <span class="font-medium">Manage Forms</span>
-            </div>
-          </Button>
-
-          <Button variant="outline" size="lg" class="h-auto py-6 group">
-            <div class="flex flex-col items-center gap-2">
-              <div
-                class="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors"
-              >
-                <Download class="w-6 h-6 text-primary" />
-              </div>
-              <span class="font-medium">Export Data</span>
-            </div>
-          </Button>
+          </NuxtLink>
         </div>
       </div>
 
@@ -310,17 +300,3 @@
     </main>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  FileText,
-  Eye,
-  Zap,
-  Activity,
-  BarChart3,
-  TrendingUp,
-  Plus,
-  Settings,
-  Download,
-} from "lucide-vue-next";
-</script>

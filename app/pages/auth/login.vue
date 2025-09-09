@@ -32,11 +32,7 @@ const signInWithEmail = async () => {
 };
 </script>
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
-
-    <!-- Login Section -->
+  <div>
     <section class="relative overflow-hidden">
       <div
         class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none"

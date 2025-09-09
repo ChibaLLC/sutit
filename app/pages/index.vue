@@ -1,8 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
-    <!-- Shared Navigation -->
-    <LayoutAppHeader />
-
+  <div>
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
       <div
@@ -30,12 +27,16 @@
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" class="group">
+            <NuxtLink
+              :class="buttonVariants({ size: 'lg' })"
+              to="/auth/register"
+              class="group"
+            >
               Get Started Free
               <ArrowRight
                 class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
               />
-            </Button>
+            </NuxtLink>
             <Button size="lg" variant="outline">
               <PlayCircle class="mr-2 h-5 w-5" />
               Watch Demo
@@ -346,4 +347,5 @@ import {
   Zap,
   Globe,
 } from "lucide-vue-next";
+import { buttonVariants } from "~/components/ui/button";
 </script>
