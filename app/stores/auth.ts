@@ -18,7 +18,7 @@ export const useAuthStore = defineStore(
 			email: string;
 			password: string;
 		}) => {
-			loading.value.signIn = true;
+			// loading.value.signIn = true;
 			try {
 				const { data, error } = await authClient.signIn.email(form);
 				if (error && error.message) {
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore(
 			} catch (error) {
 				console.error("Email sign-in failed:", error);
 			} finally {
-				loading.value.signIn = false;
+				// loading.value.signIn = false;
 			}
 		};
 
@@ -67,13 +67,18 @@ export const useAuthStore = defineStore(
 		};
 		const logout = async () => {
 			try {
-				await authClient.signOut({
-					fetchOptions: {
-						onSuccess(context) {
-							navigateTo("/auth/login");
+				await authClient
+					.signOut({
+						fetchOptions: {
+							onSuccess(context) {
+								navigateTo("/auth/login");
+							},
 						},
-					},
-				});
+					})
+					.finally(() => {
+						user.value = null;
+						token.value = null;
+					});
 			} catch (e) {}
 		};
 		const setAuthUser = (usr: User, tk: string) => {
