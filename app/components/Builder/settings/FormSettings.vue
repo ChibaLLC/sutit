@@ -123,12 +123,11 @@
           <div class="space-y-2">
             <Label for="tags" class="text-sm font-medium">Tags</Label>
             <div class="relative">
-              <Tag
-                class="absolute left-3 top-3 h-4 w-4 text-muted-foreground"
-              />
+              <div class="flex gap-3 mb-2">
+                <Badge v-for="tag in form.tags" :key="tag">{{ tag }}</Badge>
+              </div>
               <Textarea
                 id="tags"
-                :value="form.tags.join(', ')"
                 @input="updateTags"
                 placeholder="Enter tags separated by commas"
                 rows="2"
@@ -516,6 +515,7 @@ const emit = defineEmits<{
 const updateTags = (event: Event) => {
   const target = event.target as HTMLTextAreaElement;
   const tagsString = target.value;
+  console.log(tagsString);
   props.form.tags = tagsString
     .split(",")
     .map((tag) => tag.trim())

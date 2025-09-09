@@ -231,6 +231,7 @@ const removeElement = (index: number) => {
                   class="w-full px-4 py-3 border border-input bg-background/80 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                   disabled
                 />
+                <Switch v-else-if="element.type == 'toggle'" />
               </div>
             </div>
           </div>

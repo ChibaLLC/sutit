@@ -210,7 +210,9 @@
                         v-if="
                           field.type === 'text' ||
                           field.type === 'email' ||
-                          field.type === 'phone'
+                          field.type === 'phone' ||
+                          field.type === 'date' ||
+                          field.type === 'file'
                         "
                         class="space-y-3"
                       >
@@ -327,7 +329,23 @@
                           </Label>
                         </div>
                       </div>
-
+                      <div
+                        v-else-if="field.type === 'toggle'"
+                        class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <Label
+                          class="text-sm font-semibold flex items-center gap-2"
+                        >
+                          {{ field.label }}
+                          <Badge
+                            v-if="field.required"
+                            variant="destructive"
+                            class="text-xs px-1.5 py-0.5"
+                            >Required</Badge
+                          >
+                        </Label>
+                        <Switch v-model="formData[field.id]" class="mt-0" />
+                      </div>
                       <!-- Radio Group -->
                       <div v-else-if="field.type === 'radio'" class="space-y-4">
                         <Label
@@ -495,7 +513,6 @@
                                       product.id,
                                       store.id.toString(),
                                       -1,
-                                      product.price,
                                     )
                                   "
                                   :disabled="
@@ -520,7 +537,6 @@
                                       product.id,
                                       store.id.toString(),
                                       1,
-                                      product.price,
                                     )
                                   "
                                   class="h-8 w-8 p-0"
@@ -887,10 +903,7 @@ interface Emits {
       schema: FormSchema;
       formData: Record<string, any>;
       paymentData: Record<string, any>;
-      selectedProducts: Record<
-        string,
-        { quantity: number; storeId: string; price: number }
-      >;
+      selectedProducts: Record<string, { quantity: number; storeId: string }>;
     },
   ): void;
 }
@@ -904,7 +917,7 @@ const paymentData = reactive({
   phoneNumber: "",
 });
 const selectedProducts = reactive<
-  Record<string, { quantity: number; storeId: string; price: number }>
+  Record<string, { quantity: number; storeId: string }>
 >({});
 const isProcessing = ref(false);
 
@@ -1003,6 +1016,10 @@ const getInputType = (fieldType: string) => {
       return "email";
     case "phone":
       return "tel";
+    case "file":
+      return "file";
+    case "date":
+      return "date";
     default:
       return "text";
   }
@@ -1061,7 +1078,7 @@ const handleSubmit = () => {
     selectedProducts,
     paymentData,
   });
-  // currentStep.value = totalSteps.value;
+  currentStep.value = totalSteps.value;
 };
 
 const resetForm = () => {
@@ -1075,10 +1092,9 @@ const updateProductQuantity = (
   productId: string,
   storeId: string,
   change: number,
-  price: number,
 ) => {
   if (!selectedProducts[productId]) {
-    selectedProducts[productId] = { quantity: 0, storeId, price: price };
+    selectedProducts[productId] = { quantity: 0, storeId };
   }
 
   const newQuantity = selectedProducts[productId].quantity + change;
