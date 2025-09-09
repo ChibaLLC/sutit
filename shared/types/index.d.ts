@@ -1,14 +1,15 @@
+import type { user } from "~~/server/db/schema";
+
 export interface FormField {
 	id: string;
 	type: string;
 	label: string;
+	name: string;
 	placeholder?: string;
 	required?: boolean;
 	validation?: ValidationRule[];
 	options?: string[];
-	props?: Record<string, any>;
-	style?: Record<string, any>;
-	columnSpan?: number;
+	orderIndex: number;
 	[key: string]: any;
 }
 
@@ -27,20 +28,31 @@ export interface PageSchema {
 	title: string;
 	description?: string;
 	fields: FormField[];
+	orderIndex: number;
 }
 export interface FormSchema {
 	id: number;
 	title: string;
 	description?: string;
 	pages: PageSchema[];
+	createdBy: string;
 	stores?: Store[];
 	price: number;
+	status: string;
 	requireMerch: boolean;
 	allowGroups: boolean;
 	calculateTat: boolean;
 	groupAmountPayable?: number;
 	groupMemberLimit?: number;
 	infoPromptMessage?: string;
+	allowMultipleSubmissions: boolean;
+	allowRegistrationReuse: boolean;
+	submissionLimit: number | null;
+	publishedAt: string;
+	tags: string[];
+	isPublic: boolean;
+	requiresLogin: boolean;
+	slug: string;
 }
 
 export interface FormSettings {
@@ -73,3 +85,18 @@ export interface StoreItem {
 	infinite: boolean;
 	images: string[];
 }
+
+export interface SubmissionData {
+	formData: Record<string, any>;
+	paymentData?: {
+		phoneNumber: string;
+	};
+	selectedProducts: Record<
+		string,
+		{
+			quantity: number;
+			storeId: string;
+		}
+	>;
+}
+export type User = typeof user.$inferSelect;
