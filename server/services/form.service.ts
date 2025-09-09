@@ -1,17 +1,11 @@
-import { eq, and, InferInsertModel, count } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import {
 	activities,
-	fieldResponses,
 	formFields,
 	formPages,
 	forms,
-	formStatusEnum,
 	formStores,
-	formSubmissions,
-	payments,
 	storeItems,
-	storeResponses,
-	submissionStatusEnum,
 } from "../db/schema";
 import db from "../db";
 import { FormSchema } from "~~/shared/types";
@@ -156,49 +150,7 @@ export async function getFormById(formId: string) {
 		throw new Error("Failed to retrieve form.");
 	}
 }
-export async function getFormSubmissionDetails(submissionId: string) {
-	try {
-		const submission = await db.query.formSubmissions.findFirst({
-			where: eq(formSubmissions.id, submissionId),
-			with: {
-				form: {
-					columns: { id: true, title: true, slug: true },
-				},
-				submitter: {
-					columns: { id: true, email: true, name: true },
-				},
-				responses: {
-					with: {
-						field: {
-							columns: { id: true, name: true, label: true, fieldType: true },
-						},
-					},
-				},
-				storeResponses: {
-					with: {
-						items: {
-							with: {
-								storeItem: {
-									columns: {
-										id: true,
-										name: true,
-										description: true,
-										price: true,
-									},
-								},
-							},
-						},
-						payment: true,
-					},
-				},
-			},
-		});
-		return submission;
-	} catch (error) {
-		console.error("Error fetching submission details:", error);
-		throw new Error("Failed to retrieve submission details.");
-	}
-}
+
 export type UpdateFormPayload = Partial<
 	Omit<NewForm, "id" | "createdBy" | "createdAt">
 >;

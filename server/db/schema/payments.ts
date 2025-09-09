@@ -17,7 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { user } from "./auth";
-import { formGroups, forms } from "./form";
+import { formGroups, forms, formSubmissions } from "./form";
 export const paymentStatusEnum = pgEnum("payment_status", [
 	"pending",
 	"completed",
@@ -33,7 +33,7 @@ export const payments = pgTable(
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		userId: text("user_id").references(() => user.id),
-		referenceCode: varchar("reference_code", { length: 30 }).notNull(),
+		referenceCode: varchar("reference_code", { length: 30 }),
 		merchantId: text("merchant_id").notNull(),
 		checkoutId: text("checkout_id").notNull(),
 		phoneNumber: varchar("phone_number", { length: 30 }).notNull(),
@@ -57,22 +57,25 @@ export const payments = pgTable(
 export const formPayments = pgTable(
 	"form_payments",
 	{
+		id: uuid("id").primaryKey().defaultRandom(),
 		formId: uuid("form_id")
 			.notNull()
 			.references(() => forms.id, { onDelete: "cascade" }),
 		paymentId: uuid("payment_id")
 			.notNull()
 			.references(() => payments.id, { onDelete: "cascade" }),
+		submissionId: uuid("submission_id")
+			.notNull()
+			.references(() => formSubmissions.id),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(table) => {
 		return {
-			formPaymentsPkey: primaryKey({
-				columns: [table.formId, table.paymentId],
-				name: "form_payments_pkey",
-			}),
 			formIdIdx: index("form_payment_form_id_idx").on(table.formId),
 			paymentIdIdx: index("form_payment_payment_id_idx").on(table.paymentId),
+			formSubmission: index("form_payment_submission_idx").on(
+				table.submissionId,
+			),
 		};
 	},
 );
@@ -97,5 +100,9 @@ export const formPaymentsRelations = relations(formPayments, ({ one }) => ({
 	payment: one(payments, {
 		fields: [formPayments.paymentId],
 		references: [payments.id],
+	}),
+	submission: one(formSubmissions, {
+		fields: [formPayments.submissionId],
+		references: [formSubmissions.id],
 	}),
 }));

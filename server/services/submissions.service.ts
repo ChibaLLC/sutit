@@ -32,7 +32,7 @@ export const submitForm = async (
 			.values({
 				formId,
 				submitterId,
-				status: "pending",
+				status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
 				metadata: {
 					paymentData: data.paymentData ?? null,
 				},
@@ -93,8 +93,11 @@ export const submitForm = async (
 			.where(eq(formSubmissions.id, submission.id));
 
 		return {
-			...submission,
-			pricePaid: totalPaid,
+			submmission: {
+				...submission,
+				pricePaid: totalPaid,
+			},
+			form: form,
 		};
 	});
 };

@@ -1,4 +1,5 @@
 import { auth } from "~~/server/lib/auth";
+import { processFormPayment } from "~~/server/services/payment.service";
 import { submitForm } from "~~/server/services/submissions.service";
 
 export default defineEventHandler(async (event) => {
@@ -15,9 +16,26 @@ export default defineEventHandler(async (event) => {
 		});
 		const body = await readBody(event);
 		let submission = await submitForm(formId, body, session?.user.id);
+		if (submission.submmission.pricePaid == 0) {
+			return {
+				data: {
+					...submission,
+				},
+				message: "submitted successfully",
+			};
+		}
+		const pay = await processFormPayment(
+			submission.form,
+			submission.submmission,
+		);
+		console.log(pay);
+
 		return {
-			data: submission,
-			message: "submitted successfully",
+			data: {
+				...submission,
+				...pay,
+			},
+			message: "Stk Push Has been sent to your phone Pay",
 		};
 	} catch (e) {
 		throw createError({

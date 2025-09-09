@@ -18,7 +18,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { user } from "./auth";
-import { payments } from "./payments";
+import { formPayments, payments } from "./payments";
 
 export const userStatusEnum = pgEnum("user_status", [
 	"active",
@@ -581,5 +581,6 @@ export const formSubmissionsRelations = relations(
 		}),
 		responses: many(fieldResponses),
 		storeResponses: many(storeResponses),
+		payments: one(formPayments),
 	}),
 );
