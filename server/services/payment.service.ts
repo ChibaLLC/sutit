@@ -108,7 +108,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
 		.where(eq(payments.checkoutId, stkCallback.CheckoutRequestID))
 		.returning();
 
-	return { success: true, payment: updated };
+	return updated;
 };
 
 export const findPaymentWithCheckoutId = async (data: {

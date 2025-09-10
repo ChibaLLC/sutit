@@ -121,3 +121,15 @@ export type StkCallbackHook = {
 		stkCallback: StkCallback;
 	};
 };
+
+export interface GroupMember {
+	email: string;
+	phone: string;
+	paymentOption: "leader_pays" | "member_pays";
+}
+
+export interface CreateGroupRequest {
+	groupName: string;
+	members: GroupMember[];
+	phoneNumber: string;
+}

@@ -1,0 +1,85 @@
+<h2>You're Invited to Join "{{groupName}}"!</h2>
+
+<p>Hello{{#if recipientName}} {{recipientName}}{{/if}},</p>
+
+<p><strong>{{leaderName}}</strong>
+  has invited you to join their group for the following form registration:</p>
+
+<div class="card">
+  <h3>{{formTitle}}</h3>
+  {{#if formDescription}}
+    <p>{{formDescription}}</p>
+  {{/if}}
+
+  <div class="divider"></div>
+
+  <div class="info-grid">
+    <div class="info-item">
+      <strong>Group Name</strong>
+      <span>{{groupName}}</span>
+    </div>
+    <div class="info-item">
+      <strong>Organizer</strong>
+      <span>{{leaderName}}</span>
+    </div>
+  </div>
+
+  <p><strong>Payment Status:</strong>
+    {{#if (eq paymentOption "leader_pays")}}
+      <span class="badge success">Leader Paying</span>
+    {{else}}
+      <span class="badge warning">Payment Required</span>
+    {{/if}}
+  </p>
+</div>
+
+<div class="card">
+  <h3>Payment Information</h3>
+  {{#if (eq paymentOption "leader_pays")}}
+    <p><strong>{{leaderName}}</strong>
+      has already covered your registration fee of
+      <span class="amount">{{currency}} {{amount}}</span>. No payment is
+      required from you!</p>
+  {{else}}
+    <p>You'll need to complete payment of
+      <span class="amount">{{currency}} {{amount}}</span>
+      after filling out the form.</p>
+
+    {{#if dueDate}}
+      <div class="warning-box">
+        <p><strong>Payment Due:</strong> {{dueDate}}</p>
+      </div>
+    {{/if}}
+  {{/if}}
+</div>
+
+<div style="text-align: center; margin: 2rem 0;">
+  <a href="{{inviteLink}}" class="button">Accept Invitation & Fill Form</a>
+</div>
+
+<h3>What happens next?</h3>
+<ol class="steps">
+  <li>Click the invitation link above to access the form</li>
+  <li>Fill out all required information carefully</li>
+  {{#if (eq paymentOption "member_pays")}}
+    <li>Complete your payment securely through our system</li>
+  {{/if}}
+  <li>You're all set! You'll receive a confirmation email</li>
+</ol>
+
+{{#if expiresAt}}
+  <div class="warning-box">
+    <p><strong>Important:</strong>
+      This invitation expires on
+      {{expiresAt}}. Please respond soon to secure your spot!</p>
+  </div>
+{{/if}}
+
+<div class="divider"></div>
+
+<p>If you have any questions about this invitation, please contact
+  <strong>{{leaderName}}</strong>
+  directly at
+  <a href="mailto:{{leaderEmail}}">{{leaderEmail}}</a>.</p>
+
+<p>We're excited to have you join this group registration!</p>
