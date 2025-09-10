@@ -16,6 +16,7 @@ const productModalOpen = ref(false);
 const selectedProduct = ref<StoreItem | null>(null);
 const toggleProductModal = () => {
   productModalOpen.value = !productModalOpen.value;
+  selectedProduct.value = null;
 };
 const editProduct = (p: StoreItem) => {
   selectedProduct.value = p;

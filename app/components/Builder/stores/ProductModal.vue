@@ -18,7 +18,18 @@ const form = ref<StoreItem>(
 );
 
 const addProduct = () => {
-  props.store.items.push(form.value);
+  if (props.product) {
+    const index = props.store.items.findIndex((p) => p.id == props.product?.id);
+    if (index !== -1) {
+      props.store.items[index] = { ...props.store.items[index], ...form.value };
+    }
+  } else {
+    props.store.items.push({
+      ...form.value,
+      id: (props.store.items.length + 1).toString(),
+    });
+  }
+
   emits("close");
 };
 const handleImageUpload = (event: Event) => {
