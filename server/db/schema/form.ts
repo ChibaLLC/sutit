@@ -18,7 +18,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { user } from "./auth";
-import { formPayments, payments } from "./payments";
+import { formGroupMemberPayments, formPayments, payments } from "./payments";
 
 export const userStatusEnum = pgEnum("user_status", [
 	"active",
@@ -582,5 +582,45 @@ export const formSubmissionsRelations = relations(
 		responses: many(fieldResponses),
 		storeResponses: many(storeResponses),
 		payments: one(formPayments),
+	}),
+);
+
+export const formGroupsRelations = relations(formGroups, ({ one, many }) => ({
+	form: one(forms, {
+		fields: [formGroups.formId],
+		references: [forms.id],
+	}),
+	leader: one(user, {
+		fields: [formGroups.leaderId],
+		references: [user.id],
+	}),
+	payment: one(payments, {
+		fields: [formGroups.paymentId],
+		references: [payments.id],
+	}),
+	members: many(formGroupMembers),
+	memberPayments: many(formGroupMemberPayments),
+}));
+
+export const formGroupMembersRelations = relations(
+	formGroupMembers,
+	({ one, many }) => ({
+		group: one(formGroups, {
+			fields: [formGroupMembers.groupId],
+			references: [formGroups.id],
+		}),
+		user: one(user, {
+			fields: [formGroupMembers.userId],
+			references: [user.id],
+		}),
+		submission: one(formSubmissions, {
+			fields: [formGroupMembers.submissionId],
+			references: [formSubmissions.id],
+		}),
+		payment: one(payments, {
+			fields: [formGroupMembers.paymentId],
+			references: [payments.id],
+		}),
+		memberPayments: many(formGroupMemberPayments),
 	}),
 );

@@ -17,7 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { user } from "./auth";
-import { formGroups, forms, formSubmissions } from "./form";
+import { formGroupMembers, formGroups, forms, formSubmissions } from "./form";
 export const paymentStatusEnum = pgEnum("payment_status", [
 	"pending",
 	"completed",
@@ -80,6 +80,43 @@ export const formPayments = pgTable(
 	},
 );
 
+export const formGroupMemberPayments = pgTable(
+	"form_group_member_payments",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		groupId: uuid("group_id")
+			.references(() => formGroups.id, { onDelete: "cascade" })
+			.notNull(),
+		memberId: uuid("member_id")
+			.references(() => formGroupMembers.id, { onDelete: "cascade" })
+			.notNull(),
+		paymentId: uuid("payment_id")
+			.references(() => payments.id, { onDelete: "cascade" })
+			.notNull(),
+		paidBy: text("paid_by").references(() => user.id),
+		amount: integer("amount").notNull(),
+		paymentType: varchar("payment_type", { length: 50 })
+			.default("self_paid")
+			.notNull(),
+		status: paymentStatusEnum("status").default("pending").notNull(),
+		metadata: jsonb("metadata").default({}),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.defaultNow()
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => ({
+		groupIdIdx: index("group_member_payment_group_id_idx").on(table.groupId),
+		memberIdIdx: index("group_member_payment_member_id_idx").on(table.memberId),
+		paymentIdIdx: index("group_member_payment_payment_id_idx").on(
+			table.paymentId,
+		),
+		paidByIdx: index("group_member_payment_paid_by_idx").on(table.paidBy),
+		statusIdx: index("group_member_payment_status_idx").on(table.status),
+	}),
+);
+
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
 	user: one(user, {
 		fields: [payments.userId],
@@ -90,6 +127,7 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
 		fields: [payments.id],
 		references: [formGroups.paymentId],
 	}),
+	groupMemberPayments: many(formGroupMemberPayments),
 }));
 
 export const formPaymentsRelations = relations(formPayments, ({ one }) => ({
@@ -106,3 +144,25 @@ export const formPaymentsRelations = relations(formPayments, ({ one }) => ({
 		references: [formSubmissions.id],
 	}),
 }));
+
+export const formGroupMemberPaymentsRelations = relations(
+	formGroupMemberPayments,
+	({ one }) => ({
+		group: one(formGroups, {
+			fields: [formGroupMemberPayments.groupId],
+			references: [formGroups.id],
+		}),
+		member: one(formGroupMembers, {
+			fields: [formGroupMemberPayments.memberId],
+			references: [formGroupMembers.id],
+		}),
+		payment: one(payments, {
+			fields: [formGroupMemberPayments.paymentId],
+			references: [payments.id],
+		}),
+		paidBy: one(user, {
+			fields: [formGroupMemberPayments.paidBy],
+			references: [user.id],
+		}),
+	}),
+);
