@@ -20,6 +20,7 @@ export const getUserForms = async (createdBy: string) => {
 		with: {
 			creator: true,
 		},
+		orderBy: (form, { desc }) => [desc(form.createdAt)],
 	});
 };
 

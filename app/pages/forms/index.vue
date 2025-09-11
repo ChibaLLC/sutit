@@ -19,6 +19,7 @@ import {
   Search,
   X,
   ArrowUpDown,
+  Users2,
 } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 import { authHeaders } from "~/lib/auth-client";
@@ -460,9 +461,6 @@ const goToPage = (page) => {
               <Users class="w-4 h-4 mr-2" />
               Submissions
             </NuxtLink>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 mt-2">
             <NuxtLink
               :to="`/forms/${form.id}`"
               :class="buttonVariants({ size: 'sm' })"
@@ -474,7 +472,17 @@ const goToPage = (page) => {
               <Edit class="w-4 h-4 mr-2" />
               Edit
             </Button>
+            <NuxtLink
+              v-if="form.allowGroups"
+              :to="`/forms/${form.id}/group`"
+              :class="buttonVariants({ size: 'sm' })"
+            >
+              <Users2 class="h-4 w-4 mr-2" />
+              Groups
+            </NuxtLink>
           </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-2"></div>
         </CardContent>
       </Card>
 

@@ -5,6 +5,7 @@ import {
 	formGroupMemberPayments,
 	formGroupMembers,
 	formGroups,
+	forms,
 	payments,
 } from "../db/schema";
 import { and, eq } from "drizzle-orm";
@@ -126,6 +127,39 @@ export const createGroup = async (
 	} catch (e: any) {
 		throw new Error(e.message || "Failed to create group");
 	}
+};
+
+export const getFormGroups = async (formId: string) => {
+	return await db.query.forms.findFirst({
+		where: eq(forms.id, formId),
+		with: {
+			groups: {
+				with: {
+					memberPayments: {
+						with: {
+							member: true,
+							payment: true,
+						},
+					},
+					payment: true,
+					members: true,
+				},
+			},
+		},
+	});
+};
+
+export const getGroupById = async (groupId: string) => {
+	return await db.query.formGroups.findFirst({
+		where: eq(formGroups.id, groupId),
+		with: {
+			form: true,
+			leader: true,
+			members: true,
+			memberPayments: true,
+			payment: true,
+		},
+	});
 };
 
 export const processGroupPayment = async (
