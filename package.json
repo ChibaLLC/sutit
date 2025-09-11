@@ -31,7 +31,7 @@
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.44.5",
 		"jsonwebtoken": "^9.0.2",
-		"lucide-vue-next": "^0.542.0",
+		"lucide-vue-next": "^0.543.0",
 		"nodemailer": "^7.0.6",
 		"nuxt": "^4.1.1",
 		"pg": "^8.16.3",
