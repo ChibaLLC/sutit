@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toast } from "vue-sonner";
 import { authHeaders } from "~/lib/auth-client";
 import type { FormSchema } from "~~/shared/types";
 
@@ -14,9 +15,7 @@ const submitForm = async (form: FormSchema) => {
     if (data) {
       await navigateTo("/forms");
     }
-  } catch (e) {
-    console.log(e);
-  }
+  } catch (e) {}
 };
 </script>
 <template>

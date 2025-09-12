@@ -828,43 +828,43 @@
 
                   <!-- Success Page -->
                   <div v-else class="text-center space-y-8">
-                    <div class="space-y-4">
-                      <div
-                        class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto"
-                      >
-                        <CheckCircle class="w-12 h-12 text-green-600" />
-                      </div>
-                      <div class="space-y-2">
-                        <h2
-                          class="text-2xl md:text-3xl font-semibold text-card-foreground"
-                        >
-                          {{
-                            form.price > 0
-                              ? "Payment Successful!"
-                              : "Form Submitted!"
-                          }}
-                        </h2>
-                        <p
-                          class="text-muted-foreground text-base md:text-lg max-w-md mx-auto"
-                        >
-                          {{
-                            form.price > 0
-                              ? "Your payment has been processed successfully and your form has been submitted."
-                              : "Thank you for your submission. We'll get back to you soon."
-                          }}
-                        </p>
-                      </div>
-                    </div>
+                    <!-- <div class="space-y-4"> -->
+                    <!--   <div -->
+                    <!--     class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto" -->
+                    <!--   > -->
+                    <!--     <CheckCircle class="w-12 h-12 text-green-600" /> -->
+                    <!--   </div> -->
+                    <!--   <div class="space-y-2"> -->
+                    <!--     <h2 -->
+                    <!--       class="text-2xl md:text-3xl font-semibold text-card-foreground" -->
+                    <!--     > -->
+                    <!--       {{ -->
+                    <!--         form.price > 0 -->
+                    <!--           ? "Payment Successful!" -->
+                    <!--           : "Form Submitted!" -->
+                    <!--       }} -->
+                    <!--     </h2> -->
+                    <!--     <p -->
+                    <!--       class="text-muted-foreground text-base md:text-lg max-w-md mx-auto" -->
+                    <!--     > -->
+                    <!--       {{ -->
+                    <!--         form.price > 0 -->
+                    <!--           ? "Your payment has been processed successfully and your form has been submitted." -->
+                    <!--           : "Thank you for your submission. We'll get back to you soon." -->
+                    <!--       }} -->
+                    <!--     </p> -->
+                    <!--   </div> -->
+                    <!-- </div> -->
 
                     <Separator class="max-w-xs mx-auto" />
 
                     <Button
-                      @click="resetForm"
+                      @click="handleSubmit()"
                       variant="outline"
                       size="lg"
                       class="hover:scale-105 transition-all duration-200"
                     >
-                      Submit Another Form
+                      Submit
                     </Button>
                   </div>
                 </div>
