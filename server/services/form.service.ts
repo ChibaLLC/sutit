@@ -1,4 +1,4 @@
-import { and, eq, InferInsertModel, or } from "drizzle-orm";
+import { and, between, eq, ilike, InferInsertModel, or } from "drizzle-orm";
 import {
   activities,
   formFields,
@@ -12,14 +12,30 @@ import {
 import db from "../db";
 import { FormSchema } from "~~/shared/types";
 import { slugify } from "~~/shared/utils/form.schema";
-
+interface Filters {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  from?: string;
+  to?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+}
 export type NewForm = InferInsertModel<typeof forms>;
 export type NewFormSection = InferInsertModel<typeof formPages>;
 export type NewFormField = InferInsertModel<typeof formFields>;
-
-export const getUserForms = async (createdBy: string) => {
+const buildFormFilters = (createdBy: string, options?: Filters) => {
+  return [
+    eq(forms.createdBy, createdBy),
+    options?.search && ilike(forms.title, `%${options.search}%`),
+    options?.from &&
+      options?.to &&
+      between(forms.createdAt, new Date(options.from), new Date(options.to)),
+  ].filter(Boolean);
+};
+export const getUserForms = async (createdBy: string, options?: Filters) => {
   return db.query.forms.findMany({
-    where: eq(forms.createdBy, createdBy),
+    where: and(...buildFormFilters(createdBy, options)),
     with: {
       creator: true,
     },

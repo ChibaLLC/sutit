@@ -20,9 +20,11 @@ import {
   X,
   ArrowUpDown,
   Users2,
+  Share,
 } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 import { authHeaders } from "~/lib/auth-client";
+import type { FormSchema } from "~~/shared/types";
 
 const filters = ref({
   search: "",
@@ -45,39 +47,8 @@ const { data: forms } = await useFetch("/api/forms", {
 const totalPages = computed(() =>
   Math.ceil(forms.value?.data.length / filters.value.itemsPerPage),
 );
-
-const visiblePages = computed(() => {
-  const pages = [];
-  const total = totalPages.value;
-  const current = currentPage.value;
-
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i);
-    }
-  } else {
-    if (current <= 4) {
-      for (let i = 1; i <= 5; i++) pages.push(i);
-      pages.push("...");
-      pages.push(total);
-    } else if (current >= total - 3) {
-      pages.push(1);
-      pages.push("...");
-      for (let i = total - 4; i <= total; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      pages.push("...");
-      for (let i = current - 1; i <= current + 1; i++) pages.push(i);
-      pages.push("...");
-      pages.push(total);
-    }
-  }
-
-  return pages.filter(
-    (page) => page !== "..." || pages.indexOf(page) === pages.lastIndexOf(page),
-  );
-});
-
+const selectedForm = ref<FormSchema | null>(null);
+const shareModalOpen = ref(false);
 // Computed properties for stats (updated to use forms)
 const publishedCount = computed(
   () => forms.value?.data.filter((form) => form.status === "published").length,
@@ -97,11 +68,11 @@ const avgSubmissions = computed(() => {
 const clearFilters = () => {};
 
 const toggleSortOrder = () => {};
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
+const toggleShareModal = (form?: FormSchema) => {
+  if (form) {
+    selectedForm.value = form;
   }
+  shareModalOpen.value = !shareModalOpen.value;
 };
 </script>
 <template>
@@ -341,7 +312,7 @@ const goToPage = (page) => {
                 </Badge>
               </div>
               <CardTitle
-                class="text-lg font-bold text-balance leading-tight group-hover:text-accent transition-colors"
+                class="text-lg font-bold text-balance leading-tight transition-colors"
               >
                 {{ form.title }}
               </CardTitle>
@@ -356,12 +327,16 @@ const goToPage = (page) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="w-8 h-8 p-0 group-hover:opacity-100 transition-opacity"
                 >
                   <MoreVertical class="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem @click.prevent="toggleShareModal(form)">
+                  <Share class="w-4 h-4 mr-2" />
+                  Share
+                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings class="w-4 h-4 mr-2" />
                   Settings
@@ -505,6 +480,12 @@ const goToPage = (page) => {
         </Card>
       </div>
     </div>
+    <LazyFormsShareCard
+      v-if="selectedForm"
+      :form="selectedForm"
+      :isOpen="shareModalOpen"
+      @close="toggleShareModal()"
+    />
 
     <!-- Pagination Component -->
     <!-- <div v-if="totalPages > 1" class="flex justify-center"> -->

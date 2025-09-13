@@ -29,4 +29,9 @@ export default defineNuxtConfig({
      */
     componentDir: "./app/components/ui",
   },
+  runtimeConfig: {
+    public: {
+      publicUrl: "",
+    },
+  },
 });

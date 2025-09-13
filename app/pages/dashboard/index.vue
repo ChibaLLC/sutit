@@ -10,6 +10,11 @@ import {
   Plus,
   Settings,
   Download,
+  Users,
+  UserPlus,
+  DollarSign,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-vue-next";
 import type { Component } from "vue";
 import { buttonVariants } from "~/components/ui/button";
@@ -26,32 +31,6 @@ type DashboardCard = {
   icon: Component;
   description?: string;
 };
-const dashboardCards: DashboardCard[] = [
-  {
-    name: "Total Forms",
-    count: 10,
-    icon: FileText,
-    description: "",
-  },
-  {
-    name: "Total Responses",
-    count: 10,
-    icon: Eye,
-    description: "",
-  },
-  {
-    name: "Active Forms",
-    count: 10,
-    icon: Zap,
-    description: "",
-  },
-  {
-    name: "Completion Rate",
-    count: 10,
-    icon: Activity,
-    description: "",
-  },
-];
 
 const quickActions: QuickActions[] = [
   {
@@ -67,6 +46,80 @@ const quickActions: QuickActions[] = [
     variant: "outline",
   },
 ];
+
+const { data: activities } = await useFetch(`/api/activities`);
+const { data: forms } = await useFetch(`/api/forms?limit=5`);
+const { data: stats } = await useFetch(`/api/dashboard`);
+const dashboardCards = computed(() => {
+  return [
+    {
+      name: "Total Forms",
+      count: stats.value.forms.total,
+      icon: FileText,
+      description: `${stats.value.forms.total} forms created`,
+    },
+    {
+      name: "Responses Received",
+      count: stats.value.forms.submissionsReceived,
+      icon: Eye,
+      description: `${stats.value.forms.submissionsReceived} responses received`,
+    },
+    {
+      name: "Submissions Made",
+      count: stats.value.submissions.made,
+      icon: Zap,
+      description: `${stats.value.submissions.made} forms submitted`,
+    },
+    {
+      name: "Completion Rate",
+      count:
+        stats.value.forms.submissionsReceived > 0
+          ? Math.round(
+              (stats.value.submissions.made /
+                stats.value.forms.submissionsReceived) *
+                100,
+            )
+          : 0,
+      icon: Activity,
+      description: "Average completion rate (%)",
+    },
+
+    // Groups
+    {
+      name: "Groups Created",
+      count: stats.value.groups.created,
+      icon: Users,
+      description: `${stats.value.groups.created} groups created`,
+    },
+    {
+      name: "Groups Joined",
+      count: stats.value.groups.joined,
+      icon: UserPlus,
+      description: `${stats.value.groups.joined} groups joined`,
+    },
+
+    // Payments
+    {
+      name: "Revenue Received",
+      count: stats.value.payments.revenue,
+      icon: DollarSign,
+      description: `Total revenue received`,
+    },
+    {
+      name: "Amount Spent",
+      count: stats.value.payments.spent,
+      icon: ArrowDownCircle,
+      description: `Your total spending`,
+    },
+    {
+      name: "Pending Payments",
+      count: stats.value.payments.pending,
+      icon: ArrowUpCircle,
+      description: `Payments still pending`,
+    },
+  ];
+});
+const authStore = useAuthStore();
 </script>
 <template>
   <div>
@@ -80,7 +133,7 @@ const quickActions: QuickActions[] = [
           <h1
             class="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent mb-2"
           >
-            Welcome back, Admin!
+            Welcome back, {{ authStore.user?.name }}!
           </h1>
           <p class="text-lg text-muted-foreground">
             Here's what's happening with your forms today.
@@ -88,7 +141,7 @@ const quickActions: QuickActions[] = [
         </div>
       </div>
 
-      <!-- Stats Grid with enhanced styling -->
+      <!-- stats.value Grid with enhanced styling -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <Card
           v-for="card in dashboardCards"
@@ -157,11 +210,22 @@ const quickActions: QuickActions[] = [
               <h2 class="text-xl font-semibold text-foreground">
                 Recent Forms
               </h2>
-              <Button variant="ghost" size="sm">View All</Button>
+              <NuxtLink
+                :class="
+                  buttonVariants({
+                    variant: 'ghost',
+                    size: 'sm',
+                  })
+                "
+                :to="`/forms`"
+                >View All</NuxtLink
+              >
             </div>
           </div>
           <div class="p-6 space-y-4">
             <div
+              v-for="form in forms.data"
+              :key="form.id"
               class="group flex items-center justify-between p-4 bg-background rounded-lg border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 cursor-pointer"
             >
               <div class="flex items-center gap-4">
@@ -172,54 +236,14 @@ const quickActions: QuickActions[] = [
                   <h3
                     class="font-medium text-foreground group-hover:text-primary transition-colors"
                   >
-                    Customer Feedback Survey
+                    {{ form.title }}
                   </h3>
                   <p class="text-sm text-muted-foreground">
-                    Created 2 hours ago
+                    Created {{ formatDate(form.createdAt) }}
                   </p>
                 </div>
               </div>
-              <Badge variant="success">Active</Badge>
-            </div>
-
-            <div
-              class="group flex items-center justify-between p-4 bg-background rounded-lg border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 cursor-pointer"
-            >
-              <div class="flex items-center gap-4">
-                <div class="p-2 bg-primary/10 rounded-lg">
-                  <FileText class="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <h3
-                    class="font-medium text-foreground group-hover:text-primary transition-colors"
-                  >
-                    Event Registration Form
-                  </h3>
-                  <p class="text-sm text-muted-foreground">Created 1 day ago</p>
-                </div>
-              </div>
-              <Badge variant="success">Active</Badge>
-            </div>
-
-            <div
-              class="group flex items-center justify-between p-4 bg-background rounded-lg border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 cursor-pointer"
-            >
-              <div class="flex items-center gap-4">
-                <div class="p-2 bg-muted/50 rounded-lg">
-                  <FileText class="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3
-                    class="font-medium text-foreground group-hover:text-primary transition-colors"
-                  >
-                    Product Survey
-                  </h3>
-                  <p class="text-sm text-muted-foreground">
-                    Created 3 days ago
-                  </p>
-                </div>
-              </div>
-              <Badge variant="secondary">Draft</Badge>
+              <Badge variant="outline">{{ form.status }}</Badge>
             </div>
           </div>
         </Card>
@@ -235,7 +259,11 @@ const quickActions: QuickActions[] = [
             </div>
           </div>
           <div class="p-6 space-y-4">
-            <div class="flex items-start gap-4 group">
+            <div
+              v-for="activity in activities?.data"
+              :key="activity.id"
+              class="flex items-start gap-4 group"
+            >
               <div class="relative mt-1">
                 <div
                   class="w-2 h-2 bg-primary rounded-full animate-pulse"
@@ -246,52 +274,14 @@ const quickActions: QuickActions[] = [
               </div>
               <div class="flex-1">
                 <p class="text-sm text-foreground">
-                  New response received for
-                  <span class="font-medium text-primary"
-                    >Customer Feedback Survey</span
-                  >
+                  {{ activity.type }}
+                  <span class="font-medium text-primary">{{
+                    activity.description
+                  }}</span>
                 </p>
-                <p class="text-xs text-muted-foreground">5 minutes ago</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4 group">
-              <div class="w-2 h-2 bg-primary/60 rounded-full mt-1"></div>
-              <div class="flex-1">
-                <p class="text-sm text-foreground">
-                  Form
-                  <span class="font-medium text-primary"
-                    >Event Registration</span
-                  >
-                  reached 100 responses
+                <p class="text-xs text-muted-foreground">
+                  {{ formatDate(activity.createdAt) }}
                 </p>
-                <p class="text-xs text-muted-foreground">2 hours ago</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4 group">
-              <div class="w-2 h-2 bg-primary/40 rounded-full mt-1"></div>
-              <div class="flex-1">
-                <p class="text-sm text-foreground">
-                  New form
-                  <span class="font-medium text-primary">Product Survey</span>
-                  created
-                </p>
-                <p class="text-xs text-muted-foreground">3 days ago</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4 group">
-              <div class="w-2 h-2 bg-primary/40 rounded-full mt-1"></div>
-              <div class="flex-1">
-                <p class="text-sm text-foreground">
-                  Form
-                  <span class="font-medium text-primary"
-                    >Newsletter Signup</span
-                  >
-                  updated
-                </p>
-                <p class="text-xs text-muted-foreground">4 days ago</p>
               </div>
             </div>
           </div>
