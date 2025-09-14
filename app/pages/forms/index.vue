@@ -437,16 +437,25 @@ const toggleShareModal = (form?: FormSchema) => {
               Submissions
             </NuxtLink>
             <NuxtLink
-              :to="`/forms/${form.id}`"
+              :to="`/forms/${form.slug}`"
               :class="buttonVariants({ size: 'sm' })"
             >
               <Eye class="w-4 h-4 mr-2" />
               View Form
             </NuxtLink>
-            <Button variant="secondary" size="sm" class="w-full">
+            <NuxtLink
+              :class="
+                buttonVariants({
+                  variant: 'secondary',
+                  size: 'sm',
+                  class: 'w-full',
+                })
+              "
+              :to="`/forms/${form.id}/edit`"
+            >
               <Edit class="w-4 h-4 mr-2" />
               Edit
-            </Button>
+            </NuxtLink>
             <NuxtLink
               v-if="form.allowGroups"
               :to="`/forms/${form.id}/group`"

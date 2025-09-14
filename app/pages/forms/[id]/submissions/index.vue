@@ -104,10 +104,10 @@ const filteredSubmissions = computed(() => {
     filtered = filtered.filter((submission) => {
       // Search in basic submission data
       const basicMatch =
-        submission.submitter.name?.toLowerCase().includes(searchTerm) ||
-        submission.submitter.email?.toLowerCase().includes(searchTerm) ||
+        submission.submitter?.name?.toLowerCase().includes(searchTerm) ||
+        submission.submitter?.email?.toLowerCase().includes(searchTerm) ||
         submission.id.toLowerCase().includes(searchTerm) ||
-        submission.status.toLowerCase().includes(searchTerm);
+        submission.status?.toLowerCase().includes(searchTerm);
 
       // Search in form field responses
       const fieldMatch =

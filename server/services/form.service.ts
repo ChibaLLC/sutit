@@ -1,4 +1,15 @@
-import { and, between, eq, ilike, InferInsertModel, or } from "drizzle-orm";
+import {
+  and,
+  between,
+  eq,
+  ilike,
+  inArray,
+  InferInsertModel,
+  ne,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import {
   activities,
   formFields,
@@ -21,6 +32,7 @@ interface Filters {
   sort?: string;
   order?: "asc" | "desc";
 }
+
 export type NewForm = InferInsertModel<typeof forms>;
 export type NewFormSection = InferInsertModel<typeof formPages>;
 export type NewFormField = InferInsertModel<typeof formFields>;
@@ -158,8 +170,16 @@ export const createForm = async (payload: FormSchema) => {
 
 export async function getFormById(formId: string, token?: string) {
   try {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUUID = uuidRegex.test(formId);
     const form = await db.query.forms.findFirst({
-      where: or(eq(forms.id, formId), eq(forms.slug, formId)),
+      where: isUUID
+        ? or(
+            eq(forms.id, formId),
+            eq(sql`lower(${forms.slug})`, formId.toLowerCase()),
+          )
+        : eq(sql`lower(${forms.slug})`, formId.toLowerCase()),
       with: {
         pages: {
           with: {
@@ -215,65 +235,224 @@ export async function getFormById(formId: string, token?: string) {
     throw new Error(error.message || "Failed to retrieve form.");
   }
 }
+export const updateForm = async (formId: string, payload: FormSchema) => {
+  const { stores, pages, createdAt, updatedAt, ...formPayload } = payload;
 
-export type UpdateFormPayload = Partial<
-  Omit<NewForm, "id" | "createdBy" | "createdAt">
->;
-
-export async function updateForm(
-  formId: string,
-  payload: UpdateFormPayload,
-  updaterId: string,
-) {
   return db.transaction(async (tx) => {
-    const [existingForm] = await tx
-      .select()
-      .from(forms)
-      .where(eq(forms.id, formId));
-    if (!existingForm) {
-      tx.rollback();
-      throw new Error("Form not found.");
+    try {
+      // Check if form exists
+      const existingForm = await tx.query.forms.findFirst({
+        where: eq(forms.id, formId),
+      });
+
+      if (!existingForm) {
+        throw new Error("Form not found");
+      }
+
+      // Check slug uniqueness (exclude current form)
+      if (formPayload.slug !== existingForm.slug) {
+        const duplicateSlug = await tx.query.forms.findFirst({
+          where: and(eq(forms.slug, formPayload.slug), ne(forms.id, formId)),
+          columns: { id: true },
+        });
+
+        if (duplicateSlug) {
+          throw new Error(
+            `A form with the slug "${formPayload.slug}" already exists. Please choose a different slug.`,
+          );
+        }
+      }
+
+      // 1. Update the Form
+      const [updatedForm] = await tx
+        .update(forms)
+        .set({
+          ...formPayload,
+          slug: slugify(formPayload.slug),
+          publishedAt: formPayload.publishedAt
+            ? new Date(formPayload.publishedAt)
+            : undefined,
+          // updatedAt: new Date(),
+        })
+        .where(eq(forms.id, formId))
+        .returning();
+
+      // 2. Handle Pages
+      const existingPageIds: string[] = [];
+      const existingFieldIds: string[] = [];
+
+      for (const page of pages) {
+        let pageId: string;
+
+        if (page.id && isValidUUID(page.id)) {
+          // Update existing page
+          const [updatedPage] = await tx
+            .update(formPages)
+            .set({
+              title: page.title,
+              description: page.description,
+              orderIndex: page.orderIndex,
+            })
+            .where(eq(formPages.id, page.id))
+            .returning();
+
+          if (updatedPage) {
+            pageId = updatedPage.id;
+            existingPageIds.push(pageId);
+          } else {
+            throw new Error(`Page with id ${page.id} not found`);
+          }
+        } else {
+          // Create new page
+          const [newPage] = await tx
+            .insert(formPages)
+            .values({
+              formId: updatedForm.id,
+              title: page.title,
+              description: page.description,
+              orderIndex: page.orderIndex,
+              // createdAt: new Date(),
+            })
+            .returning();
+
+          if (newPage) {
+            pageId = newPage.id;
+            existingPageIds.push(pageId);
+          } else {
+            throw new Error("Failed to create new page");
+          }
+        }
+
+        // 3. Handle Fields for this page
+        for (const fieldPayload of page.fields) {
+          const { id, createdAt, updatedAt, ...fieldData } = fieldPayload;
+
+          if (id && isValidUUID(id)) {
+            // Update existing field
+            const [updatedField] = await tx
+              .update(formFields)
+              .set({
+                ...fieldData,
+                type: fieldPayload.type,
+                name:
+                  fieldPayload.label.split(" ").join("_").toLowerCase() +
+                  "_" +
+                  fieldPayload.name,
+              })
+              .where(eq(formFields.id, id))
+              .returning();
+
+            if (updatedField) {
+              existingFieldIds.push(updatedField.id);
+            }
+          } else {
+            // Create new field
+            const [newField] = await tx
+              .insert(formFields)
+              .values({
+                ...fieldData,
+                pageId: pageId,
+                // createdAt: new Date(),
+                type: fieldPayload.type,
+                name:
+                  fieldPayload.label.split(" ").join("_").toLowerCase() +
+                  "_" +
+                  fieldPayload.name,
+              })
+              .returning();
+
+            if (newField) {
+              existingFieldIds.push(newField.id);
+            }
+          }
+        }
+      }
+
+      // 4. Remove pages that are no longer in the form (only if they have no submissions)
+      if (existingPageIds.length > 0) {
+        await tx
+          .delete(formPages)
+          .where(
+            and(
+              eq(formPages.formId, formId),
+              notInArray(formPages.id, existingPageIds),
+            ),
+          );
+      }
+
+      // 5. Remove fields that are no longer in the form (only if they have no submissions)
+      if (existingFieldIds.length > 0) {
+        await tx
+          .delete(formFields)
+          .where(
+            and(
+              inArray(formFields.pageId, existingPageIds),
+              notInArray(formFields.id, existingFieldIds),
+            ),
+          );
+      }
+
+      // 6. Handle stores (these can be safely deleted since they're not linked to submissions)
+      await tx.delete(formStores).where(eq(formStores.formId, formId));
+
+      if (stores && stores.length > 0) {
+        for (const store of stores) {
+          const [newStore] = await tx
+            .insert(formStores)
+            .values({
+              formId: updatedForm.id,
+              name: store.name,
+              description: store.description,
+            })
+            .returning();
+
+          for (const item of store.items) {
+            await tx.insert(storeItems).values({
+              isInfinite: item.infinite,
+              storeId: newStore.id,
+              price: item.price,
+              quantity: item.quantity,
+              images: item.images,
+              name: item.name,
+              description: item.description,
+            });
+          }
+        }
+      }
+
+      // 7. Log Activity
+      await tx.insert(activities).values({
+        userId: updatedForm.createdBy,
+        formId: updatedForm.id,
+        type: "form_updated",
+        description: `Form '${updatedForm.title}' updated.`,
+        resourceType: "form",
+        resourceId: updatedForm.id,
+        // createdAt: new Date(),
+        metadata: { title: updatedForm.title, slug: updatedForm.slug },
+      });
+
+      return updatedForm;
+    } catch (e: any) {
+      console.error("Error in updateForm transaction:", e);
+      await tx.rollback();
+      throw new Error(e.message || "Failed to update form");
     }
-
-    const [updatedForm] = await tx
-      .update(forms)
-      .set({
-        ...payload,
-        updatedAt: new Date(),
-        // If status changes to 'published', set publishedAt
-        publishedAt:
-          payload.status === "published" && !existingForm.publishedAt
-            ? new Date()
-            : existingForm.publishedAt,
-      })
-      .where(eq(forms.id, formId))
-      .returning();
-
-    if (!updatedForm) {
-      tx.rollback();
-      throw new Error("Failed to update form.");
-    }
-
-    await tx.insert(activities).values({
-      id: uuidv4(),
-      userId: updaterId,
-      formId: updatedForm.id,
-      type: "form_updated",
-      description: `Form '${updatedForm.title}' updated.`,
-      resourceType: "form",
-      resourceId: updatedForm.id,
-      createdAt: new Date(),
-      metadata: {
-        title: updatedForm.title,
-        slug: updatedForm.slug,
-        changes: payload,
-      },
-    });
-
-    return updatedForm;
   });
+}; // Helper function to check if a string is a valid UUID
+function isValidUUID(str: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
+// Helper function to clean timestamp fields from an object
+function cleanTimestampFields(obj: any): any {
+  const cleaned = { ...obj };
+  delete cleaned.createdAt;
+  delete cleaned.updatedAt;
+  return cleaned;
+}
 export async function deleteForm(formId: string, deleterId: string) {
   return db.transaction(async (tx) => {
     const [existingForm] = await tx
