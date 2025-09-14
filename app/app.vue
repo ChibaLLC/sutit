@@ -4,6 +4,7 @@ import "vue-sonner/style.css";
 <template>
   <div>
     <NuxtRouteAnnouncer />
+    <NuxtLoadingIndicator />
     <Toaster />
     <NuxtLayout>
       <NuxtPage />

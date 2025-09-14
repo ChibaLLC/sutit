@@ -8,23 +8,44 @@ import type {
   Store,
   StoreItem,
 } from "~~/shared/types";
-
+const props = defineProps<{
+  form?: FormSchema;
+}>();
 const previewMode = ref(false);
 const isDark = ref(false);
-const form = ref<FormSchema>(<FormSchema>{
-  title: "",
-  description: "",
-  pages: [
-    {
-      title: "Page 1",
-      description: "",
-      fields: [] as FormField[],
-      orderIndex: 1,
-    },
-  ] as PageSchema[],
-  stores: [] as Store[],
-  tags: [] as string[],
-});
+const form = ref<FormSchema>(
+  props.form
+    ? props.form
+    : <FormSchema>{
+        title: "",
+        description: "",
+        pages: [
+          {
+            title: "Page 1",
+            description: "",
+            fields: [] as FormField[],
+            orderIndex: 1,
+          },
+        ] as PageSchema[],
+        stores: [] as Store[],
+        tags: [] as string[],
+        price: 0,
+        status: "draft", // could be "draft" | "published" depending on your app
+        requireMerch: false,
+        allowGroups: false,
+        calculateTat: false,
+        groupAmountPayable: 0,
+        groupMemberLimit: 0,
+        infoPromptMessage: "",
+        allowMultipleSubmissions: false,
+        allowRegistrationReuse: false,
+        submissionLimit: null,
+        publishedAt: "",
+        isPublic: false,
+        requiresLogin: false,
+        slug: "",
+      },
+);
 const emits = defineEmits<{
   preview: [form: FormSchema];
   "go-back": [];

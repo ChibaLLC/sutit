@@ -35,7 +35,6 @@ const shareSettings = ref<ShareSettings>({
   hasExpiration: false,
   expirationDate: "",
 });
-const shareTab = ref("link");
 const embedOptions = ref<EmbedOptions>({
   width: "100%",
   height: "600px",
@@ -59,7 +58,7 @@ const sharePlatforms = [
   },
 ];
 const shareUrl = ref(
-  props.form ? `${window.location.origin}/${props.form.slug}` : "",
+  props.form ? `${window.location.origin}/forms/${props.form.slug}` : "",
 );
 
 const embedCode = computed(() => {
