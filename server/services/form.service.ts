@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm";
 import {
   activities,
+  formAnalytics,
   formFields,
   formGroupMemberPayments,
   formGroupMembers,
@@ -159,6 +160,14 @@ export const createForm = async (payload: FormSchema) => {
         createdAt: new Date(),
         metadata: { title: newForm.title, slug: newForm.slug },
       });
+      //
+      // await tx.insert(formAnalytics).values({
+      //   formId: newForm.id,
+      //   analyticsDate: new Date(),
+      //   views: 0,
+      //   uniqueViews: 0,
+      //   submissions: 0,
+      // });
 
       return newForm;
     } catch (e: any) {
@@ -446,13 +455,6 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
-// Helper function to clean timestamp fields from an object
-function cleanTimestampFields(obj: any): any {
-  const cleaned = { ...obj };
-  delete cleaned.createdAt;
-  delete cleaned.updatedAt;
-  return cleaned;
-}
 export async function deleteForm(formId: string, deleterId: string) {
   return db.transaction(async (tx) => {
     const [existingForm] = await tx

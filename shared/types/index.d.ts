@@ -1,4 +1,12 @@
-import type { forms, formSubmissions, user } from "~~/server/db/schema";
+import type {
+  fieldResponses,
+  formFields,
+  forms,
+  formSubmissions,
+  storeItems,
+  storeResponses,
+  user,
+} from "~~/server/db/schema";
 
 export interface FormField {
   id: string;
@@ -104,7 +112,17 @@ export interface SubmissionData {
 export type User = typeof user.$inferSelect;
 export type Submission = typeof formSubmissions.$inferSelect;
 export type Form = typeof forms.$inferSelect;
+export type FormFieldResponse = typeof fieldResponses.$inferSelect;
+export type FormStoreResponse = typeof storeResponses.$inferSelect;
+export type FormField = typeof formFields.$inferSelect;
+export type FormStoreItem = typeof storeItems.$inferSelect;
 
+export type FormSubmission = Submission & {
+  form: Form;
+  submitter: User;
+  responses: (FormFieldResponse & { field: FormField })[];
+  storeResponses: (FormStoreResponse & { item: FormStoreItem })[];
+};
 export type StkCallback = {
   MerchantRequestID: string;
   CheckoutRequestID: string;

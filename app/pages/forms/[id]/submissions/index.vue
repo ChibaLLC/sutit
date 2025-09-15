@@ -17,11 +17,15 @@ import {
   CheckCircle,
   Clock,
   X,
+  Loader,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 
 const route = useRoute();
 const acceptingResponses = ref(true);
+const loading = ref({
+  downloadExcel: false,
+});
 
 const filters = ref({
   search: "",
@@ -272,6 +276,35 @@ const formatFieldValue = (value, fieldType) => {
       return value;
   }
 };
+
+const downloadExcel = async () => {
+  loading.value.downloadExcel = true;
+  try {
+    const res = await $fetch(
+      `/api/forms/${route.params.id}/submissions/excel`,
+      {
+        method: "GET",
+        responseType: "blob",
+      },
+    );
+
+    const blob = new Blob([res], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Submissions.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e: any) {
+  } finally {
+    loading.value.downloadExcel = false;
+  }
+};
 </script>
 
 <template>
@@ -312,7 +345,14 @@ const formatFieldValue = (value, fieldType) => {
             </div>
 
             <!-- Export buttons -->
-            <Button size="sm" variant="outline" class="gap-2">
+            <Button
+              @click.prevent="downloadExcel()"
+              size="sm"
+              variant="outline"
+              class="gap-2"
+              :disabled="loading.downloadExcel"
+            >
+              <Loader v-if="loading.downloadExcel" />
               <FileSpreadsheet class="w-4 h-4" />
               <span class="hidden sm:inline">Excel</span>
             </Button>
