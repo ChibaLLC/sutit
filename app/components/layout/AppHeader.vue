@@ -32,21 +32,43 @@
               >
                 SUTIT FORMS
               </span>
-              <span
-                class="text-xs text-muted-foreground/70 -mt-1 hidden sm:block"
-              >
-                Form Builder Pro
-              </span>
             </div>
           </NuxtLink>
 
           <!-- Desktop Navigation -->
-          <nav
-            v-if="authStore.isAuthenticated"
-            class="hidden lg:flex items-center space-x-1"
-          >
+          <nav class="hidden lg:flex items-center space-x-1">
+            <NuxtLink
+              to="/"
+              class="relative px-4 py-2 text-sm font-medium transition-all duration-300 hover:text-primary group rounded-lg"
+            >
+              <span class="relative z-10">Home</span>
+              <!-- Hover background with slide effect -->
+              <span
+                class="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 scale-95 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100"
+              ></span>
+              <!-- Active indicator -->
+              <span
+                class="absolute bottom-0 left-1/2 h-0.5 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2 rounded-full"
+              ></span>
+            </NuxtLink>
             <NuxtLink
               v-for="item in navItems"
+              :key="item.href"
+              :to="item.href"
+              class="relative px-4 py-2 text-sm font-medium transition-all duration-300 hover:text-primary group rounded-lg"
+            >
+              <span class="relative z-10">{{ item.label }}</span>
+              <!-- Hover background with slide effect -->
+              <span
+                class="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 scale-95 opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100"
+              ></span>
+              <!-- Active indicator -->
+              <span
+                class="absolute bottom-0 left-1/2 h-0.5 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2 rounded-full"
+              ></span>
+            </NuxtLink>
+            <NuxtLink
+              v-for="item in navs"
               :key="item.href"
               :to="item.href"
               class="relative px-4 py-2 text-sm font-medium transition-all duration-300 hover:text-primary group rounded-lg"
@@ -446,6 +468,10 @@ const toggleDark = useToggle(isDark);
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Forms", href: "/forms" },
+];
+const navs = [
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const logout = async () => {
