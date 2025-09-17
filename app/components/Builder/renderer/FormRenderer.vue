@@ -211,8 +211,7 @@
                           field.type === 'text' ||
                           field.type === 'email' ||
                           field.type === 'phone' ||
-                          field.type === 'date' ||
-                          field.type === 'file'
+                          field.type === 'date'
                         "
                         class="space-y-3"
                       >
@@ -236,6 +235,102 @@
                           :required="field.required"
                           class="h-12 transition-all duration-200"
                         />
+                      </div>
+                      <!-- File Input -->
+                      <div v-else-if="field.type === 'file'" class="space-y-3">
+                        <Label
+                          :for="field.id"
+                          class="text-sm font-semibold flex items-center gap-2"
+                        >
+                          {{ field.label }}
+                          <Badge
+                            v-if="field.required"
+                            variant="destructive"
+                            class="text-xs px-1.5 py-0.5"
+                          >
+                            Required
+                          </Badge>
+                        </Label>
+
+                        <div class="space-y-2">
+                          <Input
+                            :id="field.id"
+                            type="file"
+                            :multiple="field.multiple || false"
+                            :required="field.required"
+                            :accept="field.accept || '*/*'"
+                            class="h-12 transition-all duration-200 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                            @change="
+                              handleFileChange(
+                                $event,
+                                field.id,
+                                field.multiple || false,
+                              )
+                            "
+                          />
+
+                          <!-- File Preview -->
+                          <div
+                            v-if="getSelectedFiles(field.id).length > 0"
+                            class="space-y-2"
+                          >
+                            <p class="text-sm text-muted-foreground">
+                              Selected files:
+                            </p>
+                            <div class="space-y-1">
+                              <div
+                                v-for="(file, index) in getSelectedFiles(
+                                  field.id,
+                                )"
+                                :key="index"
+                                class="flex items-center justify-between p-2 bg-muted rounded-md"
+                              >
+                                <div
+                                  class="flex items-center gap-2 flex-1 min-w-0"
+                                >
+                                  <div
+                                    class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center shrink-0"
+                                  >
+                                    <File class="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium truncate">
+                                      {{ file.name }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                      {{ formatFileSize(file.size) }}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  @click="
+                                    removeFile(
+                                      field.id,
+                                      index,
+                                      field.multiple || false,
+                                    )
+                                  "
+                                  class="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <X class="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Upload Instructions -->
+                          <p class="text-sm text-muted-foreground">
+                            {{
+                              field.multiple
+                                ? "Select one or more files"
+                                : "Select a file"
+                            }}
+                            {{ field.accept ? `(${field.accept})` : "" }}
+                          </p>
+                        </div>
                       </div>
 
                       <!-- Textarea -->
@@ -890,6 +985,7 @@ import {
   Plus,
   Minus,
 } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 import type { FormSchema, FormField } from "~~/shared/types";
 
 interface Props {
@@ -1064,7 +1160,76 @@ const handleNext = () => {
     handleSubmit();
   }
 };
+const handleFileChange = async (
+  event: Event,
+  fieldId: string,
+  multiple = false,
+) => {
+  try {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
 
+    if (!files || files.length === 0) {
+      delete formData[fieldId];
+      return;
+    }
+    const formDataUpload = createFormData({
+      file: files[0],
+    });
+    const { data } = await $fetch(`/api/uploads`, {
+      method: "POST",
+      body: formDataUpload,
+    });
+    formData[fieldId] = data?.path;
+  } catch (e: any) {
+    toast.error("An error occurred!!");
+  }
+};
+const getSelectedFiles = (fieldId: string): File[] => {
+  const value = formData[fieldId];
+  if (!value) return [];
+
+  if (value instanceof FileList) {
+    return Array.from(value);
+  } else if (value instanceof File) {
+    return [value];
+  } else if (
+    Array.isArray(value) &&
+    value.every((item) => item instanceof File)
+  ) {
+    return value;
+  }
+
+  return [];
+};
+
+const removeFile = (fieldId: string, index: number, multiple: boolean) => {
+  const files = getSelectedFiles(fieldId);
+
+  if (multiple) {
+    const newFiles = files.filter((_, i) => i !== index);
+    if (newFiles.length === 0) {
+      delete formData[fieldId];
+    } else {
+      // Create a new FileList-like structure
+      const dt = new DataTransfer();
+      newFiles.forEach((file) => dt.items.add(file));
+      formData[fieldId] = dt.files;
+    }
+  } else {
+    delete formData[fieldId];
+  }
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 const handlePrevious = () => {
   if (currentStep.value > 0) {
     currentStep.value--;

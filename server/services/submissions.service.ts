@@ -8,6 +8,7 @@ import {
   storeResponses,
 } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { getFormById } from "./form.service";
 
 export const submitForm = async (
   formId: string,
@@ -16,11 +17,7 @@ export const submitForm = async (
 ) => {
   return db.transaction(async (tx) => {
     // 1. Get form (to read base price)
-    const [form] = await tx
-      .select()
-      .from(forms)
-      .where(eq(forms.id, formId))
-      .limit(1);
+    const form = await getFormById(formId);
 
     if (!form) {
       throw new Error(`Form not found: ${formId}`);
@@ -30,7 +27,7 @@ export const submitForm = async (
     const [submission] = await tx
       .insert(formSubmissions)
       .values({
-        formId,
+        formId: form.id,
         submitterId,
         status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
         metadata: {

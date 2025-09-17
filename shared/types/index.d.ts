@@ -108,6 +108,7 @@ export interface SubmissionData {
       storeId: string;
     }
   >;
+  schema: FormSchema;
 }
 export type User = typeof user.$inferSelect;
 export type Submission = typeof formSubmissions.$inferSelect;

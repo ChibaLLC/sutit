@@ -4,7 +4,9 @@ import "vue-sonner/style.css";
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator
+      color="repeating-linear-gradient(to right, #6366f1, #8b5cf6, #ec4899)"
+    />
     <Toaster />
     <NuxtLayout>
       <NuxtPage />
