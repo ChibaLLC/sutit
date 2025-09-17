@@ -5,5 +5,6 @@
     <div>
       <slot />
     </div>
+    <LazyLayoutAppFooter />
   </div>
 </template>

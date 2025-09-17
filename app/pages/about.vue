@@ -1,3 +1,82 @@
+<script setup lang="ts">
+import {
+  ArrowRight,
+  Target,
+  Heart,
+  Lightbulb,
+  Shield,
+  Users,
+  Users2,
+  Zap,
+  Globe,
+  User,
+  Rocket,
+  Github,
+  Linkedin,
+  Twitter,
+  Plus,
+  Coffee,
+  MapPin,
+  Banknote,
+  GraduationCap,
+  Calendar,
+  Laptop,
+} from "lucide-vue-next";
+const members = [
+  {
+    name: "",
+    description: "",
+    role: "",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "",
+    description: "",
+    role: "",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "",
+    description: "",
+    role: "",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "Kemboi Elvis",
+    description: "Fullstack Engineer",
+    role: "Software Engineer",
+    links: [
+      {
+        link: "https://github.com/kemboi22",
+        icon: Github,
+      },
+      {
+        link: "https://linkedin.com/in/elvis-kemboi-18a55924b/",
+        icon: Linkedin,
+      },
+      {
+        link: "https://x.com/kemboielvis22",
+        icon: Twitter,
+      },
+    ],
+  },
+];
+</script>
 <template>
   <div>
     <!-- Story Section -->
@@ -28,7 +107,7 @@
               >
                 <p>
                   Founded in 2020 during a global shift to digital workflows,
-                  SUUTIT Forms was born from a simple yet powerful observation:
+                  SUTIT Forms was born from a simple yet powerful observation:
                   existing form builders forced users to choose between
                   simplicity and functionality.
                 </p>
@@ -253,7 +332,7 @@
               class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight"
             >
               Meet the People
-              <span class="text-primary">Behind SUUTIT</span>
+              <span class="text-primary">Behind SUTIT</span>
             </h2>
             <p
               class="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
@@ -264,8 +343,9 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Team Member 1 -->
             <Card
+              v-for="member in members"
+              :key="member.name"
               class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
             >
               <div class="relative mb-6">
@@ -282,228 +362,24 @@
                   ></div>
                 </div>
               </div>
-              <h3 class="text-xl font-bold mb-2 text-foreground">Sarah Chen</h3>
-              <p class="text-primary font-medium text-sm mb-3">
-                CEO & Co-Founder
-              </p>
-              <p class="text-muted-foreground text-sm leading-relaxed mb-4">
-                Former product design lead at Figma with 10+ years in UX.
-                Passionate about democratizing design tools.
-              </p>
-              <div class="flex justify-center gap-3">
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Github class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Linkedin class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Twitter class="w-4 h-4" />
-                </a>
-              </div>
-            </Card>
-
-            <!-- Team Member 2 -->
-            <Card
-              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
-            >
-              <div class="relative mb-6">
-                <div
-                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-green-500/20 to-green-600/20 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                >
-                  <User class="w-12 h-12 text-green-600" />
-                </div>
-                <div
-                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 border-4 border-background flex items-center justify-center"
-                >
-                  <div
-                    class="w-2 h-2 rounded-full bg-white animate-pulse"
-                  ></div>
-                </div>
-              </div>
               <h3 class="text-xl font-bold mb-2 text-foreground">
-                Michael Rodriguez
+                {{ member.name }}
               </h3>
               <p class="text-primary font-medium text-sm mb-3">
-                CTO & Co-Founder
+                {{ member.role }}
               </p>
               <p class="text-muted-foreground text-sm leading-relaxed mb-4">
-                Full-stack engineer and former tech lead at Stripe. Expert in
-                scaling platforms to millions of users worldwide.
+                {{ member.description }}
               </p>
               <div class="flex justify-center gap-3">
                 <a
-                  href="#"
+                  v-for="link in member.links"
+                  :key="link.link"
+                  :href="link.link"
+                  target="_blank"
                   class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
                 >
-                  <Github class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Linkedin class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Twitter class="w-4 h-4" />
-                </a>
-              </div>
-            </Card>
-
-            <!-- Team Member 3 -->
-            <Card
-              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
-            >
-              <div class="relative mb-6">
-                <div
-                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-purple-500/20 to-purple-600/20 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                >
-                  <User class="w-12 h-12 text-purple-600" />
-                </div>
-                <div
-                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 border-4 border-background flex items-center justify-center"
-                >
-                  <div
-                    class="w-2 h-2 rounded-full bg-white animate-pulse"
-                  ></div>
-                </div>
-              </div>
-              <h3 class="text-xl font-bold mb-2 text-foreground">
-                Emily Thompson
-              </h3>
-              <p class="text-primary font-medium text-sm mb-3">
-                Head of Design
-              </p>
-              <p class="text-muted-foreground text-sm leading-relaxed mb-4">
-                Design systems expert from Airbnb. Focused on creating intuitive
-                experiences that scale beautifully.
-              </p>
-              <div class="flex justify-center gap-3">
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Github class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Linkedin class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Twitter class="w-4 h-4" />
-                </a>
-              </div>
-            </Card>
-
-            <!-- Team Member 4 -->
-            <Card
-              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
-            >
-              <div class="relative mb-6">
-                <div
-                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-orange-500/20 to-orange-600/20 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                >
-                  <User class="w-12 h-12 text-orange-600" />
-                </div>
-                <div
-                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 border-4 border-background flex items-center justify-center"
-                >
-                  <div
-                    class="w-2 h-2 rounded-full bg-white animate-pulse"
-                  ></div>
-                </div>
-              </div>
-              <h3 class="text-xl font-bold mb-2 text-foreground">David Kim</h3>
-              <p class="text-primary font-medium text-sm mb-3">
-                VP of Engineering
-              </p>
-              <p class="text-muted-foreground text-sm leading-relaxed mb-4">
-                Infrastructure specialist from Google Cloud. Ensures our
-                platform handles millions of form submissions daily.
-              </p>
-              <div class="flex justify-center gap-3">
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Github class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Linkedin class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Twitter class="w-4 h-4" />
-                </a>
-              </div>
-            </Card>
-
-            <!-- Team Member 5 -->
-            <Card
-              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
-            >
-              <div class="relative mb-6">
-                <div
-                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-pink-500/20 to-pink-600/20 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                >
-                  <User class="w-12 h-12 text-pink-600" />
-                </div>
-                <div
-                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 border-4 border-background flex items-center justify-center"
-                >
-                  <div
-                    class="w-2 h-2 rounded-full bg-white animate-pulse"
-                  ></div>
-                </div>
-              </div>
-              <h3 class="text-xl font-bold mb-2 text-foreground">Lisa Zhang</h3>
-              <p class="text-primary font-medium text-sm mb-3">
-                Head of Customer Success
-              </p>
-              <p class="text-muted-foreground text-sm leading-relaxed mb-4">
-                Customer experience leader from Intercom. Dedicated to ensuring
-                every user achieves their goals with SUUTIT.
-              </p>
-              <div class="flex justify-center gap-3">
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Github class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Linkedin class="w-4 h-4" />
-                </a>
-                <a
-                  href="#"
-                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-                >
-                  <Twitter class="w-4 h-4" />
+                  <component :is="link.icon" class="w-4 h-4" />
                 </a>
               </div>
             </Card>
@@ -548,7 +424,7 @@
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
             >
               <Coffee class="w-4 h-4" />
-              Life at SUUTIT
+              Life at SUTIT
             </div>
             <h2
               class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight"
@@ -596,7 +472,7 @@
                 </h3>
               </div>
               <p class="text-muted-foreground text-sm">
-                Everyone gets meaningful equity. When SUUTIT succeeds, we all
+                Everyone gets meaningful equity. When SUTIT succeeds, we all
                 succeed together.
               </p>
             </Card>
@@ -703,7 +579,7 @@
             <p
               class="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
             >
-              Join over 50,000 teams who trust SUUTIT Forms for their data
+              Join over 50,000 teams who trust SUTIT Forms for their data
               collection needs. Start building beautiful forms today.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -711,7 +587,7 @@
                 size="lg"
                 class="group hover:shadow-xl transition-all duration-300"
               >
-                Start Free Trial
+                Start Free
                 <ArrowRight
                   class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
                 />
@@ -725,219 +601,9 @@
                 Schedule Demo
               </Button>
             </div>
-            <div
-              class="flex items-center justify-center gap-6 text-sm text-muted-foreground"
-            >
-              <div class="flex items-center gap-2">
-                <CheckCircle class="w-4 h-4 text-green-600" />
-                <span>14-day free trial</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <CheckCircle class="w-4 h-4 text-green-600" />
-                <span>No credit card required</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <CheckCircle class="w-4 h-4 text-green-600" />
-                <span>Cancel anytime</span>
-              </div>
-            </div>
           </div>
         </Card>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="py-16 bg-muted/30 border-t">
-      <div class="container mx-auto px-4">
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12"
-        >
-          <div class="lg:col-span-1">
-            <div class="flex items-center gap-3 mb-6">
-              <div
-                class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-lg"
-              >
-                <div
-                  class="flex h-full w-full items-center justify-center text-white font-bold"
-                >
-                  S
-                </div>
-              </div>
-              <div class="flex flex-col">
-                <span
-                  class="text-xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
-                  style="
-                    font-family:
-                      &quot;Inter&quot;,
-                      &quot;SF Pro Display&quot;,
-                      -apple-system,
-                      sans-serif;
-                    font-variation-settings: &quot;wght&quot; 900;
-                  "
-                >
-                  SUUTIT
-                </span>
-                <span class="text-xs text-muted-foreground font-medium">
-                  FORMS
-                </span>
-              </div>
-            </div>
-            <p class="text-sm text-muted-foreground leading-relaxed mb-6">
-              The most powerful and intuitive form builder for modern teams.
-              Transform how you collect data.
-            </p>
-            <div class="flex gap-3">
-              <a
-                href="#"
-                class="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-              >
-                <Github class="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                class="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-              >
-                <Twitter class="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                class="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
-              >
-                <Linkedin class="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Product</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Features</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Pricing</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Templates</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Integrations</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors">API</a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Company</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >About</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Blog</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Careers</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Contact</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Press</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Support</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Help Center</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Documentation</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Status</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Privacy</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Terms</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div
-          class="mt-12 pt-8 border-t text-center text-sm text-muted-foreground"
-        >
-          <p>
-            &copy; 2025 SUUTIT Forms. All rights reserved. Made with ❤️ around
-            the world.
-          </p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  ArrowRight,
-  PlayCircle,
-  Sparkles,
-  Target,
-  Heart,
-  Lightbulb,
-  Shield,
-  Users,
-  Users2,
-  Zap,
-  Globe,
-  User,
-  Rocket,
-  Github,
-  Linkedin,
-  Twitter,
-  Plus,
-  Coffee,
-  MapPin,
-  Banknote,
-  GraduationCap,
-  Calendar,
-  Laptop,
-  CheckCircle,
-} from "lucide-vue-next";
-</script>

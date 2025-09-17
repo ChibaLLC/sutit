@@ -34,7 +34,7 @@
           <p
             class="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed"
           >
-            Have questions about SUUTIT Forms? Need help getting started? Our
+            Have questions about SUTIT Forms? Need help getting started? Our
             team is here to help you build amazing forms.
           </p>
 
@@ -50,7 +50,9 @@
                   <Phone class="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 class="font-semibold text-foreground mb-1">Call Us</h3>
-                <p class="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                <p class="text-sm text-muted-foreground">
+                  +2547758673552 / +254718240819
+                </p>
               </div>
             </Card>
 
@@ -64,9 +66,7 @@
                   <Mail class="w-6 h-6 text-green-600" />
                 </div>
                 <h3 class="font-semibold text-foreground mb-1">Email Us</h3>
-                <p class="text-sm text-muted-foreground">
-                  hello@suutitforms.com
-                </p>
+                <p class="text-sm text-muted-foreground">info@sutit.org</p>
               </div>
             </Card>
 
@@ -81,7 +81,7 @@
                 </div>
                 <h3 class="font-semibold text-foreground mb-1">Live Chat</h3>
                 <p class="text-sm text-muted-foreground">
-                  Available 9AM-6PM EST
+                  Available 9AM-6PM EAT
                 </p>
               </div>
             </Card>
@@ -268,25 +268,7 @@
                       />
                     </span>
                     <span v-else class="flex items-center">
-                      <svg
-                        class="animate-spin -ml-1 mr-2 h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          class="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          stroke-width="4"
-                        ></circle>
-                        <path
-                          class="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
+                      <Loader2 class="animate-spin -ml-1 mr-2 h-4 w-4" />
                       Sending...
                     </span>
                   </Button>
@@ -344,10 +326,10 @@
                     <div>
                       <h4 class="font-semibold text-foreground mb-1">Phone</h4>
                       <p class="text-muted-foreground text-sm">
-                        +1 (555) 123-4567
+                        +2547758673552 / 254718240819
                       </p>
                       <p class="text-xs text-muted-foreground mt-1">
-                        Mon-Fri 9AM-6PM EST
+                        Mon-Fri 9AM-6PM EAT
                       </p>
                     </div>
                   </div>
@@ -361,7 +343,7 @@
                     <div>
                       <h4 class="font-semibold text-foreground mb-1">Email</h4>
                       <p class="text-muted-foreground text-sm">
-                        hello@suutitforms.com
+                        info@sutit.org
                       </p>
                       <p class="text-xs text-muted-foreground mt-1">
                         We respond within 24 hours
@@ -383,7 +365,7 @@
                         24/7 for critical issues
                       </p>
                       <p class="text-xs text-muted-foreground mt-1">
-                        General support: Mon-Fri 9AM-6PM EST
+                        General support: Mon-Fri 9AM-6PM EAT
                       </p>
                     </div>
                   </div>
@@ -608,7 +590,7 @@
               Frequently Asked Questions
             </h2>
             <p class="text-lg text-muted-foreground">
-              Quick answers to common questions about SUUTIT Forms
+              Quick answers to common questions about SUTIT Forms
             </p>
           </div>
 
@@ -659,134 +641,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="py-16 bg-muted/30 border-t">
-      <div class="container mx-auto px-4">
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12"
-        >
-          <div class="lg:col-span-1">
-            <div class="flex items-center gap-3 mb-6">
-              <div
-                class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-lg"
-              >
-                <div
-                  class="flex h-full w-full items-center justify-center text-white font-bold"
-                >
-                  S
-                </div>
-              </div>
-              <div class="flex flex-col">
-                <span
-                  class="text-xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
-                  style="
-                    font-family:
-                      &quot;Inter&quot;,
-                      &quot;SF Pro Display&quot;,
-                      -apple-system,
-                      sans-serif;
-                    font-variation-settings: &quot;wght&quot; 900;
-                  "
-                >
-                  SUUTIT
-                </span>
-                <span class="text-xs text-muted-foreground font-medium">
-                  FORMS
-                </span>
-              </div>
-            </div>
-            <p class="text-sm text-muted-foreground leading-relaxed mb-6">
-              The most powerful and intuitive form builder for modern teams.
-            </p>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Product</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Features</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Pricing</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Templates</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Integrations</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Support</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Help Center</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Documentation</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >API Reference</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Status</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 class="font-semibold mb-6 text-foreground">Company</h3>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >About</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Blog</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Careers</a
-                >
-              </li>
-              <li>
-                <a href="#" class="hover:text-primary transition-colors"
-                  >Press</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div
-          class="mt-12 pt-8 border-t text-center text-sm text-muted-foreground"
-        >
-          <p>&copy; 2025 SUUTIT Forms. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -810,6 +664,7 @@ import {
   HelpCircle,
   Users,
   ChevronDown,
+  Loader2,
 } from "lucide-vue-next";
 
 // Form state
@@ -831,7 +686,7 @@ const openFaq = ref<number | null>(null);
 // FAQ data
 const faqs = ref([
   {
-    question: "How do I get started with SUUTIT Forms?",
+    question: "How do I get started with SUTIT Forms?",
     answer:
       "Getting started is easy! Simply sign up for a free account, choose a template or start from scratch, and use our drag-and-drop builder to create your first form. You can have a form up and running in minutes.",
   },
@@ -841,7 +696,7 @@ const faqs = ref([
       "Our free plan includes up to 100 form submissions per month, basic form builder, email notifications, and access to our template library. You can upgrade anytime for more features and higher limits.",
   },
   {
-    question: "Can I integrate SUUTIT Forms with other tools?",
+    question: "Can I integrate SUTIT Forms with other tools?",
     answer:
       "Absolutely! We offer integrations with popular tools like Zapier, Slack, Google Sheets, Mailchimp, and many more. You can also use our API to build custom integrations.",
   },
@@ -853,7 +708,7 @@ const faqs = ref([
   {
     question: "Can I customize the look of my forms?",
     answer:
-      "Yes! SUUTIT Forms offers extensive customization options including themes, colors, fonts, custom CSS, and branding options. You can make your forms match your brand perfectly.",
+      "Yes! SUTIT Forms offers extensive customization options including themes, colors, fonts, custom CSS, and branding options. You can make your forms match your brand perfectly.",
   },
   {
     question: "What kind of support do you offer?",
