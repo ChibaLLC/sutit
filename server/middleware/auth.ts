@@ -1,1 +1,1 @@
-export default defineNodeMiddleware(() => {});
+export default eventHandler(() => {});
