@@ -16,10 +16,11 @@ export async function callStkPush(
 	description: string,
 	accountNumber: string,
 ) {
+	const phone = `254${phone_number.toString().slice(-9)}`;
 	const response = await app
 		.stkPush()
 		.amount(amount)
-		.phoneNumber(phone_number)
+		.phoneNumber(parseInt(phone))
 		.description(description)
 		.shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
 		.accountNumber(accountNumber)
