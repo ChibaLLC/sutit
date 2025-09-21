@@ -24,9 +24,9 @@ import {
 } from "lucide-vue-next";
 const members = [
   {
-    name: "",
+    name: "Saxo Munene",
     description: "",
-    role: "",
+    role: "Founding Partner",
     links: [
       {
         link: "",
@@ -35,9 +35,9 @@ const members = [
     ],
   },
   {
-    name: "",
+    name: "Bosire Allan",
     description: "",
-    role: "",
+    role: "Software Engineer",
     links: [
       {
         link: "",
@@ -46,9 +46,9 @@ const members = [
     ],
   },
   {
-    name: "",
+    name: "Antoney Sydney",
     description: "",
-    role: "",
+    role: "Founding Partner",
     links: [
       {
         link: "",
