@@ -122,13 +122,16 @@ const handleConfirmVerification = () => {
 </script>
 <template>
   <div class="min-h-screen bg-background p-6">
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div v-if="!group?.data">Not Found</div>
+
+    <div v-else class="max-w-7xl mx-auto space-y-6">
       <!-- Header -->
       <div class="flex items-center gap-4">
         <Button variant="outline" size="sm" @click="handleGoBack" class="gap-2">
           <ArrowLeft class="w-4 h-4" />
           Back to Dashboard
         </Button>
+        <br>
         <div class="flex-1">
           <h1 class="text-3xl font-bold text-foreground">
             {{ group.data?.groupName }}
@@ -199,7 +202,7 @@ const handleConfirmVerification = () => {
           </CardHeader>
           <CardContent>
             <div class="text-2xl font-bold text-foreground">
-              ${{ calculatedRevenue }}
+              Ksh {{ calculatedRevenue }}
             </div>
             <p class="text-xs text-muted-foreground">total collected</p>
           </CardContent>

@@ -149,7 +149,7 @@ const toggleShareModal = (form?: FormSchema) => {
                 Total Revenue
               </p>
               <p class="text-3xl font-bold text-foreground">
-                ${{ totalRevenue }}
+                Ksh {{ totalRevenue }}
               </p>
             </div>
             <div
@@ -381,7 +381,7 @@ const toggleShareModal = (form?: FormSchema) => {
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Price</span>
               <span class="font-semibold text-foreground"
-                >${{ parseFloat(form.price).toFixed(2) }}</span
+                >Ksh {{ parseFloat(form.price).toFixed(2) }}</span
               >
             </div>
 

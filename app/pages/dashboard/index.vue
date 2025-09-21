@@ -204,7 +204,7 @@ const authStore = useAuthStore();
       <!-- Recent Forms and Events with enhanced cards -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Recent Forms -->
-        <Card class="overflow-hidden">
+        <Card class="overflow-hidden py-0">
           <div class="p-6 border-b border-border bg-muted/30">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-foreground">
@@ -223,10 +223,11 @@ const authStore = useAuthStore();
             </div>
           </div>
           <div class="p-6 space-y-4">
-            <div
+            <NuxtLink
               v-for="form in forms.data"
               :key="form.id"
               class="group flex items-center justify-between p-4 bg-background rounded-lg border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 cursor-pointer"
+              :to="`/forms/${form.id}`"
             >
               <div class="flex items-center gap-4">
                 <div class="p-2 bg-primary/10 rounded-lg">
@@ -244,12 +245,12 @@ const authStore = useAuthStore();
                 </div>
               </div>
               <Badge variant="outline">{{ form.status }}</Badge>
-            </div>
+            </NuxtLink>
           </div>
         </Card>
 
         <!-- Recent Events -->
-        <Card class="overflow-hidden">
+        <Card class="overflow-hidden py-0">
           <div class="p-6 border-b border-border bg-muted/30">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-foreground">

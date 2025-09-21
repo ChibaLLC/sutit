@@ -14,6 +14,7 @@ import {
   Info,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
+import { buttonVariants } from "~/components/ui/button";
 
 const route = useRoute();
 const router = useRouter();
@@ -115,6 +116,11 @@ const handleSubmit = async () => {
       headers: {
         ...(await authHeaders()),
       },
+      onResponse({ response }) {
+        if (response.status == 401) {
+          navigateTo(`/auth/login?redirect=/forms/${route.params.id}/group`);
+        }
+      },
     });
 
     if (response.success && response.data) {
@@ -172,36 +178,35 @@ const checkPayment = async (
   }
   throw new Error("Payment not completed in time. Please try again later.");
 };
-
-const goBack = () => {
-  router.back();
-};
 </script>
 
 <template>
   <div class="min-h-screen bg-background">
     <!-- Header -->
-    <div class="border-b bg-card mt-2">
-      <div class="container mx-auto px-4 py-3">
-        <div class="flex items-center gap-4 mb-2">
-          <Button variant="ghost" size="sm" @click="goBack">
-            <ArrowLeft class="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <div class="h-6 w-px bg-border" />
-          <div class="flex items-center gap-2">
-            <Users class="w-5 h-5 text-primary" />
-            <span class="text-sm text-muted-foreground"
-              >Group Registration</span
-            >
-          </div>
-        </div>
-        <h1 class="text-3xl font-bold text-foreground">Create Group</h1>
-        <p class="text-muted-foreground mt-1">{{ form?.title }}</p>
-      </div>
-    </div>
 
     <div class="container mx-auto px-4 py-8 max-w-7xl">
+      <Card class="mb-4">
+        <CardContent class="space-y-2">
+          <h1 class="text-3xl font-bold text-foreground">Create Group</h1>
+          <p class="text-muted-foreground mt-1">{{ form?.title }}</p>
+          <div class="flex items-center gap-4 mb-2">
+            <NuxtLink
+              :class="buttonVariants({ variant: 'destructive', size: 'sm' })"
+              to="/forms"
+            >
+              <ArrowLeft class="w-4 h-4 mr-2" />
+              Back
+            </NuxtLink>
+            <div class="h-6 w-px bg-border" />
+            <div class="flex items-center gap-2">
+              <Users class="w-5 h-5 text-primary" />
+              <span class="text-sm text-muted-foreground"
+                >Group Registration</span
+              >
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <div class="grid lg:grid-cols-3 gap-8">
         <!-- Main Form -->
         <div class="lg:col-span-2 space-y-6">
