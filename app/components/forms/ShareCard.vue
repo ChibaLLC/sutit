@@ -88,7 +88,7 @@ const saveShareSettings = () => {
 };
 </script>
 <template>
-  <Dialog :open="isOpen">
+  <Dialog :open="isOpen" @update:open="$emit('close')">
     <DialogContent class="max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">

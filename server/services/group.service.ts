@@ -31,7 +31,7 @@ export const createGroup = async (
 
 		const existingGroup = await db.query.formGroups.findFirst({
 			where: and(
-				eq(formGroups.formId, formId),
+				eq(formGroups.formId, form.id),
 				eq(formGroups.groupName, group.groupName.trim()),
 			),
 		});
@@ -73,34 +73,38 @@ export const createGroup = async (
 					.returning();
 				memberRecords.push(memberRecord);
 			}
-			const leaderPayingMembers = group.members.filter(
-				(m) => m.paymentOption === "leader_pays",
-			);
-			const leaderPaymentAmount =
-				leaderPayingMembers.length *
-				parseInt(form.groupAmountPayable || form.price || "0");
-			let payment = await processGroupPayment(
-				{
-					phone: group.phoneNumber,
-					amount: leaderPaymentAmount,
-					accountNumber: `group ${group.groupName}`,
-					description: `Payment for group ${group.groupName}`,
-				},
-				user,
-			);
-			for (const member of memberRecords) {
-				if (payment && member.metadata.paymentOption == "leader_pays") {
-					await tx.insert(formGroupMemberPayments).values({
-						groupId: formGroup.id,
-						memberId: member.id,
-						paymentId: payment.id,
-						paidBy: user.id,
+			let payment;
+			if (form.groupAmountPayable && parseInt(form.groupAmountPayable) > 0) {
+				const leaderPayingMembers = group.members.filter(
+					(m) => m.paymentOption === "leader_pays",
+				);
+				const leaderPaymentAmount =
+					leaderPayingMembers.length *
+					parseInt(form.groupAmountPayable || form.price || "0");
+				payment = await processGroupPayment(
+					{
+						phone: group.phoneNumber,
 						amount: leaderPaymentAmount,
-						paymentType: "leader_pays",
-						metadata: payment?.metadata,
-					});
+						accountNumber: `group ${group.groupName}`,
+						description: `Payment for group ${group.groupName}`,
+					},
+					user,
+				);
+				for (const member of memberRecords) {
+					if (payment && member.metadata.paymentOption == "leader_pays") {
+						await tx.insert(formGroupMemberPayments).values({
+							groupId: formGroup.id,
+							memberId: member.id,
+							paymentId: payment.id,
+							paidBy: user.id,
+							amount: leaderPaymentAmount,
+							paymentType: "leader_pays",
+							metadata: payment?.metadata,
+						});
+					}
 				}
 			}
+
 			memberRecords.forEach(async (m) => {
 				let url = process.env.NUXT_PUBLIC_URL;
 				let link = `Here is the group invite link: ${url}/forms/${form.slug}?token=${m.inviteToken}`;
@@ -119,7 +123,7 @@ export const createGroup = async (
 			});
 
 			return {
-				payment: payment,
+				payment: payment ?? null,
 				group: formGroup,
 				groupMembers: memberRecords,
 			};
