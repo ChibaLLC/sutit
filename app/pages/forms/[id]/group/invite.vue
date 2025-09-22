@@ -18,6 +18,9 @@ import { buttonVariants } from "~/components/ui/button";
 
 const route = useRoute();
 const router = useRouter();
+definePageMeta({
+  middleware: ["auth"],
+});
 
 // Fetch form data
 const { data: form } = await useFetch(`/api/forms/${route.params.id}`);
