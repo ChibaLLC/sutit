@@ -118,7 +118,9 @@ const handleSubmit = async () => {
       },
       onResponse({ response }) {
         if (response.status == 401) {
-          navigateTo(`/auth/login?redirect=/forms/${route.params.id}/group`);
+          navigateTo(
+            `/auth/login?redirect=/forms/${route.params.id}/group/invite`,
+          );
         }
       },
     });
