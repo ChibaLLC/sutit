@@ -13,7 +13,6 @@ export const useAuthStore = defineStore(
 		});
 		const isAuthenticated = computed(() => !!(user.value && token.value));
 		const router = useRouter();
-		const route = useRoute();
 
 		const signInWithEmail = async (form: {
 			email: string;
@@ -29,6 +28,8 @@ export const useAuthStore = defineStore(
 				if (data) {
 					user.value = data.user;
 					token.value = data.token;
+					const route = useRoute();
+
 					let redirect = route.query.redirect;
 					await router.push(redirect ? `${redirect}` : "/dashboard");
 

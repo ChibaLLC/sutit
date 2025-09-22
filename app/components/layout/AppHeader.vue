@@ -52,6 +52,7 @@
               ></span>
             </NuxtLink>
             <NuxtLink
+              v-if="authStore.isAuthenticated"
               v-for="item in navItems"
               :key="item.href"
               :to="item.href"
