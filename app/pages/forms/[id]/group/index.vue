@@ -2,6 +2,10 @@
 import { CreditCard, Search } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 
+definePageMeta({
+  middleware: ["auth"],
+});
+
 const searchQuery = ref("");
 const statusFilter = ref("all");
 const paymentFilter = ref("all");

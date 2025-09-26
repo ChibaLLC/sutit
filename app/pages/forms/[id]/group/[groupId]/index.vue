@@ -7,6 +7,9 @@ import {
   Users,
   CheckCircle,
 } from "lucide-vue-next";
+definePageMeta({
+  middleware: ["auth"],
+});
 
 const route = useRoute();
 const { id, groupId } = route.params;
@@ -131,7 +134,7 @@ const handleConfirmVerification = () => {
           <ArrowLeft class="w-4 h-4" />
           Back to Dashboard
         </Button>
-        <br>
+        <br />
         <div class="flex-1">
           <h1 class="text-3xl font-bold text-foreground">
             {{ group.data?.groupName }}

@@ -26,6 +26,10 @@ import { buttonVariants } from "~/components/ui/button";
 import { authHeaders } from "~/lib/auth-client";
 import type { FormSchema } from "~~/shared/types";
 
+definePageMeta({
+  middleware: ["auth"],
+});
+
 const filters = ref({
   search: "",
   status: "all",

@@ -31,6 +31,9 @@ type DashboardCard = {
   icon: Component;
   description?: string;
 };
+definePageMeta({
+  middleware: ["auth"],
+});
 
 const quickActions: QuickActions[] = [
   {

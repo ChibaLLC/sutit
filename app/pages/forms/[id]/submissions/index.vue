@@ -21,6 +21,10 @@ import {
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 
+definePageMeta({
+  middleware: ["auth"],
+});
+
 const route = useRoute();
 const acceptingResponses = ref(true);
 const loading = ref({
@@ -676,10 +680,10 @@ const downloadExcel = async () => {
                 <td class="px-4 py-4">
                   <div>
                     <p class="font-medium">
-                      {{ submission.submitter.name || "N/A" }}
+                      {{ submission?.submitter?.name || "N/A" }}
                     </p>
                     <p class="text-xs text-muted-foreground">
-                      {{ submission.submitter.email || "N/A" }}
+                      {{ submission?.submitter?.email || "N/A" }}
                     </p>
                   </div>
                 </td>

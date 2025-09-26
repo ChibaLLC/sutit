@@ -3,6 +3,10 @@ import { toast } from "vue-sonner";
 import { authHeaders } from "~/lib/auth-client";
 import type { FormSchema } from "~~/shared/types";
 
+definePageMeta({
+  middleware: ["auth"],
+});
+
 const submitForm = async (form: FormSchema) => {
   try {
     const { data, message } = await $fetch("/api/forms", {
