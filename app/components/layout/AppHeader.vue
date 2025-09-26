@@ -1,3 +1,39 @@
+<script setup lang="ts">
+import {
+  Menu,
+  X,
+  User,
+  Sun,
+  Moon,
+  UserCircle,
+  Settings,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+} from "lucide-vue-next";
+import { useDark, useToggle } from "@vueuse/core";
+
+const mobileMenuOpen = ref(false);
+const userMenuOpen = ref(false);
+const authStore = useAuthStore();
+
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+
+const navItems = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Forms", href: "/forms" },
+];
+const navs = [
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+const logout = async () => {
+  userMenuOpen.value = false;
+  await authStore.logout();
+};
+</script>
 <template>
   <nav
     class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
@@ -201,15 +237,15 @@
                     />
                     <span class="font-medium">Profile</span>
                   </a>
-                  <a
-                    href="#"
+                  <NuxtLink
+                    href="/settings"
                     class="flex items-center px-4 py-3 text-sm hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 group"
                   >
                     <Settings
                       class="h-4 w-4 mr-3 text-muted-foreground group-hover:text-primary transition-colors"
                     />
                     <span class="font-medium">Settings</span>
-                  </a>
+                  </NuxtLink>
                   <a
                     href="#"
                     class="flex items-center px-4 py-3 text-sm hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200 group"
@@ -442,41 +478,3 @@
     </Transition>
   </nav>
 </template>
-
-<script setup lang="ts">
-import { ref } from "vue";
-import {
-  Menu,
-  X,
-  User,
-  Sun,
-  Moon,
-  UserCircle,
-  Settings,
-  CreditCard,
-  HelpCircle,
-  LogOut,
-} from "lucide-vue-next";
-import { useDark, useToggle } from "@vueuse/core";
-
-const mobileMenuOpen = ref(false);
-const userMenuOpen = ref(false);
-const authStore = useAuthStore();
-
-const isDark = useDark();
-const toggleDark = useToggle(isDark);
-
-const navItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Forms", href: "/forms" },
-];
-const navs = [
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
-
-const logout = async () => {
-  userMenuOpen.value = false;
-  await authStore.logout();
-};
-</script>

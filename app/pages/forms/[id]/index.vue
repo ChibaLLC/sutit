@@ -6,7 +6,9 @@ import { authHeaders } from "~/lib/auth-client";
 const route = useRoute();
 const router = useRouter();
 
-const { data } = await useFetch(`/api/forms/${route.params.id}`);
+const { data } = await useFetch(`/api/forms/${route.params.id}`, {
+  key: `form-${route.params.id}`,
+});
 
 const hasToken = computed(() => !!route.query.token);
 
@@ -30,14 +32,14 @@ const submit = async (form: object) => {
     if (submitData) {
       toast.success(message);
       if (!submitData.payment) {
-        await navigateTo("/forms");
+        await navigateTo(`/forms/${route.params.id}/submitted`);
         return;
       }
       try {
         const result = await checkPayment(submitData.payment.checkoutId);
         toast.success("Payment completed!");
-        console.log("Payment result:", result);
-        await navigateTo("/forms");
+
+        await navigateTo(`/forms/${route.params.id}/submitted`);
       } catch (e) {
         toast.error(e.message ?? "An error occurred");
       }

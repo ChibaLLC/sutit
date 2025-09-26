@@ -50,8 +50,8 @@ const quickActions: QuickActions[] = [
   },
 ];
 
-const { data: activities } = await useFetch(`/api/activities`);
-const { data: forms } = await useFetch(`/api/forms?limit=5`);
+const { data: activities } = useFetch(`/api/activities`);
+const { data: forms } = useFetch(`/api/forms?limit=5`);
 const { data: stats } = await useFetch(`/api/dashboard`);
 const dashboardCards = computed(() => {
   return [

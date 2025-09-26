@@ -1,3 +1,343 @@
+<script setup lang="ts">
+import {
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  CreditCard,
+  Receipt,
+  Loader2,
+  ShoppingCart,
+  Package,
+  Plus,
+  Minus,
+  X,
+  File,
+} from "lucide-vue-next";
+import { toast } from "vue-sonner";
+import type { FormSchema, FormField } from "~~/shared/types";
+
+interface Props {
+  form: FormSchema;
+}
+
+interface Emits {
+  (
+    e: "submit",
+    data: {
+      schema: FormSchema;
+      formData: Record<string, any>;
+      paymentData: Record<string, any>;
+      selectedProducts: Record<string, { quantity: number; storeId: string }>;
+    },
+  ): void;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+
+const currentStep = ref(0);
+const formData = reactive<Record<string, any>>({});
+const paymentData = reactive({
+  phoneNumber: "",
+});
+const selectedProducts = reactive<
+  Record<string, { quantity: number; storeId: string }>
+>({});
+const isProcessing = ref(false);
+
+const totalSteps = computed(() => {
+  let steps = props.form.pages.length;
+  if (props.form.stores && props.form.stores.length > 0) steps += 1; // Product selection step
+  steps += 1; // Preview step (always show)
+  if (props.form.price > 0) steps += 1; // Checkout step
+  return steps;
+});
+
+const currentPage = computed(() => {
+  return props.form.pages[currentStep.value];
+});
+
+const isProductSelectionStep = computed(() => {
+  return (
+    props.form.stores &&
+    props.form.stores.length > 0 &&
+    currentStep.value === props.form.pages.length
+  );
+});
+
+const getPreviewStepIndex = () => {
+  let index = props.form.pages.length;
+  if (props.form.stores && props.form.stores.length > 0) index += 1;
+  return index;
+};
+
+const getCheckoutStepIndex = () => {
+  let index = props.form.pages.length;
+  if (props.form.stores && props.form.stores.length > 0) index += 1;
+  index += 1; // Preview step
+  return index;
+};
+
+const isPreviewStep = computed(() => {
+  return currentStep.value === getPreviewStepIndex();
+});
+
+const isCheckoutStep = computed(() => {
+  return props.form.price > 0 && currentStep.value === getCheckoutStepIndex();
+});
+
+const getStepClasses = (index: number) => {
+  if (index < currentStep.value) {
+    return "bg-primary border-primary text-primary-foreground";
+  } else if (index === currentStep.value) {
+    return "bg-accent border-accent text-accent-foreground";
+  } else {
+    return "bg-background border-border text-muted-foreground";
+  }
+};
+
+const getProductStepClasses = () => {
+  const productStepIndex = props.form.pages.length;
+  if (currentStep.value > productStepIndex) {
+    return "bg-primary border-primary text-primary-foreground";
+  } else if (currentStep.value === productStepIndex) {
+    return "bg-accent border-accent text-accent-foreground";
+  } else {
+    return "bg-background border-border text-muted-foreground";
+  }
+};
+
+const getPreviewStepClasses = () => {
+  const previewStepIndex = getPreviewStepIndex();
+  if (currentStep.value > previewStepIndex) {
+    return "bg-primary border-primary text-primary-foreground";
+  } else if (currentStep.value === previewStepIndex) {
+    return "bg-accent border-accent text-accent-foreground";
+  } else {
+    return "bg-background border-border text-muted-foreground";
+  }
+};
+
+const getCheckoutStepClasses = () => {
+  const checkoutStepIndex = getCheckoutStepIndex();
+  if (currentStep.value > checkoutStepIndex) {
+    return "bg-primary border-primary text-primary-foreground";
+  } else if (currentStep.value === checkoutStepIndex) {
+    return "bg-accent border-accent text-accent-foreground";
+  } else {
+    return "bg-background border-border text-muted-foreground";
+  }
+};
+
+const getFieldClasses = (field: FormField) => {
+  // You can add field-specific classes here if needed
+  return "";
+};
+
+const getInputType = (fieldType: string) => {
+  switch (fieldType) {
+    case "email":
+      return "email";
+    case "phone":
+      return "tel";
+    case "file":
+      return "file";
+    case "date":
+      return "date";
+    default:
+      return "text";
+  }
+};
+
+const getNextButtonText = () => {
+  if (currentStep.value < props.form.pages.length - 1) {
+    return "Continue";
+  } else if (isProductSelectionStep.value) {
+    return "Review Order";
+  } else if (isPreviewStep.value) {
+    return props.form.price > 0 ? "Proceed to Payment" : "Submit Form";
+  } else if (isCheckoutStep.value) {
+    return `Pay KSh ${(getTotalAmount.value * 1).toFixed(2)}`;
+  } else {
+    return "Review Order";
+  }
+};
+
+const handleNext = () => {
+  if (currentStep.value < props.form.pages.length - 1) {
+    // Move to next form page
+    currentStep.value++;
+  } else if (currentStep.value === props.form.pages.length - 1) {
+    // Last form page - move to products or preview or checkout
+    if (props.form.stores && props.form.stores.length > 0) {
+      currentStep.value++; // Move to product selection
+    } else {
+      currentStep.value = getPreviewStepIndex(); // Move to preview
+    }
+  } else if (isProductSelectionStep.value) {
+    // Product selection - move to preview
+    currentStep.value = getPreviewStepIndex();
+  } else if (isPreviewStep.value) {
+    // Preview - move to checkout or submit
+    if (props.form.price > 0) {
+      currentStep.value = getCheckoutStepIndex();
+    } else {
+      handleSubmit();
+    }
+  } else {
+    handleSubmit();
+  }
+};
+const handleFileChange = async (
+  event: Event,
+  fieldId: string,
+  multiple = false,
+) => {
+  try {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+
+    if (!files || files.length === 0) {
+      delete formData[fieldId];
+      return;
+    }
+    const formDataUpload = createFormData({
+      file: files[0],
+    });
+    const { data } = await $fetch(`/api/uploads`, {
+      method: "POST",
+      body: formDataUpload,
+    });
+    formData[fieldId] = data?.path;
+  } catch (e: any) {
+    toast.error("An error occurred!!");
+  }
+};
+const getSelectedFiles = (fieldId: string): File[] => {
+  const value = formData[fieldId];
+  if (!value) return [];
+
+  if (value instanceof FileList) {
+    return Array.from(value);
+  } else if (value instanceof File) {
+    return [value];
+  } else if (
+    Array.isArray(value) &&
+    value.every((item) => item instanceof File)
+  ) {
+    return value;
+  }
+
+  return [];
+};
+
+const removeFile = (fieldId: string, index: number, multiple: boolean) => {
+  const files = getSelectedFiles(fieldId);
+
+  if (multiple) {
+    const newFiles = files.filter((_, i) => i !== index);
+    if (newFiles.length === 0) {
+      delete formData[fieldId];
+    } else {
+      // Create a new FileList-like structure
+      const dt = new DataTransfer();
+      newFiles.forEach((file) => dt.items.add(file));
+      formData[fieldId] = dt.files;
+    }
+  } else {
+    delete formData[fieldId];
+  }
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+const handlePrevious = () => {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+  }
+};
+
+const handleSubmit = () => {
+  emit("submit", {
+    schema: props.form,
+    formData,
+    selectedProducts,
+    paymentData,
+  });
+  currentStep.value = totalSteps.value;
+};
+
+const resetForm = () => {
+  currentStep.value = 0;
+  Object.keys(formData).forEach((key) => delete formData[key]);
+  Object.keys(selectedProducts).forEach((key) => delete selectedProducts[key]);
+  paymentData.phoneNumber = "";
+};
+
+const updateProductQuantity = (
+  productId: string,
+  storeId: string,
+  change: number,
+) => {
+  if (!selectedProducts[productId]) {
+    selectedProducts[productId] = { quantity: 0, storeId };
+  }
+
+  const newQuantity = selectedProducts[productId].quantity + change;
+  if (newQuantity <= 0) {
+    delete selectedProducts[productId];
+  } else {
+    selectedProducts[productId].quantity = newQuantity;
+  }
+};
+
+const getProductQuantity = (productId: string) => {
+  return selectedProducts[productId]?.quantity || 0;
+};
+
+const getTotalSelectedProducts = computed(() => {
+  return Object.values(selectedProducts).reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
+});
+
+const getProductName = (productId: string) => {
+  for (const store of props.form.stores || []) {
+    const product = store.items.find((p) => p.id === productId);
+    if (product) return product.name;
+  }
+  return "Unknown Product";
+};
+
+const getProductPrice = (productId: string) => {
+  for (const store of props.form.stores || []) {
+    const product = store.items.find((p) => p.id === productId);
+    if (product) return product.price;
+  }
+  return 0;
+};
+
+const getTotalProductsPrice = computed(() => {
+  return Object.entries(selectedProducts).reduce((total, [productId, data]) => {
+    return total + getProductPrice(productId) * data.quantity;
+  }, 0);
+});
+
+const getTotalAmount = computed(() => {
+  return (
+    parseInt(props.form.price.toString()) +
+    parseInt(getTotalProductsPrice.value.toString())
+  );
+});
+</script>
 <template>
   <div class="min-h-screen bg-background py-8 px-4">
     <div class="max-w-6xl mx-auto">
@@ -971,342 +1311,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  CreditCard,
-  Receipt,
-  Loader2,
-  ShoppingCart,
-  Package,
-  Plus,
-  Minus,
-} from "lucide-vue-next";
-import { toast } from "vue-sonner";
-import type { FormSchema, FormField } from "~~/shared/types";
-
-interface Props {
-  form: FormSchema;
-}
-
-interface Emits {
-  (
-    e: "submit",
-    data: {
-      schema: FormSchema;
-      formData: Record<string, any>;
-      paymentData: Record<string, any>;
-      selectedProducts: Record<string, { quantity: number; storeId: string }>;
-    },
-  ): void;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
-
-const currentStep = ref(0);
-const formData = reactive<Record<string, any>>({});
-const paymentData = reactive({
-  phoneNumber: "",
-});
-const selectedProducts = reactive<
-  Record<string, { quantity: number; storeId: string }>
->({});
-const isProcessing = ref(false);
-
-const totalSteps = computed(() => {
-  let steps = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) steps += 1; // Product selection step
-  steps += 1; // Preview step (always show)
-  if (props.form.price > 0) steps += 1; // Checkout step
-  return steps;
-});
-
-const currentPage = computed(() => {
-  return props.form.pages[currentStep.value];
-});
-
-const isProductSelectionStep = computed(() => {
-  return (
-    props.form.stores &&
-    props.form.stores.length > 0 &&
-    currentStep.value === props.form.pages.length
-  );
-});
-
-const getPreviewStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  return index;
-};
-
-const getCheckoutStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  index += 1; // Preview step
-  return index;
-};
-
-const isPreviewStep = computed(() => {
-  return currentStep.value === getPreviewStepIndex();
-});
-
-const isCheckoutStep = computed(() => {
-  return props.form.price > 0 && currentStep.value === getCheckoutStepIndex();
-});
-
-const getStepClasses = (index: number) => {
-  if (index < currentStep.value) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (index === currentStep.value) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getProductStepClasses = () => {
-  const productStepIndex = props.form.pages.length;
-  if (currentStep.value > productStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === productStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getPreviewStepClasses = () => {
-  const previewStepIndex = getPreviewStepIndex();
-  if (currentStep.value > previewStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === previewStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getCheckoutStepClasses = () => {
-  const checkoutStepIndex = getCheckoutStepIndex();
-  if (currentStep.value > checkoutStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === checkoutStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getFieldClasses = (field: FormField) => {
-  // You can add field-specific classes here if needed
-  return "";
-};
-
-const getInputType = (fieldType: string) => {
-  switch (fieldType) {
-    case "email":
-      return "email";
-    case "phone":
-      return "tel";
-    case "file":
-      return "file";
-    case "date":
-      return "date";
-    default:
-      return "text";
-  }
-};
-
-const getNextButtonText = () => {
-  if (currentStep.value < props.form.pages.length - 1) {
-    return "Continue";
-  } else if (isProductSelectionStep.value) {
-    return "Review Order";
-  } else if (isPreviewStep.value) {
-    return props.form.price > 0 ? "Proceed to Payment" : "Submit Form";
-  } else if (isCheckoutStep.value) {
-    return `Pay KSh ${(getTotalAmount.value * 1).toFixed(2)}`;
-  } else {
-    return "Review Order";
-  }
-};
-
-const handleNext = () => {
-  if (currentStep.value < props.form.pages.length - 1) {
-    // Move to next form page
-    currentStep.value++;
-  } else if (currentStep.value === props.form.pages.length - 1) {
-    // Last form page - move to products or preview or checkout
-    if (props.form.stores && props.form.stores.length > 0) {
-      currentStep.value++; // Move to product selection
-    } else {
-      currentStep.value = getPreviewStepIndex(); // Move to preview
-    }
-  } else if (isProductSelectionStep.value) {
-    // Product selection - move to preview
-    currentStep.value = getPreviewStepIndex();
-  } else if (isPreviewStep.value) {
-    // Preview - move to checkout or submit
-    if (props.form.price > 0) {
-      currentStep.value = getCheckoutStepIndex();
-    } else {
-      handleSubmit();
-    }
-  } else {
-    handleSubmit();
-  }
-};
-const handleFileChange = async (
-  event: Event,
-  fieldId: string,
-  multiple = false,
-) => {
-  try {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-
-    if (!files || files.length === 0) {
-      delete formData[fieldId];
-      return;
-    }
-    const formDataUpload = createFormData({
-      file: files[0],
-    });
-    const { data } = await $fetch(`/api/uploads`, {
-      method: "POST",
-      body: formDataUpload,
-    });
-    formData[fieldId] = data?.path;
-  } catch (e: any) {
-    toast.error("An error occurred!!");
-  }
-};
-const getSelectedFiles = (fieldId: string): File[] => {
-  const value = formData[fieldId];
-  if (!value) return [];
-
-  if (value instanceof FileList) {
-    return Array.from(value);
-  } else if (value instanceof File) {
-    return [value];
-  } else if (
-    Array.isArray(value) &&
-    value.every((item) => item instanceof File)
-  ) {
-    return value;
-  }
-
-  return [];
-};
-
-const removeFile = (fieldId: string, index: number, multiple: boolean) => {
-  const files = getSelectedFiles(fieldId);
-
-  if (multiple) {
-    const newFiles = files.filter((_, i) => i !== index);
-    if (newFiles.length === 0) {
-      delete formData[fieldId];
-    } else {
-      // Create a new FileList-like structure
-      const dt = new DataTransfer();
-      newFiles.forEach((file) => dt.items.add(file));
-      formData[fieldId] = dt.files;
-    }
-  } else {
-    delete formData[fieldId];
-  }
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-const handlePrevious = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
-  }
-};
-
-const handleSubmit = () => {
-  emit("submit", {
-    schema: props.form,
-    formData,
-    selectedProducts,
-    paymentData,
-  });
-  currentStep.value = totalSteps.value;
-};
-
-const resetForm = () => {
-  currentStep.value = 0;
-  Object.keys(formData).forEach((key) => delete formData[key]);
-  Object.keys(selectedProducts).forEach((key) => delete selectedProducts[key]);
-  paymentData.phoneNumber = "";
-};
-
-const updateProductQuantity = (
-  productId: string,
-  storeId: string,
-  change: number,
-) => {
-  if (!selectedProducts[productId]) {
-    selectedProducts[productId] = { quantity: 0, storeId };
-  }
-
-  const newQuantity = selectedProducts[productId].quantity + change;
-  if (newQuantity <= 0) {
-    delete selectedProducts[productId];
-  } else {
-    selectedProducts[productId].quantity = newQuantity;
-  }
-};
-
-const getProductQuantity = (productId: string) => {
-  return selectedProducts[productId]?.quantity || 0;
-};
-
-const getTotalSelectedProducts = computed(() => {
-  return Object.values(selectedProducts).reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
-});
-
-const getProductName = (productId: string) => {
-  for (const store of props.form.stores || []) {
-    const product = store.items.find((p) => p.id === productId);
-    if (product) return product.name;
-  }
-  return "Unknown Product";
-};
-
-const getProductPrice = (productId: string) => {
-  for (const store of props.form.stores || []) {
-    const product = store.items.find((p) => p.id === productId);
-    if (product) return product.price;
-  }
-  return 0;
-};
-
-const getTotalProductsPrice = computed(() => {
-  return Object.entries(selectedProducts).reduce((total, [productId, data]) => {
-    return total + getProductPrice(productId) * data.quantity;
-  }, 0);
-});
-
-const getTotalAmount = computed(() => {
-  return (
-    parseInt(props.form.price.toString()) +
-    parseInt(getTotalProductsPrice.value.toString())
-  );
-});
-</script>
