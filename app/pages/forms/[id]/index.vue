@@ -2,6 +2,7 @@
 import { toast } from "vue-sonner";
 import { Users, User, ArrowRight, Clock, DollarSign } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
+import { useFormSEO } from "~/composables/seo/useFormSeo";
 
 const route = useRoute();
 const router = useRouter();
@@ -9,7 +10,8 @@ const router = useRouter();
 const { data } = await useFetch(`/api/forms/${route.params.id}`, {
   key: `form-${route.params.id}`,
 });
-
+const { generateSEO } = useFormSEO(data.value);
+generateSEO();
 const hasToken = computed(() => !!route.query.token);
 
 const showGroupSelection = computed(
