@@ -80,7 +80,7 @@ export const createForm = async (payload: FormSchema) => {
 					status: formPayload.status || "draft",
 					publishedAt: formPayload.publishedAt
 						? new Date(formPayload.publishedAt)
-						: undefined,
+						: new Date(),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				})

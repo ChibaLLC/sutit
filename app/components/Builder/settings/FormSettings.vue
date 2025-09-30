@@ -1,3 +1,47 @@
+<script setup lang="ts">
+import {
+  Settings,
+  FileText,
+  Sliders,
+  Users,
+  DollarSign,
+  Save,
+  RotateCcw,
+  Link,
+  Tag,
+  Shield,
+  Send,
+  Hash,
+  Calendar,
+} from "lucide-vue-next";
+import type { FormSchema } from "~~/shared/types";
+interface Props {
+  form: FormSchema;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<{
+  update: [form: FormSchema];
+}>();
+
+const updateTags = (event: Event) => {
+  const target = event.target as HTMLTextAreaElement;
+  const tagsString = target.value;
+  console.log(tagsString);
+  props.form.tags = tagsString
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+};
+
+const saveForm = () => {
+  emit("update", props.form);
+};
+const slugUrl = computed(() => {
+  let host = window.location.host;
+  return `${host}/forms/${props.form.slug}`;
+});
+</script>
 <template>
   <div class="min-h-screen bg-background p-6">
     <div class="mx-auto max-w-4xl space-y-8">
@@ -48,6 +92,7 @@
             <Input
               id="title"
               v-model="form.title"
+              @input="(e) => (form.slug = slugify(e.target.value))"
               placeholder="Enter form title"
               class="transition-all duration-200 focus:ring-2 focus:ring-ring/20"
             />
@@ -80,6 +125,9 @@
                 class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
               />
             </div>
+            <p class="text-sm text-black dark:text-white font-semibold">
+              {{ slugUrl }}
+            </p>
           </div>
 
           <div class="grid gap-6 md:grid-cols-2">
@@ -466,14 +514,6 @@
         </div>
         <div class="flex gap-3">
           <Button
-            variant="outline"
-            @click="resetForm"
-            class="transition-all duration-200 hover:scale-105"
-          >
-            <RotateCcw class="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-          <Button
             @click="saveForm"
             class="transition-all duration-200 hover:scale-105 bg-secondary hover:bg-secondary/90"
           >
@@ -485,45 +525,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import {
-  Settings,
-  FileText,
-  Sliders,
-  Users,
-  DollarSign,
-  Save,
-  RotateCcw,
-  Link,
-  Tag,
-  Shield,
-  Send,
-  Hash,
-  Calendar,
-} from "lucide-vue-next";
-import type { FormSchema } from "~~/shared/types";
-interface Props {
-  form: FormSchema;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<{
-  update: [form: FormSchema];
-}>();
-
-const updateTags = (event: Event) => {
-  const target = event.target as HTMLTextAreaElement;
-  const tagsString = target.value;
-  console.log(tagsString);
-  props.form.tags = tagsString
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
-};
-
-const saveForm = () => {
-  emit("update", props.form);
-  // Here you would typically call an API to save the form
-};
-</script>

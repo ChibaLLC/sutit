@@ -8,11 +8,15 @@ import type {
   Store,
   StoreItem,
 } from "~~/shared/types";
+import { toTypedSchema } from "@vee-validate/zod";
+import { useForm } from "vee-validate";
+import { toast } from "vue-sonner";
 const props = defineProps<{
   form?: FormSchema;
 }>();
 const previewMode = ref(false);
 const isDark = ref(false);
+
 const form = ref<FormSchema>(
   props.form
     ? props.form
@@ -94,6 +98,14 @@ const removePage = (index: number) => {
   form.value.pages.splice(index, 1);
 };
 const submit = () => {
+  const result = formSchemaSchema.safeParse(form.value);
+
+  if (!result.success) {
+    result.error.issues.forEach((issue) => {
+      toast.error(issue.message);
+    });
+    return;
+  }
   emits("publish", form.value);
 };
 </script>
