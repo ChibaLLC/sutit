@@ -4,7 +4,7 @@ import type { Store, StoreItem } from "~~/shared/types";
 const props = defineProps<{
   store: Store;
   isOpen: boolean;
-  product?: StoreItem;
+  product?: StoreItem | null;
 }>();
 const emits = defineEmits<{
   close: [];
@@ -14,6 +14,7 @@ const form = ref<StoreItem>(
     ? props.product
     : <StoreItem>{
         images: [] as string[],
+        infinite: false,
       },
 );
 
@@ -57,6 +58,7 @@ const removeImage = (index: number) => {
       <DialogHeader>
         <DialogTitle>Add Product</DialogTitle>
       </DialogHeader>
+      <DialogDescription>Add a product</DialogDescription>
       <div>
         <form @submit.prevent="addProduct()" class="space-y-4">
           <div>
@@ -86,6 +88,10 @@ const removeImage = (index: number) => {
             />
           </div>
           <div>
+            <Label>Is Infinite</Label>
+            <Checkbox v-model="form.infinite" />
+          </div>
+          <div v-if="!form.infinite">
             <Label class="block text-sm font-medium mb-2">Stock</Label>
             <Input
               v-model.number="form.quantity"

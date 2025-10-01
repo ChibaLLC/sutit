@@ -12,10 +12,12 @@ import {
   Minus,
   X,
   File,
+  CalendarIcon,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import type { FormSchema, FormField } from "~~/shared/types";
-
+import type { DateValue } from "@internationalized/date";
+import { DateFormatter, getLocalTimeZone } from "@internationalized/date";
 interface Props {
   form: FormSchema;
 }
@@ -337,6 +339,9 @@ const getTotalAmount = computed(() => {
     parseInt(getTotalProductsPrice.value.toString())
   );
 });
+const df = new DateFormatter("en-US", {
+  dateStyle: "long",
+});
 </script>
 <template>
   <div class="min-h-screen bg-background py-8 px-4">
@@ -545,13 +550,53 @@ const getTotalAmount = computed(() => {
                       class="group"
                       :class="getFieldClasses(field)"
                     >
+                      <div v-if="field.type == 'date'">
+                        <Label
+                          :for="field.id"
+                          class="text-sm font-semibold flex items-center gap-2"
+                        >
+                          {{ field.label }}
+                          <Badge
+                            v-if="field.required"
+                            variant="destructive"
+                            class="text-xs px-1.5 py-0.5"
+                            >Required</Badge
+                          >
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger as-child>
+                            <Button
+                              variant="outline"
+                              class="justify-start text-left font-normal w-full"
+                            >
+                              <CalendarIcon class="mr-2 h-4 w-4" />
+                              {{
+                                formData[field.id]
+                                  ? df.format(
+                                      formData[field.id].toDate(
+                                        getLocalTimeZone(),
+                                      ),
+                                    )
+                                  : "Pick a Date "
+                              }}
+                            </Button>
+                            <PopoverContent>
+                              <Calendar
+                                v-model="formData[field.id]"
+                                initial-focus
+                              />
+                            </PopoverContent>
+                          </PopoverTrigger>
+                        </Popover>
+                      </div>
                       <!-- Text Input -->
                       <div
                         v-if="
                           field.type === 'text' ||
                           field.type === 'email' ||
                           field.type === 'phone' ||
-                          field.type === 'date'
+                          field.type == 'url' ||
+                          field.type == 'number'
                         "
                         class="space-y-3"
                       >
@@ -570,7 +615,7 @@ const getTotalAmount = computed(() => {
                         <Input
                           :id="field.id"
                           v-model="formData[field.id]"
-                          :type="getInputType(field.type)"
+                          :type="field.type"
                           :placeholder="field.placeholder"
                           :required="field.required"
                           class="h-12 transition-all duration-200"
@@ -746,7 +791,7 @@ const getTotalAmount = computed(() => {
                       >
                         <Checkbox
                           :id="field.id"
-                          v-model:checked="formData[field.id]"
+                          v-model="formData[field.id]"
                           class="mt-0.5"
                         />
                         <div class="space-y-1">
@@ -1292,15 +1337,29 @@ const getTotalAmount = computed(() => {
                     <!-- </div> -->
 
                     <Separator class="max-w-xs mx-auto" />
-
-                    <Button
-                      @click="handleSubmit()"
-                      variant="outline"
-                      size="lg"
-                      class="hover:scale-105 transition-all duration-200"
+                    <div
+                      class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
                     >
-                      Submit
-                    </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        @click="handlePrevious"
+                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
+                      >
+                        <ChevronLeft class="w-4 h-4" />
+                        Previous
+                      </Button>
+
+                      <Button
+                        @click="handleSubmit()"
+                        variant="outline"
+                        size="lg"
+                        class="hover:scale-105 transition-all duration-200"
+                      >
+                        Submit
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

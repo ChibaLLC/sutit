@@ -18,7 +18,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   publish: [];
   toggleTheme: [];
-  exit: [];
+  "go-back": [];
   preview: [];
   import: [];
   export: [];
@@ -30,7 +30,12 @@ const emits = defineEmits<{
   >
     <div class="container flex h-16 items-center justify-between px-6">
       <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" @click="$emit('exit')" class="gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          @click="$emit('go-back')"
+          class="gap-2"
+        >
           <ArrowLeft class="h-4 w-4" />
           Back
         </Button>
