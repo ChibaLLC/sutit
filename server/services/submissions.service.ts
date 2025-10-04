@@ -68,8 +68,10 @@ export const submitForm = async (
 				tx.rollback();
 				throw new Error(`Invalid store item: ${itemId}`);
 			}
-			if (!storeItem.quantity || storeItem.quantity < quantity) {
-				throw new Error("No enough stock");
+			if (!storeItem.isInfinite) {
+				if (!storeItem.quantity || storeItem.quantity < quantity) {
+					throw new Error("No enough stock");
+				}
 			}
 
 			const total = parseInt(storeItem.price) * quantity;

@@ -43,6 +43,7 @@ const submit = async (form: object) => {
 
         await navigateTo(`/forms/${route.params.id}/submitted`);
       } catch (e) {
+        console.log(e.message);
         toast.error(e.message ?? "An error occurred");
       }
     }
