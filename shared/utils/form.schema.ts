@@ -39,7 +39,7 @@ export const storeItemSchema = z.object({
 	name: z.string(),
 	description: z.string().optional(),
 	price: z.number(),
-	quantity: z.number(),
+	quantity: z.number().optional(),
 	infinite: z.boolean().optional().nullable(),
 	images: z.array(z.string()),
 });
