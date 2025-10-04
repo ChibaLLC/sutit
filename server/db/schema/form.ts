@@ -232,7 +232,7 @@ export const storeItems = pgTable(
 			.notNull(),
 		name: varchar("name", { length: 255 }).notNull(),
 		description: text("description"),
-		price: decimal("price", { precision: 10, scale: 2 }),
+		price: decimal("price", { precision: 10, scale: 2 }).notNull(),
 		quantity: integer("quantity").default(0),
 		isInfinite: boolean("is_infinite").default(false),
 		images: jsonb("images").default([]),

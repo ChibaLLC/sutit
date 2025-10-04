@@ -1,1 +1,0 @@
-ALTER TABLE "store_items" ALTER COLUMN "price" DROP NOT NULL;

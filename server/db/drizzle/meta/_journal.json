@@ -36,6 +36,13 @@
       "when": 1759591800988,
       "tag": "0004_dapper_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759591994495,
+      "tag": "0005_first_true_believers",
+      "breakpoints": true
     }
   ]
 }
