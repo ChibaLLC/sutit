@@ -61,6 +61,7 @@ export interface FormSchema {
 	isPublic: boolean;
 	requiresLogin: boolean;
 	slug: string;
+	afterSubmissionMessage?: string;
 	createdAt?: string;
 	updatedAt?: string;
 }

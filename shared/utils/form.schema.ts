@@ -99,6 +99,7 @@ export const formSchemaSchema = z.object({
 	isPublic: z.boolean(),
 	requiresLogin: z.boolean(),
 	slug: z.string().min(1, "Slug is required"),
+	afterSubmissionMessage: z.string().optional().nullable(),
 });
 export const slugify = (str: string) => {
 	return str

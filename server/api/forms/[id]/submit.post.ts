@@ -28,7 +28,15 @@ export default defineEventHandler(async (event) => {
 			submission.form,
 			submission.submmission,
 		);
-		console.log(pay);
+		if (
+			submission.metadata.paymentData.phoneNumber &&
+			submission.form.afterSubmissionMessage
+		) {
+			await sendTextSmsTiara({
+				phone: submission.metadata.paymentData.phoneNumber as string,
+				message: submission.form.afterSubmissionMessage,
+			});
+		}
 
 		return {
 			data: {

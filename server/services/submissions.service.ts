@@ -9,6 +9,7 @@ import {
 } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { getFormById } from "./form.service";
+import { sendMail } from "./email.service";
 
 export const submitForm = async (
 	formId: string,
@@ -42,12 +43,22 @@ export const submitForm = async (
 			throw new Error("Failed to create submission");
 		}
 
+		let email = null;
 		// 3. Insert field responses
 		for (const [fieldId, value] of Object.entries(data.formData)) {
+			const stringValue = typeof value === "string" ? value : String(value);
+
+			// Check if it looks like an email address
+			if (
+				!email &&
+				/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(stringValue)
+			) {
+				email = stringValue;
+			}
 			await tx.insert(fieldResponses).values({
 				submissionId: submission.id,
 				fieldId,
-				value: typeof value === "string" ? value : String(value),
+				value: stringValue,
 				parsedValue: typeof value === "object" ? value : null,
 			});
 		}
@@ -96,6 +107,14 @@ export const submitForm = async (
 			.update(formSubmissions)
 			.set({ pricePaid: totalPaid })
 			.where(eq(formSubmissions.id, submission.id));
+
+		if (email && form.afterSubmissionMessage) {
+			await sendMail({
+				to: email,
+				text: form.afterSubmissionMessage,
+				subject: "After Submission",
+			});
+		}
 
 		return {
 			submmission: {
