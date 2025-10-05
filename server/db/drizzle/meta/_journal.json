@@ -50,6 +50,13 @@
       "when": 1759675627980,
       "tag": "0006_sturdy_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1759682334817,
+      "tag": "0007_fearless_surge",
+      "breakpoints": true
     }
   ]
 }

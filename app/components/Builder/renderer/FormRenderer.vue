@@ -1196,115 +1196,112 @@ const df = new DateFormatter("en-US", {
                         </div>
                       </CardContent>
                     </Card>
-
-                    <!-- M-Pesa Payment Form -->
-                    <form
-                      v-if="form.price"
-                      @submit.prevent="handleSubmit()"
-                      class="space-y-6"
-                    >
-                      <div class="space-y-4">
-                        <div class="space-y-3">
-                          <Label
-                            for="phoneNumber"
-                            class="text-sm font-semibold flex items-center gap-2"
-                          >
-                            <div
-                              class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center"
-                            >
-                              <span class="text-white text-xs font-bold"
-                                >M</span
-                              >
-                            </div>
-                            M-Pesa Phone Number
-                          </Label>
-                          <Input
-                            id="phoneNumber"
-                            v-model="paymentData.phoneNumber"
-                            placeholder="254712345678"
-                            required
-                            class="h-12 text-lg transition-all duration-200"
-                          />
-                          <p class="text-sm text-muted-foreground">
-                            Enter your M-Pesa registered phone number
-                          </p>
-                        </div>
-
-                        <Card class="bg-green-50 border-green-200">
-                          <CardContent class="p-4">
-                            <div class="flex items-start gap-3">
-                              <div
-                                class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0"
-                              >
-                                <span class="text-green-600 text-sm">ℹ</span>
-                              </div>
-                              <div class="space-y-2">
-                                <h4 class="font-semibold text-green-800">
-                                  Payment Instructions
-                                </h4>
-                                <ol
-                                  class="text-sm text-green-700 space-y-1 list-decimal list-inside"
-                                >
-                                  <li>Click "Pay with M-Pesa" below</li>
-                                  <li>
-                                    You'll receive an STK push notification on
-                                    your phone
-                                  </li>
-                                  <li>
-                                    Enter your M-Pesa PIN to complete the
-                                    payment
-                                  </li>
-                                  <li>Wait for payment confirmation</li>
-                                </ol>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <Separator />
-
-                      <div
-                        class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
-                      >
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          @click="handlePrevious"
-                          class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                        >
-                          <ChevronLeft class="w-4 h-4" />
-                          Back to Review
-                        </Button>
-
-                        <Button
-                          type="submit"
-                          size="lg"
-                          :disabled="isProcessing"
-                          class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                        >
-                          <Loader2
-                            v-if="isProcessing"
-                            class="w-5 h-5 animate-spin"
-                          />
-                          <div
-                            v-else
-                            class="w-5 h-5 bg-white rounded-full flex items-center justify-center"
-                          >
-                            <span class="text-green-600 text-xs font-bold"
-                              >M</span
-                            >
-                          </div>
-                          {{
-                            isProcessing
-                              ? "Processing Payment..."
-                              : `Pay KSh ${getTotalAmount}`
-                          }}
-                        </Button>
-                      </div>
-                    </form>
                   </div>
+                  <!-- M-Pesa Payment Form -->
+
+                  <form
+                    v-if="form.price"
+                    @submit.prevent="handleSubmit()"
+                    class="space-y-6"
+                  >
+                    <div class="space-y-4">
+                      <div class="space-y-3">
+                        <Label
+                          for="phoneNumber"
+                          class="text-sm font-semibold flex items-center gap-2"
+                        >
+                          <div
+                            class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center"
+                          >
+                            <span class="text-white text-xs font-bold">M</span>
+                          </div>
+                          M-Pesa Phone Number
+                        </Label>
+                        <Input
+                          id="phoneNumber"
+                          v-model="paymentData.phoneNumber"
+                          placeholder="254712345678"
+                          required
+                          class="h-12 text-lg transition-all duration-200"
+                        />
+                        <p class="text-sm text-muted-foreground">
+                          Enter your M-Pesa registered phone number
+                        </p>
+                      </div>
+
+                      <Card class="bg-green-50 border-green-200">
+                        <CardContent class="p-4">
+                          <div class="flex items-start gap-3">
+                            <div
+                              class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0"
+                            >
+                              <span class="text-green-600 text-sm">ℹ</span>
+                            </div>
+                            <div class="space-y-2">
+                              <h4 class="font-semibold text-green-800">
+                                Payment Instructions
+                              </h4>
+                              <ol
+                                class="text-sm text-green-700 space-y-1 list-decimal list-inside"
+                              >
+                                <li>Click "Pay with M-Pesa" below</li>
+                                <li>
+                                  You'll receive an STK push notification on
+                                  your phone
+                                </li>
+                                <li>
+                                  Enter your M-Pesa PIN to complete the payment
+                                </li>
+                                <li>Wait for payment confirmation</li>
+                              </ol>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Separator />
+
+                    <div
+                      class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
+                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        @click="handlePrevious"
+                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
+                      >
+                        <ChevronLeft class="w-4 h-4" />
+                        Back to Review
+                      </Button>
+
+                      <Button
+                        type="submit"
+                        size="lg"
+                        :disabled="isProcessing"
+                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <Loader2
+                          v-if="isProcessing"
+                          class="w-5 h-5 animate-spin"
+                        />
+                        <div
+                          v-else
+                          class="w-5 h-5 bg-white rounded-full flex items-center justify-center"
+                        >
+                          <span class="text-green-600 text-xs font-bold"
+                            >M</span
+                          >
+                        </div>
+                        {{
+                          isProcessing
+                            ? "Processing Payment..."
+                            : `Pay KSh ${getTotalAmount}`
+                        }}
+                      </Button>
+                    </div>
+                  </form>
 
                   <!-- Success Page -->
                   <div v-else class="text-center space-y-8">
