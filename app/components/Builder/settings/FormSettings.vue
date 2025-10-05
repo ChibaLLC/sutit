@@ -110,6 +110,15 @@ const slugUrl = computed(() => {
               class="transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
             />
           </div>
+          <div class="space-y-2">
+            <Label>After Submission Message</Label>
+            <Textarea
+              v-model="form.afterSubmissionMessage"
+              placeholder="Enter after form submission message "
+              rows="3"
+              class="transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+            />
+          </div>
 
           <!-- Added slug field -->
           <div class="space-y-2">

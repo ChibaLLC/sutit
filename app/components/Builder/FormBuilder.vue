@@ -48,6 +48,7 @@ const form = ref<FormSchema>(
         isPublic: false,
         requiresLogin: false,
         slug: "",
+        afterSubmissionMessage: "",
       },
 );
 const emits = defineEmits<{

@@ -89,6 +89,14 @@ export const useAuthStore = defineStore(
 			token.value = tk;
 		};
 
+		const signinWithGoogle = async () => {
+			try {
+				const { data } = await authClient.signIn.social({
+					provider: "google",
+				});
+			} catch (e: any) {}
+		};
+
 		return {
 			user,
 			token,
@@ -99,6 +107,7 @@ export const useAuthStore = defineStore(
 			signInWithEmail,
 			logout,
 			setAuthUser,
+			signinWithGoogle,
 		};
 	},
 	{
