@@ -135,6 +135,7 @@ export const forms = pgTable(
 		}),
 		groupMemberLimit: integer("group_member_limit"),
 		infoPromptMessage: text("info_prompt_message"),
+		afterSubmissionMessage: text("after_submission_message"),
 		publishedAt: timestamp("published_at"),
 		expiresAt: timestamp("expires_at"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),

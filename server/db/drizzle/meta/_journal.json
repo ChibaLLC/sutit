@@ -43,6 +43,13 @@
       "when": 1759591994495,
       "tag": "0005_first_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759675627980,
+      "tag": "0006_sturdy_bishop",
+      "breakpoints": true
     }
   ]
 }
