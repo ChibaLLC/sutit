@@ -29,11 +29,11 @@ export default defineEventHandler(async (event) => {
 			submission.submmission,
 		);
 		if (
-			submission.metadata.paymentData.phoneNumber &&
+			body.paymentData.phoneNumber &&
 			submission.form.afterSubmissionMessage
 		) {
 			await sendTextSmsTiara({
-				phone: submission.metadata.paymentData.phoneNumber as string,
+				phone: body.paymentData.phoneNumber as string,
 				message: submission.form.afterSubmissionMessage,
 			});
 		}
