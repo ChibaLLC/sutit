@@ -51,7 +51,7 @@
                 </div>
                 <h3 class="font-semibold text-foreground mb-1">Call Us</h3>
                 <p class="text-sm text-muted-foreground">
-                  +2547758673552 / +254718240819
+                  +254758673552 / +254718240819
                 </p>
               </div>
             </Card>

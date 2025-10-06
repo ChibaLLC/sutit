@@ -3,7 +3,9 @@ import { ref } from "vue";
 import { Shield, Lock, CheckCircle } from "lucide-vue-next";
 import { authClient } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
-
+definePageMeta({
+  middleware: ["guest"],
+});
 const isLoading = ref(false);
 const form = ref({
   name: "",

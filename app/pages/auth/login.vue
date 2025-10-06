@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Shield, Lock, CheckCircle } from "lucide-vue-next";
+definePageMeta({
+  middleware: ["guest"],
+});
 
 const form = ref({
   email: "",
