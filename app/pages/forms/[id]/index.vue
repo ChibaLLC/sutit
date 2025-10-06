@@ -41,7 +41,7 @@ const submit = async (form: object) => {
         const result = await checkPayment(submitData.payment.checkoutId, 15);
         toast.success("Payment completed!");
 
-        await navigateTo(`/forms/${route.params.id}/submitted`);
+        await router.push(`/forms/${route.params.id}/submitted`);
       } catch (e) {
         console.log(e.message);
         toast.error(e.message ?? "An error occurred");
