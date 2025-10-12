@@ -108,14 +108,6 @@ export const submitForm = async (
 			.set({ pricePaid: totalPaid })
 			.where(eq(formSubmissions.id, submission.id));
 
-		if (email && form.afterSubmissionMessage) {
-			await sendMail({
-				to: email,
-				text: form.afterSubmissionMessage,
-				subject: "After Submission",
-			});
-		}
-
 		return {
 			submmission: {
 				...submission,

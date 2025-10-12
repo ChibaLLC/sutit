@@ -4,6 +4,7 @@ import { formGroupMemberPayments, formPayments, payments } from "../db/schema";
 import db from "../db";
 import { eq } from "drizzle-orm";
 import { callStkPush } from "./mpesa.service";
+import { sendMail } from "./email.service";
 const createPayment = async (
 	form: Form,
 	submission: Submission,
@@ -121,6 +122,11 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
 		where: eq(formPayments.paymentId, updatedPayment.id),
 		with: {
 			form: true,
+			submission: {
+				with: {
+					submitter: true,
+				},
+			},
 		},
 	});
 
@@ -128,6 +134,19 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
 		phone: updatedPayment.phoneNumber,
 		message: `[SUTIT] KSH ${updatedPayment.amount} received for ${formPayment?.form.title}. Receipt Number ${receiptNumber ?? updatedPayment.referenceCode}`,
 	});
+	if (formPayment?.form.afterSubmissionMessage) {
+		await sendTextSmsTiara({
+			phone: updatedPayment.phoneNumber,
+			message: formPayment?.form.afterSubmissionMessage,
+		});
+		if (formPayment?.submission.submitter) {
+			await sendMail({
+				to: formPayment.submission.submitter.email,
+				text: formPayment.form.afterSubmissionMessage,
+				subject: "After Submission",
+			});
+		}
+	}
 
 	return updatedPayment;
 };
