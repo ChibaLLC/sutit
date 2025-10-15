@@ -57,6 +57,13 @@
       "when": 1759682334817,
       "tag": "0007_fearless_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1760567665357,
+      "tag": "0008_colossal_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

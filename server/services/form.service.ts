@@ -22,17 +22,8 @@ import {
   storeItems,
 } from "../db/schema";
 import db from "../db";
-import { FormSchema } from "~~/shared/types";
+import { Filters, FormSchema } from "~~/shared/types";
 import { slugify } from "~~/shared/utils/form.schema";
-interface Filters {
-  limit?: number;
-  offset?: number;
-  search?: string;
-  from?: string;
-  to?: string;
-  sort?: string;
-  order?: "asc" | "desc";
-}
 
 export type NewForm = InferInsertModel<typeof forms>;
 export type NewFormSection = InferInsertModel<typeof formPages>;
