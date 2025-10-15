@@ -6,11 +6,10 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <div class="flex items-center gap-2 mb-4">
-            <div
+            <img
+              src="/logo.jpeg"
               class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"
-            >
-              <span class="text-white font-bold">S</span>
-            </div>
+            />
             <span class="text-lg font-bold">SUTIT Forms</span>
           </div>
           <p class="text-sm text-muted-foreground">

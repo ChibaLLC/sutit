@@ -25,6 +25,7 @@ const navItems = [
   { label: "Forms", href: "/forms" },
 ];
 const navs = [
+  { label: "Market Place", href: "/marketplace" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
