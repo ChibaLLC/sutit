@@ -51,11 +51,10 @@ const logout = async () => {
               <div
                 class="relative h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-primary/30 group-hover:shadow-xl"
               >
-                <div
-                  class="flex h-full w-full items-center justify-center text-white font-bold text-lg"
-                >
-                  S
-                </div>
+                <img
+                  src="/logo.jpeg"
+                  class="flex h-full w-full items-center justify-center text-white font-bold text-lg rounded-lg"
+                />
                 <!-- Inner shine effect -->
                 <div
                   class="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
