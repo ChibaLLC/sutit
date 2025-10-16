@@ -19,6 +19,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Filter,
+  Star,
 } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 import type { Form, User } from "~~/shared/types";
@@ -31,6 +33,9 @@ interface Category {
 
 // View mode
 const viewMode = ref<"grid" | "list">("grid");
+
+// Mobile filters collapsible
+const filtersOpen = ref(false);
 
 // Filters with reactive query
 const filters = ref({
@@ -51,7 +56,7 @@ const selectedCategories = computed({
 });
 
 // Fetch data from API with auto-refresh on filter changes
-const { data, pending, refresh } = await useFetch("/api/marketplace", {
+const { data, pending } = await useFetch("/api/marketplace", {
   query: filters,
   watch: [filters],
   server: true,
@@ -109,7 +114,6 @@ const priceRanges = computed(() => {
     ];
   }
 
-  const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const hasFree = prices.some((p: number) => p === 0);
 
@@ -254,15 +258,87 @@ useHead({
     {
       name: "description",
       content:
-        "Browse through our curated collection of public forms. Find the perfect form template for your needs.",
+        "Browse through our curated collection of public forms. Find the perfect form template for your needs with advanced filtering and search.",
+    },
+    {
+      name: "keywords",
+      content:
+        "forms, templates, registration, surveys, marketplace, public forms, form builder",
+    },
+    {
+      name: "robots",
+      content: "index,follow,max-image-preview:large",
     },
     {
       property: "og:title",
-      content: "Marketplace - SUTIT Forms",
+      content: "Marketplace - Discover Public Forms | SUTIT Forms",
     },
     {
       property: "og:description",
+      content:
+        "Discover amazing public forms created by the community. Filter by category, price, and more.",
+    },
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "og:url",
+      content: `${useRuntimeConfig().public.publicUrl}/marketplace`,
+    },
+    {
+      property: "og:image",
+      content: `${useRuntimeConfig().public.publicUrl}/form.png`,
+    },
+    {
+      property: "og:site_name",
+      content: "SUTIT Forms",
+    },
+    {
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      name: "twitter:title",
+      content: "Marketplace - Discover Public Forms | SUTIT Forms",
+    },
+    {
+      name: "twitter:description",
       content: "Discover amazing public forms created by the community",
+    },
+    {
+      name: "twitter:image",
+      content: `${useRuntimeConfig().public.publicUrl}/form.png`,
+    },
+  ],
+  link: [
+    {
+      rel: "canonical",
+      href: `${useRuntimeConfig().public.publicUrl}/marketplace`,
+    },
+  ],
+  script: [
+    {
+      type: "application/ld+json",
+      children: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Public Forms Marketplace",
+        description:
+          "Browse through our curated collection of public forms created by the community",
+        url: `${useRuntimeConfig().public.publicUrl}/marketplace`,
+        mainEntity: {
+          "@type": "ItemList",
+          name: "Public Forms",
+          description: "Collection of public forms available for use",
+          numberOfItems: totalForms.value,
+        },
+        publisher: {
+          "@type": "Organization",
+          name: "SUTIT Forms",
+          url: useRuntimeConfig().public.publicUrl,
+        },
+      }),
     },
   ],
 });
@@ -340,8 +416,243 @@ useHead({
       </div>
 
       <div v-else class="flex flex-col lg:flex-row gap-6">
+        <!-- Mobile Filters Trigger -->
+        <div class="lg:hidden">
+          <Button
+            @click="filtersOpen = !filtersOpen"
+            variant="outline"
+            class="w-full mb-4"
+          >
+            <Filter class="w-4 h-4 mr-2" />
+            {{ filtersOpen ? "Hide" : "Show" }} Filters
+            <ChevronRight
+              class="w-4 h-4 ml-auto transition-transform"
+              :class="filtersOpen ? 'rotate-90' : ''"
+            />
+          </Button>
+        </div>
+
         <!-- Sidebar Filters -->
-        <aside class="lg:w-80 flex-shrink-0">
+        <Collapsible v-model:open="filtersOpen" class="lg:hidden">
+          <CollapsibleContent class="overflow-hidden">
+            <aside class="flex-shrink-0 mb-6">
+              <div class="space-y-4">
+                <!-- Search -->
+                <Card
+                  class="border-border/50 hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader class="pb-3">
+                    <CardTitle
+                      class="text-base font-semibold flex items-center gap-2"
+                    >
+                      <Search class="w-4 h-4 text-primary" />
+                      Search Forms
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="relative">
+                      <Search
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                      />
+                      <Input
+                        v-model="filters.search"
+                        placeholder="Search by name or tag..."
+                        class="pl-10 pr-10"
+                        @input="debouncedSearch"
+                      />
+                      <Button
+                        v-if="filters.search"
+                        variant="ghost"
+                        size="sm"
+                        class="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                        @click="clearSearch"
+                      >
+                        <X class="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <!-- Categories -->
+                <Card
+                  class="border-border/50 hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader class="pb-3">
+                    <CardTitle
+                      class="text-base font-semibold flex items-center gap-2"
+                    >
+                      <Layers class="w-4 h-4 text-primary" />
+                      Categories
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea class="h-[300px] pr-4">
+                      <div class="space-y-2">
+                        <button
+                          v-for="category in categories"
+                          :key="category.id"
+                          @click="toggleCategory(category.id)"
+                          class="w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group relative overflow-hidden"
+                          :class="
+                            selectedCategories.includes(category.id)
+                              ? 'bg-primary text-primary-foreground shadow-md scale-[1.02]'
+                              : 'bg-muted/30 hover:bg-muted hover:scale-[1.01] text-foreground'
+                          "
+                        >
+                          <div
+                            class="absolute inset-0 bg-gradient-to-r from-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          ></div>
+                          <div class="flex items-center gap-3 relative z-10">
+                            <div
+                              class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                              :class="
+                                selectedCategories.includes(category.id)
+                                  ? 'bg-primary-foreground/20'
+                                  : 'bg-primary/10'
+                              "
+                            >
+                              <Tag
+                                class="w-4 h-4"
+                                :class="
+                                  selectedCategories.includes(category.id)
+                                    ? 'text-primary-foreground'
+                                    : 'text-primary'
+                                "
+                              />
+                            </div>
+                            <span class="text-sm font-medium">{{
+                              category.name
+                            }}</span>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            class="text-xs relative z-10 transition-colors"
+                            :class="
+                              selectedCategories.includes(category.id)
+                                ? 'bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30'
+                                : 'border-border'
+                            "
+                          >
+                            {{ category.count }}
+                          </Badge>
+                        </button>
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                <!-- Price Range -->
+                <Card
+                  class="border-border/50 hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader class="pb-3">
+                    <CardTitle
+                      class="text-base font-semibold flex items-center gap-2"
+                    >
+                      <DollarSign class="w-4 h-4 text-primary" />
+                      Price Range
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="space-y-2">
+                      <button
+                        v-for="price in priceRanges"
+                        :key="price.id"
+                        @click="selectPriceRange(price.id)"
+                        class="w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group relative overflow-hidden"
+                        :class="
+                          filters.priceRange === price.id
+                            ? 'bg-primary text-primary-foreground shadow-md scale-[1.02]'
+                            : 'bg-muted/30 hover:bg-muted hover:scale-[1.01] text-foreground'
+                        "
+                      >
+                        <div
+                          class="absolute inset-0 bg-gradient-to-r from-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        ></div>
+                        <span class="text-sm font-medium relative z-10">{{
+                          price.label
+                        }}</span>
+                        <CheckCircle2
+                          v-if="filters.priceRange === price.id"
+                          class="w-4 h-4 relative z-10 animate-in zoom-in-50 duration-200"
+                        />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <!-- Sort Options -->
+                <Card
+                  class="border-border/50 hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader class="pb-3">
+                    <CardTitle
+                      class="text-base font-semibold flex items-center gap-2"
+                    >
+                      <ArrowUpDown class="w-4 h-4 text-primary" />
+                      Sort By
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Select v-model="filters.sortBy">
+                      <SelectTrigger class="w-full">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="popular">
+                          <div class="flex items-center gap-2">
+                            <TrendingUp class="w-4 h-4" />
+                            Most Popular
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="newest">
+                          <div class="flex items-center gap-2">
+                            <Clock class="w-4 h-4" />
+                            Newest First
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="price-low">
+                          <div class="flex items-center gap-2">
+                            <ArrowUp class="w-4 h-4" />
+                            Price: Low to High
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="price-high">
+                          <div class="flex items-center gap-2">
+                            <ArrowDown class="w-4 h-4" />
+                            Price: High to Low
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="title">
+                          <div class="flex items-center gap-2">
+                            <FileText class="w-4 h-4" />
+                            Title A-Z
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </CardContent>
+                </Card>
+
+                <!-- Clear Filters -->
+                <Button
+                  variant="outline"
+                  class="w-full group hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
+                  @click="clearFilters"
+                  v-if="hasActiveFilters"
+                >
+                  <X
+                    class="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform"
+                  />
+                  Clear All Filters
+                </Button>
+              </div>
+            </aside>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:block lg:w-80 flex-shrink-0">
           <div class="sticky top-4 space-y-4">
             <!-- Search -->
             <Card class="border-border/50 hover:shadow-lg transition-shadow">
@@ -643,6 +954,13 @@ useHead({
 
                 <div class="absolute top-3 right-3 flex gap-2">
                   <Badge
+                    v-if="form.isFeatured"
+                    class="bg-yellow-500 hover:bg-yellow-500 shadow-lg"
+                  >
+                    <Star class="w-3 h-3 mr-1 fill-current" />
+                    Featured
+                  </Badge>
+                  <Badge
                     v-if="parseFloat(form.price) === 0"
                     class="bg-chart-3 hover:bg-chart-3 shadow-lg"
                   >
@@ -766,7 +1084,14 @@ useHead({
                     >
                       <FileText class="w-16 h-16 text-primary/20" />
                     </div>
-                    <div class="absolute top-2 right-2">
+                    <div class="absolute top-2 right-2 flex gap-2">
+                      <Badge
+                        v-if="form.isFeatured"
+                        class="bg-yellow-500 hover:bg-yellow-500 text-xs shadow-md"
+                      >
+                        <Star class="w-3 h-3 mr-1 fill-current" />
+                        Featured
+                      </Badge>
                       <Badge
                         v-if="parseFloat(form.price) === 0"
                         class="bg-chart-3 hover:bg-chart-3 text-xs shadow-md"
