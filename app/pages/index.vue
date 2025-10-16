@@ -20,6 +20,34 @@ import {
 } from "lucide-vue-next";
 import { buttonVariants } from "@/components/ui/button";
 
+useSeoMeta({
+  title: "Create Powerful Forms in Minutes - SUTIT",
+  description:
+    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+  keywords:
+    "form builder, online forms, data collection, survey tool, registration forms, SUTIT",
+  author: "SUTIT",
+  robots: "index,follow,max-image-preview:large",
+  ogTitle: "Create Powerful Forms in Minutes - SUTIT",
+  ogDescription:
+    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+  ogImage: "/logo.jpeg",
+  ogImageAlt: "SUTIT Forms - Create Powerful Forms in Minutes",
+  ogUrl: "/",
+  ogType: "website",
+  ogSiteName: "SUTIT",
+  twitterCard: "summary_large_image",
+  twitterSite: "@sutit",
+  twitterCreator: "@sutit",
+  twitterTitle: "Create Powerful Forms in Minutes - SUTIT",
+  twitterDescription:
+    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+  twitterImage: "/logo.jpeg",
+  twitterImageAlt: "SUTIT Forms - Create Powerful Forms in Minutes",
+  themeColor: "#2563eb",
+  colorScheme: "light dark",
+});
+
 // Carousel state
 const currentSlide = ref<number>(0);
 const carouselContainer = ref<HTMLElement | null>(null);
@@ -27,9 +55,9 @@ const windowWidth = ref<number>(
   typeof window !== "undefined" ? window.innerWidth : 1024,
 );
 
-const { data: forms } = await useFetch(
-  "/api/marketplace?limit=6&featured=true",
-);
+const { data: forms } = useFetch("/api/marketplace?limit=6&featured=true", {
+  server: false,
+});
 
 // Calculate slides per view based on screen size
 const slidesPerView = computed<number>(() => {
@@ -619,41 +647,6 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="py-20 bg-muted/30">
-      <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">
-            This is some of us
-          </h2>
-          <p class="text-lg text-muted-foreground">SUTIT TEAM</p>
-        </div>
-
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto"
-        >
-          <div v-for="i in 4" :key="i" class="text-center group">
-            <div
-              class="bg-card border border-border rounded-xl p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-            >
-              <div
-                class="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform"
-              >
-                <User class="w-12 h-12 text-primary-foreground" />
-              </div>
-              <h3 class="text-xl font-semibold mb-2">Eston Morera</h3>
-              <p class="text-sm text-muted-foreground mb-4">Web Developer</p>
-              <div class="flex justify-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-primary"></div>
-                <div class="w-2 h-2 rounded-full bg-primary"></div>
-                <div class="w-2 h-2 rounded-full bg-primary"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Build Something Section -->
     <section class="py-20 relative overflow-hidden">
       <div
@@ -759,11 +752,12 @@ onUnmounted(() => {
                 With SUTIT Forms, you gain the power to create, manage, and
                 analyze forms that drive results. Get started in seconds.
               </p>
-              <button
-                class="px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium text-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+              <NuxtLink
+                href="/auth/register"
+                :class="buttonVariants({ size: 'lg' })"
               >
                 Get Started Free
-              </button>
+              </NuxtLink>
               <p class="text-sm text-muted-foreground mt-6">
                 ✓ No credit card required • ✓ Free forever plan available
               </p>

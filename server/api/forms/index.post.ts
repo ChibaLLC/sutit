@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
     const body = (await readBody(event)) as FormSchema;
     body.createdBy = session.user.id;
     const form = await createForm(body);
+
     return {
       data: form,
       message: "Form created successfully",
