@@ -25,8 +25,8 @@ const formatFormData = (submissions: FormSubmission[]) => {
   const storeResponses: Record<string, any>[] = [];
   const rows = submissions.forEach((sub) => {
     const row: Record<string, any> = {
-      "Submitter Name": sub.submitter.name,
-      "Submitter Email": sub.submitter.email,
+      "Submitter Name": sub.submitter?.name,
+      "Submitter Email": sub.submitter?.email,
     };
     const storeRow = { ...row };
     sub.responses.forEach((field) => {
