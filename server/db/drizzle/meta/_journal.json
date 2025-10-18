@@ -64,6 +64,13 @@
       "when": 1760567665357,
       "tag": "0008_colossal_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1760792472934,
+      "tag": "0009_boring_karen_page",
+      "breakpoints": true
     }
   ]
 }

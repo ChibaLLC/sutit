@@ -1,0 +1,1 @@
+ALTER TABLE "form_fields" ALTER COLUMN "validation" SET DEFAULT '[]'::jsonb;

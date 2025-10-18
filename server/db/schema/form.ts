@@ -189,7 +189,7 @@ export const formFields = pgTable(
     description: text("description"),
     placeholder: varchar("placeholder", { length: 500 }),
     properties: jsonb("properties").default({}),
-    validation: jsonb("validation").default({}),
+    validation: jsonb("validation").default([]),
     options: jsonb("options").default([]),
     conditions: jsonb("conditions").default({}),
     required: boolean("required").default(false),

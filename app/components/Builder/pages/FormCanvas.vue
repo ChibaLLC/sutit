@@ -138,6 +138,12 @@ const removeElement = (index: number) => {
                   <X class="w-4 h-4" />
                 </button>
               </div>
+              <p
+                v-if="element.description"
+                class="text-sm text-muted-foreground mb-2"
+              >
+                {{ element.description }}
+              </p>
 
               <div class="pointer-events-none">
                 <input
@@ -216,7 +222,7 @@ const removeElement = (index: number) => {
                     disabled
                   />
                   <label class="text-sm text-foreground font-medium">{{
-                    element.label
+                    element.placeholder
                   }}</label>
                 </div>
                 <input

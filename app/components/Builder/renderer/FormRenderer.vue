@@ -550,19 +550,25 @@ const df = new DateFormatter("en-US", {
                       class="group"
                       :class="getFieldClasses(field)"
                     >
-                      <div v-if="field.type == 'date'">
-                        <Label
-                          :for="field.id"
-                          class="text-sm font-semibold flex items-center gap-2"
+                      <Label
+                        :for="field.id"
+                        class="text-sm font-semibold flex items-center gap-2"
+                      >
+                        {{ field.label }}
+                        <Badge
+                          v-if="field.required"
+                          variant="destructive"
+                          class="text-xs px-1.5 py-0.5"
+                          >*</Badge
                         >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
+                      </Label>
+                      <p
+                        v-if="field.description"
+                        class="text-sm text-muted-foreground mb-2"
+                      >
+                        {{ field.description }}
+                      </p>
+                      <div v-if="field.type == 'date'">
                         <Popover>
                           <PopoverTrigger as-child>
                             <Button
@@ -600,18 +606,6 @@ const df = new DateFormatter("en-US", {
                         "
                         class="space-y-3"
                       >
-                        <Label
-                          :for="field.id"
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
                         <Input
                           :id="field.id"
                           v-model="formData[field.id]"
@@ -623,20 +617,6 @@ const df = new DateFormatter("en-US", {
                       </div>
                       <!-- File Input -->
                       <div v-else-if="field.type === 'file'" class="space-y-3">
-                        <Label
-                          :for="field.id"
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                          >
-                            Required
-                          </Badge>
-                        </Label>
-
                         <div class="space-y-2">
                           <Input
                             :id="field.id"
@@ -723,18 +703,6 @@ const df = new DateFormatter("en-US", {
                         v-else-if="field.type === 'textarea'"
                         class="space-y-3"
                       >
-                        <Label
-                          :for="field.id"
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
                         <Textarea
                           :id="field.id"
                           v-model="formData[field.id]"
@@ -749,18 +717,6 @@ const df = new DateFormatter("en-US", {
                         v-else-if="field.type === 'select'"
                         class="space-y-3"
                       >
-                        <Label
-                          :for="field.id"
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
                         <Select v-model="formData[field.id]">
                           <SelectTrigger
                             class="h-12 transition-all duration-200"
@@ -799,12 +755,12 @@ const df = new DateFormatter("en-US", {
                             :for="field.id"
                             class="text-sm font-medium cursor-pointer flex items-center gap-2"
                           >
-                            {{ field.label }}
+                            {{ field.placeholder }}
                             <Badge
                               v-if="field.required"
                               variant="destructive"
                               class="text-xs px-1.5 py-0.5"
-                              >Required</Badge
+                              >*</Badge
                             >
                           </Label>
                         </div>
@@ -813,32 +769,10 @@ const df = new DateFormatter("en-US", {
                         v-else-if="field.type === 'toggle'"
                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                       >
-                        <Label
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
                         <Switch v-model="formData[field.id]" class="mt-0" />
                       </div>
                       <!-- Radio Group -->
                       <div v-else-if="field.type === 'radio'" class="space-y-4">
-                        <Label
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          {{ field.label }}
-                          <Badge
-                            v-if="field.required"
-                            variant="destructive"
-                            class="text-xs px-1.5 py-0.5"
-                            >Required</Badge
-                          >
-                        </Label>
                         <RadioGroup
                           v-model="formData[field.id]"
                           class="space-y-3"

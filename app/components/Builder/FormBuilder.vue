@@ -101,6 +101,7 @@ const removePage = (index: number) => {
 const submit = () => {
   const result = formSchemaSchema.safeParse(form.value);
   if (!result.success) {
+    console.log(result.error.format());
     result.error.issues.forEach((issue) => {
       toast.error(issue.message);
     });
