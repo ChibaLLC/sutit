@@ -755,14 +755,20 @@ const downloadExcel = async () => {
                 </td>
                 <td class="px-4 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      class="h-8 w-8 p-0"
-                      title="View"
+                    <NuxtLink
+                      :to="`/forms/${form.id}/submissions/${submission.id}`"
+                      as-child
                     >
-                      <Eye class="h-4 w-4" />
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        class="h-8 w-8 p-0"
+                        title="View"
+                      >
+                        <Eye class="h-4 w-4" />
+                      </Button>
+                    </NuxtLink>
+
                     <Button
                       size="sm"
                       variant="ghost"
