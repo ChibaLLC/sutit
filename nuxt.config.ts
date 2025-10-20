@@ -35,11 +35,8 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    // Static pages - prerender for best performance
-    "/": { prerender: true },
-    "/about": { prerender: true },
-    "/contact": { prerender: true },
-    "/templates": { prerender: true },
+    // "/": { prerender: true },
+    // Disable prerendering to avoid xlsx bundling issues
   },
   nitro: {
     preset: "node-server",
