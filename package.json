@@ -33,6 +33,7 @@
 		"daraja.js": "github:ChibaLLC/daraja.js#42e371dedfabbbca6b73895f26bd62f64e77ac14",
 		"dotenv": "^17.2.3",
 		"drizzle-orm": "^0.44.6",
+		"exceljs": "^4.4.0",
 		"jsonwebtoken": "^9.0.2",
 		"jspdf": "^3.0.3",
 		"lucide-vue-next": "^0.546.0",
@@ -51,13 +52,13 @@
 		"vue": "^3.5.22",
 		"vue-router": "^4.6.3",
 		"vue-sonner": "^2.0.9",
-		"xlsx": "^0.18.5",
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@types/node": "^24.8.1",
 		"@types/pg": "^8.15.5",
 		"drizzle-kit": "^0.31.5",
+		"shadcn-vue": "^2.3.2",
 		"tsx": "^4.20.6"
 	}
 }
