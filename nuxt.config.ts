@@ -13,6 +13,8 @@ export default defineNuxtConfig({
     "shadcn-nuxt",
     "@pinia/nuxt",
     "pinia-plugin-persistedstate",
+    "@nuxtjs/sitemap",
+    "@nuxtjs/robots",
   ],
   css: ["~/assets/css/tailwind.css"],
   vite: {
@@ -35,12 +37,20 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    // "/": { prerender: true },
-    // Disable prerendering to avoid xlsx bundling issues
+    "/": { prerender: true },
+    "/about": { prerender: true },
+    "/contact": { prerender: true },
+    "/templates": { prerender: true },
+    // "/marketplace": { prerender: true },
   },
+  site: {},
+  robots: {},
   nitro: {
     preset: "node-server",
     compressPublicAssets: true,
     minify: true,
+    prerender: {
+      routes: ["/sitemap.xml"],
+    },
   },
 });
