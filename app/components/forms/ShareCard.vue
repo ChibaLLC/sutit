@@ -57,13 +57,16 @@ const sharePlatforms = [
     url: "https://twitter.com/intent/tweet?url=",
   },
 ];
-const shareUrl = ref(
-  props.form ? `${window.location.origin}/forms/${props.form.slug}` : "",
-);
+const shareUrl = ref({
+  formsUrl: props.form
+    ? `${window.location.origin}/forms/${props.form.slug}`
+    : "",
+  mainUrl: props.form ? `${window.location.origin}/${props.form.slug}` : "",
+});
 
 const embedCode = computed(() => {
   if (!props.form) return "";
-  return `<iframe src="${shareUrl.value}" width="${embedOptions.value.width}" height="${embedOptions.value.height}" frameborder="0"></iframe>`;
+  return `<iframe src="${shareUrl.value.formsUrl}" width="${embedOptions.value.width}" height="${embedOptions.value.height}" frameborder="0"></iframe>`;
 });
 
 const copyToClipboard = async (text: string) => {
@@ -76,7 +79,7 @@ const copyToClipboard = async (text: string) => {
 };
 
 const shareOnPlatform = (platform: any) => {
-  const url = platform.url + encodeURIComponent(shareUrl.value);
+  const url = platform.url + encodeURIComponent(shareUrl.value.formsUrl);
   window.open(url, "_blank");
 };
 
@@ -110,10 +113,19 @@ const saveShareSettings = () => {
         <!-- Share Link Tab -->
         <TabsContent value="link" class="space-y-4">
           <div class="space-y-3">
-            <Label>Form Link</Label>
+            <Label>Forms Link</Label>
             <div class="flex gap-2">
-              <Input v-model="shareUrl" class="flex-1" />
-              <Button @click="copyToClipboard(shareUrl)" size="sm">
+              <Input v-model="shareUrl.formsUrl" class="flex-1" />
+              <Button @click="copyToClipboard(shareUrl.formsUrl)" size="sm">
+                <Copy class="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <Label>Main Form Link</Label>
+            <div class="flex gap-2">
+              <Input v-model="shareUrl.mainUrl" class="flex-1" />
+              <Button @click="copyToClipboard(shareUrl.mainUrl)" size="sm">
                 <Copy class="h-4 w-4" />
               </Button>
             </div>

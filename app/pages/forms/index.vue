@@ -2,8 +2,6 @@
 import {
   FileText,
   Plus,
-  Sun,
-  Moon,
   CheckCircle,
   DollarSign,
   TrendingUp,
@@ -21,6 +19,7 @@ import {
   ArrowUpDown,
   Users2,
   Share,
+  Filter,
 } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 import { authHeaders } from "~/lib/auth-client";
@@ -41,19 +40,24 @@ const filters = ref({
   itemsPerPage: 24,
 });
 
-const { data: forms } = await useFetch("/api/forms", {
+const filtersOpen = ref(false);
+
+const { data: forms, pending } = await useFetch("/api/forms", {
   method: "get",
   headers: {
     ...(await authHeaders()),
   },
   query: filters,
 });
+
 const totalPages = computed(() =>
   Math.ceil(forms.value?.data.length / filters.value.itemsPerPage),
 );
+
 const selectedForm = ref<FormSchema | null>(null);
 const shareModalOpen = ref(false);
-// Computed properties for stats (updated to use forms)
+
+// Computed properties for stats
 const publishedCount = computed(
   () => forms.value?.data.filter((form) => form.status === "published").length,
 );
@@ -68,17 +72,40 @@ const avgSubmissions = computed(() => {
   return Math.floor(Math.random() * 50) + 10;
 });
 
-// Filter and pagination methods
-const clearFilters = () => {};
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+  return (
+    filters.value.search !== "" ||
+    filters.value.status !== "all" ||
+    filters.value.startDate !== "" ||
+    filters.value.endDate !== ""
+  );
+});
 
-const toggleSortOrder = () => {};
+// Filter and pagination methods
+const clearFilters = () => {
+  filters.value.search = "";
+  filters.value.status = "all";
+  filters.value.startDate = "";
+  filters.value.endDate = "";
+};
+
+const toggleSortOrder = () => {
+  filters.value.sortOrder = filters.value.sortOrder === "asc" ? "desc" : "asc";
+};
+
 const toggleShareModal = (form?: FormSchema) => {
   if (form) {
     selectedForm.value = form;
   }
   shareModalOpen.value = !shareModalOpen.value;
 };
+
+const toggleFilters = () => {
+  filtersOpen.value = !filtersOpen.value;
+};
 </script>
+
 <template>
   <div class="container mx-auto">
     <div class="container mx-auto px-6 py-4">
@@ -92,6 +119,17 @@ const toggleShareModal = (form?: FormSchema) => {
           <h1 class="text-2xl font-bold text-foreground">All Forms</h1>
         </div>
         <div class="flex items-center gap-3">
+          <Button
+            variant="outline"
+            @click="toggleFilters"
+            :class="{ 'bg-accent': filtersOpen || hasActiveFilters }"
+          >
+            <Filter class="w-4 h-4 mr-2" />
+            Filters
+            <Badge v-if="hasActiveFilters" variant="secondary" class="ml-2">
+              {{ hasActiveFilters ? "Active" : "" }}
+            </Badge>
+          </Button>
           <NuxtLink to="/forms/new" :class="buttonVariants()">
             <Plus class="w-4 h-4 mr-2" />
             New Form
@@ -99,183 +137,267 @@ const toggleShareModal = (form?: FormSchema) => {
         </div>
       </div>
     </div>
+
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <Card
-        class="border-border/50 hover:shadow-lg transition-all duration-300"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">
-                Total Forms
-              </p>
-              <p class="text-3xl font-bold text-foreground">
-                {{ forms?.data.length }}
-              </p>
+      <!-- Loading skeletons -->
+      <template v-if="pending">
+        <Card v-for="i in 4" :key="i" class="border-border/50">
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div class="space-y-2 flex-1">
+                <div class="h-4 w-24 bg-muted/50 rounded animate-pulse" />
+                <div class="h-8 w-16 bg-muted/50 rounded animate-pulse" />
+              </div>
+              <div class="w-12 h-12 bg-muted/50 rounded-lg animate-pulse" />
             </div>
-            <div
-              class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center"
-            >
-              <FileText class="w-6 h-6 text-accent" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </template>
 
-      <Card
-        class="border-border/50 hover:shadow-lg transition-all duration-300"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">Published</p>
-              <p class="text-3xl font-bold text-foreground">
-                {{ publishedCount }}
-              </p>
+      <!-- Actual stats -->
+      <template v-else>
+        <Card
+          class="border-border/50 hover:shadow-lg transition-all duration-300"
+        >
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">
+                  Total Forms
+                </p>
+                <p class="text-3xl font-bold text-foreground">
+                  {{ forms?.data.length }}
+                </p>
+              </div>
+              <div
+                class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center"
+              >
+                <FileText class="w-6 h-6 text-accent" />
+              </div>
             </div>
-            <div
-              class="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center"
-            >
-              <CheckCircle class="w-6 h-6 text-chart-3" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card
-        class="border-border/50 hover:shadow-lg transition-all duration-300"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">
-                Total Revenue
-              </p>
-              <p class="text-3xl font-bold text-foreground">
-                Ksh {{ totalRevenue }}
-              </p>
+        <Card
+          class="border-border/50 hover:shadow-lg transition-all duration-300"
+        >
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">
+                  Published
+                </p>
+                <p class="text-3xl font-bold text-foreground">
+                  {{ publishedCount }}
+                </p>
+              </div>
+              <div
+                class="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center"
+              >
+                <CheckCircle class="w-6 h-6 text-chart-3" />
+              </div>
             </div>
-            <div
-              class="w-12 h-12 bg-chart-4/10 rounded-lg flex items-center justify-center"
-            >
-              <DollarSign class="w-6 h-6 text-chart-4" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card
-        class="border-border/50 hover:shadow-lg transition-all duration-300"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">
-                Avg. Submissions
-              </p>
-              <p class="text-3xl font-bold text-foreground">
-                {{ avgSubmissions }}
-              </p>
+        <Card
+          class="border-border/50 hover:shadow-lg transition-all duration-300"
+        >
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">
+                  Total Revenue
+                </p>
+                <p class="text-3xl font-bold text-foreground">
+                  Ksh {{ totalRevenue }}
+                </p>
+              </div>
+              <div
+                class="w-12 h-12 bg-chart-4/10 rounded-lg flex items-center justify-center"
+              >
+                <DollarSign class="w-6 h-6 text-chart-4" />
+              </div>
             </div>
-            <div
-              class="w-12 h-12 bg-chart-2/10 rounded-lg flex items-center justify-center"
-            >
-              <TrendingUp class="w-6 h-6 text-chart-2" />
+          </CardContent>
+        </Card>
+
+        <Card
+          class="border-border/50 hover:shadow-lg transition-all duration-300"
+        >
+          <CardContent class="p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-muted-foreground">
+                  Avg. Submissions
+                </p>
+                <p class="text-3xl font-bold text-foreground">
+                  {{ avgSubmissions }}
+                </p>
+              </div>
+              <div
+                class="w-12 h-12 bg-chart-2/10 rounded-lg flex items-center justify-center"
+              >
+                <TrendingUp class="w-6 h-6 text-chart-2" />
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </template>
     </div>
 
-    <!-- Filters Section -->
-    <div class="mb-8">
-      <Card class="border-border/50">
-        <CardHeader>
-          <CardTitle class="text-lg font-semibold">Filter Forms</CardTitle>
-          <CardDescription
-            >Search and filter your forms by various criteria</CardDescription
-          >
-        </CardHeader>
-        <CardContent>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Search Input -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-foreground">Search</label>
-              <div class="relative">
-                <Search
-                  class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.search"
-                  placeholder="Search forms..."
-                  class="pl-10"
-                />
+    <!-- Collapsible Filters Section -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 -translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-4"
+    >
+      <div v-if="filtersOpen" class="mb-8">
+        <Card class="border-border/50">
+          <CardHeader>
+            <div class="flex items-center justify-between">
+              <div>
+                <CardTitle class="text-lg font-semibold"
+                  >Filter Forms</CardTitle
+                >
+                <CardDescription
+                  >Search and filter your forms by various
+                  criteria</CardDescription
+                >
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                @click="toggleFilters"
+                class="h-8 w-8 p-0"
+              >
+                <X class="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Search Input -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-foreground"
+                  >Search</label
+                >
+                <div class="relative">
+                  <Search
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                  />
+                  <Input
+                    v-model="filters.search"
+                    placeholder="Search forms..."
+                    class="pl-10"
+                  />
+                </div>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-foreground"
+                  >Status</label
+                >
+                <Select v-model="filters.status">
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <!-- Start Date -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-foreground"
+                  >Start Date</label
+                >
+                <Input v-model="filters.startDate" type="date" class="w-full" />
+              </div>
+
+              <!-- End Date -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-foreground"
+                  >End Date</label
+                >
+                <Input v-model="filters.endDate" type="date" class="w-full" />
               </div>
             </div>
 
-            <!-- Status Filter -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-foreground">Status</label>
-              <Select v-model="filters.status">
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
+            <!-- Filter Actions -->
+            <div
+              class="flex items-center justify-between mt-4 pt-4 border-t border-border"
+            >
+              <div class="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  @click="clearFilters"
+                  :disabled="!hasActiveFilters"
+                >
+                  <X class="w-4 h-4 mr-2" />
+                  Clear Filters
+                </Button>
+                <Badge variant="secondary" class="text-xs">
+                  {{ forms?.data.length || 0 }} forms
+                </Badge>
+              </div>
+              <div class="flex items-center gap-2">
+                <Select v-model="filters.sortBy">
+                  <SelectTrigger class="w-40">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">Created Date</SelectItem>
+                    <SelectItem value="title">Title</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="price">Price</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" @click="toggleSortOrder">
+                  <ArrowUpDown class="w-4 h-4" />
+                </Button>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    </Transition>
 
-            <!-- Start Date -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-foreground"
-                >Start Date</label
-              >
-              <Input v-model="filters.startDate" type="date" class="w-full" />
+    <!-- Forms Grid with Loading State -->
+    <div
+      v-if="pending"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
+    >
+      <Card v-for="i in 8" :key="i" class="border-border/50">
+        <CardHeader class="pb-3">
+          <div class="space-y-3">
+            <div class="flex gap-2">
+              <div class="h-5 w-20 bg-muted/50 rounded animate-pulse" />
+              <div class="h-5 w-16 bg-muted/50 rounded animate-pulse" />
             </div>
-
-            <!-- End Date -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-foreground"
-                >End Date</label
-              >
-              <Input v-model="filters.endDate" type="date" class="w-full" />
-            </div>
+            <div class="h-6 w-full bg-muted/50 rounded animate-pulse" />
+            <div class="h-4 w-3/4 bg-muted/50 rounded animate-pulse" />
           </div>
-
-          <!-- Filter Actions -->
-          <div
-            class="flex items-center justify-between mt-4 pt-4 border-t border-border"
-          >
-            <div class="flex items-center gap-2">
-              <Button variant="outline" size="sm" @click="clearFilters">
-                <X class="w-4 h-4 mr-2" />
-                Clear Filters
-              </Button>
-              <Badge variant="secondary" class="text-xs">
-                {{ forms?.data.length }} of {{ forms?.data.length }} forms
-              </Badge>
-            </div>
-            <div class="flex items-center gap-2">
-              <Select v-model="filters.sortBy">
-                <SelectTrigger class="w-40">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt">Created Date</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                  <SelectItem value="price">Price</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" @click="toggleSortOrder">
-                <ArrowUpDown class="w-4 h-4" />
-              </Button>
-            </div>
+        </CardHeader>
+        <CardContent class="pt-0 space-y-4">
+          <div class="h-16 w-full bg-muted/50 rounded-lg animate-pulse" />
+          <div class="space-y-2">
+            <div class="h-4 w-full bg-muted/50 rounded animate-pulse" />
+            <div class="h-4 w-full bg-muted/50 rounded animate-pulse" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="h-9 bg-muted/50 rounded animate-pulse" />
+            <div class="h-9 bg-muted/50 rounded animate-pulse" />
           </div>
         </CardContent>
       </Card>
@@ -283,6 +405,7 @@ const toggleShareModal = (form?: FormSchema) => {
 
     <!-- Forms Grid -->
     <div
+      v-else
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
     >
       <Card
@@ -291,56 +414,35 @@ const toggleShareModal = (form?: FormSchema) => {
         class="group border-border/50 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden"
       >
         <CardHeader class="pb-3">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
-                <Badge
-                  :variant="
-                    form.status === 'published' ? 'default' : 'secondary'
-                  "
-                  class="text-xs font-medium"
-                  :class="{
-                    'bg-chart-3 hover:bg-chart-3/90':
-                      form.status === 'published',
-                    'bg-chart-4 hover:bg-chart-4/90': form.status === 'draft',
-                    'bg-muted hover:bg-muted/90': form.status === 'archived',
-                  }"
-                >
-                  {{
-                    form.status.charAt(0).toUpperCase() + form.status.slice(1)
-                  }}
-                </Badge>
-                <Badge v-if="form.isPublic" variant="outline" class="text-xs">
-                  <Globe class="w-3 h-3 mr-1" />
-                  Public
-                </Badge>
-              </div>
-              <CardTitle
-                class="text-lg font-bold text-balance leading-tight transition-colors"
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <Badge
+                :variant="form.status === 'published' ? 'default' : 'secondary'"
+                class="text-xs font-medium"
+                :class="{
+                  'bg-chart-3 hover:bg-chart-3/90': form.status === 'published',
+                  'bg-chart-4 hover:bg-chart-4/90': form.status === 'draft',
+                  'bg-muted hover:bg-muted/90': form.status === 'archived',
+                }"
               >
-                {{ form.title }}
-              </CardTitle>
-              <CardDescription
-                class="text-sm text-muted-foreground mt-1 text-pretty"
-              >
-                {{ form.description || "No description provided" }}
-              </CardDescription>
+                {{ form.status.charAt(0).toUpperCase() + form.status.slice(1) }}
+              </Badge>
+              <Badge v-if="form.isPublic" variant="outline" class="text-xs">
+                <Globe class="w-3 h-3 mr-1" />
+                Public
+              </Badge>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  class="w-8 h-8 p-0 group-hover:opacity-100 transition-opacity"
+                  class="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <MoreVertical class="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem @click.prevent="toggleShareModal(form)">
-                  <Share class="w-4 h-4 mr-2" />
-                  Share
-                </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings class="w-4 h-4 mr-2" />
                   Settings
@@ -357,11 +459,22 @@ const toggleShareModal = (form?: FormSchema) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          <CardTitle
+            class="text-lg font-bold text-balance leading-tight transition-colors"
+          >
+            {{ form.title }}
+          </CardTitle>
+          <CardDescription
+            class="text-sm text-muted-foreground mt-1 text-pretty line-clamp-2"
+          >
+            {{ form.description || "No description provided" }}
+          </CardDescription>
         </CardHeader>
 
-        <CardContent class="pt-0">
+        <CardContent class="pt-0 space-y-4">
           <!-- Creator Info -->
-          <div class="flex items-center gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
+          <div class="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
             <Avatar class="w-8 h-8">
               <AvatarImage :src="form.creator.image || ''" />
               <AvatarFallback
@@ -381,7 +494,7 @@ const toggleShareModal = (form?: FormSchema) => {
           </div>
 
           <!-- Form Details -->
-          <div class="space-y-3 mb-4">
+          <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Price</span>
               <span class="font-semibold text-foreground"
@@ -398,79 +511,102 @@ const toggleShareModal = (form?: FormSchema) => {
                 >{{ form.groupMemberLimit }} members</span
               >
             </div>
+          </div>
 
-            <div
-              class="flex flex-wrap gap-1 mt-2"
-              v-if="form.tags && form.tags.length > 0"
+          <!-- Tags -->
+          <div
+            class="flex flex-wrap gap-1"
+            v-if="form.tags && form.tags.length > 0"
+          >
+            <Badge
+              v-for="tag in form.tags.slice(0, 2)"
+              :key="tag"
+              variant="outline"
+              class="text-xs"
             >
-              <Badge
-                v-for="tag in form.tags.slice(0, 3)"
-                :key="tag"
-                variant="outline"
-                class="text-xs"
+              {{ tag }}
+            </Badge>
+            <Badge
+              v-if="form.tags.length > 2"
+              variant="outline"
+              class="text-xs"
+            >
+              +{{ form.tags.length - 2 }}
+            </Badge>
+          </div>
+
+          <!-- Primary Actions - More visible -->
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <NuxtLink
+                :to="`/forms/${form.slug}`"
+                :class="buttonVariants({ size: 'sm', class: 'w-full' })"
               >
-                {{ tag }}
-              </Badge>
-              <Badge
-                v-if="form.tags.length > 3"
-                variant="outline"
-                class="text-xs"
+                <Eye class="w-4 h-4 mr-2" />
+                View
+              </NuxtLink>
+              <Button
+                variant="secondary"
+                size="sm"
+                class="w-full"
+                @click="toggleShareModal(form)"
               >
-                +{{ form.tags.length - 3 }}
-              </Badge>
+                <Share class="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <NuxtLink
+                :to="`/forms/${form.id}/edit`"
+                :class="
+                  buttonVariants({
+                    variant: 'outline',
+                    size: 'sm',
+                    class: 'w-full',
+                  })
+                "
+              >
+                <Edit class="w-4 h-4 mr-2" />
+                Edit
+              </NuxtLink>
+              <NuxtLink
+                :to="`/forms/${form.id}/submissions`"
+                :class="
+                  buttonVariants({
+                    variant: 'outline',
+                    size: 'sm',
+                    class: 'w-full',
+                  })
+                "
+              >
+                <Users class="w-4 h-4 mr-2" />
+                Submissions
+              </NuxtLink>
+            </div>
+
+            <!-- Additional Actions -->
+            <div class="flex gap-2">
+              <Button variant="ghost" size="sm" class="flex-1">
+                <BarChart3 class="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+              <NuxtLink
+                v-if="form.allowGroups"
+                :to="`/forms/${form.id}/group`"
+                :class="
+                  buttonVariants({
+                    variant: 'ghost',
+                    size: 'sm',
+                    class: 'flex-1',
+                  })
+                "
+              >
+                <Users2 class="h-4 w-4 mr-2" />
+                Groups
+              </NuxtLink>
             </div>
           </div>
-
-          <!-- Action Buttons -->
-          <div class="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" class="w-full">
-              <BarChart3 class="w-4 h-4 mr-2" />
-              Analytics
-            </Button>
-            <NuxtLink
-              :to="`/forms/${form.id}/submissions`"
-              :class="
-                buttonVariants({
-                  class: 'w-full',
-                  variant: 'outline',
-                  size: 'sm',
-                })
-              "
-            >
-              <Users class="w-4 h-4 mr-2" />
-              Submissions
-            </NuxtLink>
-            <NuxtLink
-              :to="`/forms/${form.slug}`"
-              :class="buttonVariants({ size: 'sm' })"
-            >
-              <Eye class="w-4 h-4 mr-2" />
-              View Form
-            </NuxtLink>
-            <NuxtLink
-              :class="
-                buttonVariants({
-                  variant: 'secondary',
-                  size: 'sm',
-                  class: 'w-full',
-                })
-              "
-              :to="`/forms/${form.id}/edit`"
-            >
-              <Edit class="w-4 h-4 mr-2" />
-              Edit
-            </NuxtLink>
-            <NuxtLink
-              v-if="form.allowGroups"
-              :to="`/forms/${form.id}/group`"
-              :class="buttonVariants({ size: 'sm' })"
-            >
-              <Users2 class="h-4 w-4 mr-2" />
-              Groups
-            </NuxtLink>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 mt-2"></div>
         </CardContent>
       </Card>
 
@@ -485,51 +621,30 @@ const toggleShareModal = (form?: FormSchema) => {
             <p class="text-muted-foreground text-center mb-4">
               Try adjusting your filters or create a new form to get started.
             </p>
-            <Button class="bg-accent hover:bg-accent/90">
+            <NuxtLink :to="'/forms/new'" :class="buttonVariants()">
               <Plus class="w-4 h-4 mr-2" />
               Create New Form
-            </Button>
+            </NuxtLink>
           </CardContent>
         </Card>
       </div>
     </div>
+
+    <!-- Share Modal -->
     <LazyFormsShareCard
       v-if="selectedForm"
       :form="selectedForm"
       :isOpen="shareModalOpen"
       @close="toggleShareModal()"
     />
-
-    <!-- Pagination Component -->
-    <!-- <div v-if="totalPages > 1" class="flex justify-center"> -->
-    <!--   <Pagination> -->
-    <!--     <PaginationContent> -->
-    <!--       <PaginationItem> -->
-    <!--         <PaginationPrevious -->
-    <!--           @click="goToPage(currentPage - 1)" -->
-    <!--           :class="{ 'pointer-events-none opacity-50': currentPage === 1 }" -->
-    <!--         /> -->
-    <!--       </PaginationItem> -->
-    <!---->
-    <!--       <PaginationItem v-for="page in visiblePages" :key="page"> -->
-    <!--         <PaginationLink -->
-    <!--           @click="goToPage(page)" -->
-    <!--           :isActive="page === currentPage" -->
-    <!--         > -->
-    <!--           {{ page }} -->
-    <!--         </PaginationLink> -->
-    <!--       </PaginationItem> -->
-    <!---->
-    <!--       <PaginationItem> -->
-    <!--         <PaginationNext -->
-    <!--           @click="goToPage(currentPage + 1)" -->
-    <!--           :class="{ -->
-    <!--             'pointer-events-none opacity-50': currentPage === totalPages, -->
-    <!--           }" -->
-    <!--         /> -->
-    <!--       </PaginationItem> -->
-    <!--     </PaginationContent> -->
-    <!--   </Pagination> -->
-    <!-- </div> -->
   </div>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

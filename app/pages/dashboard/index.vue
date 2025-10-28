@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { computed } from "vue";
 import {
   FileText,
   TrendingUp,
@@ -11,33 +11,22 @@ import {
   ArrowRight,
   Zap,
   Activity,
+  Loader2,
 } from "lucide-vue-next";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { useAuthStore } from "~/stores/auth";
 
-const activitiesData = ref(null);
-const formsData = ref(null);
-const statsData = ref(null);
-
 const authStore = useAuthStore();
 
-onMounted(async () => {
-  try {
-    const [activitiesRes, formsRes, statsRes] = await Promise.all([
-      fetch("/api/activities"),
-      fetch("/api/forms?limit=5"),
-      fetch("/api/dashboard"),
-    ]);
+// Use useFetch for parallel data fetching with loading states
+const { data: activitiesData, pending: activitiesPending } =
+  useFetch("/api/activities");
+const { data: formsData, pending: formsPending } =
+  useFetch("/api/forms?limit=5");
+const { data: statsData, pending: statsPending } = useFetch("/api/dashboard");
 
-    activitiesData.value = await activitiesRes.json();
-    formsData.value = await formsRes.json();
-    statsData.value = await statsRes.json();
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-  }
-});
-
+// Combined loading state
 const quickActions = [
   {
     name: "Create New Form",
@@ -138,56 +127,77 @@ const formatNumber = (num: number) => {
         </div>
       </div>
 
-      <!-- Enhanced stats grid with better visual hierarchy and animations -->
+      <!-- Enhanced stats grid with loaders -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div
-          v-for="(card, index) in dashboardCards"
-          :key="card.name"
-          class="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg transition-all duration-300"
-          :style="{ animationDelay: `${index * 50}ms` }"
-        >
-          <!-- Gradient background on hover -->
+        <!-- Loading skeleton for stats -->
+        <template v-if="statsPending">
           <div
-            class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          />
-
-          <div class="relative p-6 space-y-4">
-            <div class="flex items-start justify-between">
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-muted-foreground">
-                  {{ card.name }}
-                </p>
-                <p class="text-3xl font-bold text-foreground">
-                  {{ formatNumber(card.count) }}
-                </p>
+            v-for="i in 6"
+            :key="i"
+            class="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="space-y-2 flex-1">
+                <div class="h-4 w-24 bg-muted/50 rounded animate-pulse" />
+                <div class="h-8 w-16 bg-muted/50 rounded animate-pulse" />
               </div>
-              <div
-                class="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors"
-              >
-                <component :is="card.icon" class="w-6 h-6 text-primary" />
-              </div>
+              <div class="w-12 h-12 bg-muted/50 rounded-lg animate-pulse" />
             </div>
-
-            <!-- Added trend indicator for better insights -->
-            <div v-if="card.trend" class="flex items-center gap-2 text-sm">
-              <component
-                :is="card.trend > 0 ? TrendingUp : TrendingDown"
-                class="w-4 h-4"
-                :class="card.trend > 0 ? 'text-green-500' : 'text-red-500'"
-              />
-              <span :class="card.trend > 0 ? 'text-green-600' : 'text-red-600'">
-                {{ Math.abs(card.trend) }}% from last month
-              </span>
-            </div>
-
-            <p v-if="card.description" class="text-xs text-muted-foreground">
-              {{ card.description }}
-            </p>
+            <div class="h-3 w-32 bg-muted/50 rounded animate-pulse" />
           </div>
-        </div>
+        </template>
+
+        <!-- Actual stats cards -->
+        <template v-else>
+          <div
+            v-for="(card, index) in dashboardCards"
+            :key="card.name"
+            class="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+            :style="{ animationDelay: `${index * 50}ms` }"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+
+            <div class="relative p-6 space-y-4">
+              <div class="flex items-start justify-between">
+                <div class="space-y-1">
+                  <p class="text-sm font-medium text-muted-foreground">
+                    {{ card.name }}
+                  </p>
+                  <p class="text-3xl font-bold text-foreground">
+                    {{ formatNumber(card.count) }}
+                  </p>
+                </div>
+                <div
+                  class="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors"
+                >
+                  <component :is="card.icon" class="w-6 h-6 text-primary" />
+                </div>
+              </div>
+
+              <div v-if="card.trend" class="flex items-center gap-2 text-sm">
+                <component
+                  :is="card.trend > 0 ? TrendingUp : TrendingDown"
+                  class="w-4 h-4"
+                  :class="card.trend > 0 ? 'text-green-500' : 'text-red-500'"
+                />
+                <span
+                  :class="card.trend > 0 ? 'text-green-600' : 'text-red-600'"
+                >
+                  {{ Math.abs(card.trend) }}% from last month
+                </span>
+              </div>
+
+              <p v-if="card.description" class="text-xs text-muted-foreground">
+                {{ card.description }}
+              </p>
+            </div>
+          </div>
+        </template>
       </div>
 
-      <!-- Quick Actions with enhanced styling -->
+      <!-- Quick Actions -->
       <div class="mb-12">
         <h2 class="text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,7 +207,6 @@ const formatNumber = (num: number) => {
             :to="action.href"
             class="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
           >
-            <!-- Added animated gradient background -->
             <div
               class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             />
@@ -246,31 +255,55 @@ const formatNumber = (num: number) => {
             </div>
           </div>
           <div class="p-6 space-y-3">
-            <NuxtLink
-              v-for="form in formsData?.data"
-              :key="form.id"
-              :to="`/forms/${form.id}`"
-              class="group flex items-center justify-between p-4 rounded-lg border border-border/30 bg-background/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
-            >
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                  <FileText class="w-4 h-4 text-primary" />
-                </div>
-                <div class="min-w-0 flex-1">
-                  <h3
-                    class="font-medium text-foreground truncate group-hover:text-primary transition-colors"
-                  >
-                    {{ form.title }}
-                  </h3>
-                  <p class="text-xs text-muted-foreground">
-                    {{ formatDate(form.createdAt) }}
-                  </p>
+            <!-- Loading state for forms -->
+            <template v-if="formsPending">
+              <div
+                v-for="i in 3"
+                :key="i"
+                class="flex items-center gap-3 p-4 rounded-lg border border-border/30 bg-background/50"
+              >
+                <div class="w-10 h-10 bg-muted/50 rounded-lg animate-pulse" />
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 w-3/4 bg-muted/50 rounded animate-pulse" />
+                  <div class="h-3 w-1/4 bg-muted/50 rounded animate-pulse" />
                 </div>
               </div>
-              <Badge variant="outline" class="flex-shrink-0 ml-2">{{
-                form.status
-              }}</Badge>
-            </NuxtLink>
+            </template>
+
+            <!-- Forms list -->
+            <template v-else-if="formsData?.data?.length">
+              <NuxtLink
+                v-for="form in formsData.data"
+                :key="form.id"
+                :to="`/forms/${form.id}`"
+                class="group flex items-center justify-between p-4 rounded-lg border border-border/30 bg-background/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
+              >
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <div class="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                    <FileText class="w-4 h-4 text-primary" />
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h3
+                      class="font-medium text-foreground truncate group-hover:text-primary transition-colors"
+                    >
+                      {{ form.title }}
+                    </h3>
+                    <p class="text-xs text-muted-foreground">
+                      {{ formatDate(form.createdAt) }}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="outline" class="flex-shrink-0 ml-2">{{
+                  form.status
+                }}</Badge>
+              </NuxtLink>
+            </template>
+
+            <!-- Empty state -->
+            <div v-else class="text-center py-8 text-muted-foreground">
+              <FileText class="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No forms yet</p>
+            </div>
           </div>
         </div>
 
@@ -287,33 +320,54 @@ const formatNumber = (num: number) => {
             </div>
           </div>
           <div class="p-6 space-y-4">
-            <div
-              v-for="activity in activitiesData?.data"
-              :key="activity.id"
-              class="flex items-start gap-4 group"
-            >
-              <!-- Improved activity timeline indicator -->
-              <div class="relative flex flex-col items-center">
+            <!-- Loading state for activities -->
+            <template v-if="activitiesPending">
+              <div v-for="i in 4" :key="i" class="flex items-start gap-4">
                 <div
-                  class="w-3 h-3 rounded-full bg-primary ring-2 ring-primary/20"
+                  class="w-3 h-3 bg-muted/50 rounded-full animate-pulse mt-1"
                 />
-                <div
-                  class="w-0.5 h-12 bg-gradient-to-b from-primary/30 to-transparent"
-                />
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 w-full bg-muted/50 rounded animate-pulse" />
+                  <div class="h-3 w-1/4 bg-muted/50 rounded animate-pulse" />
+                </div>
               </div>
-              <div class="flex-1 pt-0.5">
-                <p class="text-sm text-foreground">
-                  <span class="font-semibold text-primary">{{
-                    activity.type
-                  }}</span>
-                  <span class="text-muted-foreground">
-                    {{ activity.description }}</span
-                  >
-                </p>
-                <p class="text-xs text-muted-foreground mt-1">
-                  {{ formatDate(activity.createdAt) }}
-                </p>
+            </template>
+
+            <!-- Activities list -->
+            <template v-else-if="activitiesData?.data?.length">
+              <div
+                v-for="activity in activitiesData.data"
+                :key="activity.id"
+                class="flex items-start gap-4 group"
+              >
+                <div class="relative flex flex-col items-center">
+                  <div
+                    class="w-3 h-3 rounded-full bg-primary ring-2 ring-primary/20"
+                  />
+                  <div
+                    class="w-0.5 h-12 bg-gradient-to-b from-primary/30 to-transparent"
+                  />
+                </div>
+                <div class="flex-1 pt-0.5">
+                  <p class="text-sm text-foreground">
+                    <span class="font-semibold text-primary">{{
+                      activity.type
+                    }}</span>
+                    <span class="text-muted-foreground">
+                      {{ activity.description }}</span
+                    >
+                  </p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    {{ formatDate(activity.createdAt) }}
+                  </p>
+                </div>
               </div>
+            </template>
+
+            <!-- Empty state -->
+            <div v-else class="text-center py-8 text-muted-foreground">
+              <Activity class="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No recent activity</p>
             </div>
           </div>
         </div>

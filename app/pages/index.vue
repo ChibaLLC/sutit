@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   Sparkles,
   ArrowRight,
@@ -17,6 +16,9 @@ import {
   ChevronLeft,
   ChevronRight,
   FileCheck,
+  Package,
+  DollarSign,
+  Truck,
 } from "lucide-vue-next";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -137,90 +139,74 @@ onUnmounted(() => {
 </script>
 <template>
   <div class="min-h-screen bg-background">
-    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-      <!-- Animated Background -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          class="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"
-        ></div>
-        <div
-          class="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000"
-        ></div>
-      </div>
-
+    <!-- Hero Section -->
+    <section
+      class="relative pt-20 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32 overflow-hidden"
+    >
       <div class="container mx-auto px-4 relative">
         <div class="max-w-4xl mx-auto text-center">
           <!-- Badge -->
           <div
             class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6 hover:bg-primary/20 transition-colors cursor-default"
           >
-            <Sparkles class="w-4 h-4 animate-pulse" />
+            <Sparkles class="w-4 h-4" />
             <span class="text-sm font-medium"
               >Your Success Story Starts With Us</span
             >
           </div>
 
-          <!-- Heading with gradient -->
-          <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            <span
-              class="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent animate-gradient"
-            >
-              Create Powerful Forms
-            </span>
+          <!-- Main Heading -->
+          <h1
+            class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-balance"
+          >
+            <span class="text-primary">Enterprise</span>
             <br />
-            <span class="text-foreground">in Minutes</span>
+            <span>Supply Chain Solutions</span>
           </h1>
 
+          <!-- Subheading -->
           <p
-            class="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
+            class="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
           >
-            We offer exactly what you're in need of from a form-based tool for
-            different kinds of industries, including Accounting, consulting,
-            sales, delivery, and many more. It's limitless.
+            End-to-end efficiency for your entire supply chain. Automate
+            Marketing/Sales, Purchase/Orders, Payments till Receipt/Order
+            Fulfillment.
           </p>
 
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button
-              class="group px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              Get Started Free
+            <Button size="lg" class="group">
+              Get Started
               <ArrowRight
-                class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
               />
-            </button>
-            <button
-              class="px-6 py-3 border border-border bg-background text-foreground rounded-lg font-medium hover:bg-accent hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              <PlayCircle class="w-5 h-5" />
-              Explore
-            </button>
+            </Button>
+            <Button size="lg" variant="outline">
+              <PlayCircle class="w-5 h-5 mr-2" />
+              Watch Demo
+            </Button>
           </div>
 
           <!-- Stats -->
-          <div class="flex flex-wrap items-center justify-center gap-8 pt-8">
-            <div class="text-center group cursor-default">
-              <p
-                class="text-4xl font-bold text-primary mb-1 group-hover:scale-110 transition-transform"
-              >
+          <div
+            class="flex flex-wrap items-center justify-center gap-6 md:gap-8 pt-8 border-t border-border"
+          >
+            <div class="text-center">
+              <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
                 1K+
               </p>
               <p class="text-sm text-muted-foreground">Active Users</p>
             </div>
             <div class="w-px h-12 bg-border hidden sm:block"></div>
-            <div class="text-center group cursor-default">
-              <p
-                class="text-4xl font-bold text-primary mb-1 group-hover:scale-110 transition-transform"
-              >
+            <div class="text-center">
+              <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
                 1K+
               </p>
               <p class="text-sm text-muted-foreground">Forms Created</p>
             </div>
             <div class="w-px h-12 bg-border hidden sm:block"></div>
-            <div class="text-center group cursor-default">
-              <p
-                class="text-4xl font-bold text-primary mb-1 group-hover:scale-110 transition-transform"
-              >
+            <div class="text-center">
+              <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
                 99.9%
               </p>
               <p class="text-sm text-muted-foreground">Uptime</p>
@@ -229,8 +215,6 @@ onUnmounted(() => {
         </div>
       </div>
     </section>
-
-    <!-- Feature Forms Section -->
     <section id="features" class="py-20 bg-muted/30">
       <div class="container mx-auto px-4">
         <div class="text-center mb-12">
@@ -254,14 +238,14 @@ onUnmounted(() => {
               <div
                 v-for="(form, index) in forms?.data"
                 :key="index"
-                class="flex-shrink-0 px-3"
+                class="shrink-0 px-3"
                 :style="{ width: slideWidth + '%' }"
               >
                 <div
                   class="group bg-card border border-border rounded-xl p-6 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transition-all duration-500 cursor-pointer relative overflow-hidden h-full"
                 >
                   <div
-                    class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
                   ></div>
                   <div class="relative flex flex-col h-full">
                     <div
@@ -277,7 +261,7 @@ onUnmounted(() => {
                     >
                       {{ form.title }}
                     </h3>
-                    <p class="text-sm text-muted-foreground mb-4 flex-grow">
+                    <p class="text-sm text-muted-foreground mb-4 grow">
                       {{ form.description }}
                     </p>
                     <NuxtLink
@@ -338,6 +322,102 @@ onUnmounted(() => {
         </div>
       </div>
     </section>
+    <!-- Supply Chain Features Section -->
+    <section class="py-16 md:py-20 lg:py-24 bg-muted/50">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-12 md:mb-16">
+          <h2
+            class="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 text-balance"
+          >
+            Complete Supply Chain Automation
+          </h2>
+          <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Streamline every step of your supply chain with integrated solutions
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
+        >
+          <!-- Marketing/Sales Card -->
+          <Card
+            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          >
+            <CardContent class="pt-6">
+              <div
+                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+              >
+                <ShoppingCart
+                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
+                />
+              </div>
+              <h3 class="text-lg font-semibold mb-2">Marketing/Sales</h3>
+              <p class="text-sm text-muted-foreground">
+                Automate lead generation and sales workflows
+              </p>
+            </CardContent>
+          </Card>
+
+          <!-- Purchase/Orders Card -->
+          <Card
+            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          >
+            <CardContent class="pt-6">
+              <div
+                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+              >
+                <Package
+                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
+                />
+              </div>
+              <h3 class="text-lg font-semibold mb-2">Purchase/Orders</h3>
+              <p class="text-sm text-muted-foreground">
+                Manage orders and procurement seamlessly
+              </p>
+            </CardContent>
+          </Card>
+
+          <!-- Payments Card -->
+          <Card
+            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          >
+            <CardContent class="pt-6">
+              <div
+                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+              >
+                <DollarSign
+                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
+                />
+              </div>
+              <h3 class="text-lg font-semibold mb-2">Payments</h3>
+              <p class="text-sm text-muted-foreground">
+                Secure payment processing and tracking
+              </p>
+            </CardContent>
+          </Card>
+
+          <!-- Receipt/Fulfillment Card -->
+          <Card
+            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          >
+            <CardContent class="pt-6">
+              <div
+                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+              >
+                <Truck
+                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
+                />
+              </div>
+              <h3 class="text-lg font-semibold mb-2">Receipt/Fulfillment</h3>
+              <p class="text-sm text-muted-foreground">
+                Track deliveries and order fulfillment
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+    <!-- Feature Forms Section -->
 
     <!-- About Section -->
     <section id="about" class="py-20">
@@ -449,15 +529,15 @@ onUnmounted(() => {
                 </p>
                 <ul class="space-y-3">
                   <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 flex-shrink-0" />
+                    <CheckCircle2 class="w-5 h-5 shrink-0" />
                     <span>100% secure and encrypted</span>
                   </li>
                   <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 flex-shrink-0" />
+                    <CheckCircle2 class="w-5 h-5 shrink-0" />
                     <span>24/7 customer support</span>
                   </li>
                   <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 flex-shrink-0" />
+                    <CheckCircle2 class="w-5 h-5 shrink-0" />
                     <span>Fast and reliable servers</span>
                   </li>
                 </ul>
