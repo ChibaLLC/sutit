@@ -569,31 +569,32 @@ const df = new DateFormatter("en-US", {
                         {{ field.description }}
                       </p>
                       <div v-if="field.type == 'date'">
-                        <Popover>
-                          <PopoverTrigger as-child>
-                            <Button
-                              variant="outline"
-                              class="justify-start text-left font-normal w-full"
-                            >
-                              <CalendarIcon class="mr-2 h-4 w-4" />
-                              {{
-                                formData[field.id]
-                                  ? df.format(
-                                      formData[field.id].toDate(
-                                        getLocalTimeZone(),
-                                      ),
-                                    )
-                                  : "Pick a Date "
-                              }}
-                            </Button>
-                            <PopoverContent>
-                              <Calendar
-                                v-model="formData[field.id]"
-                                initial-focus
-                              />
-                            </PopoverContent>
-                          </PopoverTrigger>
-                        </Popover>
+                        <Input type="date" v-model="formData[field.id]" />
+                        <!-- <Popover> -->
+                        <!--   <PopoverTrigger as-child> -->
+                        <!--     <Button -->
+                        <!--       variant="outline" -->
+                        <!--       class="justify-start text-left font-normal w-full" -->
+                        <!--     > -->
+                        <!--       <CalendarIcon class="mr-2 h-4 w-4" /> -->
+                        <!--       {{ -->
+                        <!--         formData[field.id] -->
+                        <!--           ? df.format( -->
+                        <!--               formData[field.id].toDate( -->
+                        <!--                 getLocalTimeZone(), -->
+                        <!--               ), -->
+                        <!--             ) -->
+                        <!--           : "Pick a Date " -->
+                        <!--       }} -->
+                        <!--     </Button> -->
+                        <!--     <PopoverContent> -->
+                        <!--       <Calendar -->
+                        <!--         v-model="formData[field.id]" -->
+                        <!--         initial-focus -->
+                        <!--       /> -->
+                        <!--     </PopoverContent> -->
+                        <!--   </PopoverTrigger> -->
+                        <!-- </Popover> -->
                       </div>
                       <!-- Text Input -->
                       <div
