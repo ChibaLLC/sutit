@@ -45,10 +45,26 @@ export default defineNuxtConfig({
   },
   site: {},
   robots: {},
+  image: {
+    format: ["webp", "avif", "png", "jpg", "jpeg"],
+    quality: 80,
+    sizes: "320,640,768,1024,1280,1536",
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536,
+    },
+  },
   nitro: {
     preset: "node-server",
     compressPublicAssets: true,
     minify: true,
+    experimental: {
+      wasm: true,
+    },
     prerender: {
       routes: ["/sitemap.xml"],
     },

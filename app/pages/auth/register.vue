@@ -51,11 +51,14 @@ const signUpWithEmail = async () => {
             <div class="text-center mb-8">
               <div class="flex items-center justify-center gap-2 mb-6">
                 <div
-                  class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center"
+                  class="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg"
                 >
-                  <span class="text-white font-bold text-lg">S</span>
+                  <NuxtImg
+                    src="/logo.jpeg"
+                    class="flex h-full w-full items-center justify-center rounded-md"
+                  />
                 </div>
-                <span class="text-2xl font-bold">SUTIT Forms</span>
+                <span class="text-2xl font-bold">SUTIT</span>
               </div>
 
               <h1 class="text-2xl font-bold text-foreground mb-2">
@@ -225,25 +228,5 @@ const signUpWithEmail = async () => {
         </div>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="py-8 bg-muted/30 border-t">
-      <div class="container mx-auto px-4">
-        <div class="text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 SUTIT Forms. All rights reserved.</p>
-          <div class="flex justify-center gap-6 mt-2">
-            <a href="#" class="hover:text-primary transition-colors"
-              >Privacy Policy</a
-            >
-            <a href="#" class="hover:text-primary transition-colors"
-              >Terms of Service</a
-            >
-            <a href="#" class="hover:text-primary transition-colors"
-              >Help Center</a
-            >
-          </div>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>

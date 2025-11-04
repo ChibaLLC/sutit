@@ -6,14 +6,6 @@ export const getInitials = (name: string) => {
     .toUpperCase();
 };
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
 /**
  * Convert form object to FormData, handling nested objects and arrays
  * @param {object} form - The form object
