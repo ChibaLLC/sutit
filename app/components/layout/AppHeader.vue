@@ -11,6 +11,8 @@ import {
   CreditCard,
   HelpCircle,
   LogOut,
+  Sparkles,
+  ArrowRight,
 } from "lucide-vue-next";
 import { useDark, useToggle } from "@vueuse/core";
 import { useAuthStore } from "@/stores/auth";
@@ -27,9 +29,14 @@ const navItems = [
 ];
 
 const navs = [
-  { label: "Market Place", href: "/marketplace" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+];
+
+const userNavItems = [
+  { label: "Settings", href: "/settings" },
+  { label: "Billing", href: "/billing" },
 ];
 
 const logout = async () => {
@@ -39,61 +46,140 @@ const logout = async () => {
 </script>
 <template>
   <nav
-    class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm"
+    class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
   >
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
+      <div class="flex h-20 items-center justify-between">
         <!-- Logo Section -->
-        <div class="flex items-center gap-6">
-          <NuxtLink to="/" class="flex items-center space-x-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg"
-            >
-              <NuxtImg
-                src="/logo.jpeg"
-                class="flex h-full w-full items-center justify-center rounded-md"
-              />
+        <div class="flex items-center gap-8">
+          <NuxtLink to="/" class="group flex items-center space-x-3">
+            <div class="relative">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-primary to-purple-600 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"
+              ></div>
+              <div
+                class="relative h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+              >
+                <NuxtImg
+                  src="/logo.jpeg"
+                  class="h-8 w-8 rounded-lg object-cover"
+                />
+              </div>
             </div>
-            <span class="text-xl font-bold text-foreground hidden sm:inline"
-              >SUTIT</span
-            >
+            <div class="flex flex-col">
+              <span
+                class="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent"
+                >SUTIT</span
+              >
+            </div>
           </NuxtLink>
 
           <!-- Desktop Navigation -->
           <nav class="hidden lg:flex items-center space-x-1">
             <NuxtLink
               to="/"
-              class="px-4 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+              class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
+              :class="
+                $route.path === '/'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-foreground hover:text-primary'
+              "
             >
-              Home
+              <span class="relative z-10">Home</span>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+              ></div>
             </NuxtLink>
+
             <NuxtLink
               v-for="item in navItems"
               :key="item.href"
               :to="item.href"
-              class="px-4 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+              class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
+              :class="
+                $route.path === item.href
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-foreground hover:text-primary'
+              "
             >
-              {{ item.label }}
+              <span class="relative z-10">{{ item.label }}</span>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+              ></div>
             </NuxtLink>
+
             <NuxtLink
               v-for="item in navs"
               :key="item.href"
               :to="item.href"
-              class="px-4 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+              class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
+              :class="
+                $route.path === item.href
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-foreground hover:text-primary'
+              "
             >
-              {{ item.label }}
+              <span class="relative z-10">{{ item.label }}</span>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+              ></div>
             </NuxtLink>
+
+            <!-- User Navigation Items (only show when authenticated) -->
+            <template v-if="authStore.isAuthenticated">
+              <NuxtLink
+                v-for="item in userNavItems"
+                :key="item.href"
+                :to="item.href"
+                class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
+                :class="
+                  $route.path === item.href
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-foreground hover:text-primary'
+                "
+              >
+                <span class="relative z-10">{{ item.label }}</span>
+                <div
+                  class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                ></div>
+              </NuxtLink>
+            </template>
           </nav>
         </div>
 
         <!-- Right Section -->
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-3">
+          <!-- CTA Button for non-authenticated users -->
+          <div
+            v-if="!authStore.isAuthenticated"
+            class="hidden md:flex items-center gap-3"
+          >
+            <NuxtLink to="/auth/login">
+              <Button variant="ghost" class="rounded-xl hover:bg-accent/50">
+                Log in
+              </Button>
+            </NuxtLink>
+            <NuxtLink to="/auth/register">
+              <Button
+                class="rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              >
+                <Sparkles
+                  class="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform"
+                />
+                Get Started
+                <ArrowRight
+                  class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+                />
+              </Button>
+            </NuxtLink>
+          </div>
+
           <!-- Theme Toggle -->
           <Button
             @click="toggleDark()"
             variant="outline"
             size="icon"
-            class="rounded-lg"
+            class="rounded-xl border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
             :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
           >
             <Sun v-if="!isDark" class="h-4 w-4 text-amber-500" />
@@ -101,39 +187,32 @@ const logout = async () => {
             <span class="sr-only">Toggle theme</span>
           </Button>
 
-          <!-- Auth Section -->
-          <div
-            v-if="!authStore.isAuthenticated"
-            class="flex items-center gap-2"
-          >
-            <NuxtLink to="/auth/login" class="hidden sm:block">
-              <Button variant="outline" class="rounded-lg">Log in</Button>
-            </NuxtLink>
-            <NuxtLink to="/auth/register">
-              <Button class="rounded-lg">
-                <span class="hidden sm:inline">Sign up</span>
-                <span class="sm:hidden">Join</span>
-              </Button>
-            </NuxtLink>
-          </div>
-
           <!-- User Menu -->
-          <div v-else class="hidden sm:block">
+          <div v-if="authStore.isAuthenticated" class="hidden sm:block">
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <Button
                   variant="outline"
                   size="icon"
-                  class="rounded-full h-10 w-10 bg-primary/10 text-foreground hover:bg-primary/90"
+                  class="rounded-xl h-11 w-11 border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
                 >
-                  <User class="h-4 w-4" />
+                  <div
+                    class="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center"
+                  >
+                    <span class="text-xs font-bold text-primary-foreground">
+                      {{ authStore.user?.name?.charAt(0) || "U" }}
+                    </span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-56">
-                <div class="px-4 py-3 border-b">
+              <DropdownMenuContent
+                align="end"
+                class="w-64 rounded-xl border-border/50 shadow-xl"
+              >
+                <div class="px-4 py-3 border-b border-border/50">
                   <div class="flex items-center gap-3">
                     <div
-                      class="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold"
+                      class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 text-primary-foreground flex items-center justify-center font-semibold"
                     >
                       {{ authStore.user?.name?.charAt(0) || "U" }}
                     </div>
@@ -147,37 +226,32 @@ const logout = async () => {
                     </div>
                   </div>
                 </div>
-                <DropdownMenuItem as-child>
+                <DropdownMenuItem as-child class="rounded-lg">
                   <a href="#" class="cursor-pointer">
-                    <UserCircle class="h-4 w-4 mr-2" />
+                    <UserCircle class="h-4 w-4 mr-3" />
                     Profile
                   </a>
                 </DropdownMenuItem>
-                <DropdownMenuItem as-child>
+                <DropdownMenuItem as-child class="rounded-lg">
                   <NuxtLink to="/settings" class="cursor-pointer">
-                    <Settings class="h-4 w-4 mr-2" />
+                    <Settings class="h-4 w-4 mr-3" />
                     Settings
                   </NuxtLink>
                 </DropdownMenuItem>
-                <DropdownMenuItem as-child>
+
+                <DropdownMenuItem as-child class="rounded-lg">
                   <a href="#" class="cursor-pointer">
-                    <CreditCard class="h-4 w-4 mr-2" />
-                    Billing
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem as-child>
-                  <a href="#" class="cursor-pointer">
-                    <HelpCircle class="h-4 w-4 mr-2" />
+                    <HelpCircle class="h-4 w-4 mr-3" />
                     Support
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem as-child>
+                <DropdownMenuItem as-child class="rounded-lg">
                   <button
                     @click="logout"
                     class="w-full text-left cursor-pointer text-destructive hover:text-destructive"
                   >
-                    <LogOut class="h-4 w-4 mr-2" />
+                    <LogOut class="h-4 w-4 mr-3" />
                     Sign out
                   </button>
                 </DropdownMenuItem>
@@ -191,43 +265,25 @@ const logout = async () => {
               <Button
                 variant="outline"
                 size="icon"
-                class="lg:hidden rounded-lg"
+                class="lg:hidden rounded-xl border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
               >
                 <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />
                 <X v-else class="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="top" class="w-full">
-              <div class="space-y-4 mt-4">
-                <!-- Mobile Public Navigation -->
-                <div class="space-y-2">
-                  <NuxtLink
-                    to="/about"
-                    @click="mobileMenuOpen = false"
-                    class="block px-4 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-                  >
-                    About
-                  </NuxtLink>
-                  <NuxtLink
-                    to="/contact"
-                    @click="mobileMenuOpen = false"
-                    class="block px-4 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-                  >
-                    Contact
-                  </NuxtLink>
-                </div>
-
+            <SheetContent
+              side="top"
+              class="w-full rounded-b-2xl border-border/50"
+            >
+              <div class="space-y-6 mt-6">
                 <!-- Mobile Auth Section -->
-                <div
-                  v-if="!authStore.isAuthenticated"
-                  class="space-y-2 border-t pt-4"
-                >
+                <div v-if="!authStore.isAuthenticated" class="space-y-3">
                   <NuxtLink
                     to="/auth/login"
                     @click="mobileMenuOpen = false"
                     class="block"
                   >
-                    <Button variant="outline" class="w-full rounded-lg"
+                    <Button variant="outline" class="w-full rounded-xl"
                       >Log in</Button
                     >
                   </NuxtLink>
@@ -236,35 +292,85 @@ const logout = async () => {
                     @click="mobileMenuOpen = false"
                     class="block"
                   >
-                    <Button class="w-full rounded-lg">Sign up</Button>
+                    <Button
+                      class="w-full rounded-xl bg-gradient-to-r from-primary to-purple-600"
+                    >
+                      <Sparkles class="w-4 h-4 mr-2" />
+                      Get Started
+                    </Button>
                   </NuxtLink>
                 </div>
 
-                <!-- Mobile Authenticated Navigation -->
-                <div
-                  v-if="authStore.isAuthenticated"
-                  class="space-y-2 border-t pt-4"
-                >
+                <!-- Mobile Navigation -->
+                <div class="grid grid-cols-2 gap-2">
+                  <NuxtLink
+                    to="/"
+                    @click="mobileMenuOpen = false"
+                    class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
+                    :class="
+                      $route.path === '/'
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-foreground hover:text-primary'
+                    "
+                  >
+                    Home
+                  </NuxtLink>
                   <NuxtLink
                     v-for="item in navItems"
                     :key="item.href"
                     :to="item.href"
                     @click="mobileMenuOpen = false"
-                    class="block px-4 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
+                    :class="
+                      $route.path === item.href
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-foreground hover:text-primary'
+                    "
                   >
                     {{ item.label }}
                   </NuxtLink>
+                  <NuxtLink
+                    v-for="item in navs"
+                    :key="item.href"
+                    :to="item.href"
+                    @click="mobileMenuOpen = false"
+                    class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
+                    :class="
+                      $route.path === item.href
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-foreground hover:text-primary'
+                    "
+                  >
+                    {{ item.label }}
+                  </NuxtLink>
+                  <!-- User Navigation Items (only show when authenticated) -->
+                  <template v-if="authStore.isAuthenticated">
+                    <NuxtLink
+                      v-for="item in userNavItems"
+                      :key="item.href"
+                      :to="item.href"
+                      @click="mobileMenuOpen = false"
+                      class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
+                      :class="
+                        $route.path === item.href
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'text-foreground hover:text-primary'
+                      "
+                    >
+                      {{ item.label }}
+                    </NuxtLink>
+                  </template>
                 </div>
 
                 <!-- Mobile User Section -->
                 <div
                   v-if="authStore.isAuthenticated"
-                  class="space-y-2 border-t pt-4"
+                  class="space-y-4 border-t border-border/50 pt-4"
                 >
-                  <div class="px-4 py-3 rounded-lg bg-accent/50">
+                  <div class="px-4 py-3 rounded-xl bg-accent/50">
                     <div class="flex items-center gap-3">
                       <div
-                        class="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold"
+                        class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 text-primary-foreground flex items-center justify-center font-semibold"
                       >
                         {{ authStore.user?.name?.charAt(0) || "U" }}
                       </div>
@@ -278,48 +384,42 @@ const logout = async () => {
                       </div>
                     </div>
                   </div>
-                  <a
-                    href="#"
-                    @click="mobileMenuOpen = false"
-                    class="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <UserCircle class="h-4 w-4 mr-2" />
-                    Profile
-                  </a>
-                  <a
-                    href="#"
-                    @click="mobileMenuOpen = false"
-                    class="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <Settings class="h-4 w-4 mr-2" />
-                    Settings
-                  </a>
-                  <a
-                    href="#"
-                    @click="mobileMenuOpen = false"
-                    class="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <CreditCard class="h-4 w-4 mr-2" />
-                    Billing
-                  </a>
-                  <a
-                    href="#"
-                    @click="mobileMenuOpen = false"
-                    class="flex items-center px-4 py-2 rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <HelpCircle class="h-4 w-4 mr-2" />
-                    Support
-                  </a>
-                  <button
-                    @click="
-                      logout;
-                      mobileMenuOpen = false;
-                    "
-                    class="w-full flex items-center px-4 py-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-left"
-                  >
-                    <LogOut class="h-4 w-4 mr-2" />
-                    Sign out
-                  </button>
+                  <div class="space-y-2">
+                    <!-- <a -->
+                    <!--   href="#" -->
+                    <!--   @click="mobileMenuOpen = false" -->
+                    <!--   class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-accent/50 transition-all duration-200" -->
+                    <!-- > -->
+                    <!--   <UserCircle class="h-4 w-4" /> -->
+                    <!--   <span class="font-medium">Profile</span> -->
+                    <!-- </a> -->
+                    <!-- <a -->
+                    <!--   href="#" -->
+                    <!--   @click="mobileMenuOpen = false" -->
+                    <!--   class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-accent/50 transition-all duration-200" -->
+                    <!-- > -->
+                    <!--   <Settings class="h-4 w-4" /> -->
+                    <!--   <span class="font-medium">Settings</span> -->
+                    <!-- </a> -->
+                    <!-- <a -->
+                    <!--   href="#" -->
+                    <!--   @click="mobileMenuOpen = false" -->
+                    <!--   class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-accent/50 transition-all duration-200" -->
+                    <!-- > -->
+                    <!--   <HelpCircle class="h-4 w-4" /> -->
+                    <!--   <span class="font-medium">Support</span> -->
+                    <!-- </a> -->
+                    <button
+                      @click="
+                        logout;
+                        mobileMenuOpen = false;
+                      "
+                      class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-destructive/10 text-destructive transition-all duration-200"
+                    >
+                      <LogOut class="h-4 w-4" />
+                      <span class="font-medium">Sign out</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </SheetContent>
