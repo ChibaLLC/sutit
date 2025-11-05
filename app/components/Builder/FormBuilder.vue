@@ -121,103 +121,122 @@ const submit = () => {
     />
     <BuilderNavigator>
       <template #pages>
-        <div class="flex h-[calc(100vh-120px)]">
+        <div class="flex h-[calc(100vh-120px)] space-x-2">
           <BuilderPagesFormElements />
           <div class="flex-1 flex">
-            <div class="flex-1 flex flex-col">
-              <div
-                v-if="!previewMode"
-                class="border-b bg-card/30 backdrop-blur"
-              >
-                <div class="flex items-center justify-between p-4">
-                  <ScrollArea class="flex-1">
-                    <div class="flex items-center gap-2">
-                      <div
-                        v-for="(page, index) in form.pages || []"
-                        :key="page.id || index"
-                        class="group relative flex items-center"
-                      >
-                        <Button
-                          @click="currentPage = page"
-                          :variant="currentPage === page ? 'default' : 'ghost'"
-                          size="sm"
-                          class="shrink-0 pr-8"
-                          :class="{
-                            'bg-primary text-primary-foreground':
-                              currentPage === page,
-                            'hover:bg-muted': currentPage !== page,
-                          }"
-                        >
-                          {{ page.title || "Untitled Page" }}
-                        </Button>
-
-                        <!-- Fixed remove button condition and click handler -->
-                        <AlertDialog>
-                          <AlertDialogTrigger as-child>
+            <div class="flex-1 flex flex-col overflow-y-auto">
+              <Card>
+                <CardHeader>
+                  <div
+                    v-if="!previewMode"
+                    class="border-b bg-gradient-to-r from-background via-background to-muted/20 backdrop-blur-xl"
+                  >
+                    <div class="flex items-center justify-between p-6">
+                      <ScrollArea class="flex-1">
+                        <div class="flex items-center gap-3">
+                          <div
+                            v-for="(page, index) in form.pages || []"
+                            :key="page.id || index"
+                            class="group relative flex items-center"
+                          >
                             <Button
-                              v-if="form.pages.length > 1"
-                              variant="ghost"
+                              @click="currentPage = page"
+                              :variant="
+                                currentPage === page ? 'default' : 'ghost'
+                              "
                               size="sm"
-                              class="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all duration-200 rounded-full"
-                              @click.stop
+                              class="shrink-0 pr-10 h-10 px-4 transition-all duration-200 hover:scale-105"
+                              :class="{
+                                'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg':
+                                  currentPage === page,
+                                'hover:bg-muted/80 hover:text-foreground border border-border/30':
+                                  currentPage !== page,
+                              }"
                             >
-                              <X class="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle class="flex items-center gap-2">
-                                <AlertTriangle
-                                  class="h-5 w-5 text-destructive"
-                                />
-                                Remove Page
-                              </AlertDialogTitle>
-                              <AlertDialogDescription class="text-base">
-                                Are you sure you want to remove "{{
-                                  page.title || "Untitled Page"
-                                }}"? <br /><br />
-                                <span class="font-medium text-destructive"
-                                  >This action cannot be undone</span
+                              <div class="flex items-center gap-2">
+                                <div
+                                  class="w-5 h-5 bg-primary-foreground/20 rounded-full flex items-center justify-center"
                                 >
-                                and all form fields on this page will be
-                                permanently deleted.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                @click="removePage(index)"
-                                class="bg-destructive hover:bg-destructive/90"
-                              >
-                                <Trash2 class="h-4 w-4 mr-2" />
-                                Remove Page
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                                  <span class="text-xs font-bold">{{
+                                    index + 1
+                                  }}</span>
+                                </div>
+                                {{ page.title || "Untitled Page" }}
+                              </div>
+                            </Button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        @click="addPage()"
-                        class="gap-2 shrink-0 border-dashed hover:border-solid transition-all duration-200 hover:scale-105"
-                      >
-                        <Plus class="h-3 w-3" />
-                        Add Page
-                      </Button>
+                            <!-- Fixed remove button condition and click handler -->
+                            <AlertDialog>
+                              <AlertDialogTrigger as-child>
+                                <Button
+                                  v-if="form.pages.length > 1"
+                                  variant="ghost"
+                                  size="sm"
+                                  class="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all duration-200 rounded-full"
+                                  @click.stop
+                                >
+                                  <X class="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle
+                                    class="flex items-center gap-2"
+                                  >
+                                    <AlertTriangle
+                                      class="h-5 w-5 text-destructive"
+                                    />
+                                    Remove Page
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription class="text-base">
+                                    Are you sure you want to remove "{{
+                                      page.title || "Untitled Page"
+                                    }}"? <br /><br />
+                                    <span class="font-medium text-destructive"
+                                      >This action cannot be undone</span
+                                    >
+                                    and all form fields on this page will be
+                                    permanently deleted.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    @click="removePage(index)"
+                                    class="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    <Trash2 class="h-4 w-4 mr-2" />
+                                    Remove Page
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            @click="addPage()"
+                            class="gap-2 shrink-0 border-dashed hover:border-solid hover:bg-primary/5 transition-all duration-200 hover:scale-105 h-10 px-4"
+                          >
+                            <Plus class="h-4 w-4" />
+                            Add Page
+                          </Button>
+                        </div>
+                      </ScrollArea>
                     </div>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              <div class="flex-1 overflow-auto">
-                <BuilderPagesFormCanvas
-                  :currentPage="currentPage"
-                  :selectedElement="selectedElement"
-                  @selectField="(f: FormField) => selectField(f)"
-                />
-              </div>
+                  </div>
+                </CardHeader>
+                <CardContent class="overflow-y-auto">
+                  <div class="flex-1 overflow-y-auto">
+                    <BuilderPagesFormCanvas
+                      :currentPage="currentPage"
+                      :selectedElement="selectedElement"
+                      @selectField="(f: FormField) => selectField(f)"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
           <div class="w-80 border-l bg-card backdrop-blur-md">
@@ -233,12 +252,26 @@ const submit = () => {
         <!-- Improved store section layout and styling -->
         <div class="flex h-[calc(100vh-120px)]">
           <div class="flex-1 flex flex-col">
-            <div class="border-b bg-card/30 backdrop-blur">
-              <div class="flex items-center justify-between p-4">
+            <div
+              class="border-b bg-gradient-to-r from-background via-background to-muted/20 backdrop-blur-xl"
+            >
+              <div class="flex items-center justify-between p-6">
                 <div class="flex-1">
-                  <h2 class="text-lg font-semibold tracking-tight mb-3">
-                    Store Management
-                  </h2>
+                  <div class="flex items-center gap-3 mb-4">
+                    <div
+                      class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                    >
+                      <StoreIcon class="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h2 class="text-lg font-bold tracking-tight">
+                        Store Management
+                      </h2>
+                      <p class="text-sm text-muted-foreground">
+                        Manage your product stores
+                      </p>
+                    </div>
+                  </div>
                   <ScrollArea class="w-full">
                     <div class="flex items-center gap-3 pb-2">
                       <div
@@ -252,11 +285,11 @@ const submit = () => {
                             currentStore === store ? 'default' : 'outline'
                           "
                           size="sm"
-                          class="relative pr-10 transition-all duration-200 hover:scale-105"
+                          class="relative pr-12 transition-all duration-200 hover:scale-105 h-10 px-4"
                           :class="{
-                            'bg-primary text-primary-foreground shadow-md':
+                            'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg':
                               currentStore === store,
-                            'hover:bg-accent hover:text-accent-foreground':
+                            'hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300':
                               currentStore !== store,
                           }"
                         >
@@ -314,7 +347,7 @@ const submit = () => {
                         variant="outline"
                         size="sm"
                         @click="addStore()"
-                        class="gap-2 shrink-0 border-dashed hover:border-solid transition-all duration-200 hover:scale-105"
+                        class="gap-2 shrink-0 border-dashed hover:border-solid hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-all duration-200 hover:scale-105 h-10 px-4"
                       >
                         <Plus class="h-4 w-4" />
                         Add Store
@@ -331,15 +364,19 @@ const submit = () => {
                 v-if="currentStore"
                 :store="currentStore"
               />
-              <div
-                v-else
-                class="flex items-center justify-center h-full text-muted-foreground"
-              >
-                <div class="text-center">
-                  <StoreIcon class="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p class="text-lg font-medium mb-2">No Store Selected</p>
-                  <p class="text-sm">
-                    Select a store from the tabs above or create a new one
+              <div v-else class="flex items-center justify-center h-full">
+                <div class="text-center max-w-md">
+                  <div
+                    class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                  >
+                    <StoreIcon class="h-10 w-10 text-purple-600" />
+                  </div>
+                  <h3 class="text-xl font-bold text-foreground mb-3">
+                    No Store Selected
+                  </h3>
+                  <p class="text-muted-foreground leading-relaxed">
+                    Select a store from the tabs above or create a new one to
+                    start managing your products
                   </p>
                 </div>
               </div>

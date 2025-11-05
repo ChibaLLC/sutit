@@ -562,18 +562,30 @@ const df = new DateFormatter("en-US", {
                       class="group"
                       :class="getFieldClasses(field)"
                     >
-                      <Label
-                        :for="field.id"
-                        class="text-sm font-semibold flex items-center gap-2"
-                      >
-                        {{ field.label }}
-                        <Badge
+                      <div class="flex items-center gap-3 mb-3">
+                        <div class="flex items-center gap-2">
+                          <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <Label
+                            :for="field.id"
+                            class="text-base font-semibold text-foreground"
+                          >
+                            {{ field.label }}
+                          </Label>
+                        </div>
+                        <div
                           v-if="field.required"
-                          variant="destructive"
-                          class="text-xs px-1.5 py-0.5"
-                          >*</Badge
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
                         >
-                      </Label>
+                          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                          </svg>
+                          Required
+                        </div>
+                      </div>
                       <p
                         v-if="field.description"
                         class="text-sm text-muted-foreground mb-2"
@@ -619,14 +631,21 @@ const df = new DateFormatter("en-US", {
                         "
                         class="space-y-3"
                       >
-                        <Input
-                          :id="field.id"
-                          v-model="formData[field.id]"
-                          :type="field.type"
-                          :placeholder="field.placeholder"
-                          :required="field.required"
-                          class="h-12 transition-all duration-200"
-                        />
+                        <div class="relative">
+                          <Input
+                            :id="field.id"
+                            v-model="formData[field.id]"
+                            :type="field.type"
+                            :placeholder="field.placeholder"
+                            :required="field.required"
+                            class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
+                          />
+                          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
                       <!-- File Input -->
                       <div v-else-if="field.type === 'file'" class="space-y-3">
@@ -716,13 +735,20 @@ const df = new DateFormatter("en-US", {
                         v-else-if="field.type === 'textarea'"
                         class="space-y-3"
                       >
-                        <Textarea
-                          :id="field.id"
-                          v-model="formData[field.id]"
-                          :placeholder="field.placeholder"
-                          :required="field.required"
-                          class="min-h-[120px] transition-all duration-200 resize-none"
-                        />
+                        <div class="relative">
+                          <Textarea
+                            :id="field.id"
+                            v-model="formData[field.id]"
+                            :placeholder="field.placeholder"
+                            :required="field.required"
+                            class="min-h-[120px] transition-all duration-200 resize-none border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
+                          />
+                          <div class="absolute right-3 top-3 text-muted-foreground/40">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
 
                        <!-- Select -->
@@ -730,27 +756,34 @@ const df = new DateFormatter("en-US", {
                          v-else-if="field.type === 'select'"
                          class="space-y-3"
                        >
-                         <Select v-model="formData[field.id]">
-                           <SelectTrigger
-                             class="h-12 transition-all duration-200"
-                           >
-                             <SelectValue
-                               :placeholder="
-                                 field.placeholder || 'Select an option'
-                               "
-                             />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem
-                               v-for="option in field.options"
-                               :key="option"
-                               :value="option"
-                               class="cursor-pointer"
+                         <div class="relative">
+                           <Select v-model="formData[field.id]">
+                             <SelectTrigger
+                               class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
                              >
-                               {{ option }}
-                             </SelectItem>
-                           </SelectContent>
-                         </Select>
+                               <SelectValue
+                                 :placeholder="
+                                   field.placeholder || 'Select an option'
+                                 "
+                               />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem
+                                 v-for="option in field.options"
+                                 :key="option"
+                                 :value="option"
+                                 class="cursor-pointer"
+                               >
+                                 {{ option }}
+                               </SelectItem>
+                             </SelectContent>
+                           </Select>
+                           <div class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                             </svg>
+                           </div>
+                         </div>
                        </div>
 
                        <!-- Multi-Select -->
@@ -791,20 +824,32 @@ const df = new DateFormatter("en-US", {
                            :checked="formData[field.id]"
                            class="mt-0.5 pointer-events-none"
                          />
-                         <div class="space-y-1 flex-1">
-                           <Label
-                             :for="field.id"
-                             class="text-sm font-medium cursor-pointer flex items-center gap-2"
-                           >
-                             {{ field.placeholder }}
-                             <Badge
-                               v-if="field.required"
-                               variant="destructive"
-                               class="text-xs px-1.5 py-0.5"
-                               >*</Badge
-                             >
-                           </Label>
-                         </div>
+                          <div class="space-y-1 flex-1">
+                            <div class="flex items-center gap-3">
+                              <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center">
+                                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                                <Label
+                                  :for="field.id"
+                                  class="text-base font-semibold text-foreground cursor-pointer"
+                                >
+                                  {{ field.placeholder }}
+                                </Label>
+                              </div>
+                              <div
+                                v-if="field.required"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                                Required
+                              </div>
+                            </div>
+                          </div>
                        </div>
                       <div
                         v-else-if="field.type === 'toggle'"
