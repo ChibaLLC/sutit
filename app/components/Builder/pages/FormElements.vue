@@ -56,6 +56,12 @@ const selectionElements = [
     description: "Single selection dropdown",
   },
   {
+    type: "multiselect",
+    label: "Multi-Select",
+    icon: CheckSquare,
+    description: "Multiple selections from options",
+  },
+  {
     type: "radio",
     label: "Radio Group",
     icon: Circle,
@@ -65,7 +71,7 @@ const selectionElements = [
     type: "checkbox",
     label: "Checkbox",
     icon: CheckSquare,
-    description: "Multiple selections",
+    description: "Yes/No choice",
   },
   {
     type: "toggle",
@@ -89,21 +95,17 @@ const advancedElements = [
     description: "File attachment input",
   },
 ];
-const handleDragStart = (event, element) => {
-  event.dataTransfer.setData("application/json", JSON.stringify(element));
+const handleDragStart = (event: DragEvent, element: any) => {
+  event.dataTransfer?.setData("application/json", JSON.stringify(element));
 };
 </script>
 <template>
-  <div class="w-80 border-l bg-card/30 backdrop-blur">
-    <div class="p-4 border-b">
-      <h3 class="font-semibold text-sm">Form Elements</h3>
-      <p class="text-xs text-muted-foreground mt-1">
-        Drag elements to the form canvas
-      </p>
-    </div>
-
-    <ScrollArea class="h-full p-4">
-      <!-- Enhanced form elements library with better categorization -->
+  <Card>
+    <CardHeader>
+      <CardTitle>Form Elements</CardTitle>
+      <CardDescription>Drag elements to the form canvas</CardDescription>
+    </CardHeader>
+    <CardContent class="overflow-y-auto">
       <div class="space-y-6">
         <div>
           <h4
@@ -213,6 +215,6 @@ const handleDragStart = (event, element) => {
           </div>
         </div>
       </div>
-    </ScrollArea>
-  </div>
+    </CardContent>
+  </Card>
 </template>

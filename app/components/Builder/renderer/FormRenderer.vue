@@ -260,6 +260,18 @@ const formatFileSize = (bytes: number): string => {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
+
+const toggleMultiselectOption = (fieldId: string, option: string) => {
+  if (!formData[fieldId]) {
+    formData[fieldId] = [];
+  }
+  const index = formData[fieldId].indexOf(option);
+  if (index > -1) {
+    formData[fieldId].splice(index, 1);
+  } else {
+    formData[fieldId].push(option);
+  }
+};
 const handlePrevious = () => {
   if (currentStep.value > 0) {
     currentStep.value--;
@@ -713,88 +725,118 @@ const df = new DateFormatter("en-US", {
                         />
                       </div>
 
-                      <!-- Select -->
-                      <div
-                        v-else-if="field.type === 'select'"
-                        class="space-y-3"
-                      >
-                        <Select v-model="formData[field.id]">
-                          <SelectTrigger
-                            class="h-12 transition-all duration-200"
-                          >
-                            <SelectValue
-                              :placeholder="
-                                field.placeholder || 'Select an option'
-                              "
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem
-                              v-for="option in field.options"
-                              :key="option"
-                              :value="option"
-                              class="cursor-pointer"
-                            >
-                              {{ option }}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                       <!-- Select -->
+                       <div
+                         v-else-if="field.type === 'select'"
+                         class="space-y-3"
+                       >
+                         <Select v-model="formData[field.id]">
+                           <SelectTrigger
+                             class="h-12 transition-all duration-200"
+                           >
+                             <SelectValue
+                               :placeholder="
+                                 field.placeholder || 'Select an option'
+                               "
+                             />
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem
+                               v-for="option in field.options"
+                               :key="option"
+                               :value="option"
+                               class="cursor-pointer"
+                             >
+                               {{ option }}
+                             </SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
 
-                      <!-- Checkbox -->
-                      <div
-                        v-else-if="field.type === 'checkbox'"
-                        class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                      >
-                        <Checkbox
-                          :id="field.id"
-                          v-model="formData[field.id]"
-                          class="mt-0.5"
-                        />
-                        <div class="space-y-1">
-                          <Label
-                            :for="field.id"
-                            class="text-sm font-medium cursor-pointer flex items-center gap-2"
-                          >
-                            {{ field.placeholder }}
-                            <Badge
-                              v-if="field.required"
-                              variant="destructive"
-                              class="text-xs px-1.5 py-0.5"
-                              >*</Badge
-                            >
-                          </Label>
-                        </div>
-                      </div>
+                       <!-- Multi-Select -->
+                       <div v-else-if="field.type === 'multiselect'" class="space-y-4">
+                         <div class="grid gap-3">
+                           <div
+                             v-for="option in field.options"
+                             :key="option"
+                             class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                             @click="toggleMultiselectOption(field.id, option)"
+                           >
+                             <Checkbox
+                               :id="`${field.id}-${option}`"
+                               :checked="(formData[field.id] || []).includes(option)"
+                               class="pointer-events-none"
+                             />
+                             <Label
+                               :for="`${field.id}-${option}`"
+                               class="cursor-pointer font-medium flex-1"
+                             >
+                               {{ option }}
+                             </Label>
+                           </div>
+                         </div>
+                         <p v-if="field.placeholder" class="text-sm text-muted-foreground">
+                           {{ field.placeholder }}
+                         </p>
+                       </div>
+
+                       <!-- Checkbox -->
+                       <div
+                         v-else-if="field.type === 'checkbox'"
+                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                         @click="formData[field.id] = !formData[field.id]"
+                       >
+                         <Checkbox
+                           :id="field.id"
+                           :checked="formData[field.id]"
+                           class="mt-0.5 pointer-events-none"
+                         />
+                         <div class="space-y-1 flex-1">
+                           <Label
+                             :for="field.id"
+                             class="text-sm font-medium cursor-pointer flex items-center gap-2"
+                           >
+                             {{ field.placeholder }}
+                             <Badge
+                               v-if="field.required"
+                               variant="destructive"
+                               class="text-xs px-1.5 py-0.5"
+                               >*</Badge
+                             >
+                           </Label>
+                         </div>
+                       </div>
                       <div
                         v-else-if="field.type === 'toggle'"
                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                       >
                         <Switch v-model="formData[field.id]" class="mt-0" />
                       </div>
-                      <!-- Radio Group -->
-                      <div v-else-if="field.type === 'radio'" class="space-y-4">
-                        <RadioGroup
-                          v-model="formData[field.id]"
-                          class="space-y-3"
-                        >
-                          <div
-                            v-for="option in field.options"
-                            :key="option"
-                            class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                          >
-                            <RadioGroupItem
-                              :id="`${field.id}-${option}`"
-                              :value="option"
-                            />
-                            <Label
-                              :for="`${field.id}-${option}`"
-                              class="cursor-pointer font-medium"
-                              >{{ option }}</Label
-                            >
-                          </div>
-                        </RadioGroup>
-                      </div>
+                       <!-- Radio Group -->
+                       <div v-else-if="field.type === 'radio'" class="space-y-4">
+                         <RadioGroup
+                           v-model="formData[field.id]"
+                           class="space-y-3"
+                         >
+                           <div
+                             v-for="option in field.options"
+                             :key="option"
+                             class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                             @click="formData[field.id] = option"
+                           >
+                             <RadioGroupItem
+                               :id="`${field.id}-${option}`"
+                               :value="option"
+                               class="pointer-events-none"
+                             />
+                             <Label
+                               :for="`${field.id}-${option}`"
+                               class="cursor-pointer font-medium flex-1"
+                               >{{ option }}</Label
+                             >
+                           </div>
+                         </RadioGroup>
+                       </div>
                     </div>
                   </div>
 
