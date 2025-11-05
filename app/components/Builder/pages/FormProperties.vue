@@ -261,10 +261,10 @@ const removeOption = (index) => {
             </div>
           </div>
 
-          <!-- Options for select/radio elements -->
+          <!-- Options for select/radio/multiselect elements -->
           <div
             v-if="
-              ['select', 'radio', 'checkbox-group'].includes(
+              ['select', 'radio', 'checkbox-group', 'multiselect'].includes(
                 selectedElement.type,
               )
             "
