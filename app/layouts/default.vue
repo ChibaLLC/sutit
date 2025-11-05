@@ -1,10 +1,10 @@
 <script setup lang="ts"></script>
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20">
+  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
     <LayoutAppHeader />
-    <div>
+    <main class="flex-1">
       <slot />
-    </div>
+    </main>
     <LazyLayoutAppFooter />
   </div>
 </template>

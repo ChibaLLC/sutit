@@ -11,7 +11,7 @@ const socialLinks = [
 
 <template>
   <footer
-    class="fixed bottom-0 left-0 right-0 border-t border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
+    class="w-full border-t border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 mt-auto"
   >
     <div class="container mx-auto px-4 py-6">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
