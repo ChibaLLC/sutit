@@ -6,8 +6,11 @@ import {
   MessageCircle,
   Twitter,
   Share2,
+  Download,
+  QrCode,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
+import QRCode from "qrcode";
 import type { FormSchema } from "~~/shared/types";
 interface ShareSettings {
   isPublic: boolean;
@@ -64,6 +67,47 @@ const shareUrl = ref({
   mainUrl: props.form ? `${window.location.origin}/${props.form.slug}` : "",
 });
 
+const qrCodeDataUrl = ref<string>("");
+const qrCodeLoading = ref(false);
+
+const generateQRCode = async (url: string) => {
+  qrCodeLoading.value = true;
+  try {
+    qrCodeDataUrl.value = await QRCode.toDataURL(url, {
+      width: 256,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    toast.error("Failed to generate QR code");
+  } finally {
+    qrCodeLoading.value = false;
+  }
+};
+
+const downloadQRCode = () => {
+  if (!qrCodeDataUrl.value) return;
+  
+  const link = document.createElement("a");
+  link.href = qrCodeDataUrl.value;
+  link.download = `${props.form?.slug || "form"}-qrcode.png`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast.success("QR code downloaded successfully");
+};
+
+// Generate QR code when component mounts or form changes
+watchEffect(() => {
+  if (props.form && shareUrl.value.formsUrl) {
+    generateQRCode(shareUrl.value.formsUrl);
+  }
+});
+
 const embedCode = computed(() => {
   if (!props.form) return "";
   return `<iframe src="${shareUrl.value.formsUrl}" width="${embedOptions.value.width}" height="${embedOptions.value.height}" frameborder="0"></iframe>`;
@@ -104,8 +148,9 @@ const saveShareSettings = () => {
       </DialogHeader>
 
       <Tabs default-value="link" class="w-full">
-        <TabsList class="grid w-full grid-cols-3">
+        <TabsList class="grid w-full grid-cols-4">
           <TabsTrigger value="link">Share Link</TabsTrigger>
+          <TabsTrigger value="qrcode">QR Code</TabsTrigger>
           <TabsTrigger value="embed">Embed</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -147,6 +192,53 @@ const saveShareSettings = () => {
                 <component :is="platform.icon" class="h-4 w-4" />
                 {{ platform.name }}
               </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <!-- QR Code Tab -->
+        <TabsContent value="qrcode" class="space-y-4">
+          <div class="space-y-3">
+            <Label>QR Code for Form</Label>
+            <div class="flex flex-col items-center space-y-4">
+              <div v-if="qrCodeLoading" class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+                <div class="text-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                  <p class="text-sm text-gray-500">Generating QR Code...</p>
+                </div>
+              </div>
+              <div v-else-if="qrCodeDataUrl" class="space-y-4">
+                <img 
+                  :src="qrCodeDataUrl" 
+                  alt="Form QR Code" 
+                  class="border-2 border-gray-200 rounded-lg shadow-sm"
+                />
+                <Button 
+                  @click="downloadQRCode" 
+                  class="w-full sm:w-auto"
+                  :disabled="!qrCodeDataUrl"
+                >
+                  <Download class="h-4 w-4 mr-2" />
+                  Download QR Code
+                </Button>
+              </div>
+              <div v-else class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+                <div class="text-center">
+                  <QrCode class="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p class="text-sm text-gray-500">QR Code unavailable</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div class="space-y-3">
+            <Label>QR Code Info</Label>
+            <div class="text-sm text-muted-foreground space-y-1">
+              <p>• QR code links to: {{ shareUrl.formsUrl }}</p>
+              <p>• Scan with any QR code reader to access the form</p>
+              <p>• Download and share the QR code image</p>
             </div>
           </div>
         </TabsContent>
