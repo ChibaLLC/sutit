@@ -26,17 +26,13 @@ const toggleDark = useToggle(isDark);
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Forms", href: "/forms" },
+  { label: "Settings", href: "/settings" },
 ];
 
 const navs = [
   { label: "Marketplace", href: "/marketplace" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-];
-
-const userNavItems = [
-  { label: "Settings", href: "/settings" },
-  { label: "Billing", href: "/billing" },
 ];
 
 const logout = async () => {
@@ -58,7 +54,7 @@ const logout = async () => {
                 class="absolute inset-0 bg-gradient-to-r from-primary to-purple-600 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"
               ></div>
               <div
-                class="relative h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                class="relative h-12 w-12 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
               >
                 <NuxtImg
                   src="/logo.jpeg"
@@ -91,22 +87,24 @@ const logout = async () => {
               ></div>
             </NuxtLink>
 
-            <NuxtLink
-              v-for="item in navItems"
-              :key="item.href"
-              :to="item.href"
-              class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
-              :class="
-                $route.path === item.href
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'text-foreground hover:text-primary'
-              "
-            >
-              <span class="relative z-10">{{ item.label }}</span>
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-              ></div>
-            </NuxtLink>
+            <template v-if="authStore.isAuthenticated">
+              <NuxtLink
+                v-for="item in navItems"
+                :key="item.href"
+                :to="item.href"
+                class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
+                :class="
+                  $route.path === item.href
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-foreground hover:text-primary'
+                "
+              >
+                <span class="relative z-10">{{ item.label }}</span>
+                <div
+                  class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                ></div>
+              </NuxtLink>
+            </template>
 
             <NuxtLink
               v-for="item in navs"
@@ -124,26 +122,6 @@ const logout = async () => {
                 class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
               ></div>
             </NuxtLink>
-
-            <!-- User Navigation Items (only show when authenticated) -->
-            <template v-if="authStore.isAuthenticated">
-              <NuxtLink
-                v-for="item in userNavItems"
-                :key="item.href"
-                :to="item.href"
-                class="group relative px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-accent/50 transition-all duration-200"
-                :class="
-                  $route.path === item.href
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-foreground hover:text-primary'
-                "
-              >
-                <span class="relative z-10">{{ item.label }}</span>
-                <div
-                  class="absolute inset-0 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                ></div>
-              </NuxtLink>
-            </template>
           </nav>
         </div>
 
@@ -315,20 +293,22 @@ const logout = async () => {
                   >
                     Home
                   </NuxtLink>
-                  <NuxtLink
-                    v-for="item in navItems"
-                    :key="item.href"
-                    :to="item.href"
-                    @click="mobileMenuOpen = false"
-                    class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
-                    :class="
-                      $route.path === item.href
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-foreground hover:text-primary'
-                    "
-                  >
-                    {{ item.label }}
-                  </NuxtLink>
+                  <template v-if="authStore.isAuthenticated">
+                    <NuxtLink
+                      v-for="item in navItems"
+                      :key="item.href"
+                      :to="item.href"
+                      @click="mobileMenuOpen = false"
+                      class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
+                      :class="
+                        $route.path === item.href
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'text-foreground hover:text-primary'
+                      "
+                    >
+                      {{ item.label }}
+                    </NuxtLink>
+                  </template>
                   <NuxtLink
                     v-for="item in navs"
                     :key="item.href"
@@ -343,23 +323,6 @@ const logout = async () => {
                   >
                     {{ item.label }}
                   </NuxtLink>
-                  <!-- User Navigation Items (only show when authenticated) -->
-                  <template v-if="authStore.isAuthenticated">
-                    <NuxtLink
-                      v-for="item in userNavItems"
-                      :key="item.href"
-                      :to="item.href"
-                      @click="mobileMenuOpen = false"
-                      class="px-3 py-2 text-center text-sm font-medium rounded-lg hover:bg-accent/50 transition-all duration-200"
-                      :class="
-                        $route.path === item.href
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : 'text-foreground hover:text-primary'
-                      "
-                    >
-                      {{ item.label }}
-                    </NuxtLink>
-                  </template>
                 </div>
 
                 <!-- Mobile User Section -->

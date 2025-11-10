@@ -56,6 +56,7 @@ const carouselContainer = ref<HTMLElement | null>(null);
 const windowWidth = ref<number>(
   typeof window !== "undefined" ? window.innerWidth : 1024,
 );
+const authStore = useAuthStore();
 
 const { data: forms } = useFetch("/api/marketplace?limit=6&featured=true", {
   server: false,
@@ -175,12 +176,17 @@ onUnmounted(() => {
 
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" class="group">
-              Get Started
-              <ArrowRight
-                class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
-              />
-            </Button>
+            <NuxtLink
+              :to="authStore.isAuthenticated ? `/dashboard` : `/auth/login`"
+              as-child
+            >
+              <Button size="lg" class="group">
+                Get Started
+                <ArrowRight
+                  class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+                />
+              </Button>
+            </NuxtLink>
             <Button size="lg" variant="outline">
               <PlayCircle class="w-5 h-5 mr-2" />
               Watch Demo
@@ -218,7 +224,9 @@ onUnmounted(() => {
     <section id="features" class="py-20 bg-muted/30">
       <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">Featured Forms</h2>
+          <h2 class="text-3xl md:text-5xl font-bold mb-4">
+            Featured Marketplace
+          </h2>
           <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover our most popular form templates designed to streamline your
             workflow
@@ -314,7 +322,7 @@ onUnmounted(() => {
             href="/marketplace"
             class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 group"
           >
-            Explore Public Forms
+            Explore Market Place
             <ArrowRight
               class="w-4 h-4 group-hover:translate-x-1 transition-transform"
             />
