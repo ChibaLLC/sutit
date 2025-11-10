@@ -5,6 +5,7 @@ import {
   ilike,
   inArray,
   InferInsertModel,
+  isNull,
   ne,
   notInArray,
   or,
@@ -188,6 +189,7 @@ export async function getFormById(formId: string, token?: string) {
             },
           },
           orderBy: (pages, { asc }) => [asc(pages.orderIndex)],
+          where: eq(formFields.deletedAt, isNull(formFields.deletedAt)),
         },
         creator: {
           columns: { id: true, email: true, name: true },
@@ -196,6 +198,7 @@ export async function getFormById(formId: string, token?: string) {
           with: {
             items: true,
           },
+          where: eq(formFields.deletedAt, isNull(formFields.deletedAt)),
         },
       },
     });
