@@ -101,6 +101,7 @@ const removePage = (index: number) => {
 const submit = () => {
   const result = formSchemaSchema.safeParse(form.value);
   if (!result.success) {
+    console.log(result.error.format());
     result.error.issues.forEach((issue) => {
       toast.error(issue.message);
     });
@@ -238,7 +239,7 @@ const submit = () => {
               </Card>
             </div>
           </div>
-          <div class="w-80 border-l bg-card backdrop-blur-md">
+          <div class="w-80 border-l bg-card backdrop-blur-md overflow-y-auto">
             <BuilderPagesFormProperties
               v-if="selectedElement"
               :currentPage="currentPage"

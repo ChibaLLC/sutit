@@ -53,9 +53,7 @@ const logout = async () => {
               <div
                 class="absolute inset-0 bg-gradient-to-r from-primary to-purple-600 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"
               ></div>
-              <div
-                class="relative h-12 w-12 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
-              >
+              <div class="relative h-12 w-12 rounded-full">
                 <NuxtImg
                   src="/logo.jpeg"
                   class="h-8 w-8 rounded-lg object-cover"
