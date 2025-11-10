@@ -37,7 +37,7 @@ export const formSettingsSchema = z.object({
 
 export const storeItemSchema = z.object({
   name: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   price: z.union([z.number(), z.string()]),
   quantity: z.number().optional(),
   infinite: z.boolean().optional().nullable(),
