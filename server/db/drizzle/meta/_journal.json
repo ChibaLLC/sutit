@@ -71,6 +71,13 @@
       "when": 1760792472934,
       "tag": "0009_boring_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1762782423419,
+      "tag": "0010_aspiring_agent_zero",
+      "breakpoints": true
     }
   ]
 }

@@ -144,6 +144,7 @@ export const forms = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     slugUserUnique: unique("form_slug_user_unique").on(
@@ -168,6 +169,7 @@ export const formPages = pgTable(
     description: text("description"),
     orderIndex: integer("order_index").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     formIdx: index("page_form_idx").on(table.formId),
@@ -195,6 +197,11 @@ export const formFields = pgTable(
     required: boolean("required").default(false),
     orderIndex: integer("order_index").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     pageIdx: index("field_page_idx").on(table.pageId),
@@ -218,6 +225,7 @@ export const formStores = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     formIdx: index("store_form_idx").on(table.formId),
@@ -245,6 +253,7 @@ export const storeItems = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     storeIdx: index("item_store_idx").on(table.storeId),
@@ -290,7 +299,6 @@ export const formGroups = pgTable(
       .references(() => forms.id, { onDelete: "cascade" })
       .notNull(),
     groupName: varchar("group_name", { length: 255 }).notNull(),
-    // Changed leaderId from createdBy to allow a group leader distinct from form creator
     leaderId: text("leader_id").references(() => user.id, {
       onDelete: "set null",
     }), // User who created/leads the group

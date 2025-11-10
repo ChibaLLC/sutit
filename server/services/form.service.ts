@@ -367,27 +367,31 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
           }
         }
       }
-
-      // 4. Remove pages that are no longer in the form (only if they have no submissions)
+      // 4. Mark pages that are no longer in the form as deleted (only if they have no submissions)
       if (existingPageIds.length > 0) {
         await tx
-          .delete(formPages)
+          .update(formPages)
+          .set({ deletedAt: sql`now()` })
           .where(
             and(
               eq(formPages.formId, formId),
               notInArray(formPages.id, existingPageIds),
+              // only mark pages that aren’t already deleted
+              eq(formPages.deletedAt, null),
             ),
           );
       }
 
-      // 5. Remove fields that are no longer in the form (only if they have no submissions)
+      // 5. Mark fields that are no longer in the form as deleted (only if they have no submissions)
       if (existingFieldIds.length > 0) {
         await tx
-          .delete(formFields)
+          .update(formFields)
+          .set({ deletedAt: sql`now()` })
           .where(
             and(
               inArray(formFields.pageId, existingPageIds),
               notInArray(formFields.id, existingFieldIds),
+              eq(formFields.deletedAt, null),
             ),
           );
       }
@@ -479,28 +483,30 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               }
             }
           }
-
-          // Delete removed store items
+          // 1️⃣ Mark removed store items as deleted (soft delete)
           if (existingStoreItemIds.length > 0) {
             await tx
-              .delete(storeItems)
+              .update(storeItems)
+              .set({ deletedAt: sql`now()` })
               .where(
                 and(
                   eq(storeItems.storeId, store.id),
                   notInArray(storeItems.id, existingStoreItemIds),
+                  eq(storeItems.deletedAt, null), // only mark if not already deleted
                 ),
               );
           }
         }
       }
-      // Delete removed stores (only those belonging to this form)
       if (existingStoreIds.length > 0) {
         await tx
-          .delete(formStores)
+          .update(formStores)
+          .set({ deletedAt: sql`now()` })
           .where(
             and(
               eq(formStores.formId, formId),
               notInArray(formStores.id, existingStoreIds),
+              eq(formStores.deletedAt, null), // only mark if not already deleted
             ),
           );
       }
@@ -519,7 +525,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
       return updatedForm;
     } catch (e: any) {
       console.error("Error in updateForm transaction:", e);
-      await tx.rollback();
+      tx.rollback();
       throw new Error(e.message || "Failed to update form");
     }
   });
