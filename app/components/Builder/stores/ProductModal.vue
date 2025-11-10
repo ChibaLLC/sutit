@@ -9,14 +9,31 @@ const props = defineProps<{
 const emits = defineEmits<{
   close: [];
 }>();
-const form = ref<StoreItem>(
-  props.product
-    ? props.product
-    : <StoreItem>{
-        images: [] as string[],
-        infinite: false,
-      },
-);
+const form = ref<StoreItem>({
+  id: "",
+  name: "",
+  description: "",
+  price: 0,
+  quantity: 0,
+  infinite: false,
+  images: [],
+});
+
+watch(() => props.product, (newProduct) => {
+  if (newProduct) {
+    form.value = { ...newProduct };
+  } else {
+    form.value = {
+      id: "",
+      name: "",
+      description: "",
+      price: 0,
+      quantity: 0,
+      infinite: false,
+      images: [],
+    };
+  }
+}, { immediate: true });
 
 const addProduct = () => {
   if (props.product) {

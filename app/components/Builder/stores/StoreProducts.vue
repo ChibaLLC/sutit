@@ -20,6 +20,7 @@ const toggleProductModal = () => {
 };
 const editProduct = (p: StoreItem) => {
   selectedProduct.value = p;
+  console.log(selectedProduct.value);
   productModalOpen.value = true;
 };
 const deleteProduct = (p: StoreItem) => {

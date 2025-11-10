@@ -168,7 +168,9 @@ export const getSubmissionById = async (submissionId: string) => {
   if (submission) {
     // Calculate TAT if completed
     if (submission.completedAt && submission.submittedAt) {
-      const tatMs = new Date(submission.completedAt).getTime() - new Date(submission.submittedAt).getTime();
+      const tatMs =
+        new Date(submission.completedAt).getTime() -
+        new Date(submission.submittedAt).getTime();
       submission.tat = Math.floor(tatMs / 1000); // in seconds
     } else {
       submission.tat = null;
@@ -178,11 +180,17 @@ export const getSubmissionById = async (submissionId: string) => {
   return submission;
 };
 
-export const updateSubmissionStatus = async (submissionId: string, status: string) => {
+export const updateSubmissionStatus = async (
+  submissionId: string,
+  status: string,
+) => {
   const updateData: any = { status };
-  if (status === 'completed') {
+  if (status === "completed") {
     updateData.completedAt = new Date();
   }
 
-  await db.update(formSubmissions).set(updateData).where(eq(formSubmissions.id, submissionId));
+  await db
+    .update(formSubmissions)
+    .set(updateData)
+    .where(eq(formSubmissions.id, submissionId));
 };

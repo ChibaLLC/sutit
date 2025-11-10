@@ -42,6 +42,14 @@ const formatFormData = (submissions: FormSubmission[]) => {
   const fieldResponses: Record<string, any>[] = [];
   const storeResponses: Record<string, any>[] = [];
 
+  // Collect all unique field labels
+  const allFieldLabels = new Set<string>();
+  submissions.forEach((sub) => {
+    sub.responses.forEach((field) => {
+      allFieldLabels.add(field.field.label);
+    });
+  });
+
   submissions.forEach((sub) => {
     const baseRow: Record<string, any> = {
       "Submitter Name": sub.submitter?.name,
@@ -51,8 +59,9 @@ const formatFormData = (submissions: FormSubmission[]) => {
 
     // Field Responses
     const fieldRow = { ...baseRow };
-    sub.responses.forEach((field) => {
-      fieldRow[field.field.label] = field.value;
+    allFieldLabels.forEach((label) => {
+      const response = sub.responses.find((f) => f.field.label === label);
+      fieldRow[label] = response ? response.value : "";
     });
     fieldResponses.push(fieldRow);
 
