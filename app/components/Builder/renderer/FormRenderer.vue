@@ -12,12 +12,10 @@ import {
   Minus,
   X,
   File,
-  CalendarIcon,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import type { FormSchema, FormField } from "~~/shared/types";
-import type { DateValue } from "@internationalized/date";
-import { DateFormatter, getLocalTimeZone } from "@internationalized/date";
+import type { FormSchema } from "~~/shared/types";
+import { DateFormatter } from "@internationalized/date";
 interface Props {
   form: FormSchema;
 }
@@ -128,26 +126,6 @@ const getCheckoutStepClasses = () => {
     return "bg-accent border-accent text-accent-foreground";
   } else {
     return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getFieldClasses = (field: FormField) => {
-  // You can add field-specific classes here if needed
-  return "";
-};
-
-const getInputType = (fieldType: string) => {
-  switch (fieldType) {
-    case "email":
-      return "email";
-    case "phone":
-      return "tel";
-    case "file":
-      return "file";
-    case "date":
-      return "date";
-    default:
-      return "text";
   }
 };
 
@@ -279,6 +257,9 @@ const handlePrevious = () => {
 };
 
 const handleSubmit = () => {
+  if (props.form.requireMerch && Object.keys(selectedProducts).length < 0) {
+    toast.error("You are required to pick merchandise");
+  }
   emit("submit", {
     schema: props.form,
     formData,
@@ -350,9 +331,6 @@ const getTotalAmount = computed(() => {
     parseInt(props.form.price.toString()) +
     parseInt(getTotalProductsPrice.value.toString())
   );
-});
-const df = new DateFormatter("en-US", {
-  dateStyle: "long",
 });
 </script>
 <template>
@@ -560,13 +538,24 @@ const df = new DateFormatter("en-US", {
                       v-for="field in currentPage.fields"
                       :key="field.id"
                       class="group"
-                      :class="getFieldClasses(field)"
                     >
                       <div class="flex items-center gap-3 mb-3">
                         <div class="flex items-center gap-2">
-                          <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          <div
+                            class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center"
+                          >
+                            <svg
+                              class="w-4 h-4 text-primary"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
                             </svg>
                           </div>
                           <Label
@@ -580,8 +569,16 @@ const df = new DateFormatter("en-US", {
                           v-if="field.required"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
                         >
-                          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                          <svg
+                            class="w-3.5 h-3.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                              clip-rule="evenodd"
+                            />
                           </svg>
                           Required
                         </div>
@@ -640,9 +637,21 @@ const df = new DateFormatter("en-US", {
                             :required="field.required"
                             class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
                           />
-                          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          <div
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40"
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
                             </svg>
                           </div>
                         </div>
@@ -743,145 +752,197 @@ const df = new DateFormatter("en-US", {
                             :required="field.required"
                             class="min-h-[120px] transition-all duration-200 resize-none border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
                           />
-                          <div class="absolute right-3 top-3 text-muted-foreground/40">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          <div
+                            class="absolute right-3 top-3 text-muted-foreground/40"
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
                             </svg>
                           </div>
                         </div>
                       </div>
 
-                       <!-- Select -->
-                       <div
-                         v-else-if="field.type === 'select'"
-                         class="space-y-3"
-                       >
-                         <div class="relative">
-                           <Select v-model="formData[field.id]">
-                             <SelectTrigger
-                               class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
-                             >
-                               <SelectValue
-                                 :placeholder="
-                                   field.placeholder || 'Select an option'
-                                 "
-                               />
-                             </SelectTrigger>
-                             <SelectContent>
-                               <SelectItem
-                                 v-for="option in field.options"
-                                 :key="option"
-                                 :value="option"
-                                 class="cursor-pointer"
-                               >
-                                 {{ option }}
-                               </SelectItem>
-                             </SelectContent>
-                           </Select>
-                           <div class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                             </svg>
-                           </div>
-                         </div>
-                       </div>
-
-                       <!-- Multi-Select -->
-                       <div v-else-if="field.type === 'multiselect'" class="space-y-4">
-                         <div class="grid gap-3">
-                           <div
-                             v-for="option in field.options"
-                             :key="option"
-                             class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                             @click="toggleMultiselectOption(field.id, option)"
-                           >
-                             <Checkbox
-                               :id="`${field.id}-${option}`"
-                               :checked="(formData[field.id] || []).includes(option)"
-                               class="pointer-events-none"
-                             />
-                             <Label
-                               :for="`${field.id}-${option}`"
-                               class="cursor-pointer font-medium flex-1"
-                             >
-                               {{ option }}
-                             </Label>
-                           </div>
-                         </div>
-                         <p v-if="field.placeholder" class="text-sm text-muted-foreground">
-                           {{ field.placeholder }}
-                         </p>
-                       </div>
-
-                       <!-- Checkbox -->
-                       <div
-                         v-else-if="field.type === 'checkbox'"
-                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                         @click="formData[field.id] = !formData[field.id]"
-                       >
-                         <Checkbox
-                           :id="field.id"
-                           :checked="formData[field.id]"
-                           class="mt-0.5 pointer-events-none"
-                         />
-                          <div class="space-y-1 flex-1">
-                            <div class="flex items-center gap-3">
-                              <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center">
-                                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                </div>
-                                <Label
-                                  :for="field.id"
-                                  class="text-base font-semibold text-foreground cursor-pointer"
-                                >
-                                  {{ field.placeholder }}
-                                </Label>
-                              </div>
-                              <div
-                                v-if="field.required"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
+                      <!-- Select -->
+                      <div
+                        v-else-if="field.type === 'select'"
+                        class="space-y-3"
+                      >
+                        <div class="relative">
+                          <Select v-model="formData[field.id]">
+                            <SelectTrigger
+                              class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
+                            >
+                              <SelectValue
+                                :placeholder="
+                                  field.placeholder || 'Select an option'
+                                "
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem
+                                v-for="option in field.options"
+                                :key="option"
+                                :value="option"
+                                class="cursor-pointer"
                               >
-                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                {{ option }}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Multi-Select -->
+                      <div
+                        v-else-if="field.type === 'multiselect'"
+                        class="space-y-4"
+                      >
+                        <div class="grid gap-3">
+                          <div
+                            v-for="option in field.options"
+                            :key="option"
+                            class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                            @click="toggleMultiselectOption(field.id, option)"
+                          >
+                            <Checkbox
+                              :id="`${field.id}-${option}`"
+                              :checked="
+                                (formData[field.id] || []).includes(option)
+                              "
+                              class="pointer-events-none"
+                            />
+                            <Label
+                              :for="`${field.id}-${option}`"
+                              class="cursor-pointer font-medium flex-1"
+                            >
+                              {{ option }}
+                            </Label>
+                          </div>
+                        </div>
+                        <p
+                          v-if="field.placeholder"
+                          class="text-sm text-muted-foreground"
+                        >
+                          {{ field.placeholder }}
+                        </p>
+                      </div>
+
+                      <!-- Checkbox -->
+                      <div
+                        v-else-if="field.type === 'checkbox'"
+                        class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                        @click="formData[field.id] = !formData[field.id]"
+                      >
+                        <Checkbox
+                          :id="field.id"
+                          :checked="formData[field.id]"
+                          class="mt-0.5 pointer-events-none"
+                        />
+                        <div class="space-y-1 flex-1">
+                          <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                              <div
+                                class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center"
+                              >
+                                <svg
+                                  class="w-4 h-4 text-primary"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
                                 </svg>
-                                Required
                               </div>
+                              <Label
+                                :for="field.id"
+                                class="text-base font-semibold text-foreground cursor-pointer"
+                              >
+                                {{ field.placeholder }}
+                              </Label>
+                            </div>
+                            <div
+                              v-if="field.required"
+                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
+                            >
+                              <svg
+                                class="w-3.5 h-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                              Required
                             </div>
                           </div>
-                       </div>
+                        </div>
+                      </div>
                       <div
                         v-else-if="field.type === 'toggle'"
                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                       >
                         <Switch v-model="formData[field.id]" class="mt-0" />
                       </div>
-                       <!-- Radio Group -->
-                       <div v-else-if="field.type === 'radio'" class="space-y-4">
-                         <RadioGroup
-                           v-model="formData[field.id]"
-                           class="space-y-3"
-                         >
-                           <div
-                             v-for="option in field.options"
-                             :key="option"
-                             class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                             @click="formData[field.id] = option"
-                           >
-                             <RadioGroupItem
-                               :id="`${field.id}-${option}`"
-                               :value="option"
-                               class="pointer-events-none"
-                             />
-                             <Label
-                               :for="`${field.id}-${option}`"
-                               class="cursor-pointer font-medium flex-1"
-                               >{{ option }}</Label
-                             >
-                           </div>
-                         </RadioGroup>
-                       </div>
+                      <!-- Radio Group -->
+                      <div v-else-if="field.type === 'radio'" class="space-y-4">
+                        <RadioGroup
+                          v-model="formData[field.id]"
+                          class="space-y-3"
+                        >
+                          <div
+                            v-for="option in field.options"
+                            :key="option"
+                            class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                            @click="formData[field.id] = option"
+                          >
+                            <RadioGroupItem
+                              :id="`${field.id}-${option}`"
+                              :value="option"
+                              class="pointer-events-none"
+                            />
+                            <Label
+                              :for="`${field.id}-${option}`"
+                              class="cursor-pointer font-medium flex-1"
+                              >{{ option }}</Label
+                            >
+                          </div>
+                        </RadioGroup>
+                      </div>
                     </div>
                   </div>
 
@@ -1222,7 +1283,7 @@ const df = new DateFormatter("en-US", {
                   <!-- M-Pesa Payment Form -->
 
                   <form
-                    v-if="form.price"
+                    v-if="getTotalAmount > 0"
                     @submit.prevent="handleSubmit()"
                     class="space-y-6"
                   >
