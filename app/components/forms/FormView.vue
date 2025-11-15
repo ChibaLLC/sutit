@@ -29,6 +29,9 @@ const submit = async (form: object) => {
         headers: {
           ...(await authHeaders()),
         },
+        onResponseError(e) {
+          toast.error(e.error?.message ?? "An error occurred ");
+        },
       },
     );
     if (submitData) {
@@ -43,7 +46,6 @@ const submit = async (form: object) => {
 
         await router.push(`/forms/${route.params.id}/submitted`);
       } catch (e) {
-        console.log(e.message);
         toast.error(e.message ?? "An error occurred");
       }
     }

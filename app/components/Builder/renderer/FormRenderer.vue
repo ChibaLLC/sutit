@@ -259,6 +259,7 @@ const handlePrevious = () => {
 const handleSubmit = () => {
   if (props.form.requireMerch && Object.keys(selectedProducts).length < 0) {
     toast.error("You are required to pick merchandise");
+    return;
   }
   emit("submit", {
     schema: props.form,
@@ -266,7 +267,6 @@ const handleSubmit = () => {
     selectedProducts,
     paymentData,
   });
-  currentStep.value = totalSteps.value;
 };
 
 const resetForm = () => {
