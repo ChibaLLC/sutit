@@ -8,6 +8,7 @@ import {
 } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { getFormById } from "./form.service";
+import { processFormPayment } from "./payment.service";
 
 export const submitForm = async (
   formId: string,
@@ -105,6 +106,22 @@ export const submitForm = async (
       .update(formSubmissions)
       .set({ pricePaid: totalPaid })
       .where(eq(formSubmissions.id, submission.id));
+    let pay;
+    if (totalPaid > 0) {
+      try {
+        pay = await processFormPayment(tx, form, {
+          ...submission,
+          pricePaid: totalPaid,
+        });
+        if (pay == null || pay == undefined) {
+          tx.rollback();
+          throw new Error("STK PUSH FAILED");
+        }
+      } catch (e: any) {
+        tx.rollback();
+        throw new Error(e);
+      }
+    }
 
     return {
       submmission: {
@@ -112,6 +129,11 @@ export const submitForm = async (
         pricePaid: totalPaid,
       },
       form: form,
+      message:
+        totalPaid > 0
+          ? "Stk Push Has been sent to your phone Pay"
+          : "submitted successfully",
+      pay,
     };
   });
 };

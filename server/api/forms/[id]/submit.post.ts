@@ -16,25 +16,12 @@ export default defineEventHandler(async (event) => {
     });
     const body = await readBody(event);
     let submission = await submitForm(formId, body, session?.user.id);
-    if (submission.submmission.pricePaid == 0) {
-      return {
-        data: {
-          ...submission,
-        },
-        message: "submitted successfully",
-      };
-    }
-    const pay = await processFormPayment(
-      submission.form,
-      submission.submmission,
-    );
-
     return {
       data: {
         ...submission,
-        ...pay,
+        ...submission.pay,
       },
-      message: "Stk Push Has been sent to your phone Pay",
+      message: submission.message,
     };
   } catch (e) {
     throw createError({
