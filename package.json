@@ -14,7 +14,7 @@
     "reset": "drizzle-kit reset"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.927.0",
+    "@aws-sdk/client-s3": "^3.932.0",
     "@internationalized/date": "^3.10.0",
     "@nuxt/fonts": "0.12.1",
     "@nuxt/icon": "2.1.0",
@@ -37,6 +37,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "exceljs": "^4.4.0",
+    "iovalkey": "^0.3.3",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.3",
     "lucide-vue-next": "^0.553.0",
@@ -59,9 +60,9 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
-    "drizzle-kit": "^0.31.6",
+    "drizzle-kit": "^0.31.7",
     "shadcn-vue": "^2.3.2",
     "tsx": "^4.20.6"
   },
