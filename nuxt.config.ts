@@ -15,6 +15,8 @@ export default defineNuxtConfig({
     "pinia-plugin-persistedstate",
     "@nuxtjs/sitemap",
     "@nuxtjs/robots",
+    "@nuxt/hints",
+    "nuxt-email-renderer",
   ],
   css: ["~/assets/css/tailwind.css"],
   vite: {
@@ -59,7 +61,7 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    preset: "node-server",
+    preset: "bun",
     compressPublicAssets: true,
     minify: true,
     experimental: {
