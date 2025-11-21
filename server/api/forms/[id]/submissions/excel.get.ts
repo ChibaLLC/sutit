@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     setHeader(
       event,
       "Content-Disposition",
-      `attachment; filename=${form.title}.xlsx`,
+      `attachment; filename=${form.slug}.xlsx`,
     );
 
     return buffer;
