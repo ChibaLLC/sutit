@@ -61,7 +61,7 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    preset: "bun",
+    preset: "node-server",
     compressPublicAssets: true,
     minify: true,
     experimental: {
