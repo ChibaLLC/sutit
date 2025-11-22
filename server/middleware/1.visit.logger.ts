@@ -1,3 +1,5 @@
-export default defineEventHandler((context) => {
-	if (!isVercel) log.info(`[${context.node.req.method}]   ${context.node.req.url}`);
+import { log } from "console";
+
+export default defineEventHandler((event) => {
+  log(`[${event.method}]  ${event.path}`);
 });

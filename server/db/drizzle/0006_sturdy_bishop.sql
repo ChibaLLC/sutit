@@ -1,0 +1,1 @@
+ALTER TABLE "forms" ADD COLUMN "after_submission_message" text;

@@ -1,30 +1,74 @@
+import tailwindcss from "@tailwindcss/vite";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-	devtools: { enabled: false },
-	nitro: {
-		experimental: {
-			websocket: true,
-		},
-		imports: {
-			dirs: ["./shared/utils", "./shared/types"],
-		},
-	},
-	css: ["~/assets/scss/main.scss"],
-	modules: ["@nuxtjs/tailwindcss", "@chiballc/nuxt-form-builder", "@nuxt/scripts", "@nuxt/icon"],
-	runtimeConfig: {
-		public: {
-			githubClientId: process.env.GITHUB_CLIENT_ID,
-			googleClientId: process.env.GOOGLE_CLIENT_ID,
-		},
-	},
-	future: {
-		compatibilityVersion: 4,
-	},
-	imports: {
-		dirs: ["../shared/types", "../shared/utils"],
-	},
-	compatibilityDate: "2024-11-09",
-	app: {
-		pageTransition: { name: "page", mode: "out-in" },
-	},
+  compatibilityDate: "2025-07-15",
+  devtools: { enabled: true },
+
+  modules: [
+    "@nuxt/fonts",
+    "@nuxt/icon",
+    "@nuxt/image",
+    "@nuxt/scripts",
+    "shadcn-nuxt",
+    "@pinia/nuxt",
+    "pinia-plugin-persistedstate",
+    "@nuxtjs/sitemap",
+    "@nuxtjs/robots",
+    "@nuxt/hints",
+    "nuxt-email-renderer",
+  ],
+  css: ["~/assets/css/tailwind.css"],
+  vite: {
+    plugins: [tailwindcss()],
+  },
+  shadcn: {
+    /**
+     * Prefix for all the imported component
+     */
+    prefix: "",
+    /**
+     * Directory that the component lives in.
+     * @default "./components/ui"
+     */
+    componentDir: "./app/components/ui",
+  },
+  runtimeConfig: {
+    public: {
+      publicUrl: "",
+    },
+  },
+  routeRules: {
+    "/": { prerender: true },
+    "/about": { prerender: true },
+    "/contact": { prerender: true },
+    "/templates": { prerender: true },
+    // "/marketplace": { prerender: true },
+  },
+  site: {},
+  robots: {},
+  image: {
+    format: ["webp", "avif", "png", "jpg", "jpeg"],
+    quality: 80,
+    sizes: "320,640,768,1024,1280,1536",
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536,
+    },
+  },
+  nitro: {
+    preset: "bun",
+    compressPublicAssets: true,
+    minify: true,
+    experimental: {
+      wasm: true,
+    },
+    prerender: {
+      routes: ["/sitemap.xml"],
+    },
+  },
 });

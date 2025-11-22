@@ -1,481 +1,609 @@
 <script setup lang="ts">
-// SEO metadata configuration
-const seoMeta = ref({
-	title: "About | Sutit.org",
-	description: "Sutit.org is a platform that helps you automate your business processes",
-	image: "/favico.jpeg",
-});
-
-// Use Nuxt's built-in SEO utilities
-useSeoMeta({
-	title: seoMeta.value.title,
-	description: seoMeta.value.description,
-	ogTitle: seoMeta.value.title,
-	ogDescription: seoMeta.value.description,
-	ogImage: seoMeta.value.image,
-	ogUrl: "[og:url]",
-	twitterTitle: seoMeta.value.title,
-	twitterDescription: seoMeta.value.description,
-	twitterImage: seoMeta.value.image,
-	twitterCard: "summary",
-});
-
-// Dynamic content for feature cards
-const featureCards = [
-	{
-		id: 1,
-		icon: "mdi:award",
-		iconBgColor: "bg-red-400",
-		title: "How It Started",
-		description:
-			"We identified the need for end to end efficiency for small business and the whole supply chain. For example Whatsapp business among other local tertiary businesses.",
-	},
-	{
-		id: 2,
-		icon: "mdi:twitter-retweet",
-		iconBgColor: "bg-blue-400",
-		title: "How It's Going",
-		description:
-			"Innovation, collaboration, sustainability and Business Intelligence at its core. All Inclusive, seamless and easy to use.",
-	},
-	{
-		id: 3,
-		icon: "mdi:fingerprint",
-		iconBgColor: "bg-green-400",
-		title: "The Vision",
-		description:
-			"Futuristic ubiquitous unified platform where supply chains operate with unparalleled efficiency through the use of cutting-edge technology",
-	},
-];
-
-// Feature list for growing company section
-const featuresList = [
-	{
-		id: 1,
-		icon: "mdi:language-html5",
-		text: "WhatsApp Business Integration ❎",
-		status: false,
-	},
-	{
-		id: 2,
-		icon: "mdi:paper-airplane",
-		text: "Mpesa Paybill/Till Number Integration ❎",
-		status: false,
-	},
-	{
-		id: 3,
-		icon: "mdi:paper-airplane",
-		text: "Tracking turn around time after payment",
-		status: null,
-	},
-	{
-		id: 4,
-		icon: "mdi:fingerprint",
-		text: "Mpesa Paybill Automated Reconciliations ✅",
-		status: true,
-	},
-];
-
-// Team members data
-const teamMembers = [
-	{
-		id: 1,
-		name: "Saxo Munene",
-		role: "Founding Partner",
-		image: "/images/profile_placeholder.webp",
-		socials: [
-			{ platform: "twitter", icon: "mdi:twitter", bgColor: "bg-blue-400" },
-			{ platform: "facebook", icon: "mdi:facebook", bgColor: "bg-blue-600" },
-			{ platform: "instagram", icon: "mdi:instagram", bgColor: "bg-gray-800" },
-		],
-	},
-	{
-		id: 2,
-		name: "Allen",
-		role: "Compliance Specialist",
-		image: "/images/profile_placeholder.webp",
-		socials: [
-			{ platform: "twitter", icon: "mdi:twitter", bgColor: "bg-blue-400" },
-			{ platform: "facebook", icon: "mdi:facebook", bgColor: "bg-blue-600" },
-			{ platform: "instagram", icon: "mdi:instagram", bgColor: "bg-gray-800" },
-		],
-	},
-	{
-		id: 3,
-		name: "Bosire Allan",
-		role: "Software Engineer",
-		image: "/images/profile_placeholder.webp",
-		socials: [
-			{ platform: "twitter", icon: "mdi:twitter", bgColor: "bg-blue-400" },
-			{ platform: "facebook", icon: "mdi:facebook", bgColor: "bg-blue-600" },
-			{ platform: "instagram", icon: "mdi:instagram", bgColor: "bg-gray-800" },
-		],
-	},
-	{
-		id: 4,
-		name: "Kemboi Elvis",
-		role: "Software Engineer",
-		image: "/images/profile_placeholder.webp",
-		socials: [
-			{ platform: "twitter", icon: "mdi:twitter", bgColor: "bg-blue-400" },
-			{ platform: "facebook", icon: "mdi:facebook", bgColor: "bg-blue-600" },
-			{ platform: "instagram", icon: "mdi:instagram", bgColor: "bg-gray-800" },
-		],
-	},
-	{
-		id: 4,
-		name: "Antoney Sydney",
-		role: "Founding Partner",
-		image: "/images/profile_placeholder.webp",
-		socials: [
-			{ platform: "twitter", icon: "mdi:twitter", bgColor: "bg-blue-400" },
-			{ platform: "facebook", icon: "mdi:facebook", bgColor: "bg-blue-600" },
-			{ platform: "instagram", icon: "mdi:instagram", bgColor: "bg-gray-800" },
-		],
-	},
+import {
+  ArrowRight,
+  Target,
+  Heart,
+  Lightbulb,
+  Shield,
+  Users,
+  Users2,
+  Zap,
+  Globe,
+  User,
+  Rocket,
+  Github,
+  Linkedin,
+  Twitter,
+  Plus,
+  Coffee,
+  MapPin,
+  Banknote,
+  GraduationCap,
+  Calendar,
+  Laptop,
+} from "lucide-vue-next";
+const members = [
+  {
+    name: "Saxo Munene",
+    description: "",
+    role: "Founding Partner",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "Bosire Allan",
+    description: "",
+    role: "Software Engineer",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "Antoney Sydney",
+    description: "",
+    role: "Founding Partner",
+    links: [
+      {
+        link: "",
+        icon: "",
+      },
+    ],
+  },
+  {
+    name: "Kemboi Elvis",
+    description: "Fullstack Engineer",
+    role: "Software Engineer",
+    links: [
+      {
+        link: "https://github.com/kemboi22",
+        icon: Github,
+      },
+      {
+        link: "https://linkedin.com/in/elvis-kemboi-18a55924b/",
+        icon: Linkedin,
+      },
+      {
+        link: "https://x.com/kemboielvis22",
+        icon: Twitter,
+      },
+    ],
+  },
 ];
 </script>
-
 <template>
-	<div>
-		<!-- Hero Background -->
-		<div class="bg-sky w-full h-fit absolute top-0 -z-10">
-			<img
-				src="/images/bg.jpg"
-				alt="Background"
-				class="w-full aspect-video object-cover mix-blend-multiply blur"
-			/>
-		</div>
+  <div>
+    <!-- Story Section -->
+    <section class="py-20 lg:py-32">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div
+            class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center"
+          >
+            <!-- Story Content -->
+            <div class="order-2 lg:order-1">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+              >
+                <Rocket class="w-4 h-4" />
+                Our Journey
+              </div>
 
-		<!-- Features Section -->
-		<section class="pb-20 mt-24 w-10/12 max-sm:w-11/12 mx-auto">
-			<div class="container mx-auto px-4">
-				<div class="flex flex-wrap">
-					<!-- Feature Cards (Dynamically rendered) -->
-					<div
-						v-for="card in featureCards"
-						:key="card.id"
-						:class="['lg:pt-12 pt-6 w-full md:w-4/12 px-4 text-center', card.id === 2 ? '' : 'lg:pt-12']"
-					>
-						<div
-							class="relative flex flex-col min-w-0 break-words bg-white w-full mb-8 shadow-lg rounded-lg transition-shadow duration-300 hover:shadow-xl"
-						>
-							<div class="px-4 py-5 flex-auto">
-								<div
-									:class="[
-										'text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 mb-5 shadow-lg rounded-full',
-										card.iconBgColor,
-									]"
-								>
-									<Icon :name="card.icon" class="text-xl text-black" />
-								</div>
-								<h6 class="text-xl font-semibold">{{ card.title }}</h6>
-								<p class="mt-2 mb-4 text-gray-600">
-									{{ card.description }}
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
+              <h2
+                class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight"
+              >
+                From Frustration to
+                <span class="text-primary">Innovation</span>
+              </h2>
 
-				<!-- Work With Us Section -->
-				<div class="flex flex-wrap items-center mt-32">
-					<div
-						class="w-full md:w-5/12 p-6 mr-auto ml-auto bg-white rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl"
-					>
-						<div
-							class="text-gray-600 p-3 text-center inline-flex items-center justify-center w-16 h-16 mb-6 shadow-lg rounded-full bg-gray-100"
-						>
-							<Icon name="mdi:users" class="text-2xl" />
-						</div>
-						<h3 class="text-3xl mb-2 font-semibold leading-normal">Working with us is a pleasure</h3>
-						<p class="text-lg font-light leading-relaxed mt-4 mb-4 text-gray-700">
-							We are here to Co-elevate. We are a team of dedicated and passionate individuals who are
-							ready to learn and work together for a competitive edge to our businesses. Ultimate goal is
-							to eliminate inefficiencies, lower costs, and enhance overall supply chain performance.
-						</p>
-					</div>
+              <div
+                class="space-y-6 text-muted-foreground text-lg leading-relaxed"
+              >
+                <p>
+                  Founded in 2020 during a global shift to digital workflows,
+                  SUTIT Forms was born from a simple yet powerful observation:
+                  existing form builders forced users to choose between
+                  simplicity and functionality.
+                </p>
+                <p>
+                  Our founders, having struggled with clunky interfaces and
+                  limited customization options across countless projects,
+                  envisioned a platform that would bridge this gap. They set out
+                  to create the most intuitive form builder that doesn't
+                  compromise on advanced features.
+                </p>
+                <p>
+                  Today, we're proud to serve over 50,000 users across 100+
+                  countries, helping them create more than 1 million forms that
+                  have collected billions of responses and transformed how
+                  organizations gather insights.
+                </p>
+              </div>
 
-					<div class="w-full md:w-4/12 px-4 mr-auto ml-auto">
-						<div
-							class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-pink-600"
-						>
-							<img
-								alt="Team Collaboration"
-								src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=1051&amp;q=80"
-								class="w-full align-middle rounded-t-lg"
-							/>
-							<blockquote class="relative p-8 mb-4">
-								<svg
-									preserveAspectRatio="none"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 583 95"
-									class="absolute left-0 w-full block"
-									style="height: 95px; top: -94px"
-								>
-									<polygon points="-30,95 583,95 583,65" class="text-pink-600 fill-current"></polygon>
-								</svg>
-								<h4 class="text-xl font-bold text-white">Top Notch Services</h4>
-								<p class="text-md font-light mt-2 text-white">
-									The Arctic Ocean freezes every winter and much of the sea-ice then thaws every
-									summer, and that process will continue whatever happens.
-								</p>
-								<p class="text-md font-light mt-2 text-white">
-									We are inevitable, just like the seasons. Robust Business Intelligence (BI)
-									platform.
-								</p>
-							</blockquote>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
+              <div class="flex items-center gap-4 mt-8">
+                <div class="flex -space-x-2">
+                  <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 border-2 border-background"
+                  ></div>
+                  <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-green-600 border-2 border-background"
+                  ></div>
+                  <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 border-2 border-background"
+                  ></div>
+                  <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-pink-600 border-2 border-background"
+                  ></div>
+                </div>
+                <div>
+                  <p class="font-semibold text-foreground">
+                    Trusted by teams worldwide
+                  </p>
+                  <p class="text-sm text-muted-foreground">
+                    Join thousands of happy customers
+                  </p>
+                </div>
+              </div>
+            </div>
 
-		<!-- Growing Company Section -->
-		<section class="relative py-20">
-			<!-- Wave SVG Divider -->
-			<div
-				class="bottom-auto top-0 left-0 right-0 w-full absolute pointer-events-none overflow-hidden -mt-20"
-				style="height: 80px"
-			>
-				<svg
-					class="absolute bottom-0 overflow-hidden"
-					xmlns="http://www.w3.org/2000/svg"
-					preserveAspectRatio="none"
-					version="1.1"
-					viewBox="0 0 2560 100"
-					x="0"
-					y="0"
-				>
-					<polygon class="text-white fill-current" points="2560 0 2560 100 0 100"></polygon>
-				</svg>
-			</div>
+            <!-- Mission Card -->
+            <div class="order-1 lg:order-2">
+              <Card
+                class="p-8 lg:p-10 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border-primary/20 hover:shadow-2xl transition-all duration-500"
+              >
+                <div class="text-center">
+                  <div
+                    class="w-20 h-20 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 flex items-center justify-center mx-auto mb-6"
+                  >
+                    <Target class="w-10 h-10 text-primary" />
+                  </div>
+                  <h3 class="text-2xl font-bold mb-4 text-foreground">
+                    Our Mission
+                  </h3>
+                  <p class="text-muted-foreground leading-relaxed text-lg">
+                    To democratize data collection by making powerful form
+                    building accessible to everyone, regardless of technical
+                    expertise or budget constraints.
+                  </p>
+                  <div class="mt-6 pt-6 border-t border-primary/10">
+                    <p class="text-sm text-primary font-medium">
+                      "Empowering every team to collect data beautifully"
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-			<div class="container mx-auto px-4">
-				<div class="items-center flex flex-wrap">
-					<div class="w-full md:w-4/12 ml-auto mr-auto px-4">
-						<img
-							alt="Business Growth"
-							class="max-w-full rounded-lg shadow-lg transition-transform duration-300 hover:scale-105"
-							src="https://images.unsplash.com/photo-1555212697-194d092e3b8f?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=634&amp;q=80"
-						/>
-					</div>
-					<div class="w-full md:w-5/12 ml-auto mr-auto px-4">
-						<div class="md:pr-12">
-							<div class="flex w-full justify-start sm:justify-center md:justify-start sm:mt-6">
-								<div
-									class="text-pink-600 p-3 text-center inline-flex items-center justify-center w-16 h-16 mb-6 shadow-lg rounded-full bg-pink-300 sm:mx-auto md:mx-0"
-								>
-									<Icon name="mdi:rocket" class="text-2xl" />
-								</div>
-							</div>
-							<h3 class="text-3xl font-semibold">A growing company</h3>
-							<p class="mt-4 text-lg leading-relaxed text-gray-600">
-								We are currently working on a lot of capabilities and functionalities. Stay tuned!
-							</p>
-							<ul class="list-none mt-6">
-								<!-- Feature List Items (Dynamically rendered) -->
-								<li v-for="feature in featuresList" :key="feature.id" class="py-2">
-									<div class="flex items-center">
-										<div>
-											<span
-												class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-pink-600 bg-pink-200 mr-3"
-											>
-												<Icon :name="feature.icon" class="text-xl text-black" />
-											</span>
-										</div>
-										<div>
-											<h4 class="text-gray-600">{{ feature.text }}</h4>
-										</div>
-									</div>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
+    <!-- Values Section -->
+    <section class="py-20 lg:py-32 bg-muted/30">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <Heart class="w-4 h-4" />
+              Our Values
+            </div>
+            <h2
+              class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight"
+            >
+              The Principles That
+              <span class="text-primary">Drive Us</span>
+            </h2>
+            <p
+              class="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            >
+              Everything we do is guided by these core values that shape our
+              culture, products, and relationships.
+            </p>
+          </div>
 
-		<!-- Team Section -->
-		<section class="pt-20 pb-48">
-			<div class="container mx-auto px-4">
-				<div class="flex flex-wrap justify-center text-center mb-24">
-					<div class="w-full lg:w-6/12 px-4">
-						<h2 class="text-4xl font-semibold">This is some of us</h2>
-						<p class="text-lg leading-relaxed m-4 text-gray-600">SUTIT.ORG</p>
-					</div>
-				</div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          >
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Users2 class="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">
+                User-Centric
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                Every decision we make starts with understanding our users'
+                needs and creating solutions that genuinely improve their
+                workflow.
+              </p>
+            </Card>
 
-				<!-- Team Members Grid (Dynamically rendered) -->
-				<div class="flex flex-wrap">
-					<div v-for="member in teamMembers" :key="member.id" class="w-6/12 lg:w-3/12 lg:mb-0 mb-12 px-4">
-						<div class="px-6">
-							<img
-								:alt="member.name"
-								:src="member.image"
-								class="shadow-lg rounded-full max-w-full mx-auto transition-transform duration-300 hover:scale-110"
-								style="max-width: 120px"
-							/>
-							<div class="pt-6 text-center">
-								<h5 class="text-xl font-bold">{{ member.name }}</h5>
-								<p class="mt-1 text-sm text-gray-500 uppercase font-semibold">{{ member.role }}</p>
-								<div class="mt-6">
-									<!-- Social Media Buttons (Dynamically rendered) -->
-									<button
-										v-for="(social, index) in member.socials"
-										:key="index"
-										:class="[
-											social.bgColor,
-											'text-white w-8 h-8 rounded-full outline-none focus:outline-none mr-1 mb-1 transition-transform duration-300 hover:scale-125',
-										]"
-										type="button"
-										:aria-label="social.platform"
-									>
-										<Icon :name="social.icon" />
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-green-500/10 to-green-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Lightbulb class="w-8 h-8 text-green-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">Innovation</h3>
+              <p class="text-muted-foreground leading-relaxed">
+                We continuously push boundaries, experimenting with new
+                technologies to deliver cutting-edge form building experiences.
+              </p>
+            </Card>
 
-		<!-- Service Section -->
-		<section class="pb-20 relative block bg-gray-900">
-			<!-- Wave SVG Divider -->
-			<div
-				class="bottom-auto top-0 left-0 right-0 w-full absolute pointer-events-none overflow-hidden -mt-20"
-				style="height: 80px"
-			>
-				<svg
-					class="absolute bottom-0 overflow-hidden"
-					xmlns="http://www.w3.org/2000/svg"
-					preserveAspectRatio="none"
-					version="1.1"
-					viewBox="0 0 2560 100"
-					x="0"
-					y="0"
-				>
-					<polygon class="text-gray-900 fill-current" points="2560 0 2560 100 0 100"></polygon>
-				</svg>
-			</div>
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-purple-500/10 to-purple-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Shield class="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">
+                Security First
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                We maintain the highest standards of data protection, ensuring
+                your information is always safe and compliant.
+              </p>
+            </Card>
 
-			<div class="container mx-auto px-4 lg:pt-24 lg:pb-64">
-				<div class="flex flex-wrap justify-center">
-					<div class="w-full lg:w-6/12 px-4">
-						<h2 class="text-4xl font-semibold text-white">Build something</h2>
-						<p class="text-lg leading-relaxed mb-8 text-gray-300 max-w-3xl mx-auto">
-							Be among the first and get early access to our platform.
-						</p>
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Users class="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">
+                Collaboration
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                Great products are built through teamwork, both within our
+                company and with our amazing community.
+              </p>
+            </Card>
 
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
-							<div class="bg-white/10 p-6 rounded-xl backdrop-blur-sm">
-								<h3 class="text-xl font-semibold mb-3 text-white">Payment Integration</h3>
-								<p class="text-gray-300">
-									Use our API to integrate payments into your platform and collect payments from your
-									clients.
-								</p>
-							</div>
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-red-500/10 to-red-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Zap class="w-8 h-8 text-red-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">
+                Performance
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                We're obsessed with speed and reliability, ensuring our platform
+                works flawlessly at any scale.
+              </p>
+            </Card>
 
-							<div class="bg-white/10 p-6 rounded-xl backdrop-blur-sm">
-								<h3 class="text-xl font-semibold mb-3 text-white">Form Builder</h3>
-								<p class="text-gray-300">
-									Use our Forms to collect payments and data from your clients with ease.
-								</p>
-							</div>
+            <Card
+              class="group p-6 lg:p-8 text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-background/70 backdrop-blur-sm"
+            >
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-r from-teal-500/10 to-teal-600/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300"
+              >
+                <Globe class="w-8 h-8 text-teal-600" />
+              </div>
+              <h3 class="text-xl font-bold mb-3 text-foreground">
+                Accessibility
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                We're committed to making our platform accessible to users of
+                all abilities and backgrounds worldwide.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
 
-							<div class="bg-white/10 p-6 rounded-xl backdrop-blur-sm">
-								<h3 class="text-xl font-semibold mb-3 text-white">WhatsApp Business</h3>
-								<p class="text-gray-300">
-									Use our WhatsApp Business Integration to collect payments from your clients.
-								</p>
-							</div>
+    <!-- Team Section -->
+    <section class="py-20 lg:py-32">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <Users class="w-4 h-4" />
+              Our Team
+            </div>
+            <h2
+              class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight"
+            >
+              Meet the People
+              <span class="text-primary">Behind SUTIT</span>
+            </h2>
+            <p
+              class="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            >
+              A passionate team of designers, developers, and dreamers working
+              to transform how the world collects data.
+            </p>
+          </div>
 
-							<div class="bg-white/10 p-6 rounded-xl backdrop-blur-sm">
-								<h3 class="text-xl font-semibold mb-3 text-white">Analytics Dashboard</h3>
-								<p class="text-gray-300">
-									Use our Dashboard to view and manage your transactions, trends and reports.
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card
+              v-for="member in members"
+              :key="member.name"
+              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-background to-background/50"
+            >
+              <div class="relative mb-6">
+                <div
+                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                >
+                  <User class="w-12 h-12 text-blue-600" />
+                </div>
+                <div
+                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 border-4 border-background flex items-center justify-center"
+                >
+                  <div
+                    class="w-2 h-2 rounded-full bg-white animate-pulse"
+                  ></div>
+                </div>
+              </div>
+              <h3 class="text-xl font-bold mb-2 text-foreground">
+                {{ member.name }}
+              </h3>
+              <p class="text-primary font-medium text-sm mb-3">
+                {{ member.role }}
+              </p>
+              <p class="text-muted-foreground text-sm leading-relaxed mb-4">
+                {{ member.description }}
+              </p>
+              <div class="flex justify-center gap-3">
+                <a
+                  v-for="link in member.links"
+                  :key="link.link"
+                  :href="link.link"
+                  target="_blank"
+                  class="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
+                >
+                  <component :is="link.icon" class="w-4 h-4" />
+                </a>
+              </div>
+            </Card>
 
-		<!-- Contact Form Section -->
-		<section class="relative block py-24 lg:pt-0 bg-gray-900">
-			<div class="container mx-auto px-4">
-				<div class="flex flex-wrap justify-center lg:-mt-64 -mt-32">
-					<div class="w-full lg:w-6/12 px-4">
-						<div
-							class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-gray-300"
-						>
-							<div class="flex-auto p-5 lg:p-10">
-								<h4 class="text-2xl font-semibold">Want to work with us?</h4>
-								<p class="leading-relaxed mt-1 mb-4 text-gray-600">
-									Complete this form and we will get back to you in 24 hours.
-								</p>
+            <!-- Join Us Card -->
+            <Card
+              class="group p-8 text-center hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
+            >
+              <div class="mb-6">
+                <div
+                  class="w-24 h-24 rounded-2xl bg-gradient-to-r from-primary/20 to-primary/30 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                >
+                  <Plus class="w-12 h-12 text-primary" />
+                </div>
+              </div>
+              <h3 class="text-xl font-bold mb-2 text-foreground">
+                Join Our Team
+              </h3>
+              <p class="text-primary font-medium text-sm mb-3">We're Hiring!</p>
+              <p class="text-muted-foreground text-sm leading-relaxed mb-6">
+                Want to help shape the future of form building? We're always
+                looking for talented individuals to join our mission.
+              </p>
+              <Button variant="outline" size="sm" class="group">
+                View Open Positions
+                <ArrowRight
+                  class="ml-2 h-3 w-3 transition-transform group-hover:translate-x-1"
+                />
+              </Button>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
 
-								<form>
-									<div class="relative w-full mb-3 mt-8">
-										<label
-											class="block uppercase text-gray-700 text-xs font-bold mb-2"
-											for="full-name"
-										>
-											Full Name
-										</label>
-										<input
-											type="text"
-											id="full-name"
-											class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full transition-all duration-300"
-											placeholder="Full Name"
-										/>
-									</div>
+    <!-- Culture & Perks Section -->
+    <section class="py-20 lg:py-32 bg-muted/30">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <Coffee class="w-4 h-4" />
+              Life at SUTIT
+            </div>
+            <h2
+              class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight"
+            >
+              More Than Just
+              <span class="text-primary">Work</span>
+            </h2>
+            <p
+              class="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            >
+              We believe great work happens when great people come together in
+              an environment that supports growth, creativity, and well-being.
+            </p>
+          </div>
 
-									<div class="relative w-full mb-3">
-										<label class="block uppercase text-gray-700 text-xs font-bold mb-2" for="email">
-											Email
-										</label>
-										<input
-											type="email"
-											id="email"
-											class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full transition-all duration-300"
-											placeholder="Email"
-										/>
-									</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center"
+                >
+                  <MapPin class="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">Remote First</h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                Work from anywhere in the world. We provide the tools and
+                support you need to thrive remotely.
+              </p>
+            </Card>
 
-									<div class="relative w-full mb-3">
-										<label
-											class="block uppercase text-gray-700 text-xs font-bold mb-2"
-											for="message"
-										>
-											About you
-										</label>
-										<textarea
-											id="message"
-											rows="4"
-											cols="80"
-											class="border-0 px-3 py-3 placeholder-gray-400 text-gray-700 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full transition-all duration-300"
-											placeholder="Tell us about yourself..."
-										></textarea>
-									</div>
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center"
+                >
+                  <Banknote class="w-5 h-5 text-green-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">
+                  Competitive Equity
+                </h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                Everyone gets meaningful equity. When SUTIT succeeds, we all
+                succeed together.
+              </p>
+            </Card>
 
-									<div class="text-center mt-6">
-										<button
-											class="bg-gray-900 text-white active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-300 hover:bg-gray-800"
-											type="submit"
-										>
-											Send Message
-										</button>
-									</div>
-								</form>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
-	</div>
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center"
+                >
+                  <GraduationCap class="w-5 h-5 text-purple-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">Learning Budget</h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                $2,000 annual budget for conferences, courses, books, and any
+                learning resources you need.
+              </p>
+            </Card>
+
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center"
+                >
+                  <Heart class="w-5 h-5 text-orange-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">Health & Wellness</h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                Comprehensive health coverage, mental health support, and
+                wellness stipends for gym memberships.
+              </p>
+            </Card>
+
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center"
+                >
+                  <Calendar class="w-5 h-5 text-red-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">Unlimited PTO</h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                Take the time you need to recharge. We trust you to manage your
+                time and deliver great work.
+              </p>
+            </Card>
+
+            <Card
+              class="p-6 hover:shadow-lg transition-shadow bg-background/70 backdrop-blur-sm"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div
+                  class="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center"
+                >
+                  <Laptop class="w-5 h-5 text-teal-600" />
+                </div>
+                <h3 class="font-semibold text-foreground">
+                  Top-Tier Equipment
+                </h3>
+              </div>
+              <p class="text-muted-foreground text-sm">
+                Latest MacBook Pro, 4K monitor, ergonomic setup, and any tools
+                you need to do your best work.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 lg:py-32 relative overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent"
+      ></div>
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          class="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+        ></div>
+        <div
+          class="absolute top-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-3xl"
+        ></div>
+      </div>
+
+      <div class="container mx-auto px-4 relative">
+        <Card
+          class="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 backdrop-blur-sm"
+        >
+          <div class="p-12 lg:p-16 text-center">
+            <h2
+              class="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight"
+            >
+              Ready to Transform Your
+              <span class="text-primary">Data Collection?</span>
+            </h2>
+            <p
+              class="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
+            >
+              Join over 50,000 teams who trust SUTIT Forms for their data
+              collection needs. Start building beautiful forms today.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <Button
+                size="lg"
+                class="group hover:shadow-xl transition-all duration-300"
+              >
+                Start Free
+                <ArrowRight
+                  class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
+                />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                class="hover:shadow-lg transition-all duration-300"
+              >
+                <Calendar class="mr-2 h-5 w-5" />
+                Schedule Demo
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </section>
+  </div>
 </template>

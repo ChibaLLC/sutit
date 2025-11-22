@@ -1,8 +1,10 @@
+<script setup lang="ts"></script>
 <template>
-	<div>
-		<Nav />
-		<main class="pt-24 lg:pt-36">
-			<slot />
-		</main>
-	</div>
+  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
+    <LayoutAppHeader />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <LazyLayoutAppFooter />
+  </div>
 </template>
