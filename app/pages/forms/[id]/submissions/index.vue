@@ -20,13 +20,14 @@ import {
   Loader,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
+import { toast } from "vue-sonner";
 
 definePageMeta({
   middleware: ["auth"],
 });
 
 const route = useRoute();
-const acceptingResponses = ref(true);
+
 const loading = ref({
   downloadExcel: false,
 });
@@ -53,6 +54,7 @@ const { data: form } = await useFetch(`/api/forms/${route.params.id}`, {
     ...(await authHeaders()),
   },
 });
+const acceptingResponses = ref(form.value.acceptResponses);
 // Reactive fetch with filters
 const { data: submissions, refresh } = await useFetch(
   `/api/forms/${route.params.id}/submissions`,
@@ -309,6 +311,15 @@ const downloadExcel = async () => {
     loading.value.downloadExcel = false;
   }
 };
+const toggleReponse = async () => {
+  try {
+    const res = await $fetch(`/api/forms/${form.value.id}/accept`, {
+      method: "post",
+    });
+    toast.success(res.message);
+    acceptingResponses.value = !acceptingResponses.value;
+  } catch (e) {}
+};
 </script>
 
 <template>
@@ -332,20 +343,7 @@ const downloadExcel = async () => {
               <span class="text-sm font-medium text-muted-foreground"
                 >Accepting Responses</span
               >
-              <button
-                @click="acceptingResponses = !acceptingResponses"
-                :class="[
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                  acceptingResponses ? 'bg-primary' : 'bg-muted',
-                ]"
-              >
-                <span
-                  :class="[
-                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                    acceptingResponses ? 'translate-x-6' : 'translate-x-1',
-                  ]"
-                />
-              </button>
+              <Switch @click="toggleReponse()" v-model="acceptingResponses" />
             </div>
 
             <!-- Export buttons -->

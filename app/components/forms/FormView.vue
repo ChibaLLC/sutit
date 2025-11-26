@@ -20,6 +20,10 @@ const showGroupSelection = computed(
 const showSelection = ref(showGroupSelection.value);
 
 const submit = async (form: object) => {
+  if (!data.value?.acceptResponses) {
+    toast.error("This form does not accept responses");
+    return;
+  }
   try {
     const { data: submitData, message } = await $fetch(
       `/api/forms/${route.params.id}/submit`,

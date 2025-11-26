@@ -573,3 +573,15 @@ export async function deleteForm(formId: string, deleterId: string) {
     };
   });
 }
+
+export const acceptResponse = async (formId: string) => {
+  try {
+    const form = await getFormById(formId);
+    const res = await db.update(forms).set({
+      acceptResponses: !form.acceptResponses,
+    });
+    return res;
+  } catch (e: any) {
+    throw new Error("An error occurred");
+  }
+};
