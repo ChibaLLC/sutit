@@ -12,6 +12,8 @@ import {
   Minus,
   X,
   File,
+  TicketsPlane,
+  Check,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import type { FormSchema } from "~~/shared/types";
@@ -591,31 +593,6 @@ const getTotalAmount = computed(() => {
                       </p>
                       <div v-if="field.type == 'date'">
                         <Input type="date" v-model="formData[field.id]" />
-                        <!-- <Popover> -->
-                        <!--   <PopoverTrigger as-child> -->
-                        <!--     <Button -->
-                        <!--       variant="outline" -->
-                        <!--       class="justify-start text-left font-normal w-full" -->
-                        <!--     > -->
-                        <!--       <CalendarIcon class="mr-2 h-4 w-4" /> -->
-                        <!--       {{ -->
-                        <!--         formData[field.id] -->
-                        <!--           ? df.format( -->
-                        <!--               formData[field.id].toDate( -->
-                        <!--                 getLocalTimeZone(), -->
-                        <!--               ), -->
-                        <!--             ) -->
-                        <!--           : "Pick a Date " -->
-                        <!--       }} -->
-                        <!--     </Button> -->
-                        <!--     <PopoverContent> -->
-                        <!--       <Calendar -->
-                        <!--         v-model="formData[field.id]" -->
-                        <!--         initial-focus -->
-                        <!--       /> -->
-                        <!--     </PopoverContent> -->
-                        <!--   </PopoverTrigger> -->
-                        <!-- </Popover> -->
                       </div>
                       <!-- Text Input -->
                       <div
@@ -636,9 +613,10 @@ const getTotalAmount = computed(() => {
                             :placeholder="field.placeholder"
                             :required="field.required"
                             class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
+                            @click.stop
                           />
                           <div
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
                           >
                             <svg
                               class="w-4 h-4"
@@ -751,9 +729,10 @@ const getTotalAmount = computed(() => {
                             :placeholder="field.placeholder"
                             :required="field.required"
                             class="min-h-[120px] transition-all duration-200 resize-none border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
+                            @click.stop
                           />
                           <div
-                            class="absolute right-3 top-3 text-muted-foreground/40"
+                            class="absolute right-3 top-3 text-muted-foreground/40 pointer-events-none"
                           >
                             <svg
                               class="w-4 h-4"
@@ -824,23 +803,28 @@ const getTotalAmount = computed(() => {
                         v-else-if="field.type === 'multiselect'"
                         class="space-y-4"
                       >
-                        <div class="grid gap-3">
+                        <div class="grid gap-3 sm:grid-cols-1">
                           <div
                             v-for="option in field.options"
                             :key="option"
-                            class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                            class="flex items-center space-x-3 p-3 sm:p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer active:scale-[0.98] min-h-[3rem]"
                             @click="toggleMultiselectOption(field.id, option)"
                           >
                             <Checkbox
                               :id="`${field.id}-${option}`"
-                              :checked="
-                                (formData[field.id] || []).includes(option)
+                              :modelValue="
+                                (formData[field.id] ?? []).includes(option)
                               "
-                              class="pointer-events-none"
+                              @update:modelValue="
+                                () => toggleMultiselectOption(field.id, option)
+                              "
+                              class="cursor-pointer flex-shrink-0 w-5 h-5 sm:w-4 sm:h-4"
                             />
                             <Label
                               :for="`${field.id}-${option}`"
-                              class="cursor-pointer font-medium flex-1"
+                              class="cursor-pointer font-medium flex-1 text-sm sm:text-base select-none"
+                              @click.stop
+                              @click="toggleMultiselectOption(field.id, option)"
                             >
                               {{ option }}
                             </Label>
@@ -852,9 +836,18 @@ const getTotalAmount = computed(() => {
                         >
                           {{ field.placeholder }}
                         </p>
+                        <!-- Selected count indicator -->
+                        <div
+                          v-if="(formData[field.id] || []).length > 0"
+                          class="text-sm text-primary font-medium"
+                        >
+                          {{ (formData[field.id] || []).length }} option(s)
+                          selected
+                        </div>
                       </div>
 
                       <!-- Checkbox -->
+
                       <div
                         v-else-if="field.type === 'checkbox'"
                         class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
@@ -862,51 +855,30 @@ const getTotalAmount = computed(() => {
                       >
                         <Checkbox
                           :id="field.id"
-                          :checked="formData[field.id]"
+                          :modelValue="formData[field.id]"
                           class="mt-0.5 pointer-events-none"
                         />
+
                         <div class="space-y-1 flex-1">
                           <div class="flex items-center gap-3">
                             <div class="flex items-center gap-2">
                               <div
                                 class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center"
                               >
-                                <svg
-                                  class="w-4 h-4 text-primary"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
+                                <Check class="w-4 h-4" />
                               </div>
+
                               <Label
                                 :for="field.id"
                                 class="text-base font-semibold text-foreground cursor-pointer"
+                                @click.stop
                               >
                                 {{ field.placeholder }}
                               </Label>
                             </div>
-                            <div
-                              v-if="field.required"
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
-                            >
-                              <svg
-                                class="w-3.5 h-3.5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
+
+                            <!-- required badge -->
+                            <div v-if="field.required" class="...">
                               Required
                             </div>
                           </div>
