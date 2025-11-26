@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import {
   activities,
+  fieldResponses,
   formAnalytics,
   formFields,
   formGroupMemberPayments,
@@ -275,7 +276,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
           publishedAt: formPayload.publishedAt
             ? new Date(formPayload.publishedAt)
             : undefined,
-          // updatedAt: new Date(),
+          updatedAt: new Date(), // Enable this to track updates
         })
         .where(eq(forms.id, formId))
         .returning();
@@ -295,6 +296,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               title: page.title,
               description: page.description,
               orderIndex: page.orderIndex,
+              updatedAt: new Date(),
             })
             .where(eq(formPages.id, page.id))
             .returning();
@@ -314,7 +316,6 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               title: page.title,
               description: page.description,
               orderIndex: page.orderIndex,
-              // createdAt: new Date(),
             })
             .returning();
 
@@ -341,6 +342,8 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
                   fieldPayload.label.split(" ").join("_").toLowerCase() +
                   "_" +
                   fieldPayload.name,
+                pageId: pageId, // Ensure field is linked to correct page
+                updatedAt: new Date(),
               })
               .where(eq(formFields.id, id))
               .returning();
@@ -355,7 +358,6 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               .values({
                 ...fieldData,
                 pageId: pageId,
-                // createdAt: new Date(),
                 type: fieldPayload.type,
                 name:
                   fieldPayload.label.split(" ").join("_").toLowerCase() +
@@ -370,7 +372,8 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
           }
         }
       }
-      // 4. Mark pages that are no longer in the form as deleted (only if they have no submissions)
+
+      // 4. Soft delete pages not in the update
       if (existingPageIds.length > 0) {
         await tx
           .update(formPages)
@@ -379,28 +382,54 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
             and(
               eq(formPages.formId, formId),
               notInArray(formPages.id, existingPageIds),
-              // only mark pages that aren’t already deleted
-              eq(formPages.deletedAt, null),
+              isNull(formPages.deletedAt), // Fixed: use isNull instead of eq(null)
             ),
           );
       }
 
-      // 5. Mark fields that are no longer in the form as deleted (only if they have no submissions)
-      if (existingFieldIds.length > 0) {
-        await tx
-          .update(formFields)
-          .set({ deletedAt: sql`now()` })
-          .where(
-            and(
-              inArray(formFields.pageId, existingPageIds),
-              notInArray(formFields.id, existingFieldIds),
-              eq(formFields.deletedAt, null),
-            ),
-          );
+      // 5. Delete fields that are no longer in the form
+      console.log("Existing field IDs:", existingFieldIds);
+
+      // Get fields only from pages that are being updated (existingPageIds)
+      const fieldsToCheck = await tx
+        .select({ id: formFields.id })
+        .from(formFields)
+        .where(
+          and(
+            inArray(formFields.pageId, existingPageIds),
+            isNull(formFields.deletedAt),
+          ),
+        );
+
+      const currentFieldIds = fieldsToCheck.map((f) => f.id);
+      console.log("Current field IDs in updated pages:", currentFieldIds);
+
+      const fieldsToDelete = currentFieldIds.filter(
+        (id) => !existingFieldIds.includes(id),
+      );
+
+      console.log("Fields to delete:", fieldsToDelete);
+
+      if (fieldsToDelete.length > 0) {
+        // Delete all field responses for the removed fields
+        const deletedResponses = await tx
+          .delete(fieldResponses)
+          .where(inArray(fieldResponses.fieldId, fieldsToDelete))
+          .returning();
+        console.log("Deleted responses:", deletedResponses.length);
+
+        // Then delete the fields themselves
+        const deletedFields = await tx
+          .delete(formFields)
+          .where(inArray(formFields.id, fieldsToDelete))
+          .returning();
+        console.log("Deleted fields:", deletedFields.length);
+      } else {
+        console.log("No fields to delete");
       }
 
+      // 6. Handle Stores
       const existingStoreIds: string[] = [];
-      const existingStoreItemIds: string[] = [];
 
       if (stores && stores.length > 0) {
         for (const store of stores) {
@@ -413,6 +442,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               .set({
                 name: store.name,
                 description: store.description,
+                updatedAt: new Date(),
               })
               .where(
                 and(eq(formStores.id, store.id), eq(formStores.formId, formId)),
@@ -444,7 +474,9 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
             }
           }
 
-          // Handle store items
+          // Handle store items for this specific store
+          const existingStoreItemIds: string[] = [];
+
           for (const item of store.items) {
             if (item.id && isValidUUID(item.id)) {
               // Update existing item
@@ -457,6 +489,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
                   images: item.images,
                   name: item.name,
                   description: item.description,
+                  updatedAt: new Date(),
                 })
                 .where(eq(storeItems.id, item.id))
                 .returning();
@@ -486,21 +519,24 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
               }
             }
           }
-          // 1️⃣ Mark removed store items as deleted (soft delete)
+
+          // Soft delete removed store items (FIXED: use storeId, not store.id)
           if (existingStoreItemIds.length > 0) {
             await tx
               .update(storeItems)
               .set({ deletedAt: sql`now()` })
               .where(
                 and(
-                  eq(storeItems.storeId, store.id),
+                  eq(storeItems.storeId, storeId), // FIXED: was store.id
                   notInArray(storeItems.id, existingStoreItemIds),
-                  eq(storeItems.deletedAt, null), // only mark if not already deleted
+                  isNull(storeItems.deletedAt), // Fixed: use isNull
                 ),
               );
           }
         }
       }
+
+      // Soft delete stores not in the update
       if (existingStoreIds.length > 0) {
         await tx
           .update(formStores)
@@ -509,10 +545,11 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
             and(
               eq(formStores.formId, formId),
               notInArray(formStores.id, existingStoreIds),
-              eq(formStores.deletedAt, null), // only mark if not already deleted
+              isNull(formStores.deletedAt), // Fixed: use isNull
             ),
           );
       }
+
       // 7. Log Activity
       await tx.insert(activities).values({
         userId: updatedForm.createdBy,
@@ -521,7 +558,6 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         description: `Form '${updatedForm.title}' updated.`,
         resourceType: "form",
         resourceId: updatedForm.id,
-        // createdAt: new Date(),
         metadata: { title: updatedForm.title, slug: updatedForm.slug },
       });
 
@@ -532,7 +568,9 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
       throw new Error(e.message || "Failed to update form");
     }
   });
-}; // Helper function to check if a string is a valid UUID
+};
+
+// Helper function to check if a string is a valid UUID
 function isValidUUID(str: string): boolean {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
