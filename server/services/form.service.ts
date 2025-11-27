@@ -615,11 +615,19 @@ export async function deleteForm(formId: string, deleterId: string) {
 export const acceptResponse = async (formId: string) => {
   try {
     const form = await getFormById(formId);
-    const res = await db.update(forms).set({
-      acceptResponses: !form.acceptResponses,
-    });
-    return res;
-  } catch (e: any) {
+
+    if (!form) {
+      throw new Error("Form not found");
+    }
+
+    const res = await db
+      .update(forms)
+      .set({ acceptResponses: !form.acceptResponses })
+      .where(eq(forms.id, formId))
+      .returning();
+
+    return res[0];
+  } catch (e) {
     throw new Error("An error occurred");
   }
 };
