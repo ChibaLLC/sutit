@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button, buttonVariants } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
   User,
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
   Share2,
   Mail,
   Plus,
+  Loader,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -389,7 +391,15 @@ const downloadReceipt = () => {
   });
 };
 
+const deleteDialogOpen = ref(false);
+const deleteLoading = ref(false);
+
+const confirmDelete = () => {
+  deleteDialogOpen.value = true;
+};
+
 const deleteSubmission = async () => {
+  deleteLoading.value = true;
   try {
     await $fetch(`/api/forms/${formId}/submissions/${submissionId}/delete`, {
       method: "DELETE",
@@ -397,6 +407,8 @@ const deleteSubmission = async () => {
     await navigateTo(`/forms/${formId}/submissions`);
   } catch (error: any) {
     console.error("Failed to delete submission:", error);
+  } finally {
+    deleteLoading.value = false;
   }
 };
 
@@ -848,7 +860,7 @@ onUnmounted(() => {
             </CardHeader>
             <CardContent>
               <div class="space-y-3">
-                <Button variant="destructive" class="w-full gap-2" @click="deleteSubmission">
+                <Button variant="destructive" class="w-full gap-2" @click="confirmDelete">
                   <Trash2 class="w-5 h-5" />
                   <span>Delete Submission</span>
                 </Button>
@@ -910,6 +922,29 @@ onUnmounted(() => {
           Create Other Forms
         </NuxtLink>
       </div>
+
+      <!-- Delete Confirmation Dialog -->
+      <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will delete the submission. You can restore it later from the deleted submissions tab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              @click="deleteSubmission"
+              :disabled="deleteLoading"
+              class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Loader v-if="deleteLoading" class="w-4 h-4 mr-2" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   </div>
 </template>

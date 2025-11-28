@@ -4,7 +4,6 @@ import {
   Search,
   FileSpreadsheet,
   CreditCard,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -12,12 +11,9 @@ import {
   Trash2,
   Filter,
   Calendar,
-  DollarSign,
-  Users,
-  CheckCircle,
-  Clock,
   X,
   Loader,
+  RotateCcw,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
@@ -30,7 +26,13 @@ const route = useRoute();
 
 const loading = ref({
   downloadExcel: false,
+  delete: false,
+  restore: false,
 });
+
+const activeTab = ref("active");
+const deleteDialogOpen = ref(false);
+const submissionToDelete = ref<string | null>(null);
 
 const filters = ref({
   search: "",
@@ -64,6 +66,18 @@ const { data: submissions, refresh } = await useFetch(
       ...(await authHeaders()),
     },
     query: filters,
+    server: false,
+  },
+);
+
+// Fetch deleted submissions
+const { data: deletedSubmissions, refresh: refreshDeleted } = await useFetch(
+  `/api/forms/${route.params.id}/submissions/deleted`,
+  {
+    method: "get",
+    headers: {
+      ...(await authHeaders()),
+    },
     server: false,
   },
 );
@@ -320,6 +334,53 @@ const toggleReponse = async () => {
     acceptingResponses.value = !acceptingResponses.value;
   } catch (e) {}
 };
+
+const confirmDelete = (submissionId: string) => {
+  submissionToDelete.value = submissionId;
+  deleteDialogOpen.value = true;
+};
+
+const deleteSubmission = async () => {
+  if (!submissionToDelete.value) return;
+
+  loading.value.delete = true;
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/submissions/${submissionToDelete.value}/delete`,
+      {
+        method: "DELETE",
+      },
+    );
+    toast.success("Submission deleted successfully");
+    deleteDialogOpen.value = false;
+    submissionToDelete.value = null;
+    await refresh();
+    await refreshDeleted();
+  } catch (error: any) {
+    toast.error("Failed to delete submission");
+  } finally {
+    loading.value.delete = false;
+  }
+};
+
+const restoreSubmission = async (submissionId: string) => {
+  loading.value.restore = true;
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/submissions/${submissionId}/restore`,
+      {
+        method: "POST",
+      },
+    );
+    toast.success("Submission restored successfully");
+    await refresh();
+    await refreshDeleted();
+  } catch (error: any) {
+    toast.error("Failed to restore submission");
+  } finally {
+    loading.value.restore = false;
+  }
+};
 </script>
 
 <template>
@@ -376,484 +437,556 @@ const toggleReponse = async () => {
         </p>
       </Card>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <Card
-          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-blue-500"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-blue-50 dark:bg-blue-950/50 rounded-lg">
-              <FileSpreadsheet
-                class="w-5 h-5 text-blue-600 dark:text-blue-400"
-              />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">
-                Total
-              </p>
-              <p class="text-2xl font-bold text-foreground">
-                {{ stats.total }}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-green-500"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-green-50 dark:bg-green-950/50 rounded-lg">
-              <CheckCircle class="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">
-                Completed
-              </p>
-              <p class="text-2xl font-bold text-foreground">
-                {{ stats.completed }}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-yellow-500"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-yellow-50 dark:bg-yellow-950/50 rounded-lg">
-              <Clock class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">
-                Pending
-              </p>
-              <p class="text-2xl font-bold text-foreground">
-                {{ stats.pending }}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-purple-500 col-span-2 sm:col-span-1"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-purple-50 dark:bg-purple-950/50 rounded-lg">
-              <DollarSign
-                class="w-5 h-5 text-purple-600 dark:text-purple-400"
-              />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">
-                Revenue
-              </p>
-              <p class="text-2xl font-bold text-primary">
-                {{ formatCurrency(stats.totalRevenue) }}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          class="p-4 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-indigo-500 col-span-2 sm:col-span-2 lg:col-span-1"
-        >
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-50 dark:bg-indigo-950/50 rounded-lg">
-              <CreditCard
-                class="w-5 h-5 text-indigo-600 dark:text-indigo-400"
-              />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-muted-foreground mb-1">
-                Store Sales
-              </p>
-              <p class="text-2xl font-bold text-primary">
-                {{ formatCurrency(stats.storeRevenue) }}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <!-- Enhanced Filters Section -->
-      <Card class="mb-6 p-6">
-        <div class="space-y-6">
-          <!-- Filter Header -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <Filter class="w-5 h-5 text-muted-foreground" />
-              <h3 class="text-lg font-semibold">Filters</h3>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              @click="clearFilters"
-              class="gap-2"
-            >
-              <X class="w-4 h-4" />
-              Clear All
-            </Button>
-          </div>
-
-          <!-- Filter Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Search -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Search</Label>
-              <div class="relative">
-                <Search
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.search"
-                  placeholder="Search in all fields..."
-                  class="pl-10"
-                />
-              </div>
-            </div>
-
-            <!-- Status Filter -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Status</Label>
-              <Select v-model="filters.status">
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <!-- Date Range Start -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">Start Date</Label>
-              <div class="relative">
-                <Calendar
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.dateRange.start"
-                  type="date"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-
-            <!-- Date Range End -->
-            <div class="space-y-2">
-              <Label class="text-sm font-medium">End Date</Label>
-              <div class="relative">
-                <Calendar
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                  v-model="filters.dateRange.end"
-                  type="date"
-                  class="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Active Filters Display -->
-          <div
-            v-if="
-              filters.search ||
-              filters.status !== 'all' ||
-              filters.dateRange.start ||
-              filters.dateRange.end
-            "
-            class="flex flex-wrap gap-2"
-          >
-            <Badge v-if="filters.search" variant="secondary" class="gap-1">
-              Search: {{ filters.search }}
-              <X class="w-3 h-3 cursor-pointer" @click="filters.search = ''" />
-            </Badge>
-            <Badge
-              v-if="filters.status !== 'all'"
-              variant="secondary"
-              class="gap-1"
-            >
-              Status: {{ filters.status }}
-              <X
-                class="w-3 h-3 cursor-pointer"
-                @click="filters.status = 'all'"
-              />
-            </Badge>
-            <Badge
-              v-if="filters.dateRange.start"
-              variant="secondary"
-              class="gap-1"
-            >
-              From: {{ filters.dateRange.start }}
-              <X
-                class="w-3 h-3 cursor-pointer"
-                @click="filters.dateRange.start = ''"
-              />
-            </Badge>
-            <Badge
-              v-if="filters.dateRange.end"
-              variant="secondary"
-              class="gap-1"
-            >
-              To: {{ filters.dateRange.end }}
-              <X
-                class="w-3 h-3 cursor-pointer"
-                @click="filters.dateRange.end = ''"
-              />
-            </Badge>
-          </div>
-        </div>
-      </Card>
-
-      <!-- Enhanced Table Section with Dynamic Columns -->
-      <Card class="overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[1000px]">
-            <thead class="bg-muted/30 border-b">
-              <tr>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
-                >
-                  Submission ID
-                </th>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[150px]"
-                >
-                  Submitter
-                </th>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[80px]"
-                >
-                  Status
-                </th>
-                <!-- Dynamic form field headers -->
-                <th
-                  v-for="field in formFields"
-                  :key="field.id"
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
-                  :title="field.name"
-                >
-                  {{ field.label }}
-                </th>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
-                >
-                  Price Paid
-                </th>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
-                >
-                  Store Items
-                </th>
-                <th
-                  class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
-                >
-                  Submitted At
-                </th>
-                <th
-                  class="text-right px-4 py-3 font-medium text-sm min-w-[100px]"
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="submission in paginatedSubmissions"
-                :key="submission.id"
-                class="border-b hover:bg-muted/20 transition-colors"
-              >
-                <td class="px-4 py-4">
-                  <span
-                    class="font-medium text-primary text-sm"
-                    :title="submission.id"
-                  >
-                    {{ submission.id.slice(0, 8) }}...
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <div>
-                    <p class="font-medium">
-                      {{ submission?.submitter?.name || "N/A" }}
-                    </p>
-                    <p class="text-xs text-muted-foreground">
-                      {{ submission?.submitter?.email || "N/A" }}
-                    </p>
+      <!-- Tabs -->
+      <Card class="mb-6">
+        <Tabs v-model="activeTab" class="w-full">
+          <TabsList class="grid w-full grid-cols-2">
+            <TabsTrigger value="active">Active Submissions</TabsTrigger>
+            <TabsTrigger value="deleted">Deleted Submissions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="active" class="mt-6">
+            <!-- Enhanced Filters Section -->
+            <Card class="mb-6 p-6">
+              <div class="space-y-6">
+                <!-- Filter Header -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <Filter class="w-5 h-5 text-muted-foreground" />
+                    <h3 class="text-lg font-semibold">Filters</h3>
                   </div>
-                </td>
-                <td class="px-4 py-4">
-                  <Badge
-                    :variant="
-                      submission.status === 'completed'
-                        ? 'default'
-                        : 'secondary'
-                    "
-                    class="capitalize"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    @click="clearFilters"
+                    class="gap-2"
                   >
-                    {{ submission.status }}
-                  </Badge>
-                </td>
-                <!-- Dynamic form field values -->
-                <td
-                  v-for="field in formFields"
-                  :key="field.id"
-                  class="px-4 py-4 text-sm"
-                  :title="getFieldValue(submission, field.id)"
+                    <X class="w-4 h-4" />
+                    Clear All
+                  </Button>
+                </div>
+
+                <!-- Filter Controls -->
+                <div
+                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
                 >
-                  <span class="text-muted-foreground">
+                  <!-- Search -->
+                  <div class="space-y-2">
+                    <Label class="text-sm font-medium">Search</Label>
+                    <div class="relative">
+                      <Search
+                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                      />
+                      <Input
+                        v-model="filters.search"
+                        placeholder="Search in all fields..."
+                        class="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Status Filter -->
+                  <div class="space-y-2">
+                    <Label class="text-sm font-medium">Status</Label>
+                    <Select v-model="filters.status">
+                      <SelectTrigger>
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <!-- Date Range Start -->
+                  <div class="space-y-2">
+                    <Label class="text-sm font-medium">Start Date</Label>
+                    <div class="relative">
+                      <Calendar
+                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                      />
+                      <Input
+                        v-model="filters.dateRange.start"
+                        type="date"
+                        class="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Date Range End -->
+                  <div class="space-y-2">
+                    <Label class="text-sm font-medium">End Date</Label>
+                    <div class="relative">
+                      <Calendar
+                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                      />
+                      <Input
+                        v-model="filters.dateRange.end"
+                        type="date"
+                        class="pl-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Active Filters Display -->
+                <div
+                  v-if="
+                    filters.search ||
+                    filters.status !== 'all' ||
+                    filters.dateRange.start ||
+                    filters.dateRange.end
+                  "
+                  class="flex flex-wrap gap-2"
+                >
+                  <Badge
+                    v-if="filters.search"
+                    variant="secondary"
+                    class="gap-1"
+                  >
+                    Search: {{ filters.search }}
+                    <X
+                      class="w-3 h-3 cursor-pointer"
+                      @click="filters.search = ''"
+                    />
+                  </Badge>
+                  <Badge
+                    v-if="filters.status !== 'all'"
+                    variant="secondary"
+                    class="gap-1"
+                  >
+                    Status: {{ filters.status }}
+                    <X
+                      class="w-3 h-3 cursor-pointer"
+                      @click="filters.status = 'all'"
+                    />
+                  </Badge>
+                  <Badge
+                    v-if="filters.dateRange.start"
+                    variant="secondary"
+                    class="gap-1"
+                  >
+                    From: {{ filters.dateRange.start }}
+                    <X
+                      class="w-3 h-3 cursor-pointer"
+                      @click="filters.dateRange.start = ''"
+                    />
+                  </Badge>
+                  <Badge
+                    v-if="filters.dateRange.end"
+                    variant="secondary"
+                    class="gap-1"
+                  >
+                    To: {{ filters.dateRange.end }}
+                    <X
+                      class="w-3 h-3 cursor-pointer"
+                      @click="filters.dateRange.end = ''"
+                    />
+                  </Badge>
+                </div>
+              </div>
+            </Card>
+
+            <!-- Enhanced Table Section with Dynamic Columns -->
+            <Card class="overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full min-w-[1000px]">
+                  <thead class="bg-muted/30 border-b">
+                    <tr>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                      >
+                        Submission ID
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[150px]"
+                      >
+                        Submitter
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[80px]"
+                      >
+                        Status
+                      </th>
+                      <!-- Dynamic form field headers -->
+                      <th
+                        v-for="field in formFields"
+                        :key="field.id"
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                        :title="field.name"
+                      >
+                        {{ field.label }}
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
+                      >
+                        Price Paid
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                      >
+                        Store Items
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
+                      >
+                        Submitted At
+                      </th>
+                      <th
+                        class="text-right px-4 py-3 font-medium text-sm min-w-[100px]"
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="submission in paginatedSubmissions"
+                      :key="submission.id"
+                      class="border-b hover:bg-muted/20 transition-colors"
+                    >
+                      <td class="px-4 py-4">
+                        <span
+                          class="font-medium text-primary text-sm"
+                          :title="submission.id"
+                        >
+                          {{ submission.id.slice(0, 8) }}...
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <div>
+                          <p class="font-medium">
+                            {{ submission?.submitter?.name || "N/A" }}
+                          </p>
+                          <p class="text-xs text-muted-foreground">
+                            {{ submission?.submitter?.email || "N/A" }}
+                          </p>
+                        </div>
+                      </td>
+                      <td class="px-4 py-4">
+                        <Badge
+                          :variant="
+                            submission.status === 'completed'
+                              ? 'default'
+                              : 'secondary'
+                          "
+                          class="capitalize"
+                        >
+                          {{ submission.status }}
+                        </Badge>
+                      </td>
+                      <!-- Dynamic form field values -->
+                      <td
+                        v-for="field in formFields"
+                        :key="field.id"
+                        class="px-4 py-4 text-sm"
+                        :title="getFieldValue(submission, field.id)"
+                      >
+                        <span class="text-muted-foreground">
+                          {{
+                            formatFieldValue(
+                              getFieldValue(submission, field.id),
+                              field.type,
+                            )
+                          }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class="font-medium">
+                          {{ formatCurrency(submission.pricePaid || 0) }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <div
+                          v-if="submission.storeResponses?.length > 0"
+                          class="space-y-1"
+                        >
+                          <div
+                            v-for="item in submission.storeResponses.slice(
+                              0,
+                              2,
+                            )"
+                            :key="item.item?.name || 'item'"
+                            class="text-sm"
+                          >
+                            <span class="font-medium">{{
+                              item.item?.name || "Item"
+                            }}</span>
+                            <span class="text-muted-foreground">
+                              ({{ item.quantity || 0 }}x)</span
+                            >
+                          </div>
+                          <span
+                            v-if="submission.storeResponses.length > 2"
+                            class="text-xs text-muted-foreground"
+                          >
+                            +{{ submission.storeResponses.length - 2 }} more
+                          </span>
+                        </div>
+                        <span v-else class="text-muted-foreground text-sm"
+                          >No items</span
+                        >
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class="text-sm text-muted-foreground">
+                          {{ formatDate(submission.submittedAt) }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <NuxtLink
+                            :to="`/forms/${form.id}/submissions/${submission.id}`"
+                            as-child
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              class="h-8 w-8 p-0"
+                              title="View"
+                            >
+                              <Eye class="h-4 w-4" />
+                            </Button>
+                          </NuxtLink>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 w-8 p-0"
+                            title="Edit"
+                          >
+                            <Edit class="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            title="Delete"
+                            @click="confirmDelete(submission.id)"
+                          >
+                            <Trash2 class="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Enhanced Pagination -->
+              <div
+                class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t gap-4"
+              >
+                <div class="flex items-center gap-4">
+                  <p class="text-sm text-muted-foreground">
+                    Showing
                     {{
-                      formatFieldValue(
-                        getFieldValue(submission, field.id),
-                        field.type,
+                      Math.min(
+                        (currentPage - 1) * itemsPerPage + 1,
+                        stats.total,
                       )
                     }}
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="font-medium">
-                    {{ formatCurrency(submission.pricePaid || 0) }}
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <div
-                    v-if="submission.storeResponses?.length > 0"
-                    class="space-y-1"
+                    to
+                    {{ Math.min(currentPage * itemsPerPage, stats.total) }}
+                    of {{ stats.total }} results
+                  </p>
+                  <Select v-model="itemsPerPage">
+                    <SelectTrigger class="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem :value="5">5</SelectItem>
+                      <SelectItem :value="10">10</SelectItem>
+                      <SelectItem :value="25">25</SelectItem>
+                      <SelectItem :value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="currentPage === 1"
+                    @click="currentPage--"
                   >
-                    <div
-                      v-for="item in submission.storeResponses.slice(0, 2)"
-                      :key="item.item?.name || 'item'"
-                      class="text-sm"
+                    <ChevronLeft class="h-4 w-4" />
+                    <span class="hidden sm:inline ml-1">Previous</span>
+                  </Button>
+
+                  <div class="flex items-center gap-1">
+                    <Button
+                      v-for="page in Math.min(totalPages, 5)"
+                      :key="page"
+                      :variant="currentPage === page ? 'default' : 'outline'"
+                      size="sm"
+                      class="w-8 h-8 p-0"
+                      @click="currentPage = page"
                     >
-                      <span class="font-medium">{{
-                        item.item?.name || "Item"
-                      }}</span>
-                      <span class="text-muted-foreground">
-                        ({{ item.quantity || 0 }}x)</span
-                      >
-                    </div>
+                      {{ page }}
+                    </Button>
                     <span
-                      v-if="submission.storeResponses.length > 2"
-                      class="text-xs text-muted-foreground"
+                      v-if="totalPages > 5"
+                      class="text-muted-foreground px-2"
+                      >...</span
                     >
-                      +{{ submission.storeResponses.length - 2 }} more
-                    </span>
                   </div>
-                  <span v-else class="text-muted-foreground text-sm"
-                    >No items</span
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="currentPage === totalPages"
+                    @click="currentPage++"
                   >
-                </td>
-                <td class="px-4 py-4">
-                  <span class="text-sm text-muted-foreground">
-                    {{ formatDate(submission.submittedAt) }}
-                  </span>
-                </td>
-                <td class="px-4 py-4 text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <NuxtLink
-                      :to="`/forms/${form.id}/submissions/${submission.id}`"
-                      as-child
-                    >
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        class="h-8 w-8 p-0"
-                        title="View"
+                    <span class="hidden sm:inline mr-1">Next</span>
+                    <ChevronRight class="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+          <TabsContent value="deleted" class="mt-6">
+            <!-- Deleted Submissions Table -->
+            <Card class="overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full min-w-[1000px]">
+                  <thead class="bg-muted/30 border-b">
+                    <tr>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
                       >
-                        <Eye class="h-4 w-4" />
-                      </Button>
-                    </NuxtLink>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      class="h-8 w-8 p-0"
-                      title="Edit"
+                        Submission ID
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[150px]"
+                      >
+                        Submitter
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[80px]"
+                      >
+                        Status
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
+                      >
+                        Price Paid
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
+                      >
+                        Submitted At
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
+                      >
+                        Deleted At
+                      </th>
+                      <th
+                        class="text-right px-4 py-3 font-medium text-sm min-w-[100px]"
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="submission in deletedSubmissions?.data || []"
+                      :key="submission.id"
+                      class="border-b hover:bg-muted/20 transition-colors"
                     >
-                      <Edit class="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      class="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      title="Delete"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Enhanced Pagination -->
-        <div
-          class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t gap-4"
-        >
-          <div class="flex items-center gap-4">
-            <p class="text-sm text-muted-foreground">
-              Showing
-              {{ Math.min((currentPage - 1) * itemsPerPage + 1, stats.total) }}
-              to
-              {{ Math.min(currentPage * itemsPerPage, stats.total) }}
-              of {{ stats.total }} results
-            </p>
-            <Select v-model="itemsPerPage">
-              <SelectTrigger class="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="5">5</SelectItem>
-                <SelectItem :value="10">10</SelectItem>
-                <SelectItem :value="25">25</SelectItem>
-                <SelectItem :value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              :disabled="currentPage === 1"
-              @click="currentPage--"
-            >
-              <ChevronLeft class="h-4 w-4" />
-              <span class="hidden sm:inline ml-1">Previous</span>
-            </Button>
-
-            <div class="flex items-center gap-1">
-              <Button
-                v-for="page in Math.min(totalPages, 5)"
-                :key="page"
-                :variant="currentPage === page ? 'default' : 'outline'"
-                size="sm"
-                class="w-8 h-8 p-0"
-                @click="currentPage = page"
+                      <td class="px-4 py-4">
+                        <span
+                          class="font-medium text-primary text-sm"
+                          :title="submission.id"
+                        >
+                          {{ submission.id.slice(0, 8) }}...
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <div>
+                          <p class="font-medium">
+                            {{ submission?.submitter?.name || "N/A" }}
+                          </p>
+                          <p class="text-xs text-muted-foreground">
+                            {{ submission?.submitter?.email || "N/A" }}
+                          </p>
+                        </div>
+                      </td>
+                      <td class="px-4 py-4">
+                        <Badge variant="secondary" class="capitalize">
+                          {{ submission.status }}
+                        </Badge>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class="font-medium">
+                          {{ formatCurrency(submission.pricePaid || 0) }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class="text-sm text-muted-foreground">
+                          {{ formatDate(submission.submittedAt) }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class="text-sm text-muted-foreground">
+                          {{ formatDate(submission.deletedAt) }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 w-8 p-0 text-green-600 hover:text-green-600"
+                            title="Restore"
+                            @click="restoreSubmission(submission.id)"
+                            :disabled="loading.restore"
+                          >
+                            <RotateCcw class="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                v-if="!deletedSubmissions?.data?.length"
+                class="text-center py-8"
               >
-                {{ page }}
-              </Button>
-              <span v-if="totalPages > 5" class="text-muted-foreground px-2"
-                >...</span
-              >
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
-            >
-              <span class="hidden sm:inline mr-1">Next</span>
-              <ChevronRight class="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+                <p class="text-muted-foreground">
+                  No deleted submissions found
+                </p>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </Card>
     </main>
+
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will delete the submission. You can restore it later
+            from the deleted submissions tab.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            @click="deleteSubmission"
+            :disabled="loading.delete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            <Loader v-if="loading.delete" class="w-4 h-4 mr-2" />
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
