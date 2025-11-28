@@ -28,11 +28,14 @@ const loading = ref({
   downloadExcel: false,
   delete: false,
   restore: false,
+  permanentDelete: false,
 });
 
 const activeTab = ref("active");
 const deleteDialogOpen = ref(false);
 const submissionToDelete = ref<string | null>(null);
+const permanentDeleteDialogOpen = ref(false);
+const submissionToPermanentDelete = ref<string | null>(null);
 
 const filters = ref({
   search: "",
@@ -379,6 +382,33 @@ const restoreSubmission = async (submissionId: string) => {
     toast.error("Failed to restore submission");
   } finally {
     loading.value.restore = false;
+  }
+};
+
+const confirmPermanentDelete = (submissionId: string) => {
+  submissionToPermanentDelete.value = submissionId;
+  permanentDeleteDialogOpen.value = true;
+};
+
+const permanentDeleteSubmission = async () => {
+  if (!submissionToPermanentDelete.value) return;
+
+  loading.value.permanentDelete = true;
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/submissions/${submissionToPermanentDelete.value}/permanent-delete`,
+      {
+        method: "DELETE",
+      },
+    );
+    toast.success("Submission permanently deleted");
+    permanentDeleteDialogOpen.value = false;
+    submissionToPermanentDelete.value = null;
+    await refreshDeleted();
+  } catch (error: any) {
+    toast.error("Failed to permanently delete submission");
+  } finally {
+    loading.value.permanentDelete = false;
   }
 };
 </script>
@@ -933,20 +963,30 @@ const restoreSubmission = async (submissionId: string) => {
                           {{ formatDate(submission.deletedAt) }}
                         </span>
                       </td>
-                      <td class="px-4 py-4 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            class="h-8 w-8 p-0 text-green-600 hover:text-green-600"
-                            title="Restore"
-                            @click="restoreSubmission(submission.id)"
-                            :disabled="loading.restore"
-                          >
-                            <RotateCcw class="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+                       <td class="px-4 py-4 text-right">
+                         <div class="flex items-center justify-end gap-2">
+                           <Button
+                             size="sm"
+                             variant="ghost"
+                             class="h-8 w-8 p-0 text-green-600 hover:text-green-600"
+                             title="Restore"
+                             @click="restoreSubmission(submission.id)"
+                             :disabled="loading.restore"
+                           >
+                             <RotateCcw class="h-4 w-4" />
+                           </Button>
+                           <Button
+                             size="sm"
+                             variant="ghost"
+                             class="h-8 w-8 p-0 text-red-600 hover:text-red-600"
+                             title="Permanent Delete"
+                             @click="confirmPermanentDelete(submission.id)"
+                             :disabled="loading.permanentDelete"
+                           >
+                             <Trash2 class="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </td>
                     </tr>
                   </tbody>
                 </table>
@@ -984,6 +1024,30 @@ const restoreSubmission = async (submissionId: string) => {
           >
             <Loader v-if="loading.delete" class="w-4 h-4 mr-2" />
             Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- Permanent Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="permanentDeleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Permanently Delete Submission?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The submission will be permanently deleted
+            and cannot be recovered.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            @click="permanentDeleteSubmission"
+            :disabled="loading.permanentDelete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            <Loader v-if="loading.permanentDelete" class="w-4 h-4 mr-2" />
+            Permanently Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
