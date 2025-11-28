@@ -3,7 +3,9 @@ import { FormSchema, FormSubmission } from "~~/shared/types";
 
 export const exportToExcel = async (submissions: FormSubmission[]) => {
   try {
-    const { fieldResponses, storeResponses } = formatFormData(submissions);
+    // Filter out deleted submissions
+    const activeSubmissions = submissions.filter(submission => !submission.deletedAt);
+    const { fieldResponses, storeResponses } = formatFormData(activeSubmissions);
 
     const workbook = new ExcelJS.Workbook();
 
