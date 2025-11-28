@@ -401,6 +401,7 @@ export const formSubmissions = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     formIdx: index("submission_form_idx").on(table.formId),
@@ -409,6 +410,7 @@ export const formSubmissions = pgTable(
     submittedAtIdx: index("submission_submitted_at_idx").on(table.submittedAt),
     completedAtIdx: index("submission_completed_at_idx").on(table.completedAt),
     updatedAtIdx: index("submission_updated_at_idx").on(table.updatedAt),
+    deletedAtIdx: index("submission_deleted_at_idx").on(table.deletedAt),
   }),
 );
 

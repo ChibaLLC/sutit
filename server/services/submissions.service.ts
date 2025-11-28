@@ -6,7 +6,7 @@ import {
   storeItems,
   storeResponses,
 } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull, isNotNull, and } from "drizzle-orm";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
 
@@ -137,10 +137,12 @@ export const submitForm = async (
     };
   });
 };
-
 export const getFormSubmissions = async (formId: string) => {
   let submissions = await db.query.formSubmissions.findMany({
-    where: eq(formSubmissions.formId, formId),
+    where: and(
+      eq(formSubmissions.formId, formId),
+      isNull(formSubmissions.deletedAt),
+    ),
     with: {
       form: true,
       responses: {
@@ -161,7 +163,10 @@ export const getFormSubmissions = async (formId: string) => {
 
 export const getSubmissionById = async (submissionId: string) => {
   const submission = await db.query.formSubmissions.findFirst({
-    where: eq(formSubmissions.id, submissionId),
+    where: and(
+      eq(formSubmissions.id, submissionId),
+      isNull(formSubmissions.deletedAt),
+    ),
     with: {
       form: true,
       responses: {
@@ -215,4 +220,61 @@ export const updateSubmissionStatus = async (
     .update(formSubmissions)
     .set(updateData)
     .where(eq(formSubmissions.id, submissionId));
+};
+
+export const softDeleteSubmission = async (submissionId: string) => {
+  await db
+    .update(formSubmissions)
+    .set({ deletedAt: new Date() })
+    .where(eq(formSubmissions.id, submissionId));
+};
+
+export const getDeletedFormSubmissions = async (formId: string) => {
+  let submissions = await db.query.formSubmissions.findMany({
+    where: and(
+      eq(formSubmissions.formId, formId),
+      isNotNull(formSubmissions.deletedAt),
+    ),
+    with: {
+      form: true,
+      responses: {
+        with: {
+          field: true,
+        },
+      },
+      storeResponses: {
+        with: {
+          item: true,
+        },
+      },
+      submitter: true,
+    },
+  });
+  return submissions;
+};
+
+export const restoreSubmission = async (submissionId: string) => {
+  await db
+    .update(formSubmissions)
+    .set({ deletedAt: null })
+    .where(eq(formSubmissions.id, submissionId));
+};
+
+export const permanentDeleteSubmission = async (submissionId: string) => {
+  return db.transaction(async (tx) => {
+    // Delete related field responses
+    await tx
+      .delete(fieldResponses)
+      .where(eq(fieldResponses.submissionId, submissionId));
+
+    // Delete related store responses
+    await tx
+      .delete(storeResponses)
+      .where(eq(storeResponses.submissionId, submissionId));
+
+    // Delete the submission
+    await tx
+      .delete(formSubmissions)
+      .where(eq(formSubmissions.id, submissionId));
+  });
 };

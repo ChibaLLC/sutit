@@ -389,6 +389,17 @@ const downloadReceipt = () => {
   });
 };
 
+const deleteSubmission = async () => {
+  try {
+    await $fetch(`/api/forms/${formId}/submissions/${submissionId}/delete`, {
+      method: "DELETE",
+    });
+    await navigateTo(`/forms/${formId}/submissions`);
+  } catch (error: any) {
+    console.error("Failed to delete submission:", error);
+  }
+};
+
 onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval);
 });
@@ -837,7 +848,7 @@ onUnmounted(() => {
             </CardHeader>
             <CardContent>
               <div class="space-y-3">
-                <Button variant="destructive" class="w-full gap-2">
+                <Button variant="destructive" class="w-full gap-2" @click="deleteSubmission">
                   <Trash2 class="w-5 h-5" />
                   <span>Delete Submission</span>
                 </Button>
