@@ -31,7 +31,6 @@ const loading = ref({
 const activeTab = ref("active");
 const filtersVisible = ref(true);
 
-
 const filters = ref({
   search: "",
   status: "all",
@@ -67,8 +66,6 @@ const { data: submissions, refresh } = await useFetch(
     server: false,
   },
 );
-
-
 
 // Get unique form fields from all submissions
 const formFields = computed(() => {
@@ -320,12 +317,9 @@ const toggleReponse = async () => {
     });
     toast.success(res.message);
     acceptingResponses.value = !acceptingResponses.value;
+    await refresh();
   } catch (e) {}
 };
-
-
-
-
 </script>
 
 <template>
@@ -372,228 +366,246 @@ const toggleReponse = async () => {
         </div>
       </div>
 
-       <!-- Form Title -->
-       <Card class="mb-6 p-6">
-         <h2 class="text-2xl font-bold text-foreground">
-           {{ form?.title }}
-         </h2>
-         <p class="text-muted-foreground mt-1">
-           {{ formFields.length }} fields • {{ stats.total }} submissions
-         </p>
-       </Card>
+      <!-- Form Title -->
+      <Card class="mb-6 p-6">
+        <h2 class="text-2xl font-bold text-foreground">
+          {{ form?.title }}
+        </h2>
+        <p class="text-muted-foreground mt-1">
+          {{ formFields.length }} fields • {{ stats.total }} submissions
+        </p>
+      </Card>
 
-       <!-- Dashboard Stats -->
-       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-         <Card class="p-6">
-           <div class="flex items-center justify-between">
-             <div>
-               <p class="text-sm font-medium text-muted-foreground">Total Submissions</p>
-               <p class="text-2xl font-bold">{{ stats.total }}</p>
-             </div>
-             <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-               <FileSpreadsheet class="h-4 w-4 text-blue-600" />
-             </div>
-           </div>
-         </Card>
+      <!-- Dashboard Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">
+                Total Submissions
+              </p>
+              <p class="text-2xl font-bold">{{ stats.total }}</p>
+            </div>
+            <div
+              class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center"
+            >
+              <FileSpreadsheet class="h-4 w-4 text-blue-600" />
+            </div>
+          </div>
+        </Card>
 
-         <Card class="p-6">
-           <div class="flex items-center justify-between">
-             <div>
-               <p class="text-sm font-medium text-muted-foreground">Completed</p>
-               <p class="text-2xl font-bold text-green-600">{{ stats.completed }}</p>
-             </div>
-             <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-               <Eye class="h-4 w-4 text-green-600" />
-             </div>
-           </div>
-         </Card>
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Completed</p>
+              <p class="text-2xl font-bold text-green-600">
+                {{ stats.completed }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center"
+            >
+              <Eye class="h-4 w-4 text-green-600" />
+            </div>
+          </div>
+        </Card>
 
-         <Card class="p-6">
-           <div class="flex items-center justify-between">
-             <div>
-               <p class="text-sm font-medium text-muted-foreground">Pending</p>
-               <p class="text-2xl font-bold text-yellow-600">{{ stats.pending }}</p>
-             </div>
-             <div class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-               <Loader class="h-4 w-4 text-yellow-600" />
-             </div>
-           </div>
-         </Card>
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Pending</p>
+              <p class="text-2xl font-bold text-yellow-600">
+                {{ stats.pending }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center"
+            >
+              <Loader class="h-4 w-4 text-yellow-600" />
+            </div>
+          </div>
+        </Card>
 
-         <Card class="p-6">
-           <div class="flex items-center justify-between">
-             <div>
-               <p class="text-sm font-medium text-muted-foreground">Total Revenue</p>
-               <p class="text-2xl font-bold">{{ formatCurrency(stats.totalRevenue + stats.storeRevenue) }}</p>
-             </div>
-             <div class="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-               <CreditCard class="h-4 w-4 text-purple-600" />
-             </div>
-           </div>
-         </Card>
-       </div>
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">
+                Total Revenue
+              </p>
+              <p class="text-2xl font-bold">
+                {{ formatCurrency(stats.totalRevenue + stats.storeRevenue) }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center"
+            >
+              <CreditCard class="h-4 w-4 text-purple-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
 
-       <!-- Tabs -->
+      <!-- Tabs -->
       <Card class="mb-6">
-         <Tabs v-model="activeTab" class="w-full">
-           <TabsList class="grid w-full grid-cols-1">
-             <TabsTrigger value="active">Submissions</TabsTrigger>
-           </TabsList>
+        <Tabs v-model="activeTab" class="w-full">
+          <TabsList class="grid w-full grid-cols-1">
+            <TabsTrigger value="active">Submissions</TabsTrigger>
+          </TabsList>
           <TabsContent value="active" class="mt-6">
-             <!-- Enhanced Filters Section -->
-             <Card class="mb-6 p-6">
-               <div class="space-y-6">
-                 <!-- Filter Header -->
-                 <div class="flex items-center justify-between">
-                   <div class="flex items-center gap-2">
-                     <Filter class="w-5 h-5 text-muted-foreground" />
-                     <h3 class="text-lg font-semibold">Filters</h3>
-                   </div>
-                   <div class="flex items-center gap-2">
-                     <Button
-                       variant="ghost"
-                       size="sm"
-                       @click="filtersVisible = !filtersVisible"
-                       class="gap-2"
-                     >
-                       <ChevronUp v-if="filtersVisible" class="w-4 h-4" />
-                       <ChevronDown v-else class="w-4 h-4" />
-                       {{ filtersVisible ? 'Hide' : 'Show' }} Filters
-                     </Button>
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       @click="clearFilters"
-                       class="gap-2"
-                     >
-                       <X class="w-4 h-4" />
-                       Clear All
-                     </Button>
-                   </div>
-                 </div>
+            <!-- Enhanced Filters Section -->
+            <Card class="mb-6 p-6">
+              <div class="space-y-6">
+                <!-- Filter Header -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <Filter class="w-5 h-5 text-muted-foreground" />
+                    <h3 class="text-lg font-semibold">Filters</h3>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      @click="filtersVisible = !filtersVisible"
+                      class="gap-2"
+                    >
+                      <ChevronUp v-if="filtersVisible" class="w-4 h-4" />
+                      <ChevronDown v-else class="w-4 h-4" />
+                      {{ filtersVisible ? "Hide" : "Show" }} Filters
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      @click="clearFilters"
+                      class="gap-2"
+                    >
+                      <X class="w-4 h-4" />
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
 
-                 <!-- Filter Controls -->
-                 <div v-if="filtersVisible" class="space-y-6">
-                   <div
-                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-                   >
-                     <!-- Search -->
-                     <div class="space-y-2">
-                       <Label class="text-sm font-medium">Search</Label>
-                       <div class="relative">
-                         <Search
-                           class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                         />
-                         <Input
-                           v-model="filters.search"
-                           placeholder="Search in all fields..."
-                           class="pl-10"
-                         />
-                       </div>
-                     </div>
+                <!-- Filter Controls -->
+                <div v-if="filtersVisible" class="space-y-6">
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                  >
+                    <!-- Search -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Search</Label>
+                      <div class="relative">
+                        <Search
+                          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                        />
+                        <Input
+                          v-model="filters.search"
+                          placeholder="Search in all fields..."
+                          class="pl-10"
+                        />
+                      </div>
+                    </div>
 
-                     <!-- Status Filter -->
-                     <div class="space-y-2">
-                       <Label class="text-sm font-medium">Status</Label>
-                       <Select v-model="filters.status">
-                         <SelectTrigger>
-                           <SelectValue placeholder="All statuses" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="all">All Statuses</SelectItem>
-                           <SelectItem value="pending">Pending</SelectItem>
-                           <SelectItem value="completed">Completed</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </div>
+                    <!-- Status Filter -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Status</Label>
+                      <Select v-model="filters.status">
+                        <SelectTrigger>
+                          <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                     <!-- Date Range Start -->
-                     <div class="space-y-2">
-                       <Label class="text-sm font-medium">Start Date</Label>
-                       <div class="relative">
-                         <Calendar
-                           class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                         />
-                         <Input
-                           v-model="filters.dateRange.start"
-                           type="date"
-                           class="pl-10"
-                         />
-                       </div>
-                     </div>
+                    <!-- Date Range Start -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Start Date</Label>
+                      <div class="relative">
+                        <Calendar
+                          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                        />
+                        <Input
+                          v-model="filters.dateRange.start"
+                          type="date"
+                          class="pl-10"
+                        />
+                      </div>
+                    </div>
 
-                     <!-- Date Range End -->
-                     <div class="space-y-2">
-                       <Label class="text-sm font-medium">End Date</Label>
-                       <div class="relative">
-                         <Calendar
-                           class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-                         />
-                         <Input
-                           v-model="filters.dateRange.end"
-                           type="date"
-                           class="pl-10"
-                         />
-                       </div>
-                     </div>
-                   </div>
+                    <!-- Date Range End -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">End Date</Label>
+                      <div class="relative">
+                        <Calendar
+                          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                        />
+                        <Input
+                          v-model="filters.dateRange.end"
+                          type="date"
+                          class="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-                   <!-- Active Filters Display -->
-                   <div
-                     v-if="
-                       filters.search ||
-                       filters.status !== 'all' ||
-                       filters.dateRange.start ||
-                       filters.dateRange.end
-                     "
-                     class="flex flex-wrap gap-2"
-                   >
-                     <Badge
-                       v-if="filters.search"
-                       variant="secondary"
-                       class="gap-1"
-                     >
-                       Search: {{ filters.search }}
-                       <X
-                         class="w-3 h-3 cursor-pointer"
-                         @click="filters.search = ''"
-                       />
-                     </Badge>
-                     <Badge
-                       v-if="filters.status !== 'all'"
-                       variant="secondary"
-                       class="gap-1"
-                     >
-                       Status: {{ filters.status }}
-                       <X
-                         class="w-3 h-3 cursor-pointer"
-                         @click="filters.status = 'all'"
-                       />
-                     </Badge>
-                     <Badge
-                       v-if="filters.dateRange.start"
-                       variant="secondary"
-                       class="gap-1"
-                     >
-                       From: {{ filters.dateRange.start }}
-                       <X
-                         class="w-3 h-3 cursor-pointer"
-                         @click="filters.dateRange.start = ''"
-                       />
-                     </Badge>
-                     <Badge
-                       v-if="filters.dateRange.end"
-                       variant="secondary"
-                       class="gap-1"
-                     >
-                       To: {{ filters.dateRange.end }}
-                       <X
-                         class="w-3 h-3 cursor-pointer"
-                         @click="filters.dateRange.end = ''"
-                       />
-                     </Badge>
-                   </div>
-                 </div>
+                  <!-- Active Filters Display -->
+                  <div
+                    v-if="
+                      filters.search ||
+                      filters.status !== 'all' ||
+                      filters.dateRange.start ||
+                      filters.dateRange.end
+                    "
+                    class="flex flex-wrap gap-2"
+                  >
+                    <Badge
+                      v-if="filters.search"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      Search: {{ filters.search }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.search = ''"
+                      />
+                    </Badge>
+                    <Badge
+                      v-if="filters.status !== 'all'"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      Status: {{ filters.status }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.status = 'all'"
+                      />
+                    </Badge>
+                    <Badge
+                      v-if="filters.dateRange.start"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      From: {{ filters.dateRange.start }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.dateRange.start = ''"
+                      />
+                    </Badge>
+                    <Badge
+                      v-if="filters.dateRange.end"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      To: {{ filters.dateRange.end }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.dateRange.end = ''"
+                      />
+                    </Badge>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -744,29 +756,29 @@ const toggleReponse = async () => {
                       </td>
                       <td class="px-4 py-4 text-right">
                         <div class="flex items-center justify-end gap-2">
-                           <NuxtLink
-                             :to="`/forms/${form.id}/submissions/${submission.id}`"
-                             as-child
-                           >
-                             <Button
-                               size="sm"
-                               variant="ghost"
-                               class="h-8 w-8 p-0"
-                               title="View"
-                             >
-                               <Eye class="h-4 w-4" />
-                             </Button>
-                           </NuxtLink>
+                          <NuxtLink
+                            :to="`/forms/${form.id}/submissions/${submission.id}`"
+                            as-child
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              class="h-8 w-8 p-0"
+                              title="View"
+                            >
+                              <Eye class="h-4 w-4" />
+                            </Button>
+                          </NuxtLink>
 
-                           <Button
-                             size="sm"
-                             variant="ghost"
-                             class="h-8 w-8 p-0"
-                             title="Edit"
-                           >
-                             <Edit class="h-4 w-4" />
-                           </Button>
-                         </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 w-8 p-0"
+                            title="Edit"
+                          >
+                            <Edit class="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -845,13 +857,8 @@ const toggleReponse = async () => {
               </div>
             </Card>
           </TabsContent>
-
         </Tabs>
       </Card>
     </main>
-
-
-
-
   </div>
 </template>
