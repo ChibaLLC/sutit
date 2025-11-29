@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Button, buttonVariants } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   User,
   ArrowLeft,
@@ -791,7 +800,9 @@ onUnmounted(() => {
                 <div>
                   <p class="text-sm text-foreground mb-1">Method</p>
                   <p class="text-base font-medium">
-                    {{ submission?.metadata?.paymentData?.method || "N/A" }}
+                    {{
+                      submissionData?.data.payments.payment ? "MPESA" : "N/A"
+                    }}
                   </p>
                 </div>
                 <div>
@@ -799,13 +810,21 @@ onUnmounted(() => {
                     Mobile/Bank Account
                   </p>
                   <p class="text-base font-medium">
-                    {{ submission?.metadata?.paymentData?.account || "N/A" }}
+                    {{
+                      submissionData?.data.payments.payment.phoneNumber || "N/A"
+                    }}
                   </p>
                 </div>
                 <div>
                   <p class="text-sm text-foreground mb-1">Amount</p>
                   <p class="text-lg font-bold text-primary">
-                    Kes {{ submission?.pricePaid }}
+                    Kes {{ submissionData?.data.payments.payment.amount }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-sm text-foreground mb-1">Reference Number</p>
+                  <p class="text-lg font-bold text-primary">
+                    {{ submissionData?.data.payments.payment.receiptNumber }}
                   </p>
                 </div>
               </div>
@@ -860,10 +879,10 @@ onUnmounted(() => {
             </CardHeader>
             <CardContent>
               <div class="space-y-3">
-                <Button variant="destructive" class="w-full gap-2" @click="confirmDelete">
-                  <Trash2 class="w-5 h-5" />
-                  <span>Delete Submission</span>
-                </Button>
+                <!-- <Button variant="destructive" class="w-full gap-2" @click="confirmDelete"> -->
+                <!--   <Trash2 class="w-5 h-5" /> -->
+                <!--   <span>Delete Submission</span> -->
+                <!-- </Button> -->
 
                 <Button
                   variant="outline"
@@ -929,7 +948,8 @@ onUnmounted(() => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will delete the submission. You can restore it later from the deleted submissions tab.
+              This action will delete the submission. You can restore it later
+              from the deleted submissions tab.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

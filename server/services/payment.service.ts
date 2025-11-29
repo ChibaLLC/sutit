@@ -69,7 +69,7 @@ export const processFormPayment = async (
 export const completeFormPayment = async (data: StkCallbackHook) => {
   const { stkCallback } = data.Body;
 
-  if (stkCallback.ResultCode !== 0) {
+  if (stkCallback.ResultCode != 0) {
     await db
       .update(payments)
       .set({

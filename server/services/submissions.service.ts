@@ -155,6 +155,11 @@ export const getFormSubmissions = async (formId: string) => {
           item: true,
         },
       },
+      payments: {
+        with: {
+          payment: true,
+        },
+      },
       submitter: true,
     },
   });
@@ -187,6 +192,11 @@ export const getSubmissionById = async (submissionId: string) => {
               leader: true,
             },
           },
+        },
+      },
+      payments: {
+        with: {
+          payment: true,
         },
       },
     },

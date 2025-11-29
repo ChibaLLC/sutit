@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
       });
     }
     const submissions = await getFormSubmissions(formId);
-    console.log(submissions.length);
     return {
       data: submissions,
       success: true,
