@@ -4,8 +4,11 @@ import { FormSchema, FormSubmission } from "~~/shared/types";
 export const exportToExcel = async (submissions: FormSubmission[]) => {
   try {
     // Filter out deleted submissions
-    const activeSubmissions = submissions.filter(submission => !submission.deletedAt);
-    const { fieldResponses, storeResponses } = formatFormData(activeSubmissions);
+    const activeSubmissions = submissions.filter(
+      (submission) => !submission.deletedAt,
+    );
+    const { fieldResponses, storeResponses } =
+      formatFormData(activeSubmissions);
 
     const workbook = new ExcelJS.Workbook();
 
@@ -89,8 +92,8 @@ const formatFormData = (submissions: FormSubmission[]) => {
         "Product Name": item.item.name,
         "Product ID": item.item.id,
         Quantity: item.quantity,
-        "Unit Price": item.price / item.quantity,
-        "Total Price": item.price,
+        "Unit Price": item.price,
+        "Total Price": item.total,
       });
     });
   });
