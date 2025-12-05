@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { callStkPush } from "./mpesa.service";
 import { sendMail } from "./email.service";
 import { type PgTransaction } from "drizzle-orm/pg-core";
+import { permanentDeleteSubmission } from "./submissions.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,
   form: Form,
@@ -70,13 +71,22 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   const { stkCallback } = data.Body;
 
   if (stkCallback.ResultCode != 0) {
-    await db
+    const [payment] = await db
       .update(payments)
       .set({
         status: "failed",
         updatedAt: new Date(),
       })
-      .where(eq(payments.checkoutId, stkCallback.CheckoutRequestID));
+      .where(eq(payments.checkoutId, stkCallback.CheckoutRequestID))
+      .returning();
+
+    let formPayment = await db.query.formPayments.findFirst({
+      where: eq(formPayments.paymentId, payment.id),
+    });
+
+    if (formPayment?.submissionId) {
+      await permanentDeleteSubmission(formPayment?.submissionId);
+    }
 
     return { success: false, message: stkCallback.ResultDesc };
   }

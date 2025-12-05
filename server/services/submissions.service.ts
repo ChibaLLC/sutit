@@ -2,11 +2,13 @@ import { SubmissionData } from "~~/shared/types";
 import db from "../db";
 import {
   fieldResponses,
+  formPayments,
   formSubmissions,
   storeItems,
   storeResponses,
+  payments,
 } from "../db/schema";
-import { eq, isNull, isNotNull, and } from "drizzle-orm";
+import { eq, isNull, isNotNull, and, inArray } from "drizzle-orm";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
 
@@ -272,6 +274,12 @@ export const restoreSubmission = async (submissionId: string) => {
 
 export const permanentDeleteSubmission = async (submissionId: string) => {
   return db.transaction(async (tx) => {
+    // Get payment IDs associated with this submission before deleting formPayments
+    const formPaymentRecords = await tx
+      .select({ paymentId: formPayments.paymentId })
+      .from(formPayments)
+      .where(eq(formPayments.submissionId, submissionId));
+
     // Delete related field responses
     await tx
       .delete(fieldResponses)
@@ -281,6 +289,17 @@ export const permanentDeleteSubmission = async (submissionId: string) => {
     await tx
       .delete(storeResponses)
       .where(eq(storeResponses.submissionId, submissionId));
+
+    // Delete the actual payment records
+    if (formPaymentRecords.length > 0) {
+      const paymentIds = formPaymentRecords.map((record) => record.paymentId);
+      await tx.delete(payments).where(inArray(payments.id, paymentIds));
+    }
+
+    // Delete related form payments
+    await tx
+      .delete(formPayments)
+      .where(eq(formPayments.submissionId, submissionId));
 
     // Delete the submission
     await tx
