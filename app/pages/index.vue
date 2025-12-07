@@ -23,29 +23,29 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 
 useSeoMeta({
-  title: "Create Powerful Forms in Minutes - SUTIT",
+  title: "Supply Chain Coordination for Micro & Small Enterprises - Sutit.org",
   description:
-    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+    "Sutit.org gives MSEs and cottage producers a clean, enforceable system for coordinating orders, managing delivery commitments, and automating payments - without acting as a marketplace or logistics provider.",
   keywords:
-    "form builder, online forms, data collection, survey tool, registration forms, SUTIT",
-  author: "SUTIT",
+    "supply chain coordination, MSE management, delivery tracking, SLA enforcement, Kenyan businesses, cottage industry, order management",
+  author: "Sutit.org",
   robots: "index,follow,max-image-preview:large",
-  ogTitle: "Create Powerful Forms in Minutes - SUTIT",
+  ogTitle: "Supply Chain Coordination for Micro & Small Enterprises - Sutit.org",
   ogDescription:
-    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+    "Sutit.org gives MSEs and cottage producers a clean, enforceable system for coordinating orders, managing delivery commitments, and automating payments.",
   ogImage: "/logo.jpeg",
-  ogImageAlt: "SUTIT Forms - Create Powerful Forms in Minutes",
+  ogImageAlt: "Sutit.org - Kenyan Supply Chain Coordination Platform",
   ogUrl: "/",
   ogType: "website",
-  ogSiteName: "SUTIT",
+  ogSiteName: "Sutit.org",
   twitterCard: "summary_large_image",
-  twitterSite: "@sutit",
-  twitterCreator: "@sutit",
-  twitterTitle: "Create Powerful Forms in Minutes - SUTIT",
+  twitterSite: "@sutitorg",
+  twitterCreator: "@sutitorg",
+  twitterTitle: "Supply Chain Coordination for Micro & Small Enterprises - Sutit.org",
   twitterDescription:
-    "We offer exactly what you're in need of from a form-based tool for different kinds of industries, including Accounting, consulting, sales, delivery, and many more. It's limitless.",
+    "Sutit.org gives MSEs and cottage producers a clean, enforceable system for coordinating orders, managing delivery commitments, and automating payments.",
   twitterImage: "/logo.jpeg",
-  twitterImageAlt: "SUTIT Forms - Create Powerful Forms in Minutes",
+  twitterImageAlt: "Sutit.org - Kenyan Supply Chain Coordination Platform",
   themeColor: "#2563eb",
   colorScheme: "light dark",
 });
@@ -152,7 +152,7 @@ onUnmounted(() => {
           >
             <Sparkles class="w-4 h-4" />
             <span class="text-sm font-medium"
-              >Your Success Story Starts With Us</span
+              >ORGANIC KENYAN SOLUTION</span
             >
           </div>
 
@@ -160,18 +160,15 @@ onUnmounted(() => {
           <h1
             class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-balance"
           >
-            <span class="text-primary">Enterprise</span>
-            <br />
-            <span>Supply Chain Solutions</span>
+            Supply Chain Coordination for
+            <span class="text-primary">Micro & Small Enterprises</span>
           </h1>
 
           <!-- Subheading -->
           <p
-            class="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
+            class="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
           >
-            End-to-end efficiency for your entire supply chain. Automate
-            Marketing/Sales, Purchase/Orders, Payments till Receipt/Order
-            Fulfillment.
+            Sutit.org gives MSEs and cottage producers a clean, enforceable system for coordinating orders, managing delivery commitments, and automating payments - without acting as a marketplace or logistics provider.
           </p>
 
           <!-- CTA Buttons -->
@@ -181,15 +178,14 @@ onUnmounted(() => {
               as-child
             >
               <Button size="lg" class="group">
-                Get Started
+                Get Started with Sutit
                 <ArrowRight
                   class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
                 />
               </Button>
             </NuxtLink>
             <Button size="lg" variant="outline">
-              <PlayCircle class="w-5 h-5 mr-2" />
-              Watch Demo
+              How Sutit Works
             </Button>
           </div>
 
@@ -199,535 +195,321 @@ onUnmounted(() => {
           >
             <div class="text-center">
               <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
-                1K+
+                100%
               </p>
-              <p class="text-sm text-muted-foreground">Active Users</p>
+              <p class="text-sm text-muted-foreground">Kenyan MSE Focus</p>
             </div>
             <div class="w-px h-12 bg-border hidden sm:block"></div>
             <div class="text-center">
               <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
-                1K+
+                0%
               </p>
-              <p class="text-sm text-muted-foreground">Forms Created</p>
+              <p class="text-sm text-muted-foreground">Marketplace Fees</p>
             </div>
             <div class="w-px h-12 bg-border hidden sm:block"></div>
             <div class="text-center">
               <p class="text-3xl md:text-4xl font-bold text-primary mb-1">
-                99.9%
+                24/7
               </p>
-              <p class="text-sm text-muted-foreground">Uptime</p>
+              <p class="text-sm text-muted-foreground">SLA Enforcement</p>
             </div>
           </div>
         </div>
       </div>
     </section>
-    <section id="features" class="py-20 bg-muted/30">
+    <!-- The Problem Section -->
+    <section class="py-20 bg-muted/30">
       <div class="container mx-auto px-4">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">
-            Featured Marketplace
-          </h2>
-          <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover our most popular form templates designed to streamline your
-            workflow
-          </p>
-        </div>
-
-        <!-- Carousel Container -->
-        <div class="relative max-w-7xl mx-auto">
-          <!-- Carousel -->
-          <div class="overflow-hidden" ref="carouselContainer">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
             <div
-              class="flex transition-transform duration-500 ease-out"
-              :style="{
-                transform: `translateX(-${currentSlide * slideWidth}%)`,
-              }"
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
             >
-              <div
-                v-for="(form, index) in forms?.data"
-                :key="index"
-                class="shrink-0 px-3"
-                :style="{ width: slideWidth + '%' }"
-              >
-                <div
-                  class="group bg-card border border-border rounded-xl p-6 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transition-all duration-500 cursor-pointer relative overflow-hidden h-full"
-                >
-                  <div
-                    class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-                  ></div>
-                  <div class="relative flex flex-col h-full">
-                    <div
-                      class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors"
-                    >
-                      <component
-                        :is="FileCheck"
-                        class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-                      />
-                    </div>
-                    <h3
-                      class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors"
-                    >
-                      {{ form.title }}
-                    </h3>
-                    <p class="text-sm text-muted-foreground mb-4 grow">
-                      {{ form.description }}
-                    </p>
-                    <NuxtLink
-                      :to="`/forms/${form.slug}`"
-                      :class="buttonVariants({})"
-                    >
-                      View Form
-                    </NuxtLink>
-                  </div>
+              <Target class="w-4 h-4" />
+              THE REALITY FOR MSEs AND COTTAGE PRODUCERS
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              The Chaos That
+              <span class="text-primary">Limits Growth</span>
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center mb-4">
+                <Package class="w-6 h-6 text-red-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">Lost or unclear orders</h3>
+              <p class="text-muted-foreground text-sm">
+                No structured way to track and confirm customer orders
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4">
+                <Clock class="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">Missed delivery timelines</h3>
+              <p class="text-muted-foreground text-sm">
+                No system to enforce delivery promises and track performance
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center mb-4">
+                <DollarSign class="w-6 h-6 text-yellow-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">Payment delays and disputes</h3>
+              <p class="text-muted-foreground text-sm">
+                No transparent payment flow or reconciliation system
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-4">
+                <FileCheck class="w-6 h-6 text-green-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">Zero audit trail</h3>
+              <p class="text-muted-foreground text-sm">
+                No documented history of transactions and commitments
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                <Zap class="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">No operational discipline</h3>
+              <p class="text-muted-foreground text-sm">
+                Informal processes that don't scale or improve
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
+                <BarChart3 class="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">No visibility into performance</h3>
+              <p class="text-muted-foreground text-sm">
+                No metrics or insights to improve business operations
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-12 text-center">
+            <p class="text-xl text-muted-foreground italic">
+              "This chaos limits growth and keeps small businesses small. The result is predictable."
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- The Sutit Solution Section -->
+    <section class="py-20">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <Lightbulb class="w-4 h-4" />
+              THE SUTIT SOLUTION
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              Your Supply Chain,
+              <span class="text-primary">Disciplined. Digitized. Enforceable.</span>
+            </h2>
+            <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Sutit.org transforms the way MSEs run their operations by providing:
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <FileCheck class="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold mb-2 text-foreground">1. Order Coordination</h3>
+                  <p class="text-muted-foreground">
+                    Digital order intake and confirmation — simple for customers, structured for suppliers.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Clock class="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold mb-2 text-foreground">2. Delivery Timeline Enforcement (SLA)</h3>
+                  <p class="text-muted-foreground">
+                    Suppliers set their own delivery timelines. Sutit tracks performance and enforces accountability with automated clawbacks.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign class="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold mb-2 text-foreground">3. Payments & Reconciliation</h3>
+                  <p class="text-muted-foreground">
+                    We handle the payment flow, adjust for SLA compliance, and generate a clean, auditable ledger for both sides.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Package class="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold mb-2 text-foreground">4. Workflow Tools Powered by Forms</h3>
+                  <p class="text-muted-foreground">
+                    Our forms engine supports: order requests, event registrations, service bookings, customer feedback. These tools power MSE operations without defining the product.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Navigation Buttons -->
-          <button
-            @click="prevSlide"
-            :disabled="currentSlide === 0"
-            class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:-translate-x-12 w-12 h-12 rounded-full bg-card border-2 border-border shadow-lg flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card disabled:hover:border-border disabled:hover:text-foreground z-10"
-          >
-            <ChevronLeft class="w-6 h-6" />
-          </button>
-          <button
-            @click="nextSlide"
-            :disabled="currentSlide >= maxSlide"
-            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-12 w-12 h-12 rounded-full bg-card border-2 border-border shadow-lg flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card disabled:hover:border-border disabled:hover:text-foreground z-10"
-          >
-            <ChevronRight class="w-6 h-6" />
-          </button>
-
-          <!-- Dots Indicator -->
-          <div class="flex justify-center gap-2 mt-8">
-            <button
-              v-for="(dot, index) in totalSlides"
-              :key="index"
-              @click="goToSlide(index)"
-              class="w-2 h-2 rounded-full transition-all duration-300"
-              :class="
-                currentSlide === index
-                  ? 'bg-primary w-8'
-                  : 'bg-border hover:bg-primary/50'
-              "
-            ></button>
-          </div>
-        </div>
-
-        <!-- View More Button -->
-        <div class="text-center mt-12">
-          <NuxtLink
-            href="/marketplace"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:shadow-xl hover:scale-105 transition-all duration-300 group"
-          >
-            Explore Market Place
-            <ArrowRight
-              class="w-4 h-4 group-hover:translate-x-1 transition-transform"
-            />
-          </NuxtLink>
         </div>
       </div>
     </section>
-    <!-- Supply Chain Features Section -->
-    <section class="py-16 md:py-20 lg:py-24 bg-muted/50">
-      <div class="container mx-auto px-4">
-        <div class="text-center mb-12 md:mb-16">
-          <h2
-            class="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 text-balance"
-          >
-            Complete Supply Chain Automation
-          </h2>
-          <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Streamline every step of your supply chain with integrated solutions
-          </p>
-        </div>
-
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
-        >
-          <!-- Marketing/Sales Card -->
-          <Card
-            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
-          >
-            <CardContent class="pt-6">
-              <div
-                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-              >
-                <ShoppingCart
-                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-                />
-              </div>
-              <h3 class="text-lg font-semibold mb-2">Marketing/Sales</h3>
-              <p class="text-sm text-muted-foreground">
-                Automate lead generation and sales workflows
-              </p>
-            </CardContent>
-          </Card>
-
-          <!-- Purchase/Orders Card -->
-          <Card
-            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
-          >
-            <CardContent class="pt-6">
-              <div
-                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-              >
-                <Package
-                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-                />
-              </div>
-              <h3 class="text-lg font-semibold mb-2">Purchase/Orders</h3>
-              <p class="text-sm text-muted-foreground">
-                Manage orders and procurement seamlessly
-              </p>
-            </CardContent>
-          </Card>
-
-          <!-- Payments Card -->
-          <Card
-            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
-          >
-            <CardContent class="pt-6">
-              <div
-                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-              >
-                <DollarSign
-                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-                />
-              </div>
-              <h3 class="text-lg font-semibold mb-2">Payments</h3>
-              <p class="text-sm text-muted-foreground">
-                Secure payment processing and tracking
-              </p>
-            </CardContent>
-          </Card>
-
-          <!-- Receipt/Fulfillment Card -->
-          <Card
-            class="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
-          >
-            <CardContent class="pt-6">
-              <div
-                class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
-              >
-                <Truck
-                  class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-                />
-              </div>
-              <h3 class="text-lg font-semibold mb-2">Receipt/Fulfillment</h3>
-              <p class="text-sm text-muted-foreground">
-                Track deliveries and order fulfillment
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </section>
-    <!-- Feature Forms Section -->
-
-    <!-- About Section -->
-    <section id="about" class="py-20">
-      <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">About Us</h2>
-          <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Learn why SUTIT Forms is the perfect solution for your data
-            collection needs
-          </p>
-        </div>
-
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16"
-        >
-          <div class="text-center group">
-            <div
-              class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:scale-110 transition-all duration-300"
-            >
-              <Lightbulb
-                class="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors"
-              />
-            </div>
-            <h3 class="text-xl font-semibold mb-3">How It Started</h3>
-            <p class="text-muted-foreground">
-              We have the solution for collecting data and info in the most
-              efficient way. Our system uses an API which is stable, flexible
-              and easy to use.
-            </p>
-          </div>
-
-          <div class="text-center group">
-            <div
-              class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:scale-110 transition-all duration-300"
-            >
-              <Target
-                class="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors"
-              />
-            </div>
-            <h3 class="text-xl font-semibold mb-3">How It's Going</h3>
-            <p class="text-muted-foreground">
-              We are trusted by companies and students all around the world. Our
-              platform keeps growing and we are always improving with every
-              update.
-            </p>
-          </div>
-
-          <div class="text-center group">
-            <div
-              class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:scale-110 transition-all duration-300"
-            >
-              <TrendingUp
-                class="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors"
-              />
-            </div>
-            <h3 class="text-xl font-semibold mb-3">The Value</h3>
-            <p class="text-muted-foreground">
-              Transform your data collection with flexible forms. Analyze and
-              export all you need to make your business run smoothly and stay
-              ahead of your competitors.
-            </p>
-          </div>
-        </div>
-
-        <!-- Pressure Section -->
-        <div
-          class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto items-center"
-        >
-          <div class="order-2 lg:order-1">
-            <div
-              class="bg-card border border-border rounded-xl p-8 hover:shadow-xl transition-shadow"
-            >
-              <div
-                class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6"
-              >
-                <Zap class="w-8 h-8 text-primary" />
-              </div>
-              <h3 class="text-2xl font-bold mb-4">
-                Working with us is a pleasure
-              </h3>
-              <p class="text-muted-foreground leading-relaxed">
-                We are here to come up with ideas and turn them to actionable
-                code in no time. Our staff are always ready to give you the help
-                you need and provide the end result you wish for. We are 24/7
-                and we assure you that we are reliable at all times as you can
-                contact us whether you are from China or Nairobi and you'll get
-                instant feedback.
-              </p>
-            </div>
-          </div>
-
-          <div class="order-1 lg:order-2">
-            <div
-              class="bg-gradient-to-br from-primary to-primary/80 rounded-xl p-12 text-primary-foreground relative overflow-hidden group hover:shadow-2xl transition-all"
-            >
-              <div
-                class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"
-              ></div>
-              <div
-                class="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full -ml-20 -mb-20 group-hover:scale-150 transition-transform duration-700"
-              ></div>
-              <div class="relative">
-                <h3 class="text-3xl font-bold mb-4">No Need for Checks</h3>
-                <p class="text-primary-foreground/90 mb-6 leading-relaxed">
-                  You don't need to triple check to see if everything is running
-                  well. You can trust us to manage and maintain a website that's
-                  up 99% of the time. Compare us to others and we believe you'll
-                  come back.
-                </p>
-                <ul class="space-y-3">
-                  <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 shrink-0" />
-                    <span>100% secure and encrypted</span>
-                  </li>
-                  <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 shrink-0" />
-                    <span>24/7 customer support</span>
-                  </li>
-                  <li class="flex items-center gap-3">
-                    <CheckCircle2 class="w-5 h-5 shrink-0" />
-                    <span>Fast and reliable servers</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features Grid -->
+    <!-- Who We Serve Section -->
     <section class="py-20 bg-muted/30">
       <div class="container mx-auto px-4">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">
-            What can you do at SUTIT?
-          </h2>
-          <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From simple data collection to advanced analytics, our platform
-            empowers you to do more
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div
-            class="bg-card border border-border rounded-xl p-8 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
-          >
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
             <div
-              class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors"
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
             >
-              <Database
-                class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-              />
+              <Users class="w-4 h-4" />
+              WHO WE SERVE
             </div>
-            <h3 class="text-xl font-semibold mb-3">Email Data Collection</h3>
-            <p class="text-muted-foreground">
-              Gather and manage email addresses efficiently. Create subscription
-              forms or newsletter sign-ups that automatically store emails in
-              your database for easy access and future campaigns.
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              Purpose-Built for
+              <span class="text-primary">MSEs and the Cottage Industry</span>
+            </h2>
+            <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Sutit.org is designed for Micro & Small Enterprises - from home-based cottage producers to growing local suppliers - who need structure without complexity.
             </p>
           </div>
 
-          <div
-            class="bg-card border border-border rounded-xl p-8 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
-          >
-            <div
-              class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors"
-            >
-              <ShoppingCart
-                class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-              />
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="bg-card border border-border rounded-xl p-8">
+              <h3 class="text-2xl font-bold mb-6 text-foreground">Core Focus</h3>
+              <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p class="font-medium mb-1">Home-based cottage producers</p>
+                    <p class="text-sm text-muted-foreground">Turn your craft into a structured business</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p class="font-medium mb-1">Growing local suppliers</p>
+                    <p class="text-sm text-muted-foreground">Scale operations without losing control</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                  <div>
+                    <p class="font-medium mb-1">Micro & Small Enterprises</p>
+                    <p class="text-sm text-muted-foreground">Big business discipline for small businesses</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 class="text-xl font-semibold mb-3">
-              Purchase Order Fulfillment
-            </h3>
-            <p class="text-muted-foreground">
-              Upload a file and it confirms payment via the form and delivery.
-              An alternative marketplace allows clients to sell and others to
-              buy and we integrate right in. We monitor every item sold or any
-              query on a given item.
-            </p>
-          </div>
 
-          <div
-            class="bg-card border border-border rounded-xl p-8 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
-          >
-            <div
-              class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors"
-            >
-              <Receipt
-                class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-              />
+            <div class="bg-card border border-border rounded-xl p-8">
+              <h3 class="text-2xl font-bold mb-6 text-foreground">Also Supported</h3>
+              <p class="text-muted-foreground mb-4">
+                Our platform is flexible enough to support specific non-core clients such as:
+              </p>
+              <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <p class="text-muted-foreground">Running clubs</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <p class="text-muted-foreground">Community organizations</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <p class="text-muted-foreground">Event organizers</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <p class="text-muted-foreground">Small initiatives</p>
+                </div>
+              </div>
+              <p class="text-sm text-muted-foreground mt-4 italic">
+                These groups use our workflow tools, but MSE supply chains remain the core mission.
+              </p>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Trouble & Receipts</h3>
-            <p class="text-muted-foreground">
-              Easily track payment issues and bill clients with customizable
-              templates. These document requests can be replied to online as
-              well and you give them a chance to clarify or request reversal of
-              a bill or service.
-            </p>
-          </div>
-
-          <div
-            class="bg-card border border-border rounded-xl p-8 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
-          >
-            <div
-              class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors"
-            >
-              <BarChart3
-                class="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors"
-              />
-            </div>
-            <h3 class="text-xl font-semibold mb-3">Analytics & Reporting</h3>
-            <p class="text-muted-foreground">
-              Visualize all the data from forms with automatic integration to
-              pie, bar, or line charts. Filter as required, use AI suggestions
-              to optimize your forms and display data in a way that's easy for
-              you to understand.
-            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Growing Company Section -->
+    <!-- Supplier Ownership Principle Section -->
     <section class="py-20">
       <div class="container mx-auto px-4">
-        <div class="max-w-4xl mx-auto">
-          <div class="text-center mb-12">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
             <div
-              class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 hover:bg-primary hover:scale-110 transition-all duration-300 group"
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
             >
-              <TrendingUp
-                class="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors"
-              />
+              <Shield class="w-4 h-4" />
+              OUR PRINCIPLE: SUPPLIER OWNERSHIP FIRST
             </div>
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">
-              A growing company
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              You Own the Relationship.
+              <span class="text-primary">We Handle the Coordination.</span>
             </h2>
-            <p class="text-lg text-muted-foreground mb-8">
-              We are constantly working on our capabilities and innovation
-            </p>
           </div>
 
-          <div class="space-y-4">
-            <div
-              class="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow group"
-            >
-              <div
-                class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
-              >
-                <CheckCircle2 class="w-5 h-5 text-primary-foreground" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div class="space-y-4">
+              <h3 class="text-xl font-bold mb-4 text-foreground">With Sutit.org:</h3>
+              <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+                  <p class="text-foreground">You own the customer</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+                  <p class="text-foreground">You control pricing</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+                  <p class="text-foreground">You manage your logistics</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+                  <p class="text-foreground">You choose partners</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <CheckCircle2 class="w-5 h-5 text-primary flex-shrink-0" />
+                  <p class="text-foreground">You stay in charge</p>
+                </div>
               </div>
-              <p
-                class="text-muted-foreground group-hover:text-foreground transition-colors"
-              >
-                We truly believe in being part of your success
-              </p>
             </div>
 
-            <div
-              class="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow group"
-            >
-              <div
-                class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
-              >
-                <CheckCircle2 class="w-5 h-5 text-primary-foreground" />
+            <div class="bg-card border border-border rounded-xl p-8">
+              <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 mx-auto">
+                <Target class="w-8 h-8 text-primary" />
               </div>
-              <p
-                class="text-muted-foreground group-hover:text-foreground transition-colors"
-              >
-                You're bright red to not go too deep
-              </p>
-            </div>
-
-            <div
-              class="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow group"
-            >
-              <div
-                class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
-              >
-                <CheckCircle2 class="w-5 h-5 text-primary-foreground" />
-              </div>
-              <p
-                class="text-muted-foreground group-hover:text-foreground transition-colors"
-              >
-                Let's see what else one of the very few can do
-              </p>
-            </div>
-
-            <div
-              class="flex items-center gap-4 p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow group"
-            >
-              <div
-                class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
-              >
-                <CheckCircle2 class="w-5 h-5 text-primary-foreground" />
-              </div>
-              <p
-                class="text-muted-foreground group-hover:text-foreground transition-colors"
-              >
-                You're bright but not excessive demonstration
+              <p class="text-muted-foreground text-center leading-relaxed">
+                Sutit runs the background layer that brings discipline, accountability, and trust to every order.
               </p>
             </div>
           </div>
@@ -735,92 +517,188 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <!-- Build Something Section -->
+    <!-- How Sutit Works Section -->
+    <section class="py-20 bg-muted/30">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <Zap class="w-4 h-4" />
+              HOW SUTIT WORKS (Process)
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              A Simple 5-Step
+              <span class="text-primary">Process</span>
+            </h2>
+          </div>
+
+          <div class="space-y-8 max-w-4xl mx-auto">
+            <div class="flex gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                1
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2 text-foreground">Customer Places Order</h3>
+                <p class="text-muted-foreground">
+                  Through a Sutit link or form, customers submit clean, structured order requests.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                2
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2 text-foreground">Supplier Confirms & Sets Delivery SLA</h3>
+                <p class="text-muted-foreground">
+                  You confirm availability and set the expected delivery time.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                3
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2 text-foreground">Supplier Executes Delivery</h3>
+                <p class="text-muted-foreground">
+                  Using your own logistics or chosen partners — Sutit does NOT interfere.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                4
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2 text-foreground">SLA Monitoring & Clawback Enforcement</h3>
+                <p class="text-muted-foreground">
+                  If delivery is late, a clawback automatically applies. If on time, settlement proceeds smoothly.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                5
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2 text-foreground">Automated Reconciliation</h3>
+                <p class="text-muted-foreground">
+                  Every order gets a transparent ledger: who paid, what was delivered, timelines, and final settlement.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why MSEs Grow With Sutit Section -->
+    <section class="py-20">
+      <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+          <div class="text-center mb-16">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
+              <TrendingUp class="w-4 h-4" />
+              WHY MSEs GROW WITH SUTIT
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">
+              A Platform That
+              <span class="text-primary">Scales With You</span>
+            </h2>
+            <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+              As MSEs evolve, Sutit evolves:
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Package class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">More Orders</h3>
+              <p class="text-muted-foreground text-sm">
+                Handle increased volume without losing control or quality
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Users class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">More Partners</h3>
+              <p class="text-muted-foreground text-sm">
+                Coordinate with multiple suppliers and partners seamlessly
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Zap class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">More Operational Complexity</h3>
+              <p class="text-muted-foreground text-sm">
+                Manage sophisticated workflows while maintaining simplicity
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <FileCheck class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">More Visibility</h3>
+              <p class="text-muted-foreground text-sm">
+                Gain insights into your operations with comprehensive tracking
+              </p>
+            </div>
+
+            <div class="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Shield class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">More Reliability</h3>
+              <p class="text-muted-foreground text-sm">
+                Build trust with consistent performance and accountability
+              </p>
+            </div>
+
+            <div class="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-6">
+              <div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+                <TrendingUp class="w-6 h-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold mb-2 text-foreground">Sutit grows through its MSEs</h3>
+              <p class="text-muted-foreground text-sm">
+                Supporting their supply chain maturity, not replacing it
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA Section -->
     <section class="py-20 relative overflow-hidden">
       <div
-        class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent"
+        class="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent"
       ></div>
-      <div class="container mx-auto px-4 relative">
-        <div class="max-w-4xl mx-auto text-center mb-12">
-          <h2 class="text-3xl md:text-5xl font-bold mb-4">Build Something</h2>
-          <p class="text-lg text-muted-foreground mb-8">
-            Engage and attract your audience with fast, easy, and powerful forms
-          </p>
-        </div>
-
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12"
-        >
-          <div
-            class="flex items-start gap-4 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow group"
-          >
-            <CheckCircle2
-              class="w-6 h-6 text-primary flex-shrink-0 mt-1 group-hover:scale-110 transition-transform"
-            />
-            <div>
-              <h3 class="font-semibold mb-2">Dedicated For the User</h3>
-              <p class="text-sm text-muted-foreground">
-                We don't ask you to go through many checks or verifications. Our
-                system was created having in mind that simplicity is key.
-                Everything runs seamlessly.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="flex items-start gap-4 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow group"
-          >
-            <CheckCircle2
-              class="w-6 h-6 text-primary flex-shrink-0 mt-1 group-hover:scale-110 transition-transform"
-            />
-            <div>
-              <h3 class="font-semibold mb-2">Free(most of) to Use</h3>
-              <p class="text-sm text-muted-foreground">
-                Unlike others, we don't hide feature behind a paywall. We
-                believe in accessibility so we are giving a large percentage of
-                features for free to everyone.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="flex items-start gap-4 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow group"
-          >
-            <CheckCircle2
-              class="w-6 h-6 text-primary flex-shrink-0 mt-1 group-hover:scale-110 transition-transform"
-            />
-            <div>
-              <h3 class="font-semibold mb-2">Feedback & Requests</h3>
-              <p class="text-sm text-muted-foreground">
-                If you have any ideas on what can be added or improved you can
-                always leave a suggestion through our feedback form and we'll
-                make sure that it reaches the development team.
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="flex items-start gap-4 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow group"
-          >
-            <CheckCircle2
-              class="w-6 h-6 text-primary flex-shrink-0 mt-1 group-hover:scale-110 transition-transform"
-            />
-            <div>
-              <h3 class="font-semibold mb-2">Created For Students</h3>
-              <p class="text-sm text-muted-foreground">
-                As a student ourselves, we know the struggle and so we are also
-                passionate about helping scholars stay organized and manage
-                their assignments effectively.
-              </p>
-            </div>
-          </div>
-        </div>
+          class="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+        ></div>
+        <div
+          class="absolute top-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-3xl"
+        ></div>
       </div>
-    </section>
 
-    <!-- Final CTA -->
-    <section class="py-20">
-      <div class="container mx-auto px-4">
+      <div class="container mx-auto px-4 relative">
         <div class="max-w-4xl mx-auto">
           <div
             class="bg-gradient-to-br from-card to-card/50 border border-border rounded-2xl p-12 text-center shadow-2xl relative overflow-hidden"
@@ -834,21 +712,27 @@ onUnmounted(() => {
 
             <div class="relative">
               <h2 class="text-3xl md:text-5xl font-bold mb-4">
-                Ready to build your first form?
+                Bring Discipline to
+                <span class="text-primary">Your Supply Chain</span>
               </h2>
               <p class="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                With SUTIT Forms, you gain the power to create, manage, and
-                analyze forms that drive results. Get started in seconds.
+                Sutit.org turns informal workflows into structured, accountable processes — designed for the realities of MSEs and the cottage industry.
               </p>
-              <NuxtLink
-                href="/auth/register"
-                :class="buttonVariants({ size: 'lg' })"
-              >
-                Get Started Free
-              </NuxtLink>
-              <p class="text-sm text-muted-foreground mt-6">
-                ✓ No credit card required • ✓ Free forever plan available
-              </p>
+              <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <NuxtLink
+                  :to="authStore.isAuthenticated ? `/dashboard` : `/auth/login`"
+                  :class="buttonVariants({ size: 'lg' })"
+                  class="group"
+                >
+                  Start Using Sutit
+                  <ArrowRight
+                    class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </NuxtLink>
+                <Button size="lg" variant="outline">
+                  Contact Us for Onboarding
+                </Button>
+              </div>
             </div>
           </div>
         </div>
