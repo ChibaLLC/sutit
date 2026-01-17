@@ -97,6 +97,24 @@ export const useAuthStore = defineStore(
 			} catch (e: any) {}
 		};
 
+		const forgotPassword = async (form: { email: string }) => {
+			const { data, error } = await authClient.forgotPassword(form);
+			if (error && error.message) {
+				toast.error(error.message);
+				return { error };
+			}
+			return { data };
+		};
+
+		const resetPassword = async (form: { password: string; token: string }) => {
+			const { data, error } = await authClient.resetPassword(form);
+			if (error && error.message) {
+				toast.error(error.message);
+				return { error };
+			}
+			return { data };
+		};
+
 		return {
 			user,
 			token,
@@ -108,6 +126,8 @@ export const useAuthStore = defineStore(
 			logout,
 			setAuthUser,
 			signinWithGoogle,
+			forgotPassword,
+			resetPassword,
 		};
 	},
 	{

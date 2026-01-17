@@ -129,20 +129,23 @@ const signInWithEmail = async () => {
                 />
               </div>
 
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <Checkbox id="remember" v-model="form.rememberMe" />
-                  <Label
-                    for="remember"
-                    class="text-sm font-normal cursor-pointer"
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <Checkbox id="remember" v-model="form.rememberMe" />
+                    <Label
+                      for="remember"
+                      class="text-sm font-normal cursor-pointer"
+                    >
+                      Remember me
+                    </Label>
+                  </div>
+                  <NuxtLink
+                    href="/auth/forgot-password"
+                    class="text-sm text-primary hover:underline"
                   >
-                    Remember me
-                  </Label>
+                    Forgot password?
+                  </NuxtLink>
                 </div>
-                <a href="#" class="text-sm text-primary hover:underline">
-                  Forgot password?
-                </a>
-              </div>
 
               <Button
                 type="submit"
