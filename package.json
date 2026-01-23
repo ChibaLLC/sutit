@@ -43,7 +43,7 @@
     "jspdf": "^4.0.0",
     "lucide-vue-next": "^0.562.0",
     "nodemailer": "^7.0.12",
-    "nuxt": "^4.2.2",
+    "nuxt": "^4.3.0",
     "nuxt-email-renderer": "2.1.2",
     "pg": "^8.17.1",
     "pinia": "^3.0.4",
