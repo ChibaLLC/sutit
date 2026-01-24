@@ -9,19 +9,12 @@ import {
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { formatCountdown, formatSecondsToDetailedTime } from "~/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Separator } from "~/components/ui/separator";
+import { NuxtLink } from "#components";
+import { ArrowLeft } from "lucide-vue-next";
 
 const route = useRoute();
 const submissionId = route.params.submissionId as string;
+const authStore = useAuthStore();
 
 const { data, error, pending, refresh } = await useFetch(
   `/api/submissions/${submissionId}`,
@@ -76,14 +69,18 @@ const formattedTat = computed(() => {
 
 const isCompleted = computed(() => !!submission.value?.completedAt);
 
-watch(submission, (newSubmission) => {
-  if (newSubmission && !newSubmission.completedAt) {
-    updateCountdown();
-  } else if (newSubmission?.completedAt && countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-}, { immediate: true });
+watch(
+  submission,
+  (newSubmission) => {
+    if (newSubmission && !newSubmission.completedAt) {
+      updateCountdown();
+    } else if (newSubmission?.completedAt && countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  },
+  { immediate: true },
+);
 
 // Initialize countdown when component mounts
 onMounted(() => {
@@ -134,6 +131,21 @@ onUnmounted(() => {
     class="min-h-screen bg-background flex items-center justify-center p-4"
   >
     <div class="w-full max-w-lg space-y-6">
+      <!-- Back Button -->
+      <div class="flex items-center">
+        <Button
+          :as="NuxtLink"
+          variant="ghost"
+          size="sm"
+          class="gap-2"
+          :to="`/forms/${submission.formId}/submissions`"
+          v-if="submission?.formId && authStore.isAuthenticated"
+        >
+          <ArrowLeft class="w-4 h-4" />
+          <span>Back to Form Submissions</span>
+        </Button>
+      </div>
+
       <!-- Header -->
       <div class="text-center space-y-4">
         <div
@@ -246,11 +258,6 @@ onUnmounted(() => {
           </div>
         </CardContent>
       </Card>
-
-      <!-- Footer -->
-      <div class="text-center">
-        <p class="text-xs text-muted-foreground">Powered by Sutit Forms</p>
-      </div>
     </div>
   </div>
 </template>
