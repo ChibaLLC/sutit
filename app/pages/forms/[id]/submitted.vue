@@ -7,11 +7,32 @@ import {
   BarChart3,
   Share2,
   Download,
+  Copy,
+  Clock,
 } from "lucide-vue-next";
 import { buttonVariants } from "~/components/ui/button";
 import type { FormSchema } from "~~/shared/types";
+import { toast } from "vue-sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Separator } from "~/components/ui/separator";
+import { Label } from "~/components/ui/label";
+
 const route = useRoute();
 const { data: form } = useNuxtData<FormSchema>(`form-${route.params.id}`);
+
+const stopTatUrl = computed(() => {
+  const submissionId = route.query.submissionId;
+  if (!submissionId) return null;
+  return `${window.location.origin}/submission/${submissionId}/stop-tat`;
+});
+
+const copyStopTatUrl = () => {
+  if (!stopTatUrl.value) return;
+  navigator.clipboard.writeText(stopTatUrl.value);
+  toast.success("Link copied to clipboard");
+};
 
 const shareModalOpen = ref(false);
 const toggleShareModal = () => {
@@ -43,31 +64,64 @@ const downloadResponse = () => {
         </div>
       </div>
 
-      <!-- Submission Details Card -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-xl">Submission Details</CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="col-span-full space-y-1">
-              <Label class="text-sm font-medium text-muted-foreground"
-                >Submitted At</Label
-              >
-              <p class="text-sm bg-muted px-3 py-2 rounded-md">
-                {{ new Date() }}
-              </p>
-            </div>
-          </div>
-          <Separator />
-          <div
-            class="flex items-center space-x-2 text-sm text-muted-foreground"
-          >
-            <Shield class="w-4 h-4" />
-            <span>Your data is securely stored and encrypted</span>
-          </div>
-        </CardContent>
-      </Card>
+<!-- Submission Details Card -->
+       <Card>
+         <CardHeader>
+           <CardTitle class="text-xl">Submission Details</CardTitle>
+         </CardHeader>
+         <CardContent class="space-y-4">
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div class="col-span-full space-y-1">
+               <Label class="text-sm font-medium text-muted-foreground"
+                 >Submitted At</Label
+               >
+               <p class="text-sm bg-muted px-3 py-2 rounded-md">
+                 {{ new Date() }}
+               </p>
+             </div>
+           </div>
+           <Separator />
+           <div
+             class="flex items-center space-x-2 text-sm text-muted-foreground"
+           >
+             <Shield class="w-4 h-4" />
+             <span>Your data is securely stored and encrypted</span>
+           </div>
+         </CardContent>
+       </Card>
+
+       <!-- Stop TAT Card -->
+       <Card v-if="stopTatUrl">
+         <CardHeader>
+           <CardTitle class="flex items-center gap-2">
+             <Clock class="w-5 h-5" />
+             Stop TAT
+           </CardTitle>
+           <CardDescription>
+             Use this link to stop the turnaround time timer for your
+             submission
+           </CardDescription>
+         </CardHeader>
+         <CardContent class="space-y-4">
+           <div class="flex flex-col sm:flex-row gap-3">
+             <div class="flex-1">
+               <Input
+                 :model-value="stopTatUrl"
+                 readonly
+                 class="font-mono text-xs"
+               />
+             </div>
+             <Button variant="outline" @click="copyStopTatUrl">
+               <Copy class="w-4 h-4 mr-2" />
+               Copy
+             </Button>
+           </div>
+           <p class="text-xs text-muted-foreground">
+             This link has also been sent to your email. Keep it safe to stop
+             your TAT timer when needed.
+           </p>
+         </CardContent>
+       </Card>
 
       <!-- Action Buttons -->
       <Card>

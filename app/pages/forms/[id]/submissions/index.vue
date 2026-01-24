@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NuxtLink } from "#components";
 import { ref, computed, watch } from "vue";
 import {
   Search,
@@ -14,9 +15,14 @@ import {
   Calendar,
   X,
   Loader,
+  Clock,
+  RotateCw,
+  CircleStop,
+  OctagonMinus,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
+import { formatSecondsToTime } from "~/lib/utils";
 
 definePageMeta({
   middleware: ["auth"],
@@ -357,6 +363,18 @@ const toggleReponse = async () => {
               <Loader v-if="loading.downloadExcel" />
               <FileSpreadsheet class="w-4 h-4" />
               <span class="hidden sm:inline">Excel</span>
+            </Button>
+            <Button
+              v-if="form?.calculateTat"
+              :to="`/forms/${route.params.id}/submissions/tat`"
+              :as="NuxtLink"
+              size="sm"
+              variant="outline"
+              class="gap-2"
+              as-child
+            >
+              <RotateCw class="w-4 h-4" />
+              <span class="hidden sm:inline">Manage TAT</span>
             </Button>
             <Button size="sm" variant="outline" class="gap-2">
               <CreditCard class="w-4 h-4" />
@@ -767,6 +785,19 @@ const toggleReponse = async () => {
                               title="View"
                             >
                               <Eye class="h-4 w-4" />
+                            </Button>
+                          </NuxtLink>
+                          <NuxtLink
+                            :to="`/submission/${submission.id}/stop-tat`"
+                            as-child
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              class="h-8 w-8 p-0"
+                              title="View"
+                            >
+                              <OctagonMinus class="h-4 w-4" />
                             </Button>
                           </NuxtLink>
 

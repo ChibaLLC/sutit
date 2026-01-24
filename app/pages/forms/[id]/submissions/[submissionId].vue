@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button, buttonVariants } from "@/components/ui/button";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 import {
   User,
   ArrowLeft,
@@ -31,11 +33,15 @@ import {
   Mail,
   Plus,
   Loader,
+  AlertTriangle,
+  Eye,
+  CheckCircle,
 } from "lucide-vue-next";
+import { formatSecondsToDetailedTime, formatCountdown } from "~/lib/utils";
 
 const route = useRoute();
 const formId = route.params.id as string;
-const submissionId = route.params.submissionId as string; // Note: both params are 'id', adjust if needed
+const submissionId = route.params.submissionId as string;
 
 const {
   data: submissionData,
@@ -47,39 +53,66 @@ const submission = computed(() => submissionData.value?.data);
 const loading = computed(() => pending.value);
 const error = computed(() => fetchError.value?.message || null);
 
-const countdown = ref<string>("00:00:00");
+const countdown = ref<string>("");
 
 let countdownInterval: NodeJS.Timeout | null = null;
 
 const updateCountdown = (): void => {
   if (!submission.value?.submittedAt) return;
 
-  const startTime = new Date(submission.value.submittedAt);
-
   const updateTimer = (): void => {
-    const current = new Date();
-    const diff = current.getTime() - startTime.getTime();
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    countdown.value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    countdown.value = formatCountdown(submission.value.submittedAt);
   };
 
   updateTimer();
   countdownInterval = setInterval(updateTimer, 1000);
 };
 
+const formattedTat = computed(() => {
+  if (!submission.value?.tat) return "N/A";
+  return formatSecondsToDetailedTime(submission.value.tat).formatted;
+});
+
+const totalAmount = computed(() => {
+  if (!submission.value?.storeResponses?.length) return 0;
+  return submission.value.storeResponses.reduce(
+    (sum: number, item: any) => sum + (item.total || 0),
+    0,
+  );
+});
+
+const authStore = useAuthStore();
+const isFormOwner = computed(() => {
+  return authStore.user?.id === submission.value?.form?.createdBy;
+});
+
+const stopLoading = ref(false);
+
 const stopCountdown = async () => {
+  stopLoading.value = true;
   try {
     await $fetch(`/api/forms/${formId}/submissions/${submissionId}/stop-tat`, {
       method: "POST",
+      headers: {
+        ...(await (await import("~/lib/auth-client")).authHeaders()),
+      },
     });
-    // Refresh data
     await refreshNuxtData();
   } catch (err: any) {
     console.error("Failed to stop TAT:", err);
+    const errorData = err.data;
+    const errorMessage =
+      errorData?.statusMessage || err.message || "Failed to stop TAT";
+
+    if (err.status === 403) {
+      alert(errorMessage);
+    } else if (err.status === 401) {
+      alert("You need to be logged in to stop TAT");
+    } else {
+      alert(errorMessage);
+    }
+  } finally {
+    stopLoading.value = false;
   }
 };
 
@@ -141,7 +174,12 @@ const exportData = () => {
       );
     }
     if (submission.value.tat) {
-      doc.text(`Turnaround Time: ${submission.value.tat} seconds`, 20, y + 36);
+      const tatInfo = formatSecondsToDetailedTime(submission.value.tat);
+      doc.text(
+        `Turnaround Time: ${tatInfo.label} (${submission.value.tat} seconds)`,
+        20,
+        y + 36,
+      );
     }
     y += 50;
 
@@ -801,7 +839,7 @@ onUnmounted(() => {
                   <p class="text-sm text-foreground mb-1">Method</p>
                   <p class="text-base font-medium">
                     {{
-                      submissionData?.data.payments.payment ? "MPESA" : "N/A"
+                      submissionData?.data?.payments?.payment ? "MPESA" : "N/A"
                     }}
                   </p>
                 </div>
@@ -811,20 +849,27 @@ onUnmounted(() => {
                   </p>
                   <p class="text-base font-medium">
                     {{
-                      submissionData?.data.payments.payment.phoneNumber || "N/A"
+                      submissionData?.data?.payments?.payment?.phoneNumber ||
+                      "N/A"
                     }}
                   </p>
                 </div>
                 <div>
                   <p class="text-sm text-foreground mb-1">Amount</p>
                   <p class="text-lg font-bold text-primary">
-                    Kes {{ submissionData?.data.payments.payment.amount }}
+                    Kes
+                    {{
+                      submissionData?.data?.payments?.payment?.amount || "N/A"
+                    }}
                   </p>
                 </div>
                 <div>
                   <p class="text-sm text-foreground mb-1">Reference Number</p>
                   <p class="text-lg font-bold text-primary">
-                    {{ submissionData?.data.payments.payment.receiptNumber }}
+                    {{
+                      submissionData?.data?.payments?.payment?.receiptNumber ||
+                      "N/A"
+                    }}
                   </p>
                 </div>
               </div>
@@ -847,24 +892,34 @@ onUnmounted(() => {
                     {{ new Date(submission?.submittedAt).toLocaleString() }}
                   </p>
                 </div>
-                <div>
+                <div v-if="!submission.completedAt">
                   <p class="text-sm text-foreground mb-1">Elapsed Time</p>
-                  <p class="text-base font-medium">{{ countdown }}</p>
+                  <p class="text-base font-medium">{{ countdown || "0s" }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-foreground mb-1">TAT (seconds)</p>
+                  <p class="text-sm text-foreground mb-1">Final TAT</p>
                   <p class="text-base font-medium text-primary">
-                    {{ submission?.tat || "N/A" }}
+                    {{ submission?.tat ? formattedTat : "Not stopped yet" }}
                   </p>
                 </div>
                 <Button
+                  v-if="isFormOwner && !submission?.completedAt"
                   variant="outline"
                   class="w-full gap-2"
+                  :disabled="stopLoading"
                   @click="stopCountdown"
                 >
-                  <Play class="w-5 h-5" />
+                  <Loader v-if="stopLoading" class="w-5 h-5 animate-spin" />
+                  <Play v-else class="w-5 h-5" />
                   <span>Stop TAT</span>
                 </Button>
+                <div
+                  v-else-if="submission?.completedAt"
+                  class="flex items-center gap-2 text-sm text-muted-foreground"
+                >
+                  <CheckCircle class="w-5 h-5 text-green-600" />
+                  <span>TAT completed</span>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -11,6 +11,7 @@ import {
 import { eq, isNull, isNotNull, and, inArray } from "drizzle-orm";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
+import { sendMail } from "./email.service";
 
 export const submitForm = async (
   formId: string,
@@ -125,12 +126,24 @@ export const submitForm = async (
       }
     }
 
+    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+    const stopTatUrl = `${baseUrl}/submission/${submission.id}/stop-tat`;
+
+    if (email) {
+      try {
+        await sendStopTatNotification(email, form.title, stopTatUrl);
+      } catch (error) {
+        console.error("Failed to send stop TAT notification:", error);
+      }
+    }
+
     return {
       submmission: {
         ...submission,
         pricePaid: totalPaid,
       },
       form: form,
+      stopTatUrl,
       message:
         totalPaid > 0
           ? "Stk Push Has been sent to your phone Pay"
@@ -234,6 +247,19 @@ export const updateSubmissionStatus = async (
     .where(eq(formSubmissions.id, submissionId));
 };
 
+export const stopSubmissionTAT = async (submissionId: string) => {
+  const updateData: any = {
+    completedAt: new Date(),
+    status: "completed",
+  };
+  const [submission] = await db
+    .update(formSubmissions)
+    .set(updateData)
+    .where(eq(formSubmissions.id, submissionId))
+    .returning();
+  return submission;
+};
+
 export const softDeleteSubmission = async (submissionId: string) => {
   await db
     .update(formSubmissions)
@@ -305,5 +331,58 @@ export const permanentDeleteSubmission = async (submissionId: string) => {
     await tx
       .delete(formSubmissions)
       .where(eq(formSubmissions.id, submissionId));
+  });
+};
+
+export const sendStopTatNotification = async (
+  email: string,
+  formTitle: string,
+  stopTatUrl: string,
+) => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; }
+          .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+          .button:hover { background: #5568d3; }
+          .footer { background: #f0f0f0; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Form Submission Received</h1>
+          </div>
+          <div class="content">
+            <h2>Thank you for your submission!</h2>
+            <p>Your response to <strong>${formTitle}</strong> has been successfully recorded.</p>
+            
+            <p><strong>Stop Your Turnaround Time (TAT)</strong></p>
+            <p>To stop the TAT timer for your submission, click the button below:</p>
+            
+            <a href="${stopTatUrl}" class="button">Stop TAT</a>
+            
+            <p>Or copy this link to your browser:</p>
+            <p style="word-break: break-all; color: #666;">${stopTatUrl}</p>
+            
+            <p><em>This link will allow you to stop the TAT timer when your request has been processed.</em></p>
+          </div>
+          <div class="footer">
+            <p>Powered by Sutit Forms</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  await sendMail({
+    to: email,
+    subject: `Stop TAT - ${formTitle}`,
+    html,
   });
 };

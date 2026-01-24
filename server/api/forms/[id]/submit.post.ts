@@ -18,8 +18,10 @@ export default defineEventHandler(async (event) => {
     let submission = await submitForm(formId, body, session?.user.id);
     return {
       data: {
-        ...submission,
+        ...submission.submmission,
         ...submission.pay,
+        stopTatUrl: submission.stopTatUrl,
+        submissionId: submission.submmission.id,
       },
       message: submission.message,
     };
