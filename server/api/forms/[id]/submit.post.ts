@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
       data: {
         ...submission.submmission,
         ...submission.pay,
-        stopTatUrl: submission.stopTatUrl,
         submissionId: submission.submmission.id,
       },
       message: submission.message,

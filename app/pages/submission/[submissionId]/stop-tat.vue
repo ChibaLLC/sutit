@@ -15,6 +15,7 @@ import { ArrowLeft } from "lucide-vue-next";
 const route = useRoute();
 const submissionId = route.params.submissionId as string;
 const authStore = useAuthStore();
+const token = route.query.token as string;
 
 const { data, error, pending, refresh } = await useFetch(
   `/api/submissions/${submissionId}`,
@@ -49,8 +50,16 @@ const updateCountdown = (): void => {
 const stopTat = async () => {
   stopLoading.value = true;
   try {
+    const requestBody: any = {};
+
+    // Add token to request if user is not authenticated
+    if (!authStore.isAuthenticated && token) {
+      requestBody.token = token;
+    }
+
     await $fetch(`/api/submissions/${submissionId}/stop-tat`, {
       method: "POST",
+      body: requestBody,
     });
     toast.success("TAT stopped successfully");
     await refresh();
@@ -138,7 +147,7 @@ onUnmounted(() => {
           variant="ghost"
           size="sm"
           class="gap-2"
-          :to="`/forms/${submission.formId}/submissions`"
+          :to="`/forms/${submission?.formId}`"
           v-if="submission?.formId && authStore.isAuthenticated"
         >
           <ArrowLeft class="w-4 h-4" />
@@ -167,6 +176,17 @@ onUnmounted(() => {
           </h1>
           <p class="text-muted-foreground">
             {{ submission?.form?.title }}
+          </p>
+        </div>
+
+        <!-- Token access notice for unauthenticated users -->
+        <div
+          v-if="!authStore.isAuthenticated && token"
+          class="bg-blue-50 border border-blue-200 rounded-lg p-3"
+        >
+          <p class="text-sm text-blue-700">
+            <strong>Phone Access:</strong> You have access via the secure link
+            sent to your phone number.
           </p>
         </div>
       </div>

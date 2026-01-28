@@ -12,6 +12,12 @@ import { eq, isNull, isNotNull, and, inArray } from "drizzle-orm";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
 import { sendMail } from "./email.service";
+import { sendTextSmsTiara } from "../utils/sms/tiara";
+import { randomBytes } from "crypto";
+
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
 
 export const submitForm = async (
   formId: string,
@@ -27,6 +33,7 @@ export const submitForm = async (
     }
 
     // 2. Create submission
+    const accessToken = generateToken();
     const [submission] = await tx
       .insert(formSubmissions)
       .values({
@@ -35,6 +42,7 @@ export const submitForm = async (
         status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
         metadata: {
           paymentData: data.paymentData ?? null,
+          accessToken, // Store access token for unauthenticated users
         },
         pricePaid: 0, // will be updated after we compute total
       })
@@ -120,20 +128,46 @@ export const submitForm = async (
           tx.rollback();
           throw new Error("STK PUSH FAILED");
         }
+
+        // Update submission metadata with token data for phone verification
+        if (pay.phoneNumber) {
+          await tx
+            .update(formSubmissions)
+            .set({
+              metadata: {
+                ...submission.metadata,
+                tokenData: {
+                  phoneNumber: pay.phoneNumber,
+                  generatedAt: new Date().toISOString(),
+                },
+              },
+            })
+            .where(eq(formSubmissions.id, submission.id));
+        }
+
+        // For paid submissions, we'll send notifications after payment confirmation
+        // in the M-Pesa callback
       } catch (e: any) {
         tx.rollback();
         throw new Error(e);
       }
-    }
-
-    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-    const stopTatUrl = `${baseUrl}/submission/${submission.id}/stop-tat`;
-
-    if (email) {
-      try {
-        await sendStopTatNotification(email, form.title, stopTatUrl);
-      } catch (error) {
-        console.error("Failed to send stop TAT notification:", error);
+    } else {
+      const baseUrl =
+        process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const stopTatUrl =
+        totalPaid > 0
+          ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${accessToken}`
+          : `${baseUrl}/submission/${submission.id}/stop-tat`;
+      // For free submissions (no payment), send stop TAT notification immediately
+      if (email) {
+        try {
+          await sendStopTatNotification(email, form.title, stopTatUrl);
+        } catch (error) {
+          console.error(
+            "Failed to send stop TAT notification for free submission:",
+            error,
+          );
+        }
       }
     }
 
@@ -143,7 +177,6 @@ export const submitForm = async (
         pricePaid: totalPaid,
       },
       form: form,
-      stopTatUrl,
       message:
         totalPaid > 0
           ? "Stk Push Has been sent to your phone Pay"
