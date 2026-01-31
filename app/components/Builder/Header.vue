@@ -8,12 +8,16 @@ import {
   SaveIcon,
   Sun,
   Upload,
+  Loader,
+  AlertCircle,
 } from "lucide-vue-next";
 import type { FormSchema } from "~~/shared/types";
 
 const props = defineProps<{
   previewMode: boolean;
   isDark: boolean;
+  isSubmitting?: boolean;
+  validationErrors?: { field: string; message: string }[];
 }>();
 const emits = defineEmits<{
   publish: [];
@@ -88,11 +92,21 @@ const emits = defineEmits<{
 
         <Separator orientation="vertical" class="h-5" />
 
+        <!-- Validation Warning -->
+        <div
+          v-if="validationErrors && validationErrors.length > 0"
+          class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-destructive/10 text-destructive rounded-md text-sm"
+        >
+          <AlertCircle class="h-4 w-4" />
+          <span>{{ validationErrors.length }} error(s)</span>
+        </div>
+
         <!-- Preview Toggle -->
         <Button
           :variant="previewMode ? 'default' : 'secondary'"
           size="sm"
           @click="$emit('preview')"
+          :disabled="isSubmitting"
           class="h-9 px-3"
         >
           <Eye v-if="!previewMode" class="h-4 w-4" />
@@ -106,10 +120,14 @@ const emits = defineEmits<{
         <Button
           size="sm"
           @click.prevent="$emit('publish')"
+          :disabled="isSubmitting"
           class="h-9 px-4 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-200"
         >
-          <SaveIcon class="h-4 w-4" />
-          <span class="ml-2 hidden sm:inline">Publish</span>
+          <Loader v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+          <SaveIcon v-else class="h-4 w-4" />
+          <span class="ml-2 hidden sm:inline">
+            {{ isSubmitting ? "Publishing..." : "Publish" }}
+          </span>
         </Button>
       </div>
     </div>

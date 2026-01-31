@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { AlertTriangle, Plus, StoreIcon, Trash2, X } from "lucide-vue-next";
+import { ref, computed } from "vue";
+import {
+  AlertTriangle,
+  Plus,
+  StoreIcon,
+  Trash2,
+  X,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  ChevronRight,
+} from "lucide-vue-next";
 import type {
   FormField,
   FormSchema,
@@ -8,8 +18,7 @@ import type {
   Store,
   StoreItem,
 } from "~~/shared/types";
-import { toTypedSchema } from "@vee-validate/zod";
-import { useForm } from "vee-validate";
+import { formSchemaSchema } from "~~/shared/utils/form.schema";
 import { toast } from "vue-sonner";
 const props = defineProps<{
   form?: FormSchema;
@@ -114,16 +123,117 @@ const removePage = (index: number): void => {
     currentPage.value = form.value.pages[Math.min(index, form.value.pages.length - 1)];
   }
 };
-const submit = () => {
+const validationErrors = ref<{ field: string; message: string }[]>([]);
+const isSubmitting = ref(false);
+
+interface ValidationIssue {
+  path: (string | number)[];
+  message: string;
+  code: string;
+}
+
+const formatValidationErrors = (
+  issues: ValidationIssue[]
+): { field: string; message: string }[] => {
+  const errors: { field: string; message: string }[] = [];
+  const seenFields = new Set<string>();
+
+  for (const issue of issues) {
+    const fieldPath = issue.path.join(".");
+    let fieldName = fieldPath;
+    let message = issue.message;
+
+    // Map technical paths to user-friendly names
+    if (fieldPath === "title") {
+      fieldName = "Form Title";
+    } else if (fieldPath === "slug") {
+      fieldName = "URL Slug";
+    } else if (fieldPath === "status") {
+      fieldName = "Form Status";
+    } else if (fieldPath.startsWith("pages")) {
+      const pageMatch = fieldPath.match(/pages\.(\d+)/);
+      if (pageMatch) {
+        const pageIndex = parseInt(pageMatch[1]) + 1;
+        fieldName = `Page ${pageIndex}`;
+        if (fieldPath.includes("title")) {
+          fieldName += " Title";
+        } else if (fieldPath.includes("fields")) {
+          fieldName += " Fields";
+        }
+      }
+    } else if (fieldPath.startsWith("stores")) {
+      const storeMatch = fieldPath.match(/stores\.(\d+)/);
+      if (storeMatch) {
+        const storeIndex = parseInt(storeMatch[1]) + 1;
+        fieldName = `Store ${storeIndex}`;
+        if (fieldPath.includes("items")) {
+          fieldName += " Products";
+        }
+      }
+    }
+
+    // Create unique key for deduplication
+    const uniqueKey = `${fieldName}:${message}`;
+    if (!seenFields.has(uniqueKey)) {
+      seenFields.add(uniqueKey);
+      errors.push({
+        field: fieldName,
+        message: message,
+      });
+    }
+  }
+
+  return errors;
+};
+
+const validateForm = (): boolean => {
+  validationErrors.value = [];
+
   const result = formSchemaSchema.safeParse(form.value);
   if (!result.success) {
-    console.log(result.error.format());
-    result.error.issues.forEach((issue) => {
-      toast.error(issue.message);
+    validationErrors.value = formatValidationErrors(
+      result.error.issues as ValidationIssue[]
+    );
+
+    // Show grouped error toast
+    const errorCount = validationErrors.value.length;
+    toast.error(`Validation failed: ${errorCount} issue${errorCount > 1 ? "s" : ""} found`, {
+      description: validationErrors.value.slice(0, 3).map((e) => `• ${e.field}: ${e.message}`).join("\n"),
+      duration: 8000,
     });
+
+    return false;
+  }
+
+  return true;
+};
+
+const submit = async () => {
+  if (isSubmitting.value) return;
+
+  // Clear previous errors
+  validationErrors.value = [];
+
+  // Run validation
+  if (!validateForm()) {
     return;
   }
-  emits("publish", form.value);
+
+  isSubmitting.value = true;
+
+  try {
+    emits("publish", form.value);
+    toast.success("Form submitted successfully!", {
+      description: "Redirecting to your form...",
+    });
+  } catch (error: any) {
+    console.error("Form submission error:", error);
+    toast.error("Failed to submit form", {
+      description: error?.message || "An unexpected error occurred",
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 const handleSettingsUpdate = (updatedForm: FormSchema) => {
@@ -134,9 +244,57 @@ const handleSettingsUpdate = (updatedForm: FormSchema) => {
 </script>
 <template>
   <div class="min-h-screen bg-background text-foreground p-3">
+    <!-- Validation Errors Panel -->
+    <div
+      v-if="validationErrors.length > 0"
+      class="fixed top-20 right-4 z-50 w-96 max-w-[90vw]"
+    >
+      <Card class="border-destructive/50 shadow-lg">
+        <CardHeader class="pb-3">
+          <div class="flex items-center gap-2">
+            <AlertCircle class="h-5 w-5 text-destructive" />
+            <CardTitle class="text-base">Validation Errors</CardTitle>
+            <span
+              class="ml-auto text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full"
+            >
+              {{ validationErrors.length }}
+            </span>
+          </div>
+          <CardDescription>
+            Please fix the following issues before publishing
+          </CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-2 max-h-60 overflow-y-auto">
+          <div
+            v-for="(error, index) in validationErrors"
+            :key="index"
+            class="flex items-start gap-2 p-2 bg-destructive/5 rounded-lg text-sm"
+          >
+            <ChevronRight class="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+            <div>
+              <span class="font-medium">{{ error.field }}</span>
+              <p class="text-muted-foreground">{{ error.message }}</p>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter class="pt-3 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            class="w-full"
+            @click="validationErrors = []"
+          >
+            Dismiss
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+
     <BuilderHeader
       :previewMode="previewMode"
       :isDark="isDark"
+      :isSubmitting="isSubmitting"
+      :validationErrors="validationErrors"
       @preview="togglePreviewMode()"
       @go-back="$emit('go-back')"
       @publish="submit"

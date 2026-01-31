@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import {
   Settings,
   FileText,
@@ -17,6 +18,7 @@ import {
   Loader,
 } from "lucide-vue-next";
 import type { FormSchema } from "~~/shared/types";
+import { slugify } from "~~/shared/utils/form.schema";
 import { toast } from "vue-sonner";
 interface Props {
   form: FormSchema;
@@ -250,7 +252,8 @@ const slugUrl = computed(() => {
                 </p>
               </div>
               <Switch
-                v-model="form.isPublic"
+                :checked="form.isPublic"
+                @update:checked="(checked) => (form.isPublic = checked)"
                 class="transition-all duration-200"
               />
             </div>
@@ -265,7 +268,8 @@ const slugUrl = computed(() => {
                 </p>
               </div>
               <Switch
-                v-model="form.requiresLogin"
+                :checked="form.requiresLogin"
+                @update:checked="(checked) => (form.requiresLogin = checked)"
                 class="transition-all duration-200"
               />
             </div>
@@ -303,7 +307,8 @@ const slugUrl = computed(() => {
                 </p>
               </div>
               <Switch
-                v-model="form.allowMultipleSubmissions"
+                :checked="form.allowMultipleSubmissions"
+                @update:checked="(checked) => (form.allowMultipleSubmissions = checked)"
                 class="transition-all duration-200"
               />
             </div>
@@ -318,7 +323,8 @@ const slugUrl = computed(() => {
                 </p>
               </div>
               <Switch
-                v-model="form.allowRegistrationReuse"
+                :checked="form.allowRegistrationReuse"
+                @update:checked="(checked) => (form.allowRegistrationReuse = checked)"
                 class="transition-all duration-200"
               />
             </div>
@@ -379,7 +385,8 @@ const slugUrl = computed(() => {
                   </p>
                 </div>
                 <Switch
-                  v-model="form.requireMerch"
+                  :checked="form.requireMerch"
+                  @update:checked="(checked) => (form.requireMerch = checked)"
                   class="transition-all duration-200"
                 />
               </div>
@@ -394,7 +401,8 @@ const slugUrl = computed(() => {
                   </p>
                 </div>
                 <Switch
-                  v-model="form.calculateTat"
+                  :checked="form.calculateTat"
+                  @update:checked="(checked) => (form.calculateTat = checked)"
                   class="transition-all duration-200"
                 />
               </div>
@@ -411,7 +419,8 @@ const slugUrl = computed(() => {
                   </p>
                 </div>
                 <Switch
-                  v-model="form.allowGroups"
+                  :checked="form.allowGroups"
+                  @update:checked="(checked) => (form.allowGroups = checked)"
                   class="transition-all duration-200"
                 />
               </div>
