@@ -35,6 +35,12 @@ watch(() => props.product, (newProduct) => {
   }
 }, { immediate: true });
 
+const generateUniqueId = (): string => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `prod_${timestamp}_${random}`;
+};
+
 const addProduct = () => {
   if (props.product) {
     const index = props.store.items.findIndex((p) => p.id == props.product?.id);
@@ -44,7 +50,7 @@ const addProduct = () => {
   } else {
     props.store.items.push({
       ...form.value,
-      id: (props.store.items.length + 1).toString(),
+      id: generateUniqueId(),
     });
   }
 
@@ -104,9 +110,13 @@ const removeImage = (index: number) => {
               class="w-full px-3 py-2 border rounded-md bg-background"
             />
           </div>
-          <div>
-            <Label>Is Infinite</Label>
-            <Checkbox v-model="form.infinite" />
+          <div class="flex items-center gap-2">
+            <Checkbox
+              id="infinite"
+              :checked="form.infinite"
+              @update:checked="(checked) => (form.infinite = checked)"
+            />
+            <Label for="infinite" class="cursor-pointer">Infinite Stock</Label>
           </div>
           <div v-if="!form.infinite">
             <Label class="block text-sm font-medium mb-2">Stock</Label>

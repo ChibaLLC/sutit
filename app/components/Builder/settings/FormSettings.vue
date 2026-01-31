@@ -13,8 +13,11 @@ import {
   Send,
   Hash,
   Calendar,
+  CheckCircle,
+  Loader,
 } from "lucide-vue-next";
 import type { FormSchema } from "~~/shared/types";
+import { toast } from "vue-sonner";
 interface Props {
   form: FormSchema;
 }
@@ -24,18 +27,37 @@ const emit = defineEmits<{
   update: [form: FormSchema];
 }>();
 
+const isSaving = ref(false);
+const lastSaved = ref<Date | null>(null);
+
 const updateTags = (event: Event) => {
   const target = event.target as HTMLTextAreaElement;
   const tagsString = target.value;
-  console.log(tagsString);
   props.form.tags = tagsString
     .split(",")
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
 };
 
-const saveForm = () => {
-  emit("update", props.form);
+const saveForm = async () => {
+  isSaving.value = true;
+  try {
+    // Emit the update event with the current form data
+    emit("update", { ...props.form });
+    lastSaved.value = new Date();
+    toast.success("Settings saved successfully");
+  } catch (error) {
+    console.error("Error saving form settings:", error);
+    toast.error("Failed to save settings");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const resetForm = () => {
+  if (confirm("Are you sure you want to reset all changes?")) {
+    window.location.reload();
+  }
 };
 const slugUrl = computed(() => {
   let host = window.location.host;
@@ -519,15 +541,30 @@ const slugUrl = computed(() => {
         class="flex items-center justify-between p-6 bg-card rounded-xl border"
       >
         <div class="text-sm text-muted-foreground">
-          Changes are automatically saved
+          <span v-if="lastSaved" class="flex items-center gap-2">
+            <CheckCircle class="h-4 w-4 text-green-500" />
+            Last saved {{ lastSaved.toLocaleTimeString() }}
+          </span>
+          <span v-else>Unsaved changes</span>
         </div>
         <div class="flex gap-3">
           <Button
+            variant="outline"
+            @click="resetForm"
+            :disabled="isSaving"
+            class="transition-all duration-200 hover:scale-105"
+          >
+            <RotateCcw class="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+          <Button
             @click="saveForm"
+            :disabled="isSaving"
             class="transition-all duration-200 hover:scale-105 bg-secondary hover:bg-secondary/90"
           >
-            <Save class="h-4 w-4 mr-2" />
-            Save Changes
+            <Loader v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
+            <Save v-else class="h-4 w-4 mr-2" />
+            {{ isSaving ? "Saving..." : "Save Changes" }}
           </Button>
         </div>
       </div>

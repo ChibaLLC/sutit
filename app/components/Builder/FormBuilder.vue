@@ -67,36 +67,52 @@ const selectField = (field: FormField) => {
   selectedElement.value = field;
 };
 
-const addStore = () => {
-  form.value.stores?.push({
-    id: form.value.stores.length + 1,
-    name: "Store 1",
+const addStore = (): void => {
+  const newStore: Store = {
+    id: Date.now(), // Use timestamp for unique ID
+    name: `Store ${(form.value.stores?.length || 0) + 1}`,
     description: "",
     items: [] as StoreItem[],
-  });
-  currentStore.value = form.value.stores[form.value.stores?.length];
+  };
+  form.value.stores?.push(newStore);
+  currentStore.value = newStore;
 };
-const removeStore = (store: Store) => {
-  const index = form.value.stores?.indexOf(store);
+
+const removeStore = (store: Store): void => {
+  if (!form.value.stores) return;
+  const index = form.value.stores.indexOf(store);
   if (index !== -1) {
-    form.value.stores?.splice(index, 1);
+    form.value.stores.splice(index, 1);
+    // Reset current store if the removed store was selected
+    if (currentStore.value === store) {
+      currentStore.value = form.value.stores.length > 0 ? form.value.stores[0] : null;
+    }
   }
 };
-const addPage = () => {
-  let id = form.value.pages.length + 1;
-  form.value.pages.push({
-    id: id,
-    title: "New Page",
+
+const addPage = (): void => {
+  const newPage: PageSchema = {
+    id: Date.now(),
+    title: `Page ${form.value.pages.length + 1}`,
     description: "",
     fields: [] as FormField[],
-    orderIndex: id,
-  });
+    orderIndex: form.value.pages.length + 1,
+  };
+  form.value.pages.push(newPage);
+  currentPage.value = newPage;
 };
-const removePage = (index: number) => {
-  if (form.value.pages.length === 0) {
+
+const removePage = (index: number): void => {
+  if (form.value.pages.length <= 1) {
+    toast.error("Cannot remove the last page");
     return;
   }
+  const removedPage = form.value.pages[index];
   form.value.pages.splice(index, 1);
+  // Switch to another page if the current page was removed
+  if (currentPage.value === removedPage) {
+    currentPage.value = form.value.pages[Math.min(index, form.value.pages.length - 1)];
+  }
 };
 const submit = () => {
   const result = formSchemaSchema.safeParse(form.value);
@@ -108,6 +124,12 @@ const submit = () => {
     return;
   }
   emits("publish", form.value);
+};
+
+const handleSettingsUpdate = (updatedForm: FormSchema) => {
+  // Merge the updated settings into the current form
+  Object.assign(form.value, updatedForm);
+  toast.success("Form settings updated");
 };
 </script>
 <template>
@@ -387,7 +409,10 @@ const submit = () => {
       <template #settings>
         <div class="flex h-[calc(100vh-120px)]">
           <div class="flex-1 overflow-auto">
-            <BuilderSettingsFormSettings :form="form" />
+            <BuilderSettingsFormSettings
+              :form="form"
+              @update="(updatedForm) => handleSettingsUpdate(updatedForm)"
+            />
           </div>
         </div>
       </template>

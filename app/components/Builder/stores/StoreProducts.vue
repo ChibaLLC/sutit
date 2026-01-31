@@ -25,7 +25,7 @@ const editProduct = (p: StoreItem) => {
 };
 const deleteProduct = (p: StoreItem) => {
   const index = props.store.items.indexOf(p);
-  if (index) {
+  if (index !== -1) {
     props.store.items.splice(index, 1);
   }
 };
