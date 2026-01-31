@@ -15,14 +15,11 @@ import {
   Calendar,
   X,
   Loader,
-  Clock,
-  RotateCw,
-  CircleStop,
   OctagonMinus,
+  RotateCwIcon,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
-import { formatSecondsToTime } from "~/lib/utils";
 
 definePageMeta({
   middleware: ["auth"],
@@ -208,6 +205,9 @@ const stats = computed(() => {
   const total = data.length;
   const completed = data.filter((s) => s.status === "completed").length;
   const pending = data.filter((s) => s.status === "pending").length;
+  const failedPayment = data.filter(
+    (s) => s.status === "failed_payment",
+  ).length;
   const totalRevenue = data.reduce((sum, s) => sum + (s.pricePaid ?? 0), 0);
   const storeRevenue = data.reduce(
     (sum, s) =>
@@ -223,6 +223,7 @@ const stats = computed(() => {
     total,
     completed,
     pending,
+    failedPayment,
     totalRevenue,
     storeRevenue,
   };
@@ -371,9 +372,8 @@ const toggleReponse = async () => {
               size="sm"
               variant="outline"
               class="gap-2"
-              as-child
             >
-              <RotateCw class="w-4 h-4" />
+              <RotateCwIcon class="w-4 h-4" />
               <span class="hidden sm:inline">Manage TAT</span>
             </Button>
             <Button size="sm" variant="outline" class="gap-2">
@@ -395,7 +395,9 @@ const toggleReponse = async () => {
       </Card>
 
       <!-- Dashboard Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-6"
+      >
         <Card class="p-6">
           <div class="flex items-center justify-between">
             <div>
@@ -440,6 +442,24 @@ const toggleReponse = async () => {
               class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center"
             >
               <Loader class="h-4 w-4 text-yellow-600" />
+            </div>
+          </div>
+        </Card>
+
+        <Card class="p-6" v-if="stats.failedPayment > 0">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">
+                Failed Payments
+              </p>
+              <p class="text-2xl font-bold text-red-600">
+                {{ stats.failedPayment }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center"
+            >
+              <CreditCard class="h-4 w-4 text-red-600" />
             </div>
           </div>
         </Card>
@@ -533,6 +553,9 @@ const toggleReponse = async () => {
                           <SelectItem value="all">All Statuses</SelectItem>
                           <SelectItem value="pending">Pending</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="failed_payment"
+                            >Payment Failed</SelectItem
+                          >
                         </SelectContent>
                       </Select>
                     </div>
@@ -708,11 +731,23 @@ const toggleReponse = async () => {
                           :variant="
                             submission.status === 'completed'
                               ? 'default'
-                              : 'secondary'
+                              : submission.status === 'failed_payment'
+                                ? 'destructive'
+                                : 'secondary'
                           "
+                          :class="{
+                            'bg-yellow-100 text-yellow-800 hover:bg-yellow-100':
+                              submission.status === 'pending',
+                            'bg-red-100 text-red-800 hover:bg-red-100':
+                              submission.status === 'failed_payment',
+                          }"
                           class="capitalize"
                         >
-                          {{ submission.status }}
+                          {{
+                            submission.status === "failed_payment"
+                              ? "Payment Failed"
+                              : submission.status
+                          }}
                         </Badge>
                       </td>
                       <!-- Dynamic form field values -->

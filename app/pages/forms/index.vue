@@ -20,7 +20,10 @@ import {
   Users2,
   Share,
   Filter,
+  AlertTriangle,
+  Loader,
 } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 import { buttonVariants } from "~/components/ui/button";
 import { authHeaders } from "~/lib/auth-client";
 import type { FormSchema } from "~~/shared/types";
@@ -103,6 +106,41 @@ const toggleShareModal = (form?: FormSchema) => {
 
 const toggleFilters = () => {
   filtersOpen.value = !filtersOpen.value;
+};
+
+// Form deletion
+const deleteDialogOpen = ref(false);
+const formToDelete = ref<FormSchema | null>(null);
+const isDeleting = ref(false);
+
+const openDeleteDialog = (form: FormSchema) => {
+  formToDelete.value = form;
+  deleteDialogOpen.value = true;
+};
+
+const deleteForm = async () => {
+  if (!formToDelete.value) return;
+
+  isDeleting.value = true;
+  try {
+    await $fetch(`/api/forms/${formToDelete.value.id}`, {
+      method: "DELETE",
+      headers: {
+        ...(await authHeaders()),
+      },
+    });
+
+    toast.success("Form deleted successfully");
+    // Refresh the forms list
+    await refreshNuxtData();
+  } catch (error: any) {
+    console.error("Error deleting form:", error);
+    toast.error(error.data?.message || "Failed to delete form");
+  } finally {
+    isDeleting.value = false;
+    deleteDialogOpen.value = false;
+    formToDelete.value = null;
+  }
 };
 </script>
 
@@ -452,7 +490,10 @@ const toggleFilters = () => {
                   Duplicate
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem class="text-destructive">
+                <DropdownMenuItem
+                  class="text-destructive"
+                  @click="openDeleteDialog(form)"
+                >
                   <Trash2 class="w-4 h-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
@@ -629,6 +670,38 @@ const toggleFilters = () => {
         </Card>
       </div>
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle class="flex items-center gap-2">
+            <AlertTriangle class="h-5 w-5 text-destructive" />
+            Delete Form
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{{ formToDelete?.title }}"?<br />
+            <span class="font-medium text-destructive">
+              This action cannot be undone.
+            </span>
+            All submissions, responses, and associated data will be permanently
+            deleted.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="isDeleting">Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            @click="deleteForm"
+            :disabled="isDeleting"
+            class="bg-destructive hover:bg-destructive/90"
+          >
+            <Loader v-if="isDeleting" class="w-4 h-4 mr-2 animate-spin" />
+            <Trash2 v-else class="w-4 h-4 mr-2" />
+            {{ isDeleting ? "Deleting..." : "Delete Form" }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     <!-- Share Modal -->
     <LazyFormsShareCard
