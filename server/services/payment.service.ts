@@ -1,6 +1,6 @@
 import { Mpesa } from "daraja.js";
 import { Form, StkCallbackHook, Submission } from "~~/shared/types";
-import { formGroupMemberPayments, formPayments, payments } from "../db/schema";
+import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
 import db from "../db";
 import { eq } from "drizzle-orm";
 import { callStkPush } from "./mpesa.service";
@@ -71,21 +71,39 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   const { stkCallback } = data.Body;
 
   if (stkCallback.ResultCode != 0) {
-    const [payment] = await db
+    // First, find the payment by checkout ID
+    const paymentRecord = await db.query.payments.findFirst({
+      where: eq(payments.checkoutId, stkCallback.CheckoutRequestID),
+    });
+
+    if (!paymentRecord) {
+      console.error("Payment not found for checkout ID:", stkCallback.CheckoutRequestID);
+      return { success: false, message: stkCallback.ResultDesc };
+    }
+
+    // Update payment status to failed
+    await db
       .update(payments)
       .set({
         status: "failed",
         updatedAt: new Date(),
       })
-      .where(eq(payments.checkoutId, stkCallback.CheckoutRequestID))
-      .returning();
+      .where(eq(payments.checkoutId, stkCallback.CheckoutRequestID));
 
-    let formPayment = await db.query.formPayments.findFirst({
-      where: eq(formPayments.paymentId, payment.id),
+    // Find associated form payment and submission
+    const formPayment = await db.query.formPayments.findFirst({
+      where: eq(formPayments.paymentId, paymentRecord.id),
     });
 
     if (formPayment?.submissionId) {
-      await permanentDeleteSubmission(formPayment?.submissionId);
+      // Update submission status to failed_payment instead of deleting
+      await db
+        .update(formSubmissions)
+        .set({
+          status: "failed_payment",
+          updatedAt: new Date(),
+        })
+        .where(eq(formSubmissions.id, formPayment.submissionId));
     }
 
     return { success: false, message: stkCallback.ResultDesc };
@@ -130,6 +148,23 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
         updatedAt: new Date(),
       })
       .where(eq(formGroupMemberPayments.paymentId, updatedPayment.id));
+
+    // Also update the form payment and submission status
+    const formPaymentRecord = await db.query.formPayments.findFirst({
+      where: eq(formPayments.paymentId, updatedPayment.id),
+    });
+
+    if (formPaymentRecord?.submissionId) {
+      // Update submission to completed status after successful payment
+      await db
+        .update(formSubmissions)
+        .set({
+          status: "completed",
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(formSubmissions.id, formPaymentRecord.submissionId));
+    }
   }
   const formPayment = await db.query.formPayments.findFirst({
     where: eq(formPayments.paymentId, updatedPayment.id),
