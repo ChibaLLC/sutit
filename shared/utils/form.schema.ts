@@ -79,6 +79,8 @@ export const storeSchema = z.object({
 });
 
 export const formSchemaSchema = z.object({
+  id: z.string().optional(),
+  createdBy: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   pages: z.array(pageSchemaSchema).min(1, "At least one page is required"),
@@ -94,12 +96,15 @@ export const formSchemaSchema = z.object({
   allowMultipleSubmissions: z.boolean(),
   allowRegistrationReuse: z.boolean(),
   submissionLimit: z.number().optional().nullable(),
-  publishedAt: z.string().default(new Date().toString()),
+  publishedAt: z.string().optional().nullable(),
   tags: z.array(z.string()),
   isPublic: z.boolean(),
   requiresLogin: z.boolean(),
+  acceptResponses: z.boolean().default(true),
   slug: z.string().min(1, "Slug is required"),
   afterSubmissionMessage: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 export const slugify = (str: string) => {
   return str

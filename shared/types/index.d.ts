@@ -39,11 +39,11 @@ export interface PageSchema {
   orderIndex: number;
 }
 export interface FormSchema {
-  id: string;
+  id?: string;
   title: string;
   description?: string;
   pages: PageSchema[];
-  createdBy: string;
+  createdBy?: string;
   stores?: Store[];
   price: number;
   status: string;
@@ -56,10 +56,11 @@ export interface FormSchema {
   allowMultipleSubmissions: boolean;
   allowRegistrationReuse: boolean;
   submissionLimit: number | null;
-  publishedAt: string;
+  publishedAt?: string;
   tags: string[];
   isPublic: boolean;
   requiresLogin: boolean;
+  acceptResponses?: boolean;
   slug: string;
   afterSubmissionMessage?: string;
   createdAt?: string;
