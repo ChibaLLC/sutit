@@ -8,7 +8,7 @@ import {
   storeResponses,
   payments,
 } from "../db/schema";
-import { eq, isNull, isNotNull, and, inArray } from "drizzle-orm";
+import { eq, isNull, isNotNull, and, inArray, sql } from "drizzle-orm";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
 import { sendMail } from "./email.service";
@@ -18,6 +18,32 @@ import { randomBytes } from "crypto";
 function generateToken(): string {
   return randomBytes(32).toString("hex");
 }
+
+// Check if user has existing submission for this form
+export const checkExistingSubmission = async (formId: string, userId: string) => {
+  const existingSubmission = await db.query.formSubmissions.findFirst({
+    where: and(
+      eq(formSubmissions.formId, formId),
+      eq(formSubmissions.submitterId, userId),
+      isNull(formSubmissions.deletedAt),
+    ),
+  });
+  
+  return existingSubmission;
+};
+
+// Get submission count for a form
+export const getSubmissionCount = async (formId: string): Promise<number> => {
+  const result = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(formSubmissions)
+    .where(and(
+      eq(formSubmissions.formId, formId),
+      isNull(formSubmissions.deletedAt),
+    ));
+  
+  return result[0]?.count || 0;
+};
 
 export const submitForm = async (
   formId: string,

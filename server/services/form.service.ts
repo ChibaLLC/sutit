@@ -53,8 +53,11 @@ export const createForm = async (payload: FormSchema) => {
   const { stores, pages, ...formPayload } = payload;
   return db.transaction(async (tx) => {
     try {
+      // Generate unique slug by appending user ID
+      const uniqueSlug = `${slugify(formPayload.slug)}-${payload.createdBy}`;
+      
       const existingForm = await tx.query.forms.findFirst({
-        where: eq(forms.slug, formPayload.slug),
+        where: eq(forms.slug, uniqueSlug),
         columns: { id: true, slug: true },
       });
 
@@ -68,7 +71,7 @@ export const createForm = async (payload: FormSchema) => {
         .insert(forms)
         .values({
           ...formPayload,
-          slug: slugify(formPayload.slug),
+          slug: uniqueSlug,
           createdBy: payload.createdBy,
           status: formPayload.status || "draft",
           publishedAt: formPayload.publishedAt
@@ -253,10 +256,13 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         throw new Error("Form not found");
       }
 
+      // Generate unique slug by appending user ID
+      const uniqueSlug = `${slugify(formPayload.slug)}-${existingForm.createdBy}`;
+      
       // Check slug uniqueness (exclude current form)
-      if (formPayload.slug !== existingForm.slug) {
+      if (uniqueSlug !== existingForm.slug) {
         const duplicateSlug = await tx.query.forms.findFirst({
-          where: and(eq(forms.slug, formPayload.slug), ne(forms.id, formId)),
+          where: and(eq(forms.slug, uniqueSlug), ne(forms.id, formId)),
           columns: { id: true },
         });
 
@@ -272,7 +278,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         .update(forms)
         .set({
           ...formPayload,
-          slug: slugify(formPayload.slug),
+          slug: uniqueSlug,
           publishedAt: formPayload.publishedAt
             ? new Date(formPayload.publishedAt)
             : undefined,
