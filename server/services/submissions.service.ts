@@ -20,7 +20,10 @@ function generateToken(): string {
 }
 
 // Check if user has existing submission for this form
-export const checkExistingSubmission = async (formId: string, userId: string) => {
+export const checkExistingSubmission = async (
+  formId: string,
+  userId: string,
+) => {
   const existingSubmission = await db.query.formSubmissions.findFirst({
     where: and(
       eq(formSubmissions.formId, formId),
@@ -28,7 +31,7 @@ export const checkExistingSubmission = async (formId: string, userId: string) =>
       isNull(formSubmissions.deletedAt),
     ),
   });
-  
+
   return existingSubmission;
 };
 
@@ -37,11 +40,13 @@ export const getSubmissionCount = async (formId: string): Promise<number> => {
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(formSubmissions)
-    .where(and(
-      eq(formSubmissions.formId, formId),
-      isNull(formSubmissions.deletedAt),
-    ));
-  
+    .where(
+      and(
+        eq(formSubmissions.formId, formId),
+        isNull(formSubmissions.deletedAt),
+      ),
+    );
+
   return result[0]?.count || 0;
 };
 
@@ -178,8 +183,7 @@ export const submitForm = async (
         throw new Error(e);
       }
     } else {
-      const baseUrl =
-        process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const baseUrl = process.env.BETTER_AUTH_URL;
       const stopTatUrl =
         totalPaid > 0
           ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${accessToken}`
