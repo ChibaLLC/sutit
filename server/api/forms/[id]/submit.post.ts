@@ -1,6 +1,9 @@
 import { auth } from "~~/server/lib/auth";
 import { processFormPayment } from "~~/server/services/payment.service";
-import { submitForm, checkExistingSubmission } from "~~/server/services/submissions.service";
+import {
+  submitForm,
+  checkExistingSubmission,
+} from "~~/server/services/submissions.service";
 import { getFormById } from "~~/server/services/form.service";
 
 export default defineEventHandler(async (event) => {
@@ -15,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
     // Get form settings first to validate
     const form = await getFormById(formId);
-    
+
     if (!form) {
       throw createError({
         message: "Form not found",
@@ -42,37 +45,40 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if form is public
-    if (!form.isPublic && !session?.user) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: "Form not public",
-        data: {
-          type: "form_not_public",
-          message: "This form is not publicly accessible",
-        },
-      });
-    }
+    // if (!form.isPublic && !session?.user) {
+    //   throw createError({
+    //     statusCode: 403,
+    //     statusMessage: "Form not public",
+    //     data: {
+    //       type: "form_not_public",
+    //       message: "This form is not publicly accessible",
+    //     },
+    //   });
+    // }
 
     // Check submission limit
-    if (form.submissionLimit && form.submissionLimit > 0) {
-      const submissionCount = await getSubmissionCount(formId);
-      if (submissionCount >= form.submissionLimit) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: "Submission limit reached",
-          data: {
-            type: "submission_limit_reached",
-            message: `This form has reached its maximum limit of ${form.submissionLimit} submissions`,
-            limit: form.submissionLimit,
-            current: submissionCount,
-          },
-        });
-      }
-    }
+    // if (form.submissionLimit && form.submissionLimit > 0) {
+    //   const submissionCount = await getSubmissionCount(formId);
+    //   if (submissionCount >= form.submissionLimit) {
+    //     throw createError({
+    //       statusCode: 400,
+    //       statusMessage: "Submission limit reached",
+    //       data: {
+    //         type: "submission_limit_reached",
+    //         message: `This form has reached its maximum limit of ${form.submissionLimit} submissions`,
+    //         limit: form.submissionLimit,
+    //         current: submissionCount,
+    //       },
+    //     });
+    //   }
+    // }
 
     // Check multiple submissions for logged in users
     if (!form.allowMultipleSubmissions && session?.user) {
-      const existingSubmission = await checkExistingSubmission(formId, session.user.id);
+      const existingSubmission = await checkExistingSubmission(
+        form.id,
+        session.user.id,
+      );
       if (existingSubmission) {
         throw createError({
           statusCode: 400,
@@ -99,10 +105,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const body = await readBody(event);
-    
+
     // Validate required merchandise
     if (form.requireMerch) {
-      const hasStoreItems = body.selectedProducts && Object.keys(body.selectedProducts).length > 0;
+      const hasStoreItems =
+        body.selectedProducts && Object.keys(body.selectedProducts).length > 0;
       if (!hasStoreItems) {
         throw createError({
           statusCode: 400,
@@ -116,7 +123,7 @@ export default defineEventHandler(async (event) => {
     }
 
     let submission = await submitForm(formId, body, session?.user?.id);
-    
+
     return {
       data: {
         ...submission.submmission,
@@ -130,7 +137,7 @@ export default defineEventHandler(async (event) => {
     if (e.statusCode && e.data) {
       throw e;
     }
-    
+
     console.error("Form submission error:", e);
     throw createError({
       statusCode: e.statusCode || 500,
@@ -146,13 +153,15 @@ export default defineEventHandler(async (event) => {
 // Helper function to get submission count
 async function getSubmissionCount(formId: string): Promise<number> {
   const db = (await import("~~/server/db")).default;
-  const { formSubmissions, eq, isNull, sql } = await import("~~/server/db/schema");
-  
+  const { formSubmissions, eq, isNull, sql } = await import(
+    "~~/server/db/schema"
+  );
+
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(formSubmissions)
     .where(eq(formSubmissions.formId, formId))
     .execute();
-  
+
   return result[0]?.count || 0;
 }
