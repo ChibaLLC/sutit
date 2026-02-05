@@ -34,8 +34,11 @@ const submit = async (form: object) => {
           ...(await authHeaders()),
         },
         onResponseError(e) {
-          console.log(e.response._data.statusMessage);
-          toast.error(e.response._data.statusMessage ?? "An error occurred ");
+          toast.error(
+            e.response._data.message ??
+              e.response._data.statusMessage ??
+              "An error occurred ",
+          );
         },
       },
     );
