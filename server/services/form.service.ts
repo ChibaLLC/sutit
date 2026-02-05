@@ -54,16 +54,16 @@ export const createForm = async (payload: FormSchema) => {
   return db.transaction(async (tx) => {
     try {
       // Generate unique slug by appending user ID
-      const uniqueSlug = `${slugify(formPayload.slug)}-${payload.createdBy}`;
-      
+      let uniqueSlug = `${slugify(formPayload.slug)}`;
+
       const existingForm = await tx.query.forms.findFirst({
-        where: eq(forms.slug, uniqueSlug),
+        where: eq(forms.slug, formPayload.slug),
         columns: { id: true, slug: true },
       });
 
       if (existingForm) {
-        throw new Error(
-          `A form with the slug "${formPayload.slug}" already exists. Please choose a different slug.`,
+        uniqueSlug = slugify(
+          uniqueSlug + "-" + new Date().getDate().toString(),
         );
       }
       // 1. Create the Form
@@ -258,7 +258,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
 
       // Generate unique slug by appending user ID
       const uniqueSlug = `${slugify(formPayload.slug)}-${existingForm.createdBy}`;
-      
+
       // Check slug uniqueness (exclude current form)
       if (uniqueSlug !== existingForm.slug) {
         const duplicateSlug = await tx.query.forms.findFirst({
