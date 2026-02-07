@@ -10,6 +10,11 @@
       "type": "local",
       "command": ["pnpm", "dlx", "shadcn-vue@latest", "mcp"],
       "enabled": true
+    },
+    "better-auth": {
+      "type": "remote",
+      "url": "https://mcp.inkeep.com/better-auth/mcp",
+      "enabled": true
     }
   }
 }
