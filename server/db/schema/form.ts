@@ -117,7 +117,7 @@ export const forms = pgTable(
     description: text("description"),
     status: formStatusEnum("status").default("draft"),
     slug: varchar("slug", { length: 255 }).unique().notNull(),
-    isPublic: boolean("is_public").default(false),
+    isPublic: boolean("is_public").default(true),
     isFeatured: boolean("is_featured").default(false),
     requiresLogin: boolean("requires_login").default(false),
     allowMultipleSubmissions: boolean("allow_multiple_submissions").default(
@@ -138,6 +138,8 @@ export const forms = pgTable(
     infoPromptMessage: text("info_prompt_message"),
     afterSubmissionMessage: text("after_submission_message"),
     acceptResponses: boolean("accept_responses").default(true),
+    requirePassword: boolean("require_password").default(false),
+    password: text("password"),
     publishedAt: timestamp("published_at"),
     expiresAt: timestamp("expires_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

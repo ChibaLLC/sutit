@@ -60,7 +60,10 @@ export interface FormSchema {
   tags: string[];
   isPublic: boolean;
   requiresLogin: boolean;
+  requirePassword?: boolean;
+  password?: string;
   acceptResponses?: boolean;
+  expiresAt?: string;
   slug: string;
   afterSubmissionMessage?: string;
   createdAt?: string;

@@ -8,10 +8,13 @@ import {
   Share2,
   Download,
   QrCode,
+  Loader,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import QRCode from "qrcode";
 import type { FormSchema } from "~~/shared/types";
+import { authHeaders } from "~/lib/auth-client";
+
 interface ShareSettings {
   isPublic: boolean;
   requirePassword: boolean;
@@ -30,14 +33,40 @@ const props = defineProps<{
 }>();
 const emits = defineEmits<{
   close: [];
+  settingsUpdated: [form: FormSchema];
 }>();
+
+// Initialize settings from form data
 const shareSettings = ref<ShareSettings>({
-  isPublic: true,
-  requirePassword: false,
-  password: "",
-  hasExpiration: false,
-  expirationDate: "",
+  isPublic: props.form?.isPublic ?? true,
+  requirePassword: props.form?.requirePassword ?? false,
+  password: props.form?.password ?? "",
+  hasExpiration: !!props.form?.expiresAt,
+  expirationDate: props.form?.expiresAt
+    ? new Date(props.form.expiresAt).toISOString().slice(0, 16)
+    : "",
 });
+
+// Update settings when form prop changes
+watch(
+  () => props.form,
+  (newForm) => {
+    if (newForm) {
+      shareSettings.value = {
+        isPublic: newForm.isPublic ?? true,
+        requirePassword: newForm.requirePassword ?? false,
+        password: newForm.password ?? "",
+        hasExpiration: !!newForm.expiresAt,
+        expirationDate: newForm.expiresAt
+          ? new Date(newForm.expiresAt).toISOString().slice(0, 16)
+          : "",
+      };
+    }
+  },
+  { immediate: true },
+);
+
+const isSaving = ref(false);
 const embedOptions = ref<EmbedOptions>({
   width: "100%",
   height: "600px",
@@ -91,7 +120,7 @@ const generateQRCode = async (url: string) => {
 
 const downloadQRCode = () => {
   if (!qrCodeDataUrl.value) return;
-  
+
   const link = document.createElement("a");
   link.href = qrCodeDataUrl.value;
   link.download = `${props.form?.slug || "form"}-qrcode.png`;
@@ -127,11 +156,59 @@ const shareOnPlatform = (platform: any) => {
   window.open(url, "_blank");
 };
 
-const saveShareSettings = () => {
-  toast.success("Not Yet implimented");
-  // Save settings logic here
-  console.log("Saving share settings:", shareSettings.value);
-  emits("close");
+const saveShareSettings = async () => {
+  if (!props.form?.id) {
+    toast.error("Form ID is required");
+    return;
+  }
+
+  // Validation
+  if (shareSettings.value.requirePassword && !shareSettings.value.password) {
+    toast.error("Please enter a password");
+    return;
+  }
+
+  if (
+    shareSettings.value.hasExpiration &&
+    !shareSettings.value.expirationDate
+  ) {
+    toast.error("Please select an expiration date");
+    return;
+  }
+
+  isSaving.value = true;
+
+  try {
+    const response = await $fetch(`/api/forms/${props.form.id}/share`, {
+      method: "PATCH",
+      headers: {
+        ...(await authHeaders()),
+      },
+      body: {
+        isPublic: shareSettings.value.isPublic,
+        requirePassword: shareSettings.value.requirePassword,
+        password: shareSettings.value.requirePassword
+          ? shareSettings.value.password
+          : null,
+        expiresAt: shareSettings.value.hasExpiration
+          ? shareSettings.value.expirationDate
+          : null,
+      },
+    });
+
+    if (response.success) {
+      toast.success("Share settings saved successfully");
+      emits("settingsUpdated", response.data);
+      emits("close");
+    } else {
+      throw new Error(response.message || "Failed to save settings");
+    }
+  } catch (error: any) {
+    console.error("Error saving share settings:", error);
+    toast.error(error.message || "Failed to save share settings");
+  } finally {
+    isSaving.value = false;
+  }
 };
 </script>
 <template>
@@ -201,20 +278,25 @@ const saveShareSettings = () => {
           <div class="space-y-3">
             <Label>QR Code for Form</Label>
             <div class="flex flex-col items-center space-y-4">
-              <div v-if="qrCodeLoading" class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+              <div
+                v-if="qrCodeLoading"
+                class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg"
+              >
                 <div class="text-center">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                  <div
+                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"
+                  ></div>
                   <p class="text-sm text-gray-500">Generating QR Code...</p>
                 </div>
               </div>
               <div v-else-if="qrCodeDataUrl" class="space-y-4">
-                <img 
-                  :src="qrCodeDataUrl" 
-                  alt="Form QR Code" 
+                <img
+                  :src="qrCodeDataUrl"
+                  alt="Form QR Code"
                   class="border-2 border-gray-200 rounded-lg shadow-sm"
                 />
-                <Button 
-                  @click="downloadQRCode" 
+                <Button
+                  @click="downloadQRCode"
                   class="w-full sm:w-auto"
                   :disabled="!qrCodeDataUrl"
                 >
@@ -222,7 +304,10 @@ const saveShareSettings = () => {
                   Download QR Code
                 </Button>
               </div>
-              <div v-else class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+              <div
+                v-else
+                class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg"
+              >
                 <div class="text-center">
                   <QrCode class="h-12 w-12 text-gray-400 mx-auto mb-2" />
                   <p class="text-sm text-gray-500">QR Code unavailable</p>
@@ -230,9 +315,9 @@ const saveShareSettings = () => {
               </div>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           <div class="space-y-3">
             <Label>QR Code Info</Label>
             <div class="text-sm text-muted-foreground space-y-1">
@@ -321,7 +406,6 @@ const saveShareSettings = () => {
                 <Label>Link Expiration</Label>
                 <p class="text-sm text-muted-foreground">
                   Set expiration date for the link
-                  {{ shareUrl }}
                 </p>
               </div>
               <Switch v-model:checked="shareSettings.hasExpiration" />
@@ -344,11 +428,17 @@ const saveShareSettings = () => {
           variant="outline"
           @click="$emit('close')"
           class="w-full sm:w-auto"
+          :disabled="isSaving"
         >
           Cancel
         </Button>
-        <Button @click="saveShareSettings" class="w-full sm:w-auto">
-          Save Settings
+        <Button
+          @click="saveShareSettings"
+          class="w-full sm:w-auto"
+          :disabled="isSaving"
+        >
+          <Loader v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
+          {{ isSaving ? "Saving..." : "Save Settings" }}
         </Button>
       </DialogFooter>
     </DialogContent>

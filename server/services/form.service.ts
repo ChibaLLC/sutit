@@ -4,7 +4,7 @@ import {
   eq,
   ilike,
   inArray,
-  InferInsertModel,
+  type InferInsertModel,
   isNull,
   ne,
   notInArray,
@@ -24,7 +24,7 @@ import {
   storeItems,
 } from "../db/schema";
 import db from "../db";
-import { Filters, FormSchema } from "~~/shared/types";
+import type { Filters, FormSchema } from "~~/shared/types";
 import { slugify } from "~~/shared/utils/form.schema";
 
 export type NewForm = InferInsertModel<typeof forms>;
@@ -635,5 +635,72 @@ export const acceptResponse = async (formId: string) => {
     return res[0];
   } catch (e) {
     throw new Error("An error occurred");
+  }
+};
+
+interface ShareSettings {
+  isPublic?: boolean;
+  requirePassword?: boolean;
+  password?: string | null;
+  expiresAt?: string | null;
+  requiresLogin?: boolean;
+  acceptResponses?: boolean;
+}
+
+export const updateShareSettings = async (
+  formId: string,
+  settings: ShareSettings,
+) => {
+  try {
+    const form = await db.query.forms.findFirst({
+      where: eq(forms.id, formId),
+    });
+
+    if (!form) {
+      throw new Error("Form not found");
+    }
+
+    const updateData: Partial<typeof forms.$inferInsert> = {};
+
+    if (settings.isPublic !== undefined) {
+      updateData.isPublic = settings.isPublic;
+    }
+
+    if (settings.requirePassword !== undefined) {
+      updateData.requirePassword = settings.requirePassword;
+    }
+
+    if (settings.password !== undefined) {
+      updateData.password = settings.password || null;
+    }
+
+    if (settings.expiresAt !== undefined) {
+      updateData.expiresAt = settings.expiresAt
+        ? new Date(settings.expiresAt)
+        : null;
+    }
+
+    if (settings.requiresLogin !== undefined) {
+      updateData.requiresLogin = settings.requiresLogin;
+    }
+
+    if (settings.acceptResponses !== undefined) {
+      updateData.acceptResponses = settings.acceptResponses;
+    }
+
+    updateData.updatedAt = new Date();
+
+    const [updatedForm] = await db
+      .update(forms)
+      .set(updateData)
+      .where(eq(forms.id, formId))
+      .returning();
+
+    return updatedForm;
+  } catch (e) {
+    console.error("Error updating share settings:", e);
+    throw new Error(
+      e instanceof Error ? e.message : "Failed to update share settings",
+    );
   }
 };
