@@ -19,8 +19,19 @@ const authStore = useAuthStore();
 const signInWithGoogle = async () => {
   isLoading.value = true;
   try {
-  } catch (error) {
+    const { data, error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // The redirect is handled automatically by Better Auth
+  } catch (error: any) {
     console.error("Google sign-in failed:", error);
+    toast.error(error.message || "Failed to sign in with Google");
   } finally {
     isLoading.value = false;
   }

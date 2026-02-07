@@ -91,10 +91,20 @@ export const useAuthStore = defineStore(
 
 		const signinWithGoogle = async () => {
 			try {
-				const { data } = await authClient.signIn.social({
+				const { data, error } = await authClient.signIn.social({
 					provider: "google",
+					callbackURL: "/dashboard",
 				});
-			} catch (e: any) {}
+				
+				if (error) {
+					throw error;
+				}
+				
+				// The redirect is handled automatically by Better Auth
+			} catch (error: any) {
+				console.error("Google sign-in failed:", error);
+				toast.error(error.message || "Failed to sign in with Google");
+			}
 		};
 
 		const forgotPassword = async (form: { email: string }) => {
