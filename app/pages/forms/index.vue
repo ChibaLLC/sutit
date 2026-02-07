@@ -22,6 +22,8 @@ import {
   Filter,
   AlertTriangle,
   Loader,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { buttonVariants } from "~/components/ui/button";
@@ -53,26 +55,148 @@ const { data: forms, pending } = await useFetch("/api/forms", {
   query: filters,
 });
 
+// Computed property for filtered forms (applying search and status filters)
+const filteredForms = computed(() => {
+  if (!forms.value?.data) return [];
+
+  let result = [...forms.value.data];
+
+  // Apply search filter
+  if (filters.value.search) {
+    const searchTerm = filters.value.search.toLowerCase();
+    result = result.filter(
+      (form) =>
+        form.title.toLowerCase().includes(searchTerm) ||
+        (form.description &&
+          form.description.toLowerCase().includes(searchTerm)) ||
+        (form.tags &&
+          form.tags.some((tag) => tag.toLowerCase().includes(searchTerm))),
+    );
+  }
+
+  // Apply status filter
+  if (filters.value.status !== "all") {
+    result = result.filter((form) => form.status === filters.value.status);
+  }
+
+  // Apply date filters
+  if (filters.value.startDate) {
+    const startDate = new Date(filters.value.startDate);
+    result = result.filter(
+      (form) => new Date(form.createdAt) >= startDate,
+    );
+  }
+
+  if (filters.value.endDate) {
+    const endDate = new Date(filters.value.endDate);
+    endDate.setHours(23, 59, 59, 999); // End of day
+    result = result.filter(
+      (form) => new Date(form.createdAt) <= endDate,
+    );
+  }
+
+  // Apply sorting
+  result.sort((a, b) => {
+    let aValue: any = a[filters.value.sortBy as keyof FormSchema];
+    let bValue: any = b[filters.value.sortBy as keyof FormSchema];
+
+    // Handle date fields
+    if (
+      filters.value.sortBy === "createdAt" ||
+      filters.value.sortBy === "updatedAt"
+    ) {
+      aValue = new Date(aValue || 0).getTime();
+      bValue = new Date(bValue || 0).getTime();
+    }
+
+    // Handle string fields
+    if (typeof aValue === "string") {
+      aValue = aValue.toLowerCase();
+      bValue = (bValue as string).toLowerCase();
+    }
+
+    if (filters.value.sortOrder === "asc") {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  return result;
+});
+
+// Computed property for paginated forms
+const paginatedForms = computed(() => {
+  const start = (filters.value.currentPage - 1) * filters.value.itemsPerPage;
+  const end = start + filters.value.itemsPerPage;
+  return filteredForms.value.slice(start, end);
+});
+
+// Total pages based on filtered results
 const totalPages = computed(() =>
-  Math.ceil(forms.value?.data.length / filters.value.itemsPerPage),
+  Math.max(1, Math.ceil(filteredForms.value.length / filters.value.itemsPerPage)),
 );
+
+// Total filtered count
+const totalFilteredCount = computed(() => filteredForms.value.length);
+
+// Visible page numbers for pagination
+const visiblePages = computed(() => {
+  const current = filters.value.currentPage;
+  const total = totalPages.value;
+
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 3) {
+    return [1, 2, 3, 4, 5];
+  }
+
+  if (current >= total - 2) {
+    return [total - 4, total - 3, total - 2, total - 1, total];
+  }
+
+  return [current - 2, current - 1, current, current + 1, current + 2];
+});
 
 const selectedForm = ref<FormSchema | null>(null);
 const shareModalOpen = ref(false);
 
-// Computed properties for stats
+// Computed properties for stats (based on filtered forms)
 const publishedCount = computed(
-  () => forms.value?.data.filter((form) => form.status === "published").length,
+  () => filteredForms.value.filter((form) => form.status === "published").length,
 );
 
 const totalRevenue = computed(() =>
-  forms.value?.data
-    .reduce((sum, form) => sum + parseFloat(form.price?.toString()), 0)
+  filteredForms.value
+    .reduce((sum, form) => sum + (parseFloat(form.price?.toString()) || 0), 0)
     .toFixed(2),
 );
 
 const avgSubmissions = computed(() => {
   return Math.floor(Math.random() * 50) + 10;
+});
+
+// Reset to page 1 when filters change
+watch(
+  () => [
+    filters.value.search,
+    filters.value.status,
+    filters.value.startDate,
+    filters.value.endDate,
+    filters.value.itemsPerPage,
+  ],
+  () => {
+    filters.value.currentPage = 1;
+  },
+);
+
+// Ensure current page doesn't exceed total pages
+watch(totalPages, (newTotalPages) => {
+  if (filters.value.currentPage > newTotalPages && newTotalPages > 0) {
+    filters.value.currentPage = newTotalPages;
+  }
 });
 
 // Check if any filters are active
@@ -205,7 +329,7 @@ const deleteForm = async () => {
                   Total Forms
                 </p>
                 <p class="text-3xl font-bold text-foreground">
-                  {{ forms?.data.length }}
+                  {{ totalFilteredCount }}
                 </p>
               </div>
               <div
@@ -386,7 +510,7 @@ const deleteForm = async () => {
                   Clear Filters
                 </Button>
                 <Badge variant="secondary" class="text-xs">
-                  {{ forms?.data.length || 0 }} forms
+                  {{ totalFilteredCount }} forms
                 </Badge>
               </div>
               <div class="flex items-center gap-2">
@@ -447,7 +571,7 @@ const deleteForm = async () => {
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8"
     >
       <Card
-        v-for="form in forms?.data"
+        v-for="form in paginatedForms"
         :key="form.id"
         class="group border-border/50 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden"
       >
@@ -652,7 +776,7 @@ const deleteForm = async () => {
       </Card>
 
       <!-- Empty State -->
-      <div v-if="forms?.data.length === 0" class="col-span-full">
+      <div v-if="totalFilteredCount === 0" class="col-span-full">
         <Card class="border-dashed border-2 border-border/50">
           <CardContent class="flex flex-col items-center justify-center py-12">
             <FileText class="w-12 h-12 text-muted-foreground mb-4" />
@@ -668,6 +792,102 @@ const deleteForm = async () => {
             </NuxtLink>
           </CardContent>
         </Card>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      v-if="!pending && totalFilteredCount > 0"
+      class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 border-t border-border gap-4 mb-8"
+    >
+      <!-- Results info -->
+      <div class="flex items-center gap-4">
+        <p class="text-sm text-muted-foreground">
+          Showing
+          {{ Math.min((filters.currentPage - 1) * filters.itemsPerPage + 1, totalFilteredCount) }}
+          to
+          {{ Math.min(filters.currentPage * filters.itemsPerPage, totalFilteredCount) }}
+          of {{ totalFilteredCount }} results
+        </p>
+        <Select v-model="filters.itemsPerPage">
+          <SelectTrigger class="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem :value="12">12</SelectItem>
+            <SelectItem :value="24">24</SelectItem>
+            <SelectItem :value="48">48</SelectItem>
+            <SelectItem :value="96">96</SelectItem>
+          </SelectContent>
+        </Select>
+        <span class="text-sm text-muted-foreground">per page</span>
+      </div>
+
+      <!-- Page controls -->
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="filters.currentPage === 1"
+          @click="filters.currentPage--"
+        >
+          <ChevronLeft class="h-4 w-4" />
+          <span class="hidden sm:inline ml-1">Previous</span>
+        </Button>
+
+        <div class="flex items-center gap-1">
+          <!-- First page + ellipsis if needed -->
+          <template v-if="totalPages > 5 && filters.currentPage > 3">
+            <Button
+              variant="outline"
+              size="sm"
+              class="w-8 h-8 p-0"
+              @click="filters.currentPage = 1"
+            >
+              1
+            </Button>
+            <span v-if="filters.currentPage > 4" class="text-muted-foreground px-1">
+              ...
+            </span>
+          </template>
+
+          <!-- Page numbers -->
+          <Button
+            v-for="page in visiblePages"
+            :key="page"
+            :variant="filters.currentPage === page ? 'default' : 'outline'"
+            size="sm"
+            class="w-8 h-8 p-0"
+            @click="filters.currentPage = page"
+          >
+            {{ page }}
+          </Button>
+
+          <!-- Last page + ellipsis if needed -->
+          <template v-if="totalPages > 5 && filters.currentPage < totalPages - 2">
+            <span v-if="filters.currentPage < totalPages - 3" class="text-muted-foreground px-1">
+              ...
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              class="w-8 h-8 p-0"
+              @click="filters.currentPage = totalPages"
+            >
+              {{ totalPages }}
+            </Button>
+          </template>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="filters.currentPage === totalPages"
+          @click="filters.currentPage++"
+        >
+          <span class="hidden sm:inline mr-1">Next</span>
+          <ChevronRight class="h-4 w-4" />
+        </Button>
       </div>
     </div>
 
