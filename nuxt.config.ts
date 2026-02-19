@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     "pinia-plugin-persistedstate",
     "@nuxtjs/sitemap",
     "@nuxtjs/robots",
-    "@nuxt/hints",
+    // "@nuxt/hints",
     "nuxt-email-renderer",
   ],
   css: ["~/assets/css/tailwind.css"],
