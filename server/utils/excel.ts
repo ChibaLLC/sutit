@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { FormSchema, FormSubmission } from "~~/shared/types";
+import type { FormSubmission } from "~~/shared/types";
 
 export const exportToExcel = async (submissions: FormSubmission[]) => {
   try {
@@ -68,13 +68,17 @@ const formatFormData = (submissions: FormSubmission[]) => {
   submissions.forEach((sub) => {
     // Extract email from form responses if submitter email is not available
     const emailFromResponse = sub.responses.find(
-      (response) => response.field.type === "email",
+      (response) => response.field.type == "email",
     )?.value;
 
     const baseRow: Record<string, any> = {
       "Submitter Name": sub.submitter?.name,
       "Submitter Email": sub.submitter?.email || emailFromResponse || "",
       "Submitted At": sub.submittedAt,
+      Status: sub.status,
+      "Price Paid": sub.pricePaid || 0,
+      "Payment Status": sub.payments.payment.status,
+      "Receipt Number": sub.payments.payment.receiptNumber,
     };
 
     // Field Responses
@@ -90,7 +94,6 @@ const formatFormData = (submissions: FormSubmission[]) => {
       storeResponses.push({
         ...baseRow,
         "Product Name": item.item.name,
-        "Product ID": item.item.id,
         Quantity: item.quantity,
         "Unit Price": item.price,
         "Total Price": item.total,

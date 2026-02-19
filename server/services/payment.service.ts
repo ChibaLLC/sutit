@@ -210,3 +210,13 @@ export const findPaymentWithCheckoutId = async (data: {
   }
   return payment;
 };
+
+export const getPaymentReferenceById = async (paymentId: string) => {
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+  });
+  if (!payment) {
+    return null;
+  }
+  return payment;
+};

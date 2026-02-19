@@ -54,6 +54,7 @@ export const submitForm = async (
   formId: string,
   data: SubmissionData,
   submitterId?: string,
+  existingSubmissionId?: string,
 ) => {
   return db.transaction(async (tx) => {
     // 1. Get form (to read base price)
@@ -63,25 +64,58 @@ export const submitForm = async (
       throw new Error(`Form not found: ${formId}`);
     }
 
-    // 2. Create submission
-    const accessToken = generateToken();
-    const [submission] = await tx
-      .insert(formSubmissions)
-      .values({
-        formId: form.id,
-        submitterId,
-        status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
-        metadata: {
-          paymentData: data.paymentData ?? null,
-          accessToken, // Store access token for unauthenticated users
-        },
-        pricePaid: 0, // will be updated after we compute total
-      })
-      .returning();
+    let submission: any;
+    
+    if (existingSubmissionId) {
+      // If we have an existing submission ID, update that submission instead of creating new
+      const existingSubmission = await tx.query.formSubmissions.findFirst({
+        where: and(
+          eq(formSubmissions.id, existingSubmissionId),
+          eq(formSubmissions.formId, formId),
+          isNull(formSubmissions.deletedAt),
+        ),
+      });
+
+      if (!existingSubmission) {
+        throw new Error(`Existing submission not found: ${existingSubmissionId}`);
+      }
+
+      // Update the existing submission
+      submission = await tx
+        .update(formSubmissions)
+        .set({
+          status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
+          metadata: {
+            paymentData: data.paymentData ?? null,
+            accessToken: generateToken(), // Generate new access token
+          },
+          pricePaid: 0, // will be updated after we compute total
+        })
+        .where(eq(formSubmissions.id, existingSubmissionId))
+        .returning();
+    } else {
+      // 2. Create new submission (original logic)
+      const accessToken = generateToken();
+      const [newSubmission] = await tx
+        .insert(formSubmissions)
+        .values({
+          formId: form.id,
+          submitterId,
+          status: parseInt(form.price || "0") > 0 ? "pending" : "completed",
+          metadata: {
+            paymentData: data.paymentData ?? null,
+            accessToken, // Store access token for unauthenticated users
+          },
+          pricePaid: 0, // will be updated after we compute total
+        })
+        .returning();
+
+      submission = newSubmission;
+    }
 
     if (!submission) {
       tx.rollback();
-      throw new Error("Failed to create submission");
+      throw new Error("Failed to create/update submission");
     }
 
     let email = null;
@@ -186,7 +220,7 @@ export const submitForm = async (
       const baseUrl = process.env.BETTER_AUTH_URL;
       const stopTatUrl =
         totalPaid > 0
-          ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${accessToken}`
+          ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${submission.metadata?.accessToken}`
           : `${baseUrl}/submission/${submission.id}/stop-tat`;
       // For free submissions (no payment), send stop TAT notification immediately
       if (email) {

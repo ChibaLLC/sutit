@@ -17,6 +17,10 @@ import {
   Loader,
   OctagonMinus,
   RotateCwIcon,
+  RefreshCw,
+  AlertCircle,
+  Info,
+  DollarSign,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
@@ -29,7 +33,11 @@ const route = useRoute();
 
 const loading = ref({
   downloadExcel: false,
+  submissions: false,
+  refreshing: false,
 });
+
+const error = ref<string | null>(null);
 
 const activeTab = ref("active");
 const filtersVisible = ref(true);
@@ -58,17 +66,24 @@ const { data: form } = await useFetch(`/api/forms/${route.params.id}`, {
 });
 const acceptingResponses = ref(form.value.acceptResponses);
 // Reactive fetch with filters
-const { data: submissions, refresh } = await useFetch(
-  `/api/forms/${route.params.id}/submissions`,
-  {
-    method: "get",
-    headers: {
-      ...(await authHeaders()),
-    },
-    query: filters,
-    server: false,
+const {
+  data: submissions,
+  refresh,
+  pending,
+} = await useFetch(`/api/forms/${route.params.id}/submissions`, {
+  method: "get",
+  headers: {
+    ...(await authHeaders()),
   },
-);
+  query: filters,
+  server: false,
+});
+
+// Track loading state
+watch(pending, (isPending) => {
+  loading.value.submissions = isPending;
+  loading.value.refreshing = isPending;
+});
 
 // Get unique form fields from all submissions
 const formFields = computed(() => {
@@ -352,6 +367,19 @@ const toggleReponse = async () => {
               >
               <Switch @click="toggleReponse()" v-model="acceptingResponses" />
             </div>
+
+            <!-- Refresh button -->
+            <Button
+              @click.prevent="refresh()"
+              size="sm"
+              variant="outline"
+              class="gap-2"
+              :disabled="loading.refreshing"
+            >
+              <Loader v-if="loading.refreshing" class="animate-spin" />
+              <RefreshCw v-else class="w-4 h-4" />
+              <span class="hidden sm:inline">Refresh</span>
+            </Button>
 
             <!-- Export buttons -->
             <Button
@@ -652,7 +680,32 @@ const toggleReponse = async () => {
 
             <!-- Enhanced Table Section with Dynamic Columns -->
             <Card class="overflow-hidden">
-              <div class="overflow-x-auto">
+              <!-- Loading State -->
+              <div
+                v-if="loading.submissions"
+                class="flex items-center justify-center py-12"
+              >
+                <Loader class="h-8 w-8 text-muted-foreground animate-spin" />
+                <span class="ml-2 text-muted-foreground"
+                  >Loading submissions...</span
+                >
+              </div>
+
+              <!-- Empty State -->
+              <div
+                v-else-if="!submissions?.data?.length"
+                class="flex flex-col items-center justify-center py-12"
+              >
+                <Info class="h-12 w-12 text-muted-foreground mb-4" />
+                <p class="text-lg font-medium text-foreground">
+                  No submissions found
+                </p>
+                <p class="text-sm text-muted-foreground">
+                  Submissions will appear here once users submit the form
+                </p>
+              </div>
+
+              <div v-else class="overflow-x-auto">
                 <table class="w-full min-w-[1000px]">
                   <thead class="bg-muted/30 border-b">
                     <tr>
@@ -684,6 +737,11 @@ const toggleReponse = async () => {
                         class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
                       >
                         Price Paid
+                      </th>
+                      <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                      >
+                        Payment Ref
                       </th>
                       <th
                         class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
@@ -739,13 +797,16 @@ const toggleReponse = async () => {
                             'bg-yellow-100 text-yellow-800 hover:bg-yellow-100':
                               submission.status === 'pending',
                             'bg-red-100 text-red-800 hover:bg-red-100':
-                              submission.status === 'failed_payment',
+                              submission.payments
+                                ? submission.payments.payment?.status ===
+                                  'failed'
+                                : false,
                           }"
                           class="capitalize"
                         >
                           {{
-                            submission.status === "failed_payment"
-                              ? "Payment Failed"
+                            submission.payments
+                              ? submission.payments.payment?.status
                               : submission.status
                           }}
                         </Badge>
@@ -770,6 +831,19 @@ const toggleReponse = async () => {
                         <span class="font-medium">
                           {{ formatCurrency(submission.pricePaid || 0) }}
                         </span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span
+                          v-if="
+                            submission.payments?.[0]?.payment?.referenceCode
+                          "
+                          class="text-sm font-mono"
+                        >
+                          {{ submission.payments[0].payment.referenceCode }}
+                        </span>
+                        <span v-else class="text-muted-foreground text-sm"
+                          >-</span
+                        >
                       </td>
                       <td class="px-4 py-4">
                         <div
