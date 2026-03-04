@@ -256,29 +256,28 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         throw new Error("Form not found");
       }
 
-      // Generate unique slug by appending user ID
-      const uniqueSlug = `${slugify(formPayload.slug)}-${existingForm.createdBy}`;
-
-      // Check slug uniqueness (exclude current form)
-      if (uniqueSlug !== existingForm.slug) {
-        const duplicateSlug = await tx.query.forms.findFirst({
-          where: and(eq(forms.slug, uniqueSlug), ne(forms.id, formId)),
-          columns: { id: true },
-        });
-
-        if (duplicateSlug) {
-          throw new Error(
-            `A form with the slug "${formPayload.slug}" already exists. Please choose a different slug.`,
-          );
-        }
-      }
+      // // Generate unique slug by appending user ID
+      // const uniqueSlug = `${slugify(formPayload.slug)}-${existingForm.createdBy}`;
+      //
+      // // Check slug uniqueness (exclude current form)
+      // if (uniqueSlug !== existingForm.slug) {
+      //   const duplicateSlug = await tx.query.forms.findFirst({
+      //     where: and(eq(forms.slug, uniqueSlug), ne(forms.id, formId)),
+      //     columns: { id: true },
+      //   });
+      //
+      //   if (duplicateSlug) {
+      //     throw new Error(
+      //       `A form with the slug "${formPayload.slug}" already exists. Please choose a different slug.`,
+      //     );
+      //   }
+      // }
 
       // 1. Update the Form
       const [updatedForm] = await tx
         .update(forms)
         .set({
           ...formPayload,
-          slug: uniqueSlug,
           publishedAt: formPayload.publishedAt
             ? new Date(formPayload.publishedAt)
             : undefined,

@@ -1,6 +1,6 @@
 import { auth } from "~~/server/lib/auth";
 import { createForm } from "~~/server/services/form.service";
-import { FormSchema } from "~~/shared/types";
+import type { FormSchema } from "~~/shared/types";
 import { formSchemaSchema } from "~~/shared/utils/form.schema";
 
 export default defineEventHandler(async (event) => {
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
         data: {
           type: "validation_error",
           errors: fieldErrors,
-          summary: `Found ${fieldErrors.length} validation error${fieldErrors.length > 1 ? 's' : ''}`,
+          summary: `Found ${fieldErrors.length} validation error${fieldErrors.length > 1 ? "s" : ""}`,
         },
       });
     }
@@ -115,7 +115,8 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 500,
       statusCode: 500,
-      message: e?.message || "An unexpected error occurred while creating the form",
+      message:
+        e?.message || "An unexpected error occurred while creating the form",
       data: {
         type: "server_error",
         details:
