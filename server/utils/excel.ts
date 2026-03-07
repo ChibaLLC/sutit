@@ -77,9 +77,11 @@ const formatFormData = (submissions: FormSubmission[]) => {
       "Submitted At": sub.submittedAt,
       Status: sub.status,
       "Price Paid": sub.pricePaid || 0,
-      "Payment Status": sub.payments.payment.status,
-      "Receipt Number": sub.payments.payment.receiptNumber,
     };
+    if (sub.payments?.payment) {
+      baseRow["Payment Status"] = sub.payments.payment.status;
+      baseRow["Receipt Number"] = sub.payments.payment.receiptNumber;
+    }
 
     // Field Responses
     const fieldRow = { ...baseRow };
