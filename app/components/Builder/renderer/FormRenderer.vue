@@ -1,1396 +1,233 @@
 <script setup lang="ts">
-import {
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  CreditCard,
-  Receipt,
-  Loader2,
-  ShoppingCart,
-  Package,
-  Plus,
-  Minus,
-  X,
-  File,
-  TicketsPlane,
-  Check,
-} from "lucide-vue-next";
+import { ref, reactive, computed } from "vue";
+import { ArrowLeft, ArrowRight, Check, Loader2, CreditCard, Package, FileText } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import type { FormSchema } from "~~/shared/types";
-import { DateFormatter } from "@internationalized/date";
-interface Props {
+
+const props = defineProps<{
   form: FormSchema;
-}
+}>();
 
-interface Emits {
-  (
-    e: "submit",
-    data: {
-      schema: FormSchema;
-      formData: Record<string, any>;
-      paymentData: Record<string, any>;
-      selectedProducts: Record<string, { quantity: number; storeId: string }>;
-    },
-  ): void;
-}
+const emit = defineEmits<{
+  submit: [data: {
+    schema: FormSchema;
+    formData: Record<string, any>;
+    paymentData: { phoneNumber: string };
+    selectedProducts: Record<string, { quantity: number; storeId: string }>;
+  }];
+}>();
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
-
-const currentStep = ref(0);
+const currentStep = ref(1);
 const formData = reactive<Record<string, any>>({});
-const paymentData = reactive({
-  phoneNumber: "",
-});
-const selectedProducts = reactive<
-  Record<string, { quantity: number; storeId: string }>
->({});
-const isProcessing = ref(false);
+const selectedProducts = reactive<Record<string, { quantity: number; storeId: string }>>({});
+const phoneNumber = ref("");
+const isSubmitting = ref(false);
 
-const totalSteps = computed(() => {
-  let steps = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) steps += 1; // Product selection step
-  steps += 1; // Preview step (always show)
-  if (props.form.price > 0) steps += 1; // Checkout step
-  return steps;
-});
+const hasProducts = computed(() => (props.form.stores?.length ?? 0) > 0);
+const hasPrice = computed(() => Number(props.form.price) > 0);
 
-const currentPage = computed(() => {
-  return props.form.pages[currentStep.value];
-});
-
-const isProductSelectionStep = computed(() => {
-  return (
-    props.form.stores &&
-    props.form.stores.length > 0 &&
-    currentStep.value === props.form.pages.length
-  );
+const steps = computed(() => {
+  const s: { id: number; label: string; icon: any }[] = [];
+  let n = 1;
+  for (const page of props.form.pages) {
+    s.push({ id: n++, label: page.title || `Page ${n - 1}`, icon: FileText });
+  }
+  if (hasProducts.value) {
+    s.push({ id: n++, label: "Products", icon: Package });
+  }
+  s.push({ id: n++, label: "Review", icon: FileText });
+  return s;
 });
 
-const getPreviewStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  return index;
+const maxStep = computed(() => steps.value.length);
+const progressPercent = computed(() => ((currentStep.value - 1) / (maxStep.value - 1)) * 100);
+const currentLabel = computed(() => steps.value.find((s) => s.id === currentStep.value)?.label ?? "");
+
+// Which step type are we on
+const isPageStep = computed(() => currentStep.value <= props.form.pages.length);
+const isProductStep = computed(() => hasProducts.value && currentStep.value === props.form.pages.length + 1);
+const isReviewStep = computed(() => currentStep.value === maxStep.value);
+
+const currentPageIndex = computed(() => currentStep.value - 1);
+const currentPage = computed(() => props.form.pages[currentPageIndex.value]);
+
+const next = () => {
+  if (currentStep.value < maxStep.value) currentStep.value++;
 };
 
-const getCheckoutStepIndex = () => {
-  let index = props.form.pages.length;
-  if (props.form.stores && props.form.stores.length > 0) index += 1;
-  index += 1; // Preview step
-  return index;
+const prev = () => {
+  if (currentStep.value > 1) currentStep.value--;
 };
 
-const isPreviewStep = computed(() => {
-  return currentStep.value === getPreviewStepIndex();
+const nextLabel = computed(() => {
+  if (isReviewStep.value) {
+    if (hasPrice.value) return `Pay KES ${Number(props.form.price).toLocaleString()}`;
+    return "Submit";
+  }
+  if (isProductStep.value) return "Review";
+  if (currentPageIndex.value < props.form.pages.length - 1) return "Continue";
+  if (hasProducts.value) return "Select Products";
+  return "Review";
 });
-
-const isCheckoutStep = computed(() => {
-  return props.form.price > 0 && currentStep.value === getCheckoutStepIndex();
-});
-
-const getStepClasses = (index: number) => {
-  if (index < currentStep.value) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (index === currentStep.value) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getProductStepClasses = () => {
-  const productStepIndex = props.form.pages.length;
-  if (currentStep.value > productStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === productStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getPreviewStepClasses = () => {
-  const previewStepIndex = getPreviewStepIndex();
-  if (currentStep.value > previewStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === previewStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getCheckoutStepClasses = () => {
-  const checkoutStepIndex = getCheckoutStepIndex();
-  if (currentStep.value > checkoutStepIndex) {
-    return "bg-primary border-primary text-primary-foreground";
-  } else if (currentStep.value === checkoutStepIndex) {
-    return "bg-accent border-accent text-accent-foreground";
-  } else {
-    return "bg-background border-border text-muted-foreground";
-  }
-};
-
-const getNextButtonText = () => {
-  if (currentStep.value < props.form.pages.length - 1) {
-    return "Continue";
-  } else if (isProductSelectionStep.value) {
-    return "Review Order";
-  } else if (isPreviewStep.value) {
-    return props.form.price > 0 ? "Proceed to Payment" : "Submit Form";
-  } else if (isCheckoutStep.value) {
-    return `Pay KSh ${(getTotalAmount.value * 1).toFixed(2)}`;
-  } else {
-    return "Review Order";
-  }
-};
-
-const handleNext = () => {
-  if (currentStep.value < props.form.pages.length - 1) {
-    // Move to next form page
-    currentStep.value++;
-  } else if (currentStep.value === props.form.pages.length - 1) {
-    // Last form page - move to products or preview or checkout
-    if (props.form.stores && props.form.stores.length > 0) {
-      currentStep.value++; // Move to product selection
-    } else {
-      currentStep.value = getPreviewStepIndex(); // Move to preview
-    }
-  } else if (isProductSelectionStep.value) {
-    // Product selection - move to preview
-    currentStep.value = getPreviewStepIndex();
-  } else if (isPreviewStep.value) {
-    // Preview - move to checkout or submit
-    if (props.form.price > 0) {
-      currentStep.value = getCheckoutStepIndex();
-    } else {
-      handleSubmit();
-    }
-  } else {
-    handleSubmit();
-  }
-};
-const handleFileChange = async (
-  event: Event,
-  fieldId: string,
-  multiple = false,
-) => {
-  try {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-
-    if (!files || files.length === 0) {
-      delete formData[fieldId];
-      return;
-    }
-    const formDataUpload = createFormData({
-      file: files[0],
-    });
-    const { data } = await $fetch(`/api/uploads`, {
-      method: "POST",
-      body: formDataUpload,
-    });
-    formData[fieldId] = data?.path;
-  } catch (e: any) {
-    toast.error("An error occurred!!");
-  }
-};
-const getSelectedFiles = (fieldId: string): File[] => {
-  const value = formData[fieldId];
-  if (!value) return [];
-
-  if (value instanceof FileList) {
-    return Array.from(value);
-  } else if (value instanceof File) {
-    return [value];
-  } else if (
-    Array.isArray(value) &&
-    value.every((item) => item instanceof File)
-  ) {
-    return value;
-  }
-
-  return [];
-};
-
-const removeFile = (fieldId: string, index: number, multiple: boolean) => {
-  const files = getSelectedFiles(fieldId);
-
-  if (multiple) {
-    const newFiles = files.filter((_, i) => i !== index);
-    if (newFiles.length === 0) {
-      delete formData[fieldId];
-    } else {
-      // Create a new FileList-like structure
-      const dt = new DataTransfer();
-      newFiles.forEach((file) => dt.items.add(file));
-      formData[fieldId] = dt.files;
-    }
-  } else {
-    delete formData[fieldId];
-  }
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-
-const toggleMultiselectOption = (fieldId: string, option: string) => {
-  if (!formData[fieldId]) {
-    formData[fieldId] = [];
-  }
-  const index = formData[fieldId].indexOf(option);
-  if (index > -1) {
-    formData[fieldId].splice(index, 1);
-  } else {
-    formData[fieldId].push(option);
-  }
-};
-const handlePrevious = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--;
-  }
-};
 
 const handleSubmit = () => {
-  if (props.form.requireMerch && Object.keys(selectedProducts).length < 0) {
-    toast.error("You are required to pick merchandise");
-    return;
-  }
+  isSubmitting.value = true;
   emit("submit", {
     schema: props.form,
-    formData,
-    selectedProducts,
-    paymentData,
+    formData: { ...formData },
+    selectedProducts: { ...selectedProducts },
+    paymentData: { phoneNumber: phoneNumber.value },
   });
 };
 
-const resetForm = () => {
-  currentStep.value = 0;
-  Object.keys(formData).forEach((key) => delete formData[key]);
-  Object.keys(selectedProducts).forEach((key) => delete selectedProducts[key]);
-  paymentData.phoneNumber = "";
-};
-
-const updateProductQuantity = (
-  productId: string,
-  storeId: string,
-  change: number,
-) => {
-  if (!selectedProducts[productId]) {
-    selectedProducts[productId] = { quantity: 0, storeId };
-  }
-
-  const newQuantity = selectedProducts[productId].quantity + change;
-  if (newQuantity <= 0) {
-    delete selectedProducts[productId];
+const handleAction = () => {
+  if (isReviewStep.value) {
+    handleSubmit();
   } else {
-    selectedProducts[productId].quantity = newQuantity;
+    next();
   }
 };
 
-const getProductQuantity = (productId: string) => {
-  return selectedProducts[productId]?.quantity || 0;
-};
-
-const getTotalSelectedProducts = computed(() => {
-  return Object.values(selectedProducts).reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
-});
-
-const getProductName = (productId: string) => {
-  for (const store of props.form.stores || []) {
-    const product = store.items.find((p) => p.id === productId);
-    if (product) return product.name;
+const syncProducts = (val: Record<string, { quantity: number; storeId: string }>) => {
+  for (const k of Object.keys(selectedProducts)) {
+    if (!(k in val)) delete selectedProducts[k];
   }
-  return "Unknown Product";
+  Object.assign(selectedProducts, val);
 };
-
-const getProductPrice = (productId: string) => {
-  for (const store of props.form.stores || []) {
-    const product = store.items.find((p) => p.id === productId);
-    if (product) return product.price;
-  }
-  return 0;
-};
-
-const getTotalProductsPrice = computed(() => {
-  return Object.entries(selectedProducts).reduce((total, [productId, data]) => {
-    return total + getProductPrice(productId) * data.quantity;
-  }, 0);
-});
-
-const getTotalAmount = computed(() => {
-  return (
-    parseInt(props.form.price.toString()) +
-    parseInt(getTotalProductsPrice.value.toString())
-  );
-});
 </script>
+
 <template>
-  <div class="min-h-screen bg-background py-8 px-4">
-    <div class="max-w-6xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Vertical Stepper Navigation -->
-        <div class="lg:col-span-1">
-          <Card class="sticky top-8">
-            <CardContent class="p-6">
-              <div class="space-y-6">
-                <div class="text-center">
-                  <h3 class="font-semibold text-lg">Progress</h3>
-                  <p class="text-sm text-muted-foreground">
-                    Step {{ currentStep + 1 }} of {{ totalSteps }}
-                  </p>
-                </div>
-
-                <Progress
-                  :value="((currentStep + 1) / totalSteps) * 100"
-                  class="h-2"
-                />
-
-                <!-- Vertical Step List -->
-                <div class="space-y-4">
-                  <!-- Form Pages -->
-                  <div
-                    v-for="(page, index) in form.pages"
-                    :key="page.id"
-                    class="flex items-center gap-3"
-                  >
-                    <div
-                      class="flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0"
-                      :class="getStepClasses(index)"
-                    >
-                      <CheckCircle v-if="index < currentStep" class="w-4 h-4" />
-                      <div
-                        v-else-if="index === currentStep"
-                        class="w-2 h-2 bg-current rounded-full animate-pulse"
-                      ></div>
-                      <span v-else class="text-xs font-semibold">{{
-                        index + 1
-                      }}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p
-                        class="text-sm font-medium truncate"
-                        :class="
-                          index <= currentStep
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        "
-                      >
-                        {{ page.title }}
-                      </p>
-                      <p class="text-xs text-muted-foreground">Form Page</p>
-                    </div>
-                  </div>
-
-                  <!-- Product Selection Step -->
-                  <div
-                    v-if="form.stores && form.stores.length > 0"
-                    class="flex items-center gap-3"
-                  >
-                    <div
-                      class="flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0"
-                      :class="getProductStepClasses()"
-                    >
-                      <CheckCircle
-                        v-if="currentStep > form.pages.length"
-                        class="w-4 h-4"
-                      />
-                      <ShoppingCart
-                        v-else-if="isProductSelectionStep"
-                        class="w-4 h-4"
-                      />
-                      <Package v-else class="w-4 h-4" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p
-                        class="text-sm font-medium"
-                        :class="
-                          currentStep >= form.pages.length
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        "
-                      >
-                        Select Products
-                      </p>
-                      <p class="text-xs text-muted-foreground">Choose Items</p>
-                    </div>
-                  </div>
-
-                  <!-- Preview Step -->
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0"
-                      :class="getPreviewStepClasses()"
-                    >
-                      <CheckCircle
-                        v-if="currentStep > getPreviewStepIndex()"
-                        class="w-4 h-4"
-                      />
-                      <Receipt v-else-if="isPreviewStep" class="w-4 h-4" />
-                      <span v-else class="text-xs font-semibold">✓</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p
-                        class="text-sm font-medium"
-                        :class="
-                          currentStep >= getPreviewStepIndex()
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        "
-                      >
-                        Review
-                      </p>
-                      <p class="text-xs text-muted-foreground">Check Details</p>
-                    </div>
-                  </div>
-
-                  <!-- Checkout Step -->
-                  <div v-if="form.price > 0" class="flex items-center gap-3">
-                    <div
-                      class="flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0"
-                      :class="getCheckoutStepClasses()"
-                    >
-                      <CheckCircle
-                        v-if="currentStep > getCheckoutStepIndex()"
-                        class="w-4 h-4"
-                      />
-                      <CreditCard v-else-if="isCheckoutStep" class="w-4 h-4" />
-                      <span v-else class="text-xs font-semibold">$</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p
-                        class="text-sm font-medium"
-                        :class="
-                          currentStep >= getCheckoutStepIndex()
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        "
-                      >
-                        M-Pesa Payment
-                      </p>
-                      <p class="text-xs text-muted-foreground">
-                        Complete Payment
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+  <div class="min-h-screen bg-background">
+    <!-- Top bar with progress -->
+    <header class="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div class="max-w-3xl mx-auto flex h-14 items-center justify-between px-6">
+        <div>
+          <h1 class="text-sm font-semibold truncate max-w-[200px]">{{ form.title }}</h1>
+          <p class="text-xs text-muted-foreground">Step {{ currentStep }} of {{ maxStep }}</p>
         </div>
+        <Badge variant="outline" class="text-xs">{{ currentLabel }}</Badge>
+      </div>
+      <div class="h-1 bg-muted">
+        <div class="h-full bg-primary transition-all duration-500 ease-out" :style="{ width: `${progressPercent}%` }" />
+      </div>
+    </header>
 
-        <!-- Main Content -->
-        <div class="lg:col-span-3">
-          <!-- Header -->
-          <div class="text-center mb-8">
-            <Badge v-if="form.price > 0" variant="secondary" class="mb-4">
-              <CreditCard class="w-3 h-3 mr-1" />
-              Paid Form - KSh {{ (form.price * 1).toFixed(2) }}
-            </Badge>
-            <h1 class="text-2xl md:text-4xl font-bold text-foreground mb-3">
-              {{ form.title }}
-            </h1>
-            <p
-              v-if="form.description"
-              class="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto"
+    <!-- Step indicators -->
+    <div class="max-w-3xl mx-auto px-6 pt-6">
+      <div class="flex items-center justify-center gap-1.5 flex-wrap">
+        <template v-for="(step, index) in steps" :key="step.id">
+          <button
+            @click="step.id < currentStep ? (currentStep = step.id) : null"
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors"
+            :class="[
+              step.id === currentStep
+                ? 'bg-primary text-primary-foreground font-medium'
+                : step.id < currentStep
+                  ? 'bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
+                  : 'text-muted-foreground'
+            ]"
+          >
+            <span
+              class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium border"
+              :class="[
+                step.id === currentStep
+                  ? 'border-primary-foreground/30 bg-primary-foreground/20'
+                  : step.id < currentStep
+                    ? 'border-primary/30 bg-primary/10'
+                    : 'border-muted-foreground/30'
+              ]"
             >
-              {{ form.description }}
-            </p>
-          </div>
-
-          <!-- Form Content -->
-          <Card class="shadow-lg border bg-card">
-            <CardContent class="p-4 md:p-8">
-              <!-- Form Pages -->
-              <div v-if="currentStep < form.pages.length" class="space-y-8">
-                <!-- Page Header -->
-                <div class="text-center space-y-3">
-                  <Badge variant="outline" class="mb-2">
-                    Page {{ currentStep + 1 }}
-                  </Badge>
-                  <h2
-                    class="text-2xl md:text-3xl font-semibold text-card-foreground"
-                  >
-                    {{ currentPage.title }}
-                  </h2>
-                  <p
-                    v-if="currentPage.description"
-                    class="text-muted-foreground text-base md:text-lg max-w-xl mx-auto"
-                  >
-                    {{ currentPage.description }}
-                  </p>
-                </div>
-
-                <Separator />
-
-                <form @submit.prevent="handleNext" class="space-y-8">
-                  <!-- Field Grid -->
-                  <div class="grid gap-6 grid-cols-1">
-                    <div
-                      v-for="field in currentPage.fields"
-                      :key="field.id"
-                      class="group"
-                    >
-                      <div class="flex items-center gap-3 mb-3">
-                        <div class="flex items-center gap-2">
-                          <div
-                            class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center"
-                          >
-                            <svg
-                              class="w-4 h-4 text-primary"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                          </div>
-                          <Label
-                            :for="field.id"
-                            class="text-base font-semibold text-foreground"
-                          >
-                            {{ field.label }}
-                          </Label>
-                        </div>
-                        <div
-                          v-if="field.required"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200 rounded-full text-xs font-semibold shadow-sm"
-                        >
-                          <svg
-                            class="w-3.5 h-3.5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fill-rule="evenodd"
-                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                              clip-rule="evenodd"
-                            />
-                          </svg>
-                          Required
-                        </div>
-                      </div>
-                      <p
-                        v-if="field.description"
-                        class="text-sm text-muted-foreground mb-2"
-                      >
-                        {{ field.description }}
-                      </p>
-                      <div v-if="field.type == 'date'">
-                        <Input type="date" v-model="formData[field.id]" />
-                      </div>
-                      <!-- Text Input -->
-                      <div
-                        v-if="
-                          field.type === 'text' ||
-                          field.type === 'email' ||
-                          field.type === 'phone' ||
-                          field.type == 'url' ||
-                          field.type == 'number'
-                        "
-                        class="space-y-3"
-                      >
-                        <div class="relative">
-                          <Input
-                            :id="field.id"
-                            v-model="formData[field.id]"
-                            :type="field.type"
-                            :placeholder="field.placeholder"
-                            :required="field.required"
-                            class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
-                            @click.stop
-                          />
-                          <div
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
-                          >
-                            <svg
-                              class="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                      <!-- File Input -->
-                      <div v-else-if="field.type === 'file'" class="space-y-3">
-                        <div class="space-y-2">
-                          <Input
-                            :id="field.id"
-                            type="file"
-                            :multiple="field.multiple || false"
-                            :required="field.required"
-                            :accept="field.accept || '*/*'"
-                            class="h-12 transition-all duration-200 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                            @change="
-                              handleFileChange(
-                                $event,
-                                field.id,
-                                field.multiple || false,
-                              )
-                            "
-                          />
-
-                          <!-- File Preview -->
-                          <div
-                            v-if="getSelectedFiles(field.id).length > 0"
-                            class="space-y-2"
-                          >
-                            <p class="text-sm text-muted-foreground">
-                              Selected files:
-                            </p>
-                            <div class="space-y-1">
-                              <div
-                                v-for="(file, index) in getSelectedFiles(
-                                  field.id,
-                                )"
-                                :key="index"
-                                class="flex items-center justify-between p-2 bg-muted rounded-md"
-                              >
-                                <div
-                                  class="flex items-center gap-2 flex-1 min-w-0"
-                                >
-                                  <div
-                                    class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center shrink-0"
-                                  >
-                                    <File class="w-4 h-4 text-primary" />
-                                  </div>
-                                  <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium truncate">
-                                      {{ file.name }}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                      {{ formatFileSize(file.size) }}
-                                    </p>
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  @click="
-                                    removeFile(
-                                      field.id,
-                                      index,
-                                      field.multiple || false,
-                                    )
-                                  "
-                                  class="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <X class="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <!-- Upload Instructions -->
-                          <p class="text-sm text-muted-foreground">
-                            {{
-                              field.multiple
-                                ? "Select one or more files"
-                                : "Select a file"
-                            }}
-                            {{ field.accept ? `(${field.accept})` : "" }}
-                          </p>
-                        </div>
-                      </div>
-
-                      <!-- Textarea -->
-                      <div
-                        v-else-if="field.type === 'textarea'"
-                        class="space-y-3"
-                      >
-                        <div class="relative">
-                          <Textarea
-                            :id="field.id"
-                            v-model="formData[field.id]"
-                            :placeholder="field.placeholder"
-                            :required="field.required"
-                            class="min-h-[120px] transition-all duration-200 resize-none border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
-                            @click.stop
-                          />
-                          <div
-                            class="absolute right-3 top-3 text-muted-foreground/40 pointer-events-none"
-                          >
-                            <svg
-                              class="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Select -->
-                      <div
-                        v-else-if="field.type === 'select'"
-                        class="space-y-3"
-                      >
-                        <div class="relative">
-                          <Select v-model="formData[field.id]">
-                            <SelectTrigger
-                              class="h-12 transition-all duration-200 border-0 bg-background/80 focus:bg-background shadow-sm hover:shadow-md"
-                            >
-                              <SelectValue
-                                :placeholder="
-                                  field.placeholder || 'Select an option'
-                                "
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem
-                                v-for="option in field.options"
-                                :key="option"
-                                :value="option"
-                                class="cursor-pointer"
-                              >
-                                {{ option }}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <div
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
-                          >
-                            <svg
-                              class="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Multi-Select -->
-                      <div
-                        v-else-if="field.type === 'multiselect'"
-                        class="space-y-4"
-                      >
-                        <div class="grid gap-3 sm:grid-cols-1">
-                          <div
-                            v-for="option in field.options"
-                            :key="option"
-                            class="flex items-center space-x-3 p-3 sm:p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer active:scale-[0.98] min-h-[3rem]"
-                            @click="toggleMultiselectOption(field.id, option)"
-                          >
-                            <Checkbox
-                              :id="`${field.id}-${option}`"
-                              :modelValue="
-                                (formData[field.id] ?? []).includes(option)
-                              "
-                              @update:modelValue="
-                                () => toggleMultiselectOption(field.id, option)
-                              "
-                              class="cursor-pointer flex-shrink-0 w-5 h-5 sm:w-4 sm:h-4"
-                            />
-                            <Label
-                              :for="`${field.id}-${option}`"
-                              class="cursor-pointer font-medium flex-1 text-sm sm:text-base select-none"
-                              @click.stop
-                              @click="toggleMultiselectOption(field.id, option)"
-                            >
-                              {{ option }}
-                            </Label>
-                          </div>
-                        </div>
-                        <p
-                          v-if="field.placeholder"
-                          class="text-sm text-muted-foreground"
-                        >
-                          {{ field.placeholder }}
-                        </p>
-                        <!-- Selected count indicator -->
-                        <div
-                          v-if="(formData[field.id] || []).length > 0"
-                          class="text-sm text-primary font-medium"
-                        >
-                          {{ (formData[field.id] || []).length }} option(s)
-                          selected
-                        </div>
-                      </div>
-
-                      <!-- Checkbox -->
-
-                      <div
-                        v-else-if="field.type === 'checkbox'"
-                        class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                        @click="formData[field.id] = !formData[field.id]"
-                      >
-                        <Checkbox
-                          :id="field.id"
-                          :modelValue="formData[field.id]"
-                          class="mt-0.5 pointer-events-none"
-                        />
-
-                        <div class="space-y-1 flex-1">
-                          <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                              <div
-                                class="w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center"
-                              >
-                                <Check class="w-4 h-4" />
-                              </div>
-
-                              <Label
-                                :for="field.id"
-                                class="text-base font-semibold text-foreground cursor-pointer"
-                                @click.stop
-                              >
-                                {{ field.placeholder }}
-                              </Label>
-                            </div>
-
-                            <!-- required badge -->
-                            <div v-if="field.required" class="...">
-                              Required
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        v-else-if="field.type === 'toggle'"
-                        class="flex items-start space-x-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                      >
-                        <Switch v-model="formData[field.id]" class="mt-0" />
-                      </div>
-                      <!-- Radio Group -->
-                      <div v-else-if="field.type === 'radio'" class="space-y-4">
-                        <RadioGroup
-                          v-model="formData[field.id]"
-                          class="space-y-3"
-                        >
-                          <div
-                            v-for="option in field.options"
-                            :key="option"
-                            class="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                            @click="formData[field.id] = option"
-                          >
-                            <RadioGroupItem
-                              :id="`${field.id}-${option}`"
-                              :value="option"
-                              class="pointer-events-none"
-                            />
-                            <Label
-                              :for="`${field.id}-${option}`"
-                              class="cursor-pointer font-medium flex-1"
-                              >{{ option }}</Label
-                            >
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <!-- Navigation Buttons -->
-                  <div
-                    class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
-                  >
-                    <Button
-                      v-if="currentStep > 0"
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      @click="handlePrevious"
-                      class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                    >
-                      <ChevronLeft class="w-4 h-4" />
-                      Previous
-                    </Button>
-                    <div v-else class="hidden sm:block"></div>
-
-                    <Button
-                      type="submit"
-                      size="lg"
-                      class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                    >
-                      {{ getNextButtonText() }}
-                      <ChevronRight class="w-4 h-4" />
-                    </Button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Product Selection Page -->
-              <div v-else-if="isProductSelectionStep" class="space-y-8">
-                <div class="text-center space-y-4">
-                  <div
-                    class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto"
-                  >
-                    <ShoppingCart class="w-10 h-10 text-primary" />
-                  </div>
-                  <div>
-                    <h2
-                      class="text-2xl md:text-3xl font-semibold text-card-foreground mb-2"
-                    >
-                      Select Products
-                    </h2>
-                    <p class="text-muted-foreground text-base md:text-lg">
-                      Choose products from our available stores
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <!-- Store Products -->
-                <div class="space-y-8">
-                  <div
-                    v-for="store in form.stores"
-                    :key="store.id"
-                    class="space-y-4"
-                  >
-                    <div class="flex items-center gap-3">
-                      <div
-                        class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center"
-                      >
-                        <Package class="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 class="text-xl font-semibold">{{ store.name }}</h3>
-                        <p
-                          v-if="store.description"
-                          class="text-muted-foreground"
-                        >
-                          {{ store.description }}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                    >
-                      <Card
-                        v-for="product in store.items"
-                        :key="product.id"
-                        class="group hover:shadow-lg transition-all duration-300"
-                      >
-                        <CardContent class="p-4">
-                          <div
-                            class="aspect-square bg-muted rounded-lg mb-3 overflow-hidden"
-                          >
-                            <img
-                              v-if="product.images && product.images.length > 0"
-                              :src="product.images[0]"
-                              :alt="product.name"
-                              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div
-                              v-else
-                              class="w-full h-full flex items-center justify-center"
-                            >
-                              <Package
-                                class="w-12 h-12 text-muted-foreground"
-                              />
-                            </div>
-                          </div>
-
-                          <div class="space-y-2">
-                            <h4 class="font-semibold text-sm">
-                              {{ product.name }}
-                            </h4>
-                            <p
-                              v-if="product.description"
-                              class="text-xs text-muted-foreground line-clamp-2"
-                            >
-                              {{ product.description }}
-                            </p>
-
-                            <div class="flex items-center justify-between">
-                              <Badge variant="secondary" class="text-sm">
-                                KSh {{ (product.price * 1).toFixed(2) }}
-                              </Badge>
-
-                              <div class="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  @click="
-                                    updateProductQuantity(
-                                      product.id,
-                                      store.id.toString(),
-                                      -1,
-                                    )
-                                  "
-                                  :disabled="
-                                    getProductQuantity(product.id) === 0
-                                  "
-                                  class="h-8 w-8 p-0"
-                                >
-                                  <Minus class="w-3 h-3" />
-                                </Button>
-
-                                <span
-                                  class="text-sm font-medium min-w-[2rem] text-center"
-                                >
-                                  {{ getProductQuantity(product.id) }}
-                                </span>
-
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  @click="
-                                    updateProductQuantity(
-                                      product.id,
-                                      store.id.toString(),
-                                      1,
-                                    )
-                                  "
-                                  class="h-8 w-8 p-0"
-                                >
-                                  <Plus class="w-3 h-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Selected Products Summary -->
-                <div v-if="getTotalSelectedProducts > 0" class="mt-8">
-                  <Card class="bg-primary/5 border-primary/20">
-                    <CardContent class="p-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <ShoppingCart class="w-5 h-5 text-primary" />
-                          <span class="font-semibold">Selected Products</span>
-                        </div>
-                        <Badge variant="secondary" class="text-lg px-3 py-1">
-                          {{ getTotalSelectedProducts }} items
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Separator />
-
-                <!-- Navigation Buttons -->
-                <div
-                  class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    @click="handlePrevious"
-                    class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                  >
-                    <ChevronLeft class="w-4 h-4" />
-                    Previous
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="lg"
-                    @click="handleNext"
-                    class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                  >
-                    {{ getNextButtonText() }}
-                    <ChevronRight class="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <!-- Preview Page -->
-              <div v-else-if="isPreviewStep" class="space-y-8">
-                <div class="text-center space-y-4">
-                  <div
-                    class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto"
-                  >
-                    <Receipt class="w-10 h-10 text-primary" />
-                  </div>
-                  <div>
-                    <h2
-                      class="text-2xl md:text-3xl font-semibold text-card-foreground mb-2"
-                    >
-                      Review Your Submission
-                    </h2>
-                    <p class="text-muted-foreground text-base md:text-lg">
-                      Please review your information before submitting
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <!-- Form Data Review -->
-                <div class="space-y-6">
-                  <div
-                    v-for="(page, pageIndex) in form.pages"
-                    :key="page.id"
-                    class="space-y-4"
-                  >
-                    <div class="flex items-center gap-3">
-                      <Badge variant="outline" class="text-sm"
-                        >Page {{ pageIndex + 1 }}</Badge
-                      >
-                      <h3 class="text-xl font-semibold">{{ page.title }}</h3>
-                    </div>
-
-                    <Card class="bg-muted/30">
-                      <CardContent class="p-4">
-                        <div class="grid gap-4">
-                          <div
-                            v-for="field in page.fields"
-                            :key="field.id"
-                            class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2"
-                          >
-                            <div class="space-y-1 flex-1">
-                              <Label
-                                class="text-sm font-medium text-muted-foreground"
-                                >{{ field.label }}</Label
-                              >
-                              <div class="text-sm">
-                                <span
-                                  v-if="formData[field.id]"
-                                  class="font-medium break-words"
-                                >
-                                  {{ formData[field.id] }}
-                                </span>
-                                <span
-                                  v-else
-                                  class="text-muted-foreground italic"
-                                  >Not provided</span
-                                >
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <!-- Selected Products Review -->
-                  <div v-if="getTotalSelectedProducts > 0" class="space-y-4">
-                    <div class="flex items-center gap-3">
-                      <Badge variant="outline" class="text-sm">Products</Badge>
-                      <h3 class="text-xl font-semibold">Selected Items</h3>
-                    </div>
-
-                    <Card class="bg-muted/30">
-                      <CardContent class="p-4">
-                        <div class="space-y-3">
-                          <div
-                            v-for="(productData, productId) in selectedProducts"
-                            :key="productId"
-                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
-                          >
-                            <div class="space-y-1">
-                              <div class="font-medium">
-                                {{ getProductName(productId) }}
-                              </div>
-                              <div class="text-sm text-muted-foreground">
-                                Quantity: {{ productData.quantity }}
-                              </div>
-                            </div>
-                            <Badge
-                              variant="secondary"
-                              class="self-start sm:self-center"
-                            >
-                              KSh
-                              {{
-                                (
-                                  getProductPrice(productId) *
-                                  productData.quantity *
-                                  1
-                                ).toFixed(2)
-                              }}
-                            </Badge>
-                          </div>
-                          <Separator />
-                          <div
-                            class="flex justify-between items-center text-lg font-semibold"
-                          >
-                            <span>Total Amount</span>
-                            <span class="text-primary"
-                              >KSh {{ (getTotalAmount * 1).toFixed(2) }}</span
-                            >
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <!-- M-Pesa Payment Form -->
-
-                  <form
-                    v-if="getTotalAmount > 0"
-                    @submit.prevent="handleSubmit()"
-                    class="space-y-6"
-                  >
-                    <div class="space-y-4">
-                      <div class="space-y-3">
-                        <Label
-                          for="phoneNumber"
-                          class="text-sm font-semibold flex items-center gap-2"
-                        >
-                          <div
-                            class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center"
-                          >
-                            <span class="text-white text-xs font-bold">M</span>
-                          </div>
-                          M-Pesa Phone Number
-                        </Label>
-                        <Input
-                          id="phoneNumber"
-                          v-model="paymentData.phoneNumber"
-                          placeholder="254712345678"
-                          required
-                          class="h-12 text-lg transition-all duration-200"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                          Enter your M-Pesa registered phone number
-                        </p>
-                      </div>
-
-                      <Card class="bg-green-50 border-green-200">
-                        <CardContent class="p-4">
-                          <div class="flex items-start gap-3">
-                            <div
-                              class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0"
-                            >
-                              <span class="text-green-600 text-sm">ℹ</span>
-                            </div>
-                            <div class="space-y-2">
-                              <h4 class="font-semibold text-green-800">
-                                Payment Instructions
-                              </h4>
-                              <ol
-                                class="text-sm text-green-700 space-y-1 list-decimal list-inside"
-                              >
-                                <li>Click "Pay with M-Pesa" below</li>
-                                <li>
-                                  You'll receive an STK push notification on
-                                  your phone
-                                </li>
-                                <li>
-                                  Enter your M-Pesa PIN to complete the payment
-                                </li>
-                                <li>Wait for payment confirmation</li>
-                              </ol>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Separator />
-
-                    <div
-                      class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
-                    >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        @click="handlePrevious"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                      >
-                        <ChevronLeft class="w-4 h-4" />
-                        Back to Review
-                      </Button>
-
-                      <Button
-                        type="submit"
-                        size="lg"
-                        :disabled="isProcessing"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200 bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                      >
-                        <Loader2
-                          v-if="isProcessing"
-                          class="w-5 h-5 animate-spin"
-                        />
-                        <div
-                          v-else
-                          class="w-5 h-5 bg-white rounded-full flex items-center justify-center"
-                        >
-                          <span class="text-green-600 text-xs font-bold"
-                            >M</span
-                          >
-                        </div>
-                        {{
-                          isProcessing
-                            ? "Processing Payment..."
-                            : `Pay KSh ${getTotalAmount}`
-                        }}
-                      </Button>
-                    </div>
-                  </form>
-
-                  <!-- Success Page -->
-                  <div v-else class="text-center space-y-8">
-                    <Separator class="max-w-xs mx-auto" />
-                    <div
-                      class="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4"
-                    >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        @click="handlePrevious"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 hover:scale-105 transition-all duration-200"
-                      >
-                        <ChevronLeft class="w-4 h-4" />
-                        Previous
-                      </Button>
-
-                      <Button
-                        @click="handleSubmit()"
-                        variant="outline"
-                        size="lg"
-                        class="hover:scale-105 transition-all duration-200"
-                      >
-                        Submit
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Check v-if="step.id < currentStep" class="w-2.5 h-2.5" />
+              <span v-else>{{ step.id }}</span>
+            </span>
+            <span class="hidden sm:inline">{{ step.label }}</span>
+          </button>
+          <div v-if="index < steps.length - 1" class="w-6 h-px" :class="[step.id < currentStep ? 'bg-primary/30' : 'bg-border']" />
+        </template>
       </div>
     </div>
+
+    <!-- Content -->
+    <main class="max-w-3xl mx-auto px-6 py-8">
+      <Transition
+        mode="out-in"
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 translate-x-4"
+        enter-to-class="opacity-100 translate-x-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-x-0"
+        leave-to-class="opacity-0 -translate-x-4"
+      >
+        <!-- Form page -->
+        <div v-if="isPageStep && currentPage" :key="currentStep" class="space-y-6">
+          <div class="text-center space-y-1">
+            <Badge variant="outline" class="text-[10px]">Page {{ currentStep }}</Badge>
+            <h2 class="text-xl font-bold">{{ currentPage.title }}</h2>
+            <p v-if="currentPage.description" class="text-sm text-muted-foreground">{{ currentPage.description }}</p>
+          </div>
+          <div class="space-y-5">
+            <BuilderRendererField
+              v-for="field in currentPage.fields"
+              :key="field.id"
+              :field="field"
+              :model-value="formData[field.id]"
+              @update:model-value="formData[field.id] = $event"
+            />
+            <p v-if="!currentPage.fields.length" class="text-center text-sm text-muted-foreground py-8">
+              This page has no fields
+            </p>
+          </div>
+        </div>
+
+        <!-- Products -->
+        <div v-else-if="isProductStep" :key="'products'" class="space-y-6">
+          <div class="text-center space-y-1">
+            <Badge variant="outline" class="text-[10px]">Products</Badge>
+            <h2 class="text-xl font-bold">Select Products</h2>
+            <p class="text-sm text-muted-foreground">Choose items from available stores</p>
+          </div>
+          <BuilderRendererProducts
+            :stores="form.stores ?? []"
+            :selected="selectedProducts"
+            @update:selected="syncProducts"
+          />
+        </div>
+
+        <!-- Review -->
+        <div v-else-if="isReviewStep" :key="'review'" class="space-y-6">
+          <div class="text-center space-y-1">
+            <Badge variant="outline" class="text-[10px]">Review</Badge>
+            <h2 class="text-xl font-bold">Review & Submit</h2>
+            <p class="text-sm text-muted-foreground">Check your details before submitting</p>
+          </div>
+          <BuilderRendererReview
+            :form="form"
+            :form-data="formData"
+            :selected-products="selectedProducts"
+            :phone-number="phoneNumber"
+            :is-submitting="isSubmitting"
+            @update:phone-number="phoneNumber = $event"
+            @submit="handleSubmit"
+          />
+        </div>
+      </Transition>
+    </main>
+
+    <!-- Bottom nav -->
+    <footer class="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
+        <Button variant="ghost" @click="prev" :disabled="currentStep === 1">
+          <ArrowLeft class="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        <Button @click="handleAction" :disabled="isSubmitting" class="bg-gradient-to-r from-primary to-primary/90">
+          <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
+          {{ nextLabel }}
+          <ArrowRight v-if="!isSubmitting && !isReviewStep" class="w-4 h-4 ml-2" />
+          <CreditCard v-if="!isSubmitting && isReviewStep && hasPrice" class="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+    </footer>
   </div>
 </template>
