@@ -16,7 +16,7 @@ export default defineNuxtConfig({
     "@nuxtjs/sitemap",
     "@nuxtjs/robots",
     // "@nuxt/hints",
-    "nuxt-email-renderer",
+    // "nuxt-email-renderer",
   ],
   css: ["~/assets/css/tailwind.css"],
   vite: {
@@ -50,7 +50,6 @@ export default defineNuxtConfig({
   image: {
     format: ["webp", "avif", "png", "jpg", "jpeg"],
     quality: 80,
-    sizes: "320,640,768,1024,1280,1536",
     screens: {
       xs: 320,
       sm: 640,
