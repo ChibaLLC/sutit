@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch } from "vue";
 import { Plus, Trash2, ShoppingBag, Package, X } from "lucide-vue-next";
 import type { Store, StoreItem } from "~~/shared/types";
 
@@ -301,7 +301,7 @@ const flushStoreName = () => {
               leave-to-class="opacity-0 max-h-0"
             >
               <div
-                v-if="editingItemId === item.id"
+                v-if="editingItemId == item.id"
                 class="mt-4 pt-4 border-t space-y-4 overflow-hidden"
                 @click.stop
               >
@@ -338,12 +338,7 @@ const flushStoreName = () => {
 
                 <div class="flex items-center gap-4">
                   <div class="flex items-center gap-2">
-                    <Switch
-                      :checked="item.infinite"
-                      @update:checked="
-                        (val: boolean) => toggleInfinite(item.id, val)
-                      "
-                    />
+                    <Switch v-model="item.infinite" />
                     <Label class="text-xs">Unlimited stock</Label>
                   </div>
                   <div v-if="!item.infinite" class="flex items-center gap-2">

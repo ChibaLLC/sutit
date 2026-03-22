@@ -36,8 +36,11 @@ import {
   AlertTriangle,
   Eye,
   CheckCircle,
+  Truck,
+  PackageCheck,
 } from "lucide-vue-next";
 import { formatSecondsToDetailedTime, formatCountdown } from "~/lib/utils";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const formId = route.params.id as string;
@@ -459,6 +462,78 @@ const deleteSubmission = async () => {
   }
 };
 
+// Dispatch actions
+const dispatchLoading = ref(false);
+const deliverLoading = ref(false);
+const dispatchDialogOpen = ref(false);
+const deliverDialogOpen = ref(false);
+const dispatchForm = ref({
+  dispatchedBy: "",
+  dispatchDate: new Date().toISOString().split("T")[0],
+  notes: "",
+});
+const deliverDate = ref(new Date().toISOString().split("T")[0]);
+
+const openDispatchDialog = () => {
+  dispatchForm.value = {
+    dispatchedBy: "",
+    dispatchDate: new Date().toISOString().split("T")[0],
+    notes: "",
+  };
+  dispatchDialogOpen.value = true;
+};
+
+const submitDispatch = async () => {
+  if (!dispatchForm.value.dispatchedBy || !dispatchForm.value.dispatchDate) {
+    toast.error("Please fill in all required fields");
+    return;
+  }
+  dispatchLoading.value = true;
+  try {
+    await $fetch(`/api/forms/${formId}/submissions/${submissionId}/dispatch`, {
+      method: "POST",
+      body: dispatchForm.value,
+    });
+    toast.success("Dispatched successfully");
+    dispatchDialogOpen.value = false;
+    await refreshNuxtData();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to dispatch");
+  } finally {
+    dispatchLoading.value = false;
+  }
+};
+
+const openDeliverDialog = () => {
+  deliverDate.value = new Date().toISOString().split("T")[0];
+  deliverDialogOpen.value = true;
+};
+
+const submitDeliver = async () => {
+  if (!deliverDate.value) {
+    toast.error("Please set a delivery date");
+    return;
+  }
+  deliverLoading.value = true;
+  try {
+    await $fetch(
+      `/api/forms/${formId}/submissions/${submissionId}/dispatch/deliver`,
+      { method: "POST", body: { deliveryDate: deliverDate.value } },
+    );
+    toast.success("Marked as delivered");
+    deliverDialogOpen.value = false;
+    await refreshNuxtData();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to mark as delivered");
+  } finally {
+    deliverLoading.value = false;
+  }
+};
+
+const dispatchStatus = computed(() => {
+  return submission.value?.dispatch?.status || null;
+});
+
 onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval);
 });
@@ -633,6 +708,56 @@ onUnmounted(() => {
                     >Kes {{ totalAmount }}</span
                   >
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Dispatch Card -->
+          <Card v-if="submission?.storeResponses?.length > 0">
+            <CardHeader>
+              <CardTitle class="flex items-center gap-3">
+                <Truck class="w-6 h-6" />
+                Dispatch & Delivery
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div v-if="submission?.dispatch" class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-muted-foreground">Status</span>
+                  <Badge
+                    :variant="dispatchStatus === 'delivered' ? 'default' : 'outline'"
+                    :class="{
+                      'bg-blue-100 text-blue-800 border-blue-300': dispatchStatus === 'dispatched',
+                      'bg-green-100 text-green-800': dispatchStatus === 'delivered',
+                    }"
+                  >
+                    {{ dispatchStatus === 'dispatched' ? 'Dispatched' : 'Delivered' }}
+                  </Badge>
+                </div>
+                <div>
+                  <p class="text-sm text-muted-foreground mb-1">Dispatched By</p>
+                  <p class="text-base font-medium">{{ submission.dispatch.dispatchedBy }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-muted-foreground mb-1">Dispatch Date</p>
+                  <p class="text-base font-medium">
+                    {{ new Date(submission.dispatch.dispatchedAt).toLocaleDateString() }}
+                  </p>
+                </div>
+                <div v-if="submission.dispatch.deliveryDate">
+                  <p class="text-sm text-muted-foreground mb-1">Delivery Date</p>
+                  <p class="text-base font-medium">
+                    {{ new Date(submission.dispatch.deliveryDate).toLocaleDateString() }}
+                  </p>
+                </div>
+                <div v-if="submission.dispatch.notes">
+                  <p class="text-sm text-muted-foreground mb-1">Notes</p>
+                  <p class="text-base font-medium">{{ submission.dispatch.notes }}</p>
+                </div>
+              </div>
+              <div v-else class="text-center py-4">
+                <Package class="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                <p class="text-sm text-muted-foreground">Not yet dispatched</p>
               </div>
             </CardContent>
           </Card>
@@ -934,10 +1059,25 @@ onUnmounted(() => {
             </CardHeader>
             <CardContent>
               <div class="space-y-3">
-                <!-- <Button variant="destructive" class="w-full gap-2" @click="confirmDelete"> -->
-                <!--   <Trash2 class="w-5 h-5" /> -->
-                <!--   <span>Delete Submission</span> -->
-                <!-- </Button> -->
+                <Button
+                  v-if="submission?.storeResponses?.length > 0 && !dispatchStatus"
+                  variant="outline"
+                  class="w-full gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  @click="openDispatchDialog"
+                >
+                  <Truck class="w-5 h-5" />
+                  <span>Dispatch</span>
+                </Button>
+
+                <Button
+                  v-if="dispatchStatus === 'dispatched'"
+                  variant="outline"
+                  class="w-full gap-2 text-green-600 border-green-200 hover:bg-green-50"
+                  @click="openDeliverDialog"
+                >
+                  <PackageCheck class="w-5 h-5" />
+                  <span>Mark Delivered</span>
+                </Button>
 
                 <Button
                   variant="outline"
@@ -1016,6 +1156,73 @@ onUnmounted(() => {
             >
               <Loader v-if="deleteLoading" class="w-4 h-4 mr-2" />
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Dispatch Dialog -->
+      <AlertDialog v-model:open="dispatchDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Truck class="w-5 h-5" />
+              Dispatch Submission
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the dispatch details. The user will be notified by email.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Dispatched By</Label>
+              <Input
+                v-model="dispatchForm.dispatchedBy"
+                placeholder="Name of person dispatching"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label>Dispatch Date</Label>
+              <Input v-model="dispatchForm.dispatchDate" type="date" />
+            </div>
+            <div class="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Input v-model="dispatchForm.notes" placeholder="Any notes" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitDispatch" :disabled="dispatchLoading">
+              <Loader v-if="dispatchLoading" class="w-4 h-4 mr-2 animate-spin" />
+              Dispatch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Deliver Dialog -->
+      <AlertDialog v-model:open="deliverDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <PackageCheck class="w-5 h-5" />
+              Mark as Delivered
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the delivery date. The user will be notified by email.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Delivery Date</Label>
+              <Input v-model="deliverDate" type="date" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitDeliver" :disabled="deliverLoading">
+              <Loader v-if="deliverLoading" class="w-4 h-4 mr-2 animate-spin" />
+              Mark Delivered
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

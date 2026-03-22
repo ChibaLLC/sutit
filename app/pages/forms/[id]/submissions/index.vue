@@ -21,6 +21,9 @@ import {
   AlertCircle,
   Info,
   DollarSign,
+  Truck,
+  Package,
+  PackageCheck,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { toast } from "vue-sonner";
@@ -35,6 +38,8 @@ const loading = ref({
   downloadExcel: false,
   submissions: false,
   refreshing: false,
+  dispatching: false,
+  delivering: false,
 });
 
 const error = ref<string | null>(null);
@@ -45,6 +50,7 @@ const filtersVisible = ref(true);
 const filters = ref({
   search: "",
   status: "all",
+  dispatchStatus: "all",
   dateRange: {
     start: "",
     end: "",
@@ -65,7 +71,7 @@ const { data: form } = await useFetch(`/api/forms/${route.params.id}`, {
   },
 });
 const acceptingResponses = ref(form.value.acceptResponses);
-// Reactive fetch with filters
+
 const {
   data: submissions,
   refresh,
@@ -79,18 +85,14 @@ const {
   server: false,
 });
 
-// Track loading state
 watch(pending, (isPending) => {
   loading.value.submissions = isPending;
   loading.value.refreshing = isPending;
 });
 
-// Get unique form fields from all submissions
 const formFields = computed(() => {
   if (!submissions.value?.data?.length) return [];
-
   const fieldsMap = new Map();
-
   submissions.value.data.forEach((submission) => {
     if (submission.responses) {
       submission.responses.forEach((response) => {
@@ -106,52 +108,48 @@ const formFields = computed(() => {
       });
     }
   });
-
   return Array.from(fieldsMap.values()).sort(
     (a, b) => a.orderIndex - b.orderIndex,
   );
 });
 
-// Function to get field response value for a submission
 const getFieldValue = (submission, fieldId) => {
   if (!submission.responses) return "";
   const response = submission.responses.find((r) => r.fieldId === fieldId);
   return response?.value || "";
 };
 
-// Enhanced filtered submissions with field-based search
 const filteredSubmissions = computed(() => {
   if (!submissions.value?.data) return [];
-
   let filtered = [...submissions.value.data];
 
-  // Search filter - now searches across all field values
   if (filters.value.search) {
     const searchTerm = filters.value.search.toLowerCase();
     filtered = filtered.filter((submission) => {
-      // Search in basic submission data
       const basicMatch =
         submission.submitter?.name?.toLowerCase().includes(searchTerm) ||
         submission.submitter?.email?.toLowerCase().includes(searchTerm) ||
         submission.id.toLowerCase().includes(searchTerm) ||
         submission.status?.toLowerCase().includes(searchTerm);
-
-      // Search in form field responses
       const fieldMatch =
         submission.responses?.some((response) =>
           response.value?.toString().toLowerCase().includes(searchTerm),
         ) || false;
-
       return basicMatch || fieldMatch;
     });
   }
 
-  // Status filter
   if (filters.value.status !== "all") {
     filtered = filtered.filter((s) => s.status === filters.value.status);
   }
 
-  // Date range filter
+  if (filters.value.dispatchStatus !== "all") {
+    filtered = filtered.filter((s) => {
+      const dStatus = s.dispatch?.status || "none";
+      return dStatus === filters.value.dispatchStatus;
+    });
+  }
+
   if (filters.value.dateRange.start) {
     const startDate = new Date(filters.value.dateRange.start);
     filtered = filtered.filter((s) => new Date(s.submittedAt) >= startDate);
@@ -163,7 +161,6 @@ const filteredSubmissions = computed(() => {
     filtered = filtered.filter((s) => new Date(s.submittedAt) <= endDate);
   }
 
-  // Price range filter
   if (filters.value.priceRange.min) {
     filtered = filtered.filter(
       (s) => (s.pricePaid || 0) >= parseFloat(filters.value.priceRange.min),
@@ -176,7 +173,6 @@ const filteredSubmissions = computed(() => {
     );
   }
 
-  // Store items filter
   if (filters.value.hasStoreItems !== "all") {
     const hasItems = filters.value.hasStoreItems === "yes";
     filtered = filtered.filter((s) => {
@@ -185,10 +181,8 @@ const filteredSubmissions = computed(() => {
     });
   }
 
-  // Sorting
   filtered.sort((a, b) => {
     let aValue, bValue;
-
     switch (filters.value.sortBy) {
       case "submittedAt":
         aValue = new Date(a.submittedAt);
@@ -206,7 +200,6 @@ const filteredSubmissions = computed(() => {
         aValue = a.submittedAt;
         bValue = b.submittedAt;
     }
-
     if (aValue < bValue) return filters.value.sortOrder === "asc" ? -1 : 1;
     if (aValue > bValue) return filters.value.sortOrder === "asc" ? 1 : -1;
     return 0;
@@ -233,6 +226,16 @@ const stats = computed(() => {
       ) || 0),
     0,
   );
+  const withProducts = data.filter((s) => s.storeResponses?.length > 0).length;
+  const pendingDispatch = data.filter(
+    (s) => s.storeResponses?.length > 0 && !s.dispatch,
+  ).length;
+  const dispatched = data.filter(
+    (s) => s.dispatch?.status === "dispatched",
+  ).length;
+  const delivered = data.filter(
+    (s) => s.dispatch?.status === "delivered",
+  ).length;
 
   return {
     total,
@@ -241,6 +244,10 @@ const stats = computed(() => {
     failedPayment,
     totalRevenue,
     storeRevenue,
+    withProducts,
+    pendingDispatch,
+    dispatched,
+    delivered,
   };
 });
 
@@ -257,11 +264,10 @@ const totalPages = computed(() =>
   Math.ceil(filteredSubmissions.value.length / itemsPerPage.value),
 );
 
-// Watch for filter changes to refresh data
 watch(
   filters,
   () => {
-    currentPage.value = 1; // Reset to first page when filters change
+    currentPage.value = 1;
     refresh();
   },
   { deep: true },
@@ -275,6 +281,7 @@ const clearFilters = () => {
   filters.value = {
     search: "",
     status: "all",
+    dispatchStatus: "all",
     dateRange: { start: "", end: "" },
     priceRange: { min: "", max: "" },
     hasStoreItems: "all",
@@ -283,20 +290,11 @@ const clearFilters = () => {
   };
 };
 
-// Format field value based on type
 const formatFieldValue = (value, fieldType) => {
   if (!value) return "-";
-
   switch (fieldType) {
     case "date":
       return new Date(value).toLocaleDateString();
-    case "email":
-      return value;
-    case "phone":
-      return value;
-    case "select":
-    case "radio":
-      return value;
     case "textarea":
       return value.length > 50 ? value.substring(0, 50) + "..." : value;
     default:
@@ -309,16 +307,11 @@ const downloadExcel = async () => {
   try {
     const res = await $fetch(
       `/api/forms/${route.params.id}/submissions/excel`,
-      {
-        method: "GET",
-        responseType: "blob",
-      },
+      { method: "GET", responseType: "blob" },
     );
-
     const blob = new Blob([res], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -332,6 +325,7 @@ const downloadExcel = async () => {
     loading.value.downloadExcel = false;
   }
 };
+
 const toggleReponse = async () => {
   try {
     const res = await $fetch(`/api/forms/${form.value.id}/accept`, {
@@ -341,6 +335,103 @@ const toggleReponse = async () => {
     acceptingResponses.value = !acceptingResponses.value;
     await refresh();
   } catch (e) {}
+};
+
+// Dispatch dialog state
+const dispatchDialogOpen = ref(false);
+const dispatchForm = ref({
+  submissionId: "",
+  dispatchedBy: "",
+  dispatchDate: new Date().toISOString().split("T")[0],
+  notes: "",
+});
+
+const openDispatchDialog = (submission) => {
+  dispatchForm.value = {
+    submissionId: submission.id,
+    dispatchedBy: "",
+    dispatchDate: new Date().toISOString().split("T")[0],
+    notes: "",
+  };
+  dispatchDialogOpen.value = true;
+};
+
+const submitDispatch = async () => {
+  if (!dispatchForm.value.dispatchedBy || !dispatchForm.value.dispatchDate) {
+    toast.error("Please fill in all required fields");
+    return;
+  }
+  loading.value.dispatching = true;
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/submissions/${dispatchForm.value.submissionId}/dispatch`,
+      {
+        method: "POST",
+        body: {
+          dispatchedBy: dispatchForm.value.dispatchedBy,
+          dispatchDate: dispatchForm.value.dispatchDate,
+          notes: dispatchForm.value.notes,
+        },
+      },
+    );
+    toast.success("Submission dispatched successfully");
+    dispatchDialogOpen.value = false;
+    await refresh();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to dispatch");
+  } finally {
+    loading.value.dispatching = false;
+  }
+};
+
+// Deliver dialog state
+const deliverDialogOpen = ref(false);
+const deliverForm = ref({
+  submissionId: "",
+  deliveryDate: new Date().toISOString().split("T")[0],
+});
+
+const openDeliverDialog = (submission) => {
+  deliverForm.value = {
+    submissionId: submission.id,
+    deliveryDate: new Date().toISOString().split("T")[0],
+  };
+  deliverDialogOpen.value = true;
+};
+
+const submitDeliver = async () => {
+  if (!deliverForm.value.deliveryDate) {
+    toast.error("Please set a delivery date");
+    return;
+  }
+  loading.value.delivering = true;
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/submissions/${deliverForm.value.submissionId}/dispatch/deliver`,
+      {
+        method: "POST",
+        body: {
+          deliveryDate: deliverForm.value.deliveryDate,
+        },
+      },
+    );
+    toast.success("Marked as delivered");
+    deliverDialogOpen.value = false;
+    await refresh();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to mark as delivered");
+  } finally {
+    loading.value.delivering = false;
+  }
+};
+
+const getDispatchBadge = (submission) => {
+  if (!submission.storeResponses?.length) return null;
+  const status = submission.dispatch?.status;
+  if (!status) return { label: "Pending Dispatch", variant: "outline", class: "text-yellow-700 border-yellow-300" };
+  if (status === "dispatched") return { label: "Dispatched", variant: "outline", class: "text-blue-700 border-blue-300" };
+  if (status === "delivered") return { label: "Delivered", variant: "outline", class: "text-green-700 border-green-300" };
+  return null;
 };
 </script>
 
@@ -509,6 +600,56 @@ const toggleReponse = async () => {
             </div>
           </div>
         </Card>
+
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">
+                Pending Dispatch
+              </p>
+              <p class="text-2xl font-bold text-yellow-600">
+                {{ stats.pendingDispatch }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center"
+            >
+              <Package class="h-4 w-4 text-yellow-600" />
+            </div>
+          </div>
+        </Card>
+
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Dispatched</p>
+              <p class="text-2xl font-bold text-blue-600">
+                {{ stats.dispatched }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center"
+            >
+              <Truck class="h-4 w-4 text-blue-600" />
+            </div>
+          </div>
+        </Card>
+
+        <Card class="p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">Delivered</p>
+              <p class="text-2xl font-bold text-green-600">
+                {{ stats.delivered }}
+              </p>
+            </div>
+            <div
+              class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center"
+            >
+              <PackageCheck class="h-4 w-4 text-green-600" />
+            </div>
+          </div>
+        </Card>
       </div>
 
       <!-- Tabs -->
@@ -584,6 +725,22 @@ const toggleReponse = async () => {
                           <SelectItem value="failed_payment"
                             >Payment Failed</SelectItem
                           >
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <!-- Dispatch Status Filter -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Dispatch Status</Label>
+                      <Select v-model="filters.dispatchStatus">
+                        <SelectTrigger>
+                          <SelectValue placeholder="All" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="none">Pending Dispatch</SelectItem>
+                          <SelectItem value="dispatched">Dispatched</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -749,6 +906,11 @@ const toggleReponse = async () => {
                         Store Items
                       </th>
                       <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
+                      >
+                        Dispatch Status
+                      </th>
+                      <th
                         class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
                       >
                         Submitted At
@@ -877,6 +1039,21 @@ const toggleReponse = async () => {
                         >
                       </td>
                       <td class="px-4 py-4">
+                        <template v-if="submission.storeResponses?.length > 0">
+                          <Badge
+                            v-if="getDispatchBadge(submission)"
+                            :variant="getDispatchBadge(submission).variant"
+                            :class="getDispatchBadge(submission).class"
+                          >
+                            {{ getDispatchBadge(submission).label }}
+                          </Badge>
+                          <span v-if="submission.dispatch?.dispatchedAt" class="block text-xs text-muted-foreground mt-1">
+                            {{ new Date(submission.dispatch.dispatchedAt).toLocaleDateString() }}
+                          </span>
+                        </template>
+                        <span v-else class="text-muted-foreground text-sm">-</span>
+                      </td>
+                      <td class="px-4 py-4">
                         <span class="text-sm text-muted-foreground">
                           {{ formatDate(submission.submittedAt) }}
                         </span>
@@ -896,6 +1073,29 @@ const toggleReponse = async () => {
                               <Eye class="h-4 w-4" />
                             </Button>
                           </NuxtLink>
+
+                          <Button
+                            v-if="submission.storeResponses?.length > 0 && !submission.dispatch"
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            title="Dispatch"
+                            @click="openDispatchDialog(submission)"
+                          >
+                            <Truck class="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            v-if="submission.dispatch?.status === 'dispatched'"
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            title="Mark Delivered"
+                            @click="openDeliverDialog(submission)"
+                          >
+                            <PackageCheck class="h-4 w-4" />
+                          </Button>
+
                           <NuxtLink
                             :to="`/submission/${submission.id}/stop-tat`"
                             as-child
@@ -904,7 +1104,7 @@ const toggleReponse = async () => {
                               size="sm"
                               variant="ghost"
                               class="h-8 w-8 p-0"
-                              title="View"
+                              title="Stop TAT"
                             >
                               <OctagonMinus class="h-4 w-4" />
                             </Button>
@@ -999,6 +1199,73 @@ const toggleReponse = async () => {
           </TabsContent>
         </Tabs>
       </Card>
+
+      <!-- Dispatch Dialog -->
+      <AlertDialog v-model:open="dispatchDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Truck class="w-5 h-5" />
+              Dispatch Submission
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the dispatch details for this submission.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Dispatched By</Label>
+              <Input
+                v-model="dispatchForm.dispatchedBy"
+                placeholder="Name of person dispatching"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label>Dispatch Date</Label>
+              <Input v-model="dispatchForm.dispatchDate" type="date" />
+            </div>
+            <div class="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Input v-model="dispatchForm.notes" placeholder="Any notes" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitDispatch" :disabled="loading.dispatching">
+              <Loader v-if="loading.dispatching" class="w-4 h-4 mr-2 animate-spin" />
+              Dispatch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Deliver Dialog -->
+      <AlertDialog v-model:open="deliverDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <PackageCheck class="w-5 h-5" />
+              Mark as Delivered
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the delivery date. The user will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Delivery Date</Label>
+              <Input v-model="deliverForm.deliveryDate" type="date" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitDeliver" :disabled="loading.delivering">
+              <Loader v-if="loading.delivering" class="w-4 h-4 mr-2 animate-spin" />
+              Mark Delivered
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   </div>
 </template>

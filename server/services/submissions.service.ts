@@ -273,6 +273,7 @@ export const getFormSubmissions = async (formId: string) => {
         },
       },
       submitter: true,
+      dispatch: true,
     },
   });
   return submissions;
@@ -311,6 +312,7 @@ export const getSubmissionById = async (submissionId: string) => {
           payment: true,
         },
       },
+      dispatch: true,
     },
   });
 

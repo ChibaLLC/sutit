@@ -463,6 +463,38 @@ export const storeResponses = pgTable("store_responses", {
     .notNull(),
 });
 
+export const dispatchStatusEnum = pgEnum("dispatch_status", [
+  "pending",
+  "dispatched",
+  "delivered",
+]);
+
+export const dispatches = pgTable(
+  "dispatches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id")
+      .references(() => formSubmissions.id)
+      .notNull()
+      .unique(),
+    status: dispatchStatusEnum("status").default("pending"),
+    dispatchedBy: varchar("dispatched_by", { length: 255 }),
+    dispatchedAt: timestamp("dispatched_at"),
+    deliveryDate: timestamp("delivery_date"),
+    deliveredAt: timestamp("delivered_at"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    submissionIdx: index("dispatch_submission_idx").on(table.submissionId),
+    statusIdx: index("dispatch_status_idx").on(table.status),
+  }),
+);
+
 // ============================================
 // ANALYTICS
 // ============================================
@@ -598,6 +630,7 @@ export const formSubmissionsRelations = relations(
     storeResponses: many(storeResponses),
     payments: one(formPayments),
     groupMembers: many(formGroupMembers),
+    dispatch: one(dispatches),
   }),
 );
 
@@ -640,3 +673,10 @@ export const formGroupMembersRelations = relations(
     memberPayments: many(formGroupMemberPayments),
   }),
 );
+
+export const dispatchesRelations = relations(dispatches, ({ one }) => ({
+  submission: one(formSubmissions, {
+    fields: [dispatches.submissionId],
+    references: [formSubmissions.id],
+  }),
+}));
