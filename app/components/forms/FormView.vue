@@ -16,6 +16,8 @@ import type { FormSchema } from "~~/shared/types";
 
 const route = useRoute();
 const router = useRouter();
+const loading = ref(false);
+const { start, finish } = useLoadingIndicator();
 
 // Get password from query if provided
 const queryPassword = route.query.password as string | undefined;
@@ -76,6 +78,8 @@ const submitPassword = async () => {
 };
 
 const submit = async (formData: object) => {
+  loading.value = true;
+  start();
   if (!form.value?.acceptResponses) {
     toast.error("This form does not accept responses");
     return;
@@ -88,6 +92,10 @@ const submit = async (formData: object) => {
         body: formData,
         headers: {
           ...(await authHeaders()),
+        },
+        onResponse({}) {
+          loading.value = false;
+          finish();
         },
         onResponseError(e) {
           toast.error(
@@ -112,7 +120,11 @@ const submit = async (formData: object) => {
         toast.error(e.message ?? "An error occurred");
       }
     }
-  } catch (e) {}
+  } catch (e) {
+  } finally {
+    // loading.value = false;
+    // finish();
+  }
 };
 
 const checkPayment = async (
@@ -448,7 +460,7 @@ const handleIndividualFill = () => {
           </div>
         </div>
 
-        <BuilderRendererFormRenderer :form="form" @submit="submit" />
+        <BuilderRendererFormRenderer :form="form" @submit="submit" :loading />
       </div>
     </div>
   </div>

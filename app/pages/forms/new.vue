@@ -12,54 +12,35 @@ const isSubmitting = ref(false);
 
 const handleCreate = async (form: FormSchema) => {
   if (isSubmitting.value) return;
-
   isSubmitting.value = true;
+
   try {
-    const response = await $fetch("/api/forms", {
+    await $fetch("/api/forms", {
       method: "POST",
       body: form,
-      headers: {
-        ...(await authHeaders()),
-      },
+      headers: { ...(await authHeaders()) },
     });
 
-    if (response.data) {
-      toast.success("Form created!", {
-        description: "Opening the builder...",
-      });
-      await navigateTo("/forms");
-    }
+    toast.success("Form created successfully");
+    await navigateTo("/forms");
   } catch (error: any) {
-    const errorData = error?.data;
-    const statusCode = error?.statusCode || error?.status;
+    const status = error?.statusCode ?? error?.status;
+    const msg = error?.data?.message || error?.message || "Something went wrong";
 
-    if (errorData?.type === "validation_error" && errorData?.errors) {
-      const firstErrors = errorData.errors.slice(0, 3);
+    if (status === 422 && error?.data?.errors) {
+      const errors = error.data.errors.slice(0, 3);
       toast.error("Validation failed", {
-        description: firstErrors
-          .map((e: any) => `• ${e.field}: ${e.message}`)
-          .join("\n"),
-        duration: 10000,
+        description: errors.map((e: any) => `${e.field}: ${e.message}`).join("\n"),
       });
-    } else if (errorData?.type === "slug_conflict") {
+    } else if (status === 409) {
       toast.error("Slug already taken", {
-        description:
-          errorData?.suggestion || "Please choose a different form name",
-        duration: 8000,
+        description: "Please choose a different form name",
       });
-    } else if (statusCode === 401) {
-      toast.error("Session expired", {
-        description: "Please log in again",
-      });
+    } else if (status === 401) {
+      toast.error("Session expired");
       await navigateTo("/auth/login");
     } else {
-      toast.error("Failed to create form", {
-        description:
-          errorData?.message ||
-          error?.message ||
-          "Something went wrong. Please try again.",
-        duration: 8000,
-      });
+      toast.error("Failed to create form", { description: msg });
     }
   } finally {
     isSubmitting.value = false;
@@ -68,5 +49,5 @@ const handleCreate = async (form: FormSchema) => {
 </script>
 
 <template>
-  <CreateFormWizard :is-submitting="isSubmitting" @create="handleCreate" />
+  <CreateFormWizard :is-submitting="isSubmitting" @submit="handleCreate" />
 </template>

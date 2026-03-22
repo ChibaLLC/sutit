@@ -1,27 +1,39 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from "vue";
-import { ArrowLeft, ArrowRight, Check, Loader2, CreditCard, Package, FileText } from "lucide-vue-next";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Loader2,
+  CreditCard,
+  Package,
+  FileText,
+} from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import type { FormSchema } from "~~/shared/types";
 
 const props = defineProps<{
   form: FormSchema;
+  loading: boolean;
 }>();
 
 const emit = defineEmits<{
-  submit: [data: {
-    schema: FormSchema;
-    formData: Record<string, any>;
-    paymentData: { phoneNumber: string };
-    selectedProducts: Record<string, { quantity: number; storeId: string }>;
-  }];
+  submit: [
+    data: {
+      schema: FormSchema;
+      formData: Record<string, any>;
+      paymentData: { phoneNumber: string };
+      selectedProducts: Record<string, { quantity: number; storeId: string }>;
+    },
+  ];
 }>();
 
 const currentStep = ref(1);
 const formData = reactive<Record<string, any>>({});
-const selectedProducts = reactive<Record<string, { quantity: number; storeId: string }>>({});
+const selectedProducts = reactive<
+  Record<string, { quantity: number; storeId: string }>
+>({});
 const phoneNumber = ref("");
-const isSubmitting = ref(false);
 
 const hasProducts = computed(() => (props.form.stores?.length ?? 0) > 0);
 const hasPrice = computed(() => Number(props.form.price) > 0);
@@ -40,12 +52,18 @@ const steps = computed(() => {
 });
 
 const maxStep = computed(() => steps.value.length);
-const progressPercent = computed(() => ((currentStep.value - 1) / (maxStep.value - 1)) * 100);
-const currentLabel = computed(() => steps.value.find((s) => s.id === currentStep.value)?.label ?? "");
+const progressPercent = computed(
+  () => ((currentStep.value - 1) / (maxStep.value - 1)) * 100,
+);
+const currentLabel = computed(
+  () => steps.value.find((s) => s.id === currentStep.value)?.label ?? "",
+);
 
 // Which step type are we on
 const isPageStep = computed(() => currentStep.value <= props.form.pages.length);
-const isProductStep = computed(() => hasProducts.value && currentStep.value === props.form.pages.length + 1);
+const isProductStep = computed(
+  () => hasProducts.value && currentStep.value === props.form.pages.length + 1,
+);
 const isReviewStep = computed(() => currentStep.value === maxStep.value);
 
 const currentPageIndex = computed(() => currentStep.value - 1);
@@ -61,7 +79,8 @@ const prev = () => {
 
 const nextLabel = computed(() => {
   if (isReviewStep.value) {
-    if (hasPrice.value) return `Pay KES ${Number(props.form.price).toLocaleString()}`;
+    if (hasPrice.value)
+      return `Pay KES ${Number(props.form.price).toLocaleString()}`;
     return "Submit";
   }
   if (isProductStep.value) return "Review";
@@ -71,7 +90,6 @@ const nextLabel = computed(() => {
 });
 
 const handleSubmit = () => {
-  isSubmitting.value = true;
   emit("submit", {
     schema: props.form,
     formData: { ...formData },
@@ -88,7 +106,9 @@ const handleAction = () => {
   }
 };
 
-const syncProducts = (val: Record<string, { quantity: number; storeId: string }>) => {
+const syncProducts = (
+  val: Record<string, { quantity: number; storeId: string }>,
+) => {
   for (const k of Object.keys(selectedProducts)) {
     if (!(k in val)) delete selectedProducts[k];
   }
@@ -99,16 +119,27 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
 <template>
   <div class="min-h-screen bg-background">
     <!-- Top bar with progress -->
-    <header class="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="max-w-3xl mx-auto flex h-14 items-center justify-between px-6">
+    <header
+      class="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div
+        class="max-w-3xl mx-auto flex h-14 items-center justify-between px-6"
+      >
         <div>
-          <h1 class="text-sm font-semibold truncate max-w-[200px]">{{ form.title }}</h1>
-          <p class="text-xs text-muted-foreground">Step {{ currentStep }} of {{ maxStep }}</p>
+          <h1 class="text-sm font-semibold truncate max-w-[200px]">
+            {{ form.title }}
+          </h1>
+          <p class="text-xs text-muted-foreground">
+            Step {{ currentStep }} of {{ maxStep }}
+          </p>
         </div>
         <Badge variant="outline" class="text-xs">{{ currentLabel }}</Badge>
       </div>
       <div class="h-1 bg-muted">
-        <div class="h-full bg-primary transition-all duration-500 ease-out" :style="{ width: `${progressPercent}%` }" />
+        <div
+          class="h-full bg-primary transition-all duration-500 ease-out"
+          :style="{ width: `${progressPercent}%` }"
+        />
       </div>
     </header>
 
@@ -124,7 +155,7 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
                 ? 'bg-primary text-primary-foreground font-medium'
                 : step.id < currentStep
                   ? 'bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
-                  : 'text-muted-foreground'
+                  : 'text-muted-foreground',
             ]"
           >
             <span
@@ -134,7 +165,7 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
                   ? 'border-primary-foreground/30 bg-primary-foreground/20'
                   : step.id < currentStep
                     ? 'border-primary/30 bg-primary/10'
-                    : 'border-muted-foreground/30'
+                    : 'border-muted-foreground/30',
               ]"
             >
               <Check v-if="step.id < currentStep" class="w-2.5 h-2.5" />
@@ -142,7 +173,11 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
             </span>
             <span class="hidden sm:inline">{{ step.label }}</span>
           </button>
-          <div v-if="index < steps.length - 1" class="w-6 h-px" :class="[step.id < currentStep ? 'bg-primary/30' : 'bg-border']" />
+          <div
+            v-if="index < steps.length - 1"
+            class="w-6 h-px"
+            :class="[step.id < currentStep ? 'bg-primary/30' : 'bg-border']"
+          />
         </template>
       </div>
     </div>
@@ -159,11 +194,22 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
         leave-to-class="opacity-0 -translate-x-4"
       >
         <!-- Form page -->
-        <div v-if="isPageStep && currentPage" :key="currentStep" class="space-y-6">
+        <div
+          v-if="isPageStep && currentPage"
+          :key="currentStep"
+          class="space-y-6"
+        >
           <div class="text-center space-y-1">
-            <Badge variant="outline" class="text-[10px]">Page {{ currentStep }}</Badge>
+            <Badge variant="outline" class="text-[10px]"
+              >Page {{ currentStep }}</Badge
+            >
             <h2 class="text-xl font-bold">{{ currentPage.title }}</h2>
-            <p v-if="currentPage.description" class="text-sm text-muted-foreground">{{ currentPage.description }}</p>
+            <p
+              v-if="currentPage.description"
+              class="text-sm text-muted-foreground"
+            >
+              {{ currentPage.description }}
+            </p>
           </div>
           <div class="space-y-5">
             <BuilderRendererField
@@ -173,7 +219,10 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
               :model-value="formData[field.id]"
               @update:model-value="formData[field.id] = $event"
             />
-            <p v-if="!currentPage.fields.length" class="text-center text-sm text-muted-foreground py-8">
+            <p
+              v-if="!currentPage.fields.length"
+              class="text-center text-sm text-muted-foreground py-8"
+            >
               This page has no fields
             </p>
           </div>
@@ -184,7 +233,9 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
           <div class="text-center space-y-1">
             <Badge variant="outline" class="text-[10px]">Products</Badge>
             <h2 class="text-xl font-bold">Select Products</h2>
-            <p class="text-sm text-muted-foreground">Choose items from available stores</p>
+            <p class="text-sm text-muted-foreground">
+              Choose items from available stores
+            </p>
           </div>
           <BuilderRendererProducts
             :stores="form.stores ?? []"
@@ -198,14 +249,16 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
           <div class="text-center space-y-1">
             <Badge variant="outline" class="text-[10px]">Review</Badge>
             <h2 class="text-xl font-bold">Review & Submit</h2>
-            <p class="text-sm text-muted-foreground">Check your details before submitting</p>
+            <p class="text-sm text-muted-foreground">
+              Check your details before submitting
+            </p>
           </div>
           <BuilderRendererReview
             :form="form"
             :form-data="formData"
             :selected-products="selectedProducts"
             :phone-number="phoneNumber"
-            :is-submitting="isSubmitting"
+            :is-submitting="loading"
             @update:phone-number="phoneNumber = $event"
             @submit="handleSubmit"
           />
@@ -214,18 +267,29 @@ const syncProducts = (val: Record<string, { quantity: number; storeId: string }>
     </main>
 
     <!-- Bottom nav -->
-    <footer class="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
+    <footer
+      class="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div
+        class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4"
+      >
         <Button variant="ghost" @click="prev" :disabled="currentStep === 1">
           <ArrowLeft class="w-4 h-4 mr-2" />
           Back
         </Button>
 
-        <Button @click="handleAction" :disabled="isSubmitting" class="bg-gradient-to-r from-primary to-primary/90">
-          <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
+        <Button
+          @click="handleAction"
+          :disabled="loading"
+          class="bg-gradient-to-r from-primary to-primary/90"
+        >
+          <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
           {{ nextLabel }}
-          <ArrowRight v-if="!isSubmitting && !isReviewStep" class="w-4 h-4 ml-2" />
-          <CreditCard v-if="!isSubmitting && isReviewStep && hasPrice" class="w-4 h-4 ml-2" />
+          <ArrowRight v-if="!loading && !isReviewStep" class="w-4 h-4 ml-2" />
+          <CreditCard
+            v-if="!loading && isReviewStep && hasPrice"
+            class="w-4 h-4 ml-2"
+          />
         </Button>
       </div>
     </footer>

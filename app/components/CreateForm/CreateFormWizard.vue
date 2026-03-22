@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-vue-next";
-import type { FormSchema, FormField, PageSchema, Store, StoreItem } from "~~/shared/types";
+import type { FormSchema, PageSchema, Store } from "~~/shared/types";
 
 const emit = defineEmits<{
-  "create": [form: FormSchema];
+  submit: [form: FormSchema];
 }>();
 
 const props = defineProps<{
   isSubmitting?: boolean;
+  initialForm?: FormSchema | null;
 }>();
+
+const isEdit = computed(() => !!props.initialForm);
 
 // Step 1: Basic Info
 const formName = ref("");
@@ -41,7 +44,49 @@ const settings = ref({
   submissionLimit: null as number | null,
   allowGroups: false,
   afterSubmissionMessage: "",
+  status: "draft" as string,
+  tags: [] as string[],
 });
+
+// Pre-fill from initialForm (edit mode)
+watch(
+  () => props.initialForm,
+  (f) => {
+    if (!f) return;
+    formName.value = f.title ?? "";
+    formSlug.value = f.slug ?? "";
+    formDescription.value = f.description ?? "";
+    formType.value = f.requireMerch ? "product" : "regular";
+    isPaid.value = Number(f.price) > 0;
+    price.value = Number(f.price) || 0;
+    if (f.pages?.length) {
+      pages.value = f.pages.map((p: any) => ({
+        ...p,
+        fields: (p.fields ?? []).map((fld: any) => ({ ...fld })),
+      }));
+    }
+    if (f.stores?.length) {
+      stores.value = f.stores.map((s: any) => ({
+        ...s,
+        items: (s.items ?? []).map((it: any) => ({
+          ...it,
+          infinite: it.isInfinite ?? it.infinite ?? false,
+        })),
+      }));
+    }
+    settings.value = {
+      isPublic: f.isPublic ?? true,
+      requiresLogin: f.requiresLogin ?? false,
+      allowMultipleSubmissions: f.allowMultipleSubmissions ?? false,
+      submissionLimit: f.submissionLimit ?? null,
+      allowGroups: f.allowGroups ?? false,
+      afterSubmissionMessage: f.afterSubmissionMessage ?? "",
+      status: f.status ?? "draft",
+      tags: f.tags ?? [],
+    };
+  },
+  { immediate: true }
+);
 
 const currentStep = ref(1);
 
@@ -52,16 +97,14 @@ const steps = computed(() => {
     { id: 3, label: "Pricing" },
     { id: 4, label: "Fields" },
   ];
-  if (formType.value === "product") {
-    base.push({ id: 5, label: "Products" });
-  }
+  if (formType.value === "product") base.push({ id: 5, label: "Products" });
   base.push({ id: formType.value === "product" ? 6 : 5, label: "Settings" });
   base.push({ id: formType.value === "product" ? 7 : 6, label: "Review" });
   return base;
 });
 
-const settingsStep = computed(() => formType.value === "product" ? 6 : 5);
-const reviewStep = computed(() => formType.value === "product" ? 7 : 6);
+const settingsStep = computed(() => (formType.value === "product" ? 6 : 5));
+const reviewStep = computed(() => (formType.value === "product" ? 7 : 6));
 const productsStep = 5;
 
 const canProceed = computed(() => {
@@ -72,10 +115,7 @@ const canProceed = computed(() => {
 });
 
 const nextStep = () => {
-  if (canProceed.value) {
-    const maxStep = steps.value.length;
-    if (currentStep.value < maxStep) currentStep.value++;
-  }
+  if (canProceed.value && currentStep.value < steps.value.length) currentStep.value++;
 };
 
 const prevStep = () => {
@@ -83,11 +123,11 @@ const prevStep = () => {
 };
 
 const buildFormSchema = (): FormSchema => {
-  return {
+  const base: any = {
     title: formName.value,
     description: formDescription.value,
     slug: formSlug.value,
-    status: "draft",
+    status: settings.value.status || "draft",
     price: isPaid.value ? price.value : 0,
     isPublic: settings.value.isPublic,
     requiresLogin: settings.value.requiresLogin,
@@ -97,26 +137,28 @@ const buildFormSchema = (): FormSchema => {
     allowMultipleSubmissions: settings.value.allowMultipleSubmissions,
     allowRegistrationReuse: false,
     submissionLimit: settings.value.submissionLimit,
-    tags: [],
+    tags: settings.value.tags,
     pages: pages.value,
     stores: formType.value === "product" ? stores.value : [],
     afterSubmissionMessage: settings.value.afterSubmissionMessage,
     infoPromptMessage: "",
   };
+
+  if (isEdit.value && props.initialForm) {
+    base.id = props.initialForm.id;
+    base.createdBy = props.initialForm.createdBy;
+    base.createdAt = props.initialForm.createdAt;
+    base.updatedAt = props.initialForm.updatedAt;
+    base.publishedAt = props.initialForm.publishedAt;
+  }
+
+  return base;
 };
 
-const handleSubmit = () => {
-  emit("create", buildFormSchema());
-};
+const handleSubmit = () => emit("submit", buildFormSchema());
 
-const progressPercent = computed(() => {
-  const max = steps.value.length;
-  return ((currentStep.value - 1) / (max - 1)) * 100;
-});
-
-const currentStepLabel = computed(() => {
-  return steps.value.find((s) => s.id === currentStep.value)?.label ?? "";
-});
+const progressPercent = computed(() => ((currentStep.value - 1) / (steps.value.length - 1)) * 100);
+const currentStepLabel = computed(() => steps.value.find((s) => s.id === currentStep.value)?.label ?? "");
 </script>
 
 <template>
@@ -125,25 +167,18 @@ const currentStepLabel = computed(() => {
     <header class="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div class="max-w-6xl mx-auto flex h-14 items-center justify-between px-6">
         <div class="flex items-center gap-3">
-          <Button variant="ghost" size="sm" class="h-9 w-9 p-0" @click="navigateTo('/dashboard')">
+          <Button variant="ghost" size="sm" class="h-9 w-9 p-0" @click="navigateTo('/forms')">
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div>
-            <h1 class="text-sm font-semibold">Create new form</h1>
+            <h1 class="text-sm font-semibold">{{ isEdit ? "Edit form" : "Create new form" }}</h1>
             <p class="text-xs text-muted-foreground">Step {{ currentStep }} of {{ steps.length }}</p>
           </div>
         </div>
-        <Badge variant="outline" class="text-xs">
-          {{ currentStepLabel }}
-        </Badge>
+        <Badge variant="outline" class="text-xs">{{ currentStepLabel }}</Badge>
       </div>
-
-      <!-- Progress bar -->
       <div class="h-1 bg-muted">
-        <div
-          class="h-full bg-primary transition-all duration-500 ease-out"
-          :style="{ width: `${progressPercent}%` }"
-        />
+        <div class="h-full bg-primary transition-all duration-500 ease-out" :style="{ width: `${progressPercent}%` }" />
       </div>
     </header>
 
@@ -155,21 +190,17 @@ const currentStepLabel = computed(() => {
             @click="step.id < currentStep ? (currentStep = step.id) : null"
             class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors"
             :class="[
-              step.id === currentStep
-                ? 'bg-primary text-primary-foreground font-medium'
-                : step.id < currentStep
-                  ? 'bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
-                  : 'text-muted-foreground'
+              step.id === currentStep ? 'bg-primary text-primary-foreground font-medium'
+                : step.id < currentStep ? 'bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
+                : 'text-muted-foreground'
             ]"
           >
             <span
               class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium border"
               :class="[
-                step.id === currentStep
-                  ? 'border-primary-foreground/30 bg-primary-foreground/20'
-                  : step.id < currentStep
-                    ? 'border-primary/30 bg-primary/10'
-                    : 'border-muted-foreground/30'
+                step.id === currentStep ? 'border-primary-foreground/30 bg-primary-foreground/20'
+                  : step.id < currentStep ? 'border-primary/30 bg-primary/10'
+                  : 'border-muted-foreground/30'
               ]"
             >
               <Check v-if="step.id < currentStep" class="w-2.5 h-2.5" />
@@ -177,11 +208,7 @@ const currentStepLabel = computed(() => {
             </span>
             <span class="hidden sm:inline">{{ step.label }}</span>
           </button>
-          <div
-            v-if="index < steps.length - 1"
-            class="w-6 h-px"
-            :class="[step.id < currentStep ? 'bg-primary/30' : 'bg-border']"
-          />
+          <div v-if="index < steps.length - 1" class="w-6 h-px" :class="[step.id < currentStep ? 'bg-primary/30' : 'bg-border']" />
         </template>
       </div>
     </div>
@@ -199,9 +226,7 @@ const currentStepLabel = computed(() => {
       >
         <CreateFormStepBasicInfo
           v-if="currentStep === 1"
-          :name="formName"
-          :slug="formSlug"
-          :description="formDescription"
+          :name="formName" :slug="formSlug" :description="formDescription"
           @update:name="formName = $event"
           @update:slug="formSlug = $event"
           @update:description="formDescription = $event"
@@ -213,9 +238,7 @@ const currentStepLabel = computed(() => {
         />
         <CreateFormStepPricing
           v-else-if="currentStep === 3"
-          :is-paid="isPaid"
-          :price="price"
-          :form-type="formType"
+          :is-paid="isPaid" :price="price" :form-type="formType"
           @update:is-paid="isPaid = $event"
           @update:price="price = $event"
         />
@@ -247,51 +270,30 @@ const currentStepLabel = computed(() => {
         />
         <CreateFormStepReview
           v-else-if="currentStep === reviewStep"
-          :name="formName"
-          :slug="formSlug"
-          :description="formDescription"
-          :form-type="formType"
-          :is-paid="isPaid"
-          :price="price"
-          :pages="pages"
-          :stores="stores"
-          :is-public="settings.isPublic"
-          :requires-login="settings.requiresLogin"
+          :name="formName" :slug="formSlug" :description="formDescription"
+          :form-type="formType" :is-paid="isPaid" :price="price"
+          :pages="pages" :stores="stores"
+          :is-public="settings.isPublic" :requires-login="settings.requiresLogin"
           :allow-multiple-submissions="settings.allowMultipleSubmissions"
           :submission-limit="settings.submissionLimit"
         />
       </Transition>
     </main>
 
-    <!-- Bottom navigation -->
+    <!-- Bottom nav -->
     <footer class="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-        <Button
-          variant="ghost"
-          @click="prevStep"
-          :disabled="currentStep === 1"
-        >
-          <ArrowLeft class="w-4 h-4 mr-2" />
-          Back
+        <Button variant="ghost" @click="prevStep" :disabled="currentStep === 1">
+          <ArrowLeft class="w-4 h-4 mr-2" /> Back
         </Button>
 
-        <Button
-          v-if="currentStep < reviewStep"
-          @click="nextStep"
-          :disabled="!canProceed"
-        >
-          Continue
-          <ArrowRight class="w-4 h-4 ml-2" />
+        <Button v-if="currentStep < reviewStep" @click="nextStep" :disabled="!canProceed">
+          Continue <ArrowRight class="w-4 h-4 ml-2" />
         </Button>
 
-        <Button
-          v-else
-          @click="handleSubmit"
-          :disabled="isSubmitting"
-          class="bg-gradient-to-r from-primary to-primary/90"
-        >
+        <Button v-else @click="handleSubmit" :disabled="isSubmitting" class="bg-gradient-to-r from-primary to-primary/90">
           <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
-          Create form
+          {{ isEdit ? "Save changes" : "Create form" }}
           <ArrowRight v-if="!isSubmitting" class="w-4 h-4 ml-2" />
         </Button>
       </div>
