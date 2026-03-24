@@ -51,6 +51,7 @@ const filters = ref({
   search: "",
   status: "all",
   dispatchStatus: "all",
+  batchId: "all",
   dateRange: {
     start: "",
     end: "",
@@ -147,6 +148,13 @@ const filteredSubmissions = computed(() => {
     filtered = filtered.filter((s) => {
       const dStatus = s.dispatch?.status || "none";
       return dStatus === filters.value.dispatchStatus;
+    });
+  }
+
+  if (filters.value.batchId !== "all") {
+    filtered = filtered.filter((s) => {
+      if (filters.value.batchId === "unbatched") return !s.dispatch?.batchId;
+      return s.dispatch?.batchId === filters.value.batchId;
     });
   }
 
@@ -282,6 +290,7 @@ const clearFilters = () => {
     search: "",
     status: "all",
     dispatchStatus: "all",
+    batchId: "all",
     dateRange: { start: "", end: "" },
     priceRange: { min: "", max: "" },
     hasStoreItems: "all",
@@ -307,7 +316,18 @@ const downloadExcel = async () => {
   try {
     const res = await $fetch(
       `/api/forms/${route.params.id}/submissions/excel`,
-      { method: "GET", responseType: "blob" },
+      {
+        method: "GET",
+        responseType: "blob",
+        query: {
+          status: filters.value.status !== "all" ? filters.value.status : undefined,
+          dispatchStatus: filters.value.dispatchStatus !== "all" ? filters.value.dispatchStatus : undefined,
+          batchId: filters.value.batchId !== "all" ? filters.value.batchId : undefined,
+          search: filters.value.search || undefined,
+          dateStart: filters.value.dateRange.start || undefined,
+          dateEnd: filters.value.dateRange.end || undefined,
+        },
+      },
     );
     const blob = new Blob([res], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -432,6 +452,193 @@ const getDispatchBadge = (submission) => {
   if (status === "dispatched") return { label: "Dispatched", variant: "outline", class: "text-blue-700 border-blue-300" };
   if (status === "delivered") return { label: "Delivered", variant: "outline", class: "text-green-700 border-green-300" };
   return null;
+};
+
+// Synced scroll for top and bottom scrollbars
+const topScrollRef = ref<HTMLElement | null>(null);
+const mainScrollRef = ref<HTMLElement | null>(null);
+const bottomScrollRef = ref<HTMLElement | null>(null);
+const isSyncing = ref(false);
+
+const syncScroll = (source: "top" | "main" | "bottom") => {
+  if (isSyncing.value) return;
+  isSyncing.value = true;
+  const scrollLeft =
+    source === "top"
+      ? topScrollRef.value?.scrollLeft
+      : source === "bottom"
+        ? bottomScrollRef.value?.scrollLeft
+        : mainScrollRef.value?.scrollLeft;
+
+  if (scrollLeft !== undefined) {
+    if (source !== "top" && topScrollRef.value)
+      topScrollRef.value.scrollLeft = scrollLeft;
+    if (source !== "main" && mainScrollRef.value)
+      mainScrollRef.value.scrollLeft = scrollLeft;
+    if (source !== "bottom" && bottomScrollRef.value)
+      bottomScrollRef.value.scrollLeft = scrollLeft;
+  }
+  nextTick(() => {
+    isSyncing.value = false;
+  });
+};
+
+// Batch dispatch
+const selectedSubmissions = ref<Set<string>>(new Set());
+const batchDialogOpen = ref(false);
+const batchForm = ref({
+  name: "",
+  notes: "",
+});
+
+const { data: batchesData, refresh: refreshBatches } = await useFetch(
+  `/api/forms/${route.params.id}/batches`,
+  {
+    method: "get",
+    headers: { ...(await authHeaders()) },
+    server: false,
+  },
+);
+
+const batches = computed(() => batchesData.value?.data || []);
+
+const toggleSelect = (submissionId: string) => {
+  if (selectedSubmissions.value.has(submissionId)) {
+    selectedSubmissions.value.delete(submissionId);
+  } else {
+    selectedSubmissions.value.add(submissionId);
+  }
+  selectedSubmissions.value = new Set(selectedSubmissions.value);
+};
+
+const toggleSelectAll = () => {
+  const productSubmissions = paginatedSubmissions.value.filter(
+    (s) => s.storeResponses?.length > 0 && !s.dispatch,
+  );
+  if (productSubmissions.every((s) => selectedSubmissions.value.has(s.id))) {
+    productSubmissions.forEach((s) => selectedSubmissions.value.delete(s.id));
+  } else {
+    productSubmissions.forEach((s) => selectedSubmissions.value.add(s.id));
+  }
+  selectedSubmissions.value = new Set(selectedSubmissions.value);
+};
+
+const allSelected = computed(() => {
+  const productSubmissions = paginatedSubmissions.value.filter(
+    (s) => s.storeResponses?.length > 0 && !s.dispatch,
+  );
+  return (
+    productSubmissions.length > 0 &&
+    productSubmissions.every((s) => selectedSubmissions.value.has(s.id))
+  );
+});
+
+const openBatchDialog = () => {
+  batchForm.value = { name: "", notes: "" };
+  batchDialogOpen.value = true;
+};
+
+const createBatch = async () => {
+  if (!batchForm.value.name || selectedSubmissions.value.size === 0) {
+    toast.error("Please enter a batch name and select submissions");
+    return;
+  }
+  try {
+    await $fetch(`/api/forms/${route.params.id}/batches`, {
+      method: "POST",
+      body: {
+        name: batchForm.value.name,
+        submissionIds: Array.from(selectedSubmissions.value),
+        notes: batchForm.value.notes,
+      },
+    });
+    toast.success("Batch created successfully");
+    batchDialogOpen.value = false;
+    selectedSubmissions.value = new Set();
+    await refreshBatches();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to create batch");
+  }
+};
+
+const batchDispatchDialogOpen = ref(false);
+const batchDispatchForm = ref({
+  batchId: "",
+  dispatchedBy: "",
+  dispatchDate: new Date().toISOString().split("T")[0],
+});
+
+const openBatchDispatchDialog = (batch: any) => {
+  batchDispatchForm.value = {
+    batchId: batch.id,
+    dispatchedBy: "",
+    dispatchDate: new Date().toISOString().split("T")[0],
+  };
+  batchDispatchDialogOpen.value = true;
+};
+
+const submitBatchDispatch = async () => {
+  if (
+    !batchDispatchForm.value.dispatchedBy ||
+    !batchDispatchForm.value.dispatchDate
+  ) {
+    toast.error("Please fill in all required fields");
+    return;
+  }
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/batches/${batchDispatchForm.value.batchId}/dispatch`,
+      {
+        method: "POST",
+        body: {
+          dispatchedBy: batchDispatchForm.value.dispatchedBy,
+          dispatchDate: batchDispatchForm.value.dispatchDate,
+        },
+      },
+    );
+    toast.success("Batch dispatched successfully");
+    batchDispatchDialogOpen.value = false;
+    await refreshBatches();
+    await refresh();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to dispatch batch");
+  }
+};
+
+const batchDeliverDialogOpen = ref(false);
+const batchDeliverForm = ref({
+  batchId: "",
+  deliveryDate: new Date().toISOString().split("T")[0],
+});
+
+const openBatchDeliverDialog = (batch: any) => {
+  batchDeliverForm.value = {
+    batchId: batch.id,
+    deliveryDate: new Date().toISOString().split("T")[0],
+  };
+  batchDeliverDialogOpen.value = true;
+};
+
+const submitBatchDeliver = async () => {
+  if (!batchDeliverForm.value.deliveryDate) {
+    toast.error("Please set a delivery date");
+    return;
+  }
+  try {
+    await $fetch(
+      `/api/forms/${route.params.id}/batches/${batchDeliverForm.value.batchId}/deliver`,
+      {
+        method: "POST",
+        body: { deliveryDate: batchDeliverForm.value.deliveryDate },
+      },
+    );
+    toast.success("Batch marked as delivered");
+    batchDeliverDialogOpen.value = false;
+    await refreshBatches();
+    await refresh();
+  } catch (e: any) {
+    toast.error(e.data?.message || "Failed to deliver batch");
+  }
 };
 </script>
 
@@ -655,8 +862,9 @@ const getDispatchBadge = (submission) => {
       <!-- Tabs -->
       <Card class="mb-6">
         <Tabs v-model="activeTab" class="w-full">
-          <TabsList class="grid w-full grid-cols-1">
+          <TabsList class="grid w-full grid-cols-2">
             <TabsTrigger value="active">Submissions</TabsTrigger>
+            <TabsTrigger value="batches">Batches</TabsTrigger>
           </TabsList>
           <TabsContent value="active" class="mt-6">
             <!-- Enhanced Filters Section -->
@@ -669,6 +877,16 @@ const getDispatchBadge = (submission) => {
                     <h3 class="text-lg font-semibold">Filters</h3>
                   </div>
                   <div class="flex items-center gap-2">
+                    <Button
+                      v-if="selectedSubmissions.size > 0"
+                      size="sm"
+                      variant="outline"
+                      class="gap-2 text-blue-600 border-blue-200"
+                      @click="openBatchDialog"
+                    >
+                      <Package class="w-4 h-4" />
+                      Create Batch ({{ selectedSubmissions.size }})
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -745,6 +963,27 @@ const getDispatchBadge = (submission) => {
                       </Select>
                     </div>
 
+                    <!-- Batch Filter -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Batch</Label>
+                      <Select v-model="filters.batchId">
+                        <SelectTrigger>
+                          <SelectValue placeholder="All" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Batches</SelectItem>
+                          <SelectItem value="unbatched">Unbatched</SelectItem>
+                          <SelectItem
+                            v-for="batch in batches"
+                            :key="batch.id"
+                            :value="batch.id"
+                          >
+                            {{ batch.name }}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <!-- Date Range Start -->
                     <div class="space-y-2">
                       <Label class="text-sm font-medium">Start Date</Label>
@@ -781,6 +1020,8 @@ const getDispatchBadge = (submission) => {
                     v-if="
                       filters.search ||
                       filters.status !== 'all' ||
+                      filters.dispatchStatus !== 'all' ||
+                      filters.batchId !== 'all' ||
                       filters.dateRange.start ||
                       filters.dateRange.end
                     "
@@ -806,6 +1047,28 @@ const getDispatchBadge = (submission) => {
                       <X
                         class="w-3 h-3 cursor-pointer"
                         @click="filters.status = 'all'"
+                      />
+                    </Badge>
+                    <Badge
+                      v-if="filters.dispatchStatus !== 'all'"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      Dispatch: {{ filters.dispatchStatus }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.dispatchStatus = 'all'"
+                      />
+                    </Badge>
+                    <Badge
+                      v-if="filters.batchId !== 'all'"
+                      variant="secondary"
+                      class="gap-1"
+                    >
+                      Batch: {{ batches.find(b => b.id === filters.batchId)?.name || filters.batchId }}
+                      <X
+                        class="w-3 h-3 cursor-pointer"
+                        @click="filters.batchId = 'all'"
                       />
                     </Badge>
                     <Badge
@@ -862,10 +1125,33 @@ const getDispatchBadge = (submission) => {
                 </p>
               </div>
 
-              <div v-else class="overflow-x-auto">
-                <table class="w-full min-w-[1000px]">
-                  <thead class="bg-muted/30 border-b">
-                    <tr>
+              <div v-else class="relative">
+                <!-- Top scrollbar -->
+                <div
+                  ref="topScrollRef"
+                  class="overflow-x-auto"
+                  @scroll="syncScroll('top')"
+                >
+                  <div class="min-w-[1000px] h-2"></div>
+                </div>
+
+                <!-- Main table scroll -->
+                <div
+                  ref="mainScrollRef"
+                  class="overflow-x-auto"
+                  @scroll="syncScroll('main')"
+                >
+                  <table class="w-full min-w-[1000px]">
+                    <thead class="bg-muted/30 border-b sticky top-0 z-10">
+                      <tr>
+                      <th class="px-2 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          :checked="allSelected"
+                          @change="toggleSelectAll"
+                          class="w-4 h-4 rounded border-gray-300"
+                        />
+                      </th>
                       <th
                         class="text-left px-4 py-3 font-medium text-sm min-w-[120px]"
                       >
@@ -911,12 +1197,17 @@ const getDispatchBadge = (submission) => {
                         Dispatch Status
                       </th>
                       <th
+                        class="text-left px-4 py-3 font-medium text-sm min-w-[100px]"
+                      >
+                        Batch
+                      </th>
+                      <th
                         class="text-left px-4 py-3 font-medium text-sm min-w-[140px]"
                       >
                         Submitted At
                       </th>
                       <th
-                        class="text-right px-4 py-3 font-medium text-sm min-w-[100px]"
+                        class="text-right px-4 py-3 font-medium text-sm min-w-[100px] sticky right-0 bg-muted/30 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]"
                       >
                         Actions
                       </th>
@@ -928,6 +1219,15 @@ const getDispatchBadge = (submission) => {
                       :key="submission.id"
                       class="border-b hover:bg-muted/20 transition-colors"
                     >
+                      <td class="px-2 py-4">
+                        <input
+                          v-if="submission.storeResponses?.length > 0 && !submission.dispatch"
+                          type="checkbox"
+                          :checked="selectedSubmissions.has(submission.id)"
+                          @change="toggleSelect(submission.id)"
+                          class="w-4 h-4 rounded border-gray-300"
+                        />
+                      </td>
                       <td class="px-4 py-4">
                         <span
                           class="font-medium text-primary text-sm"
@@ -1053,12 +1353,20 @@ const getDispatchBadge = (submission) => {
                         </template>
                         <span v-else class="text-muted-foreground text-sm">-</span>
                       </td>
+                      <td class="px-4 py-4 text-sm">
+                        <template v-if="submission.dispatch?.batchId">
+                          <Badge variant="secondary" class="text-xs">
+                            {{ batches.find(b => b.id === submission.dispatch.batchId)?.name || "Batch" }}
+                          </Badge>
+                        </template>
+                        <span v-else class="text-muted-foreground">-</span>
+                      </td>
                       <td class="px-4 py-4">
                         <span class="text-sm text-muted-foreground">
                           {{ formatDate(submission.submittedAt) }}
                         </span>
                       </td>
-                      <td class="px-4 py-4 text-right">
+                      <td class="px-4 py-4 text-right sticky right-0 bg-background shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]">
                         <div class="flex items-center justify-end gap-2">
                           <NuxtLink
                             :to="`/forms/${form.id}/submissions/${submission.id}`"
@@ -1123,6 +1431,16 @@ const getDispatchBadge = (submission) => {
                     </tr>
                   </tbody>
                 </table>
+                </div>
+
+                <!-- Bottom scrollbar -->
+                <div
+                  ref="bottomScrollRef"
+                  class="overflow-x-auto"
+                  @scroll="syncScroll('bottom')"
+                >
+                  <div class="min-w-[1000px] h-2"></div>
+                </div>
               </div>
 
               <!-- Enhanced Pagination -->
@@ -1197,6 +1515,99 @@ const getDispatchBadge = (submission) => {
               </div>
             </Card>
           </TabsContent>
+
+          <TabsContent value="batches" class="mt-6">
+            <div v-if="!batches.length" class="flex flex-col items-center justify-center py-12">
+              <Package class="h-12 w-12 text-muted-foreground mb-4" />
+              <p class="text-lg font-medium text-foreground">No batches yet</p>
+              <p class="text-sm text-muted-foreground">
+                Select submissions with products and click "Create Batch" to get started
+              </p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <Card v-for="batch in batches" :key="batch.id" class="p-4">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h3 class="text-lg font-semibold">{{ batch.name }}</h3>
+                      <Badge
+                        :variant="batch.status === 'open' ? 'outline' : 'default'"
+                        :class="{
+                          'text-yellow-700 border-yellow-300': batch.status === 'open',
+                          'bg-blue-100 text-blue-800': batch.status === 'dispatched',
+                          'bg-green-100 text-green-800': batch.status === 'delivered',
+                        }"
+                      >
+                        {{ batch.status }}
+                      </Badge>
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-1">
+                      {{ batch.dispatches?.length || 0 }} submissions
+                    </p>
+                    <div v-if="batch.dispatchedBy" class="text-sm text-muted-foreground mt-1">
+                      Dispatched by {{ batch.dispatchedBy }}
+                      <span v-if="batch.dispatchedAt">
+                        on {{ new Date(batch.dispatchedAt).toLocaleDateString() }}
+                      </span>
+                    </div>
+                    <div v-if="batch.notes" class="text-sm text-muted-foreground mt-1">
+                      Notes: {{ batch.notes }}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <Button
+                      v-if="batch.status === 'open'"
+                      size="sm"
+                      class="gap-2"
+                      @click="openBatchDispatchDialog(batch)"
+                    >
+                      <Truck class="w-4 h-4" />
+                      Dispatch All
+                    </Button>
+                    <Button
+                      v-if="batch.status === 'dispatched'"
+                      size="sm"
+                      class="gap-2 bg-green-600 hover:bg-green-700"
+                      @click="openBatchDeliverDialog(batch)"
+                    >
+                      <PackageCheck class="w-4 h-4" />
+                      Mark Delivered
+                    </Button>
+                  </div>
+                </div>
+
+                <!-- Batch items -->
+                <div v-if="batch.dispatches?.length" class="mt-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div
+                      v-for="d in batch.dispatches"
+                      :key="d.id"
+                      class="flex items-center justify-between p-2 bg-muted/30 rounded text-sm"
+                    >
+                      <div>
+                        <p class="font-medium">{{ d.submission?.submitter?.name || "N/A" }}</p>
+                        <p class="text-xs text-muted-foreground">
+                          {{ d.submission?.storeResponses?.length || 0 }} item(s)
+                        </p>
+                      </div>
+                      <Badge
+                        :variant="d.status === 'pending' ? 'outline' : 'default'"
+                        :class="{
+                          'text-yellow-700 border-yellow-300': d.status === 'pending',
+                          'bg-blue-100 text-blue-800': d.status === 'dispatched',
+                          'bg-green-100 text-green-800': d.status === 'delivered',
+                        }"
+                        class="text-xs"
+                      >
+                        {{ d.status }}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </Card>
 
@@ -1262,6 +1673,101 @@ const getDispatchBadge = (submission) => {
             <AlertDialogAction @click="submitDeliver" :disabled="loading.delivering">
               <Loader v-if="loading.delivering" class="w-4 h-4 mr-2 animate-spin" />
               Mark Delivered
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Create Batch Dialog -->
+      <AlertDialog v-model:open="batchDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Package class="w-5 h-5" />
+              Create Dispatch Batch
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Group {{ selectedSubmissions.size }} selected submission(s) into a batch for dispatch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Batch Name</Label>
+              <Input
+                v-model="batchForm.name"
+                placeholder="e.g. Batch 1 - Jan 2026"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Input v-model="batchForm.notes" placeholder="Any notes" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="createBatch">
+              Create Batch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Batch Dispatch Dialog -->
+      <AlertDialog v-model:open="batchDispatchDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Truck class="w-5 h-5" />
+              Dispatch Batch
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Mark all submissions in this batch as dispatched. All users will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Dispatched By</Label>
+              <Input
+                v-model="batchDispatchForm.dispatchedBy"
+                placeholder="Name of person dispatching"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label>Dispatch Date</Label>
+              <Input v-model="batchDispatchForm.dispatchDate" type="date" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitBatchDispatch">
+              Dispatch All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Batch Deliver Dialog -->
+      <AlertDialog v-model:open="batchDeliverDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <PackageCheck class="w-5 h-5" />
+              Deliver Batch
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Mark all submissions in this batch as delivered. All users will be notified with a confirmation link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Delivery Date</Label>
+              <Input v-model="batchDeliverForm.deliveryDate" type="date" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="submitBatchDeliver">
+              Mark All Delivered
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

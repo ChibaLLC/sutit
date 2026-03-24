@@ -754,6 +754,15 @@ onUnmounted(() => {
                   <p class="text-sm text-muted-foreground mb-1">Notes</p>
                   <p class="text-base font-medium">{{ submission.dispatch.notes }}</p>
                 </div>
+                <div v-if="submission.dispatch.deliveryConfirmedAt">
+                  <p class="text-sm text-muted-foreground mb-1">Receipt Confirmed</p>
+                  <div class="flex items-center gap-2">
+                    <CheckCircle class="w-4 h-4 text-green-600" />
+                    <p class="text-base font-medium text-green-600">
+                      Confirmed on {{ new Date(submission.dispatch.deliveryConfirmedAt).toLocaleDateString() }}
+                    </p>
+                  </div>
+                </div>
               </div>
               <div v-else class="text-center py-4">
                 <Package class="w-10 h-10 text-muted-foreground mx-auto mb-2" />
@@ -919,12 +928,12 @@ onUnmounted(() => {
 
         <!-- Right Column - Submission Info & Actions -->
         <div class="space-y-6">
-          <!-- Submission Info Card -->
+          <!-- Submission & Payment Info Card -->
           <Card>
             <CardHeader>
               <CardTitle class="flex items-center gap-3">
                 <FileCheck class="w-6 h-6" />
-                Submission Info
+                Submission & Payment Info
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -941,27 +950,11 @@ onUnmounted(() => {
                     {{ new Date(submission?.submittedAt).toLocaleString() }}
                   </p>
                 </div>
-                <div>
-                  <p class="text-sm text-foreground mb-1">IP Address</p>
-                  <p class="text-base font-medium">N/A</p>
-                  <!-- Assuming no IP data -->
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <!-- Payment Info Card -->
-          <Card>
-            <CardHeader>
-              <CardTitle class="flex items-center gap-3">
-                <CreditCard class="w-6 h-6" />
-                Payment Info
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div class="space-y-4">
+                <Separator />
+
                 <div>
-                  <p class="text-sm text-foreground mb-1">Method</p>
+                  <p class="text-sm text-foreground mb-1">Payment Method</p>
                   <p class="text-base font-medium">
                     {{
                       submissionData?.data?.payments?.payment ? "MPESA" : "N/A"
