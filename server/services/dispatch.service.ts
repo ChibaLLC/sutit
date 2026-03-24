@@ -1,16 +1,37 @@
 import db from "../db";
 import {
   dispatches,
+  dispatchBatches,
   formSubmissions,
-  storeResponses,
-  fieldResponses,
 } from "../db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendMail } from "./email.service";
+import { randomBytes } from "crypto";
+
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
 
 export const getDispatchBySubmissionId = async (submissionId: string) => {
   return await db.query.dispatches.findFirst({
     where: eq(dispatches.submissionId, submissionId),
+  });
+};
+
+export const getDispatchByToken = async (token: string) => {
+  return await db.query.dispatches.findFirst({
+    where: eq(dispatches.deliveryToken, token),
+    with: {
+      submission: {
+        with: {
+          form: true,
+          submitter: true,
+          storeResponses: {
+            with: { item: true },
+          },
+        },
+      },
+    },
   });
 };
 
@@ -27,9 +48,7 @@ export const createDispatch = async (
       storeResponses: true,
       submitter: true,
       responses: {
-        with: {
-          field: true,
-        },
+        with: { field: true },
       },
     },
   });
@@ -78,20 +97,22 @@ export const markAsDelivered = async (
 ) => {
   const dispatch = await getDispatchBySubmissionId(submissionId);
   if (!dispatch) throw new Error("No dispatch record found");
-  if (dispatch.status === "delivered")
-    throw new Error("Already delivered");
+  if (dispatch.status === "delivered" && dispatch.deliveryConfirmedAt)
+    throw new Error("Already delivered and confirmed");
 
   const submission = await db.query.formSubmissions.findFirst({
     where: eq(formSubmissions.id, submissionId),
     with: {
       submitter: true,
       responses: {
-        with: {
-          field: true,
-        },
+        with: { field: true },
       },
     },
   });
+
+  const token = generateToken();
+  const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+  const confirmUrl = `${baseUrl}/submission/${submissionId}/confirm-delivery?token=${token}`;
 
   const [updated] = await db
     .update(dispatches)
@@ -99,6 +120,7 @@ export const markAsDelivered = async (
       status: "delivered",
       deliveryDate: new Date(data.deliveryDate),
       deliveredAt: new Date(),
+      deliveryToken: token,
     })
     .where(eq(dispatches.submissionId, submissionId))
     .returning();
@@ -108,16 +130,34 @@ export const markAsDelivered = async (
     try {
       await sendMail({
         to: email,
-        subject: "Your order has been delivered",
+        subject: "Your order has been delivered - Confirm receipt",
         html: buildDeliveryEmail(
           submission?.submitter?.name || "Customer",
           data.deliveryDate,
+          confirmUrl,
         ),
       });
     } catch (e) {
       console.error("Failed to send delivery email:", e);
     }
   }
+
+  return updated;
+};
+
+export const confirmDelivery = async (token: string) => {
+  const dispatch = await db.query.dispatches.findFirst({
+    where: eq(dispatches.deliveryToken, token),
+  });
+
+  if (!dispatch) throw new Error("Invalid verification token");
+  if (dispatch.deliveryConfirmedAt) throw new Error("Delivery already confirmed");
+
+  const [updated] = await db
+    .update(dispatches)
+    .set({ deliveryConfirmedAt: new Date() })
+    .where(eq(dispatches.deliveryToken, token))
+    .returning();
 
   return updated;
 };
@@ -142,13 +182,272 @@ function buildDispatchEmail(name: string, dispatchedBy: string, dispatchDate: st
     </div>`;
 }
 
-function buildDeliveryEmail(name: string, deliveryDate: string) {
+function buildDeliveryEmail(name: string, deliveryDate: string, confirmUrl: string) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
       <h2 style="color:#333">Your Order Has Been Delivered</h2>
       <p>Hi ${name},</p>
       <p>Your order was delivered on <strong>${new Date(deliveryDate).toLocaleDateString()}</strong>.</p>
-      <p>Thank you for your purchase!</p>
+      <p>Please confirm that you received your order by clicking the button below:</p>
+      <a href="${confirmUrl}" style="display:inline-block;padding:12px 24px;background:#22c55e;color:white;text-decoration:none;border-radius:6px;margin:16px 0">Confirm Receipt</a>
+      <p style="color:#999;font-size:12px">Or copy this link: ${confirmUrl}</p>
       <p style="color:#888;font-size:12px">Powered by Sutit Forms</p>
     </div>`;
 }
+
+// ============================================
+// BATCH DISPATCH
+// ============================================
+
+export const getBatchesByFormId = async (formId: string) => {
+  return await db.query.dispatchBatches.findMany({
+    where: eq(dispatchBatches.formId, formId),
+    with: {
+      dispatches: {
+        with: {
+          submission: {
+            with: {
+              submitter: true,
+              storeResponses: {
+                with: { item: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: (batches, { desc }) => [desc(batches.createdAt)],
+  });
+};
+
+export const getBatchById = async (batchId: string) => {
+  return await db.query.dispatchBatches.findFirst({
+    where: eq(dispatchBatches.id, batchId),
+    with: {
+      dispatches: {
+        with: {
+          submission: {
+            with: {
+              submitter: true,
+              storeResponses: {
+                with: { item: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const createBatch = async (
+  formId: string,
+  data: { name: string; submissionIds: string[]; notes?: string },
+) => {
+  return await db.transaction(async (tx) => {
+    const [batch] = await tx
+      .insert(dispatchBatches)
+      .values({
+        formId,
+        name: data.name,
+        notes: data.notes || null,
+      })
+      .returning();
+
+    for (const submissionId of data.submissionIds) {
+      const existing = await tx.query.dispatches.findFirst({
+        where: eq(dispatches.submissionId, submissionId),
+      });
+
+      if (existing) {
+        await tx
+          .update(dispatches)
+          .set({ batchId: batch.id })
+          .where(eq(dispatches.submissionId, submissionId));
+      } else {
+        await tx.insert(dispatches).values({
+          submissionId,
+          batchId: batch.id,
+          status: "pending",
+        });
+      }
+    }
+
+    return batch;
+  });
+};
+
+export const dispatchBatch = async (
+  batchId: string,
+  data: { dispatchedBy: string; dispatchDate: string },
+) => {
+  return await db.transaction(async (tx) => {
+    const batch = await tx.query.dispatchBatches.findFirst({
+      where: eq(dispatchBatches.id, batchId),
+      with: {
+        dispatches: {
+          with: {
+            submission: {
+              with: {
+                submitter: true,
+                responses: {
+                  with: { field: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!batch) throw new Error("Batch not found");
+    if (batch.status !== "open") throw new Error("Batch is not open");
+
+    await tx
+      .update(dispatchBatches)
+      .set({
+        status: "dispatched",
+        dispatchedBy: data.dispatchedBy,
+        dispatchedAt: new Date(data.dispatchDate),
+      })
+      .where(eq(dispatchBatches.id, batchId));
+
+    for (const d of batch.dispatches) {
+      await tx
+        .update(dispatches)
+        .set({
+          status: "dispatched",
+          dispatchedBy: data.dispatchedBy,
+          dispatchedAt: new Date(data.dispatchDate),
+        })
+        .where(eq(dispatches.id, d.id));
+
+      const email = findEmailFromResponses(d.submission?.responses || []);
+      if (email) {
+        try {
+          await sendMail({
+            to: email,
+            subject: "Your order has been dispatched",
+            html: buildDispatchEmail(
+              d.submission?.submitter?.name || "Customer",
+              data.dispatchedBy,
+              data.dispatchDate,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send dispatch email:", e);
+        }
+      }
+    }
+
+    return batch;
+  });
+};
+
+export const deliverBatch = async (
+  batchId: string,
+  data: { deliveryDate: string },
+) => {
+  return await db.transaction(async (tx) => {
+    const batch = await tx.query.dispatchBatches.findFirst({
+      where: eq(dispatchBatches.id, batchId),
+      with: {
+        dispatches: {
+          with: {
+            submission: {
+              with: {
+                submitter: true,
+                responses: {
+                  with: { field: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!batch) throw new Error("Batch not found");
+
+    await tx
+      .update(dispatchBatches)
+      .set({
+        status: "delivered",
+        deliveryDate: new Date(data.deliveryDate),
+      })
+      .where(eq(dispatchBatches.id, batchId));
+
+    const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
+    for (const d of batch.dispatches) {
+      const token = generateToken();
+      const confirmUrl = `${baseUrl}/submission/${d.submissionId}/confirm-delivery?token=${token}`;
+
+      await tx
+        .update(dispatches)
+        .set({
+          status: "delivered",
+          deliveryDate: new Date(data.deliveryDate),
+          deliveredAt: new Date(),
+          deliveryToken: token,
+        })
+        .where(eq(dispatches.id, d.id));
+
+      const email = findEmailFromResponses(d.submission?.responses || []);
+      if (email) {
+        try {
+          await sendMail({
+            to: email,
+            subject: "Your order has been delivered - Confirm receipt",
+            html: buildDeliveryEmail(
+              d.submission?.submitter?.name || "Customer",
+              data.deliveryDate,
+              confirmUrl,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send delivery email:", e);
+        }
+      }
+    }
+
+    return batch;
+  });
+};
+
+export const addToBatch = async (batchId: string, submissionIds: string[]) => {
+  return await db.transaction(async (tx) => {
+    for (const submissionId of submissionIds) {
+      const existing = await tx.query.dispatches.findFirst({
+        where: eq(dispatches.submissionId, submissionId),
+      });
+
+      if (existing) {
+        await tx
+          .update(dispatches)
+          .set({ batchId })
+          .where(eq(dispatches.submissionId, submissionId));
+      } else {
+        await tx.insert(dispatches).values({
+          submissionId,
+          batchId,
+          status: "pending",
+        });
+      }
+    }
+  });
+};
+
+export const removeFromBatch = async (submissionIds: string[]) => {
+  for (const id of submissionIds) {
+    await db
+      .update(dispatches)
+      .set({ batchId: null })
+      .where(
+        and(
+          eq(dispatches.submissionId, id),
+          eq(dispatches.status, "pending"),
+        ),
+      );
+  }
+};

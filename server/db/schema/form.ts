@@ -469,6 +469,38 @@ export const dispatchStatusEnum = pgEnum("dispatch_status", [
   "delivered",
 ]);
 
+export const batchStatusEnum = pgEnum("batch_status", [
+  "open",
+  "dispatched",
+  "delivered",
+  "closed",
+]);
+
+export const dispatchBatches = pgTable(
+  "dispatch_batches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    formId: uuid("form_id")
+      .references(() => forms.id)
+      .notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    status: batchStatusEnum("status").default("open"),
+    dispatchedBy: varchar("dispatched_by", { length: 255 }),
+    dispatchedAt: timestamp("dispatched_at"),
+    deliveryDate: timestamp("delivery_date"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    formIdx: index("batch_form_idx").on(table.formId),
+    statusIdx: index("batch_status_idx").on(table.status),
+  }),
+);
+
 export const dispatches = pgTable(
   "dispatches",
   {
@@ -477,11 +509,14 @@ export const dispatches = pgTable(
       .references(() => formSubmissions.id)
       .notNull()
       .unique(),
+    batchId: uuid("batch_id").references(() => dispatchBatches.id),
     status: dispatchStatusEnum("status").default("pending"),
     dispatchedBy: varchar("dispatched_by", { length: 255 }),
     dispatchedAt: timestamp("dispatched_at"),
     deliveryDate: timestamp("delivery_date"),
     deliveredAt: timestamp("delivered_at"),
+    deliveryToken: varchar("delivery_token", { length: 255 }),
+    deliveryConfirmedAt: timestamp("delivery_confirmed_at"),
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -492,6 +527,7 @@ export const dispatches = pgTable(
   (table) => ({
     submissionIdx: index("dispatch_submission_idx").on(table.submissionId),
     statusIdx: index("dispatch_status_idx").on(table.status),
+    batchIdx: index("dispatch_batch_idx").on(table.batchId),
   }),
 );
 
@@ -679,4 +715,19 @@ export const dispatchesRelations = relations(dispatches, ({ one }) => ({
     fields: [dispatches.submissionId],
     references: [formSubmissions.id],
   }),
+  batch: one(dispatchBatches, {
+    fields: [dispatches.batchId],
+    references: [dispatchBatches.id],
+  }),
 }));
+
+export const dispatchBatchesRelations = relations(
+  dispatchBatches,
+  ({ one, many }) => ({
+    form: one(forms, {
+      fields: [dispatchBatches.formId],
+      references: [forms.id],
+    }),
+    dispatches: many(dispatches),
+  }),
+);
