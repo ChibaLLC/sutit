@@ -30,9 +30,7 @@ const emit = defineEmits<{
 
 const currentStep = ref(1);
 const formData = reactive<Record<string, any>>({});
-const selectedProducts = reactive<
-  Record<string, { quantity: number; storeId: string }>
->({});
+const selectedProducts = reactive<Record<string, { quantity: number; storeId: string }>>({});
 const phoneNumber = ref("");
 
 const hasProducts = computed(() => (props.form.stores?.length ?? 0) > 0);
@@ -52,9 +50,7 @@ const steps = computed(() => {
 });
 
 const maxStep = computed(() => steps.value.length);
-const progressPercent = computed(
-  () => ((currentStep.value - 1) / (maxStep.value - 1)) * 100,
-);
+const progressPercent = computed(() => ((currentStep.value - 1) / (maxStep.value - 1)) * 100);
 const currentLabel = computed(
   () => steps.value.find((s) => s.id === currentStep.value)?.label ?? "",
 );
@@ -79,8 +75,7 @@ const prev = () => {
 
 const nextLabel = computed(() => {
   if (isReviewStep.value) {
-    if (hasPrice.value)
-      return `Pay KES ${Number(props.form.price).toLocaleString()}`;
+    if (hasPrice.value) return `Pay KES ${Number(props.form.price).toLocaleString()}`;
     return "Submit";
   }
   if (isProductStep.value) return "Review";
@@ -106,9 +101,7 @@ const handleAction = () => {
   }
 };
 
-const syncProducts = (
-  val: Record<string, { quantity: number; storeId: string }>,
-) => {
+const syncProducts = (val: Record<string, { quantity: number; storeId: string }>) => {
   for (const k of Object.keys(selectedProducts)) {
     if (!(k in val)) delete selectedProducts[k];
   }
@@ -122,16 +115,12 @@ const syncProducts = (
     <header
       class="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div
-        class="max-w-3xl mx-auto flex h-14 items-center justify-between px-6"
-      >
+      <div class="max-w-3xl mx-auto flex h-14 items-center justify-between px-6">
         <div>
           <h1 class="text-sm font-semibold truncate max-w-[200px]">
             {{ form.title }}
           </h1>
-          <p class="text-xs text-muted-foreground">
-            Step {{ currentStep }} of {{ maxStep }}
-          </p>
+          <p class="text-xs text-muted-foreground">Step {{ currentStep }} of {{ maxStep }}</p>
         </div>
         <Badge variant="outline" class="text-xs">{{ currentLabel }}</Badge>
       </div>
@@ -183,7 +172,7 @@ const syncProducts = (
     </div>
 
     <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 py-8">
+    <main class="max-w-4xl mx-auto px-6 py-8">
       <Transition
         mode="out-in"
         enter-active-class="transition-all duration-300 ease-out"
@@ -194,20 +183,11 @@ const syncProducts = (
         leave-to-class="opacity-0 -translate-x-4"
       >
         <!-- Form page -->
-        <div
-          v-if="isPageStep && currentPage"
-          :key="currentStep"
-          class="space-y-6"
-        >
+        <div v-if="isPageStep && currentPage" :key="currentStep" class="space-y-6">
           <div class="text-center space-y-1">
-            <Badge variant="outline" class="text-[10px]"
-              >Page {{ currentStep }}</Badge
-            >
+            <Badge variant="outline" class="text-[10px]">Page {{ currentStep }}</Badge>
             <h2 class="text-xl font-bold">{{ currentPage.title }}</h2>
-            <p
-              v-if="currentPage.description"
-              class="text-sm text-muted-foreground"
-            >
+            <p v-if="currentPage.description" class="text-sm text-muted-foreground">
               {{ currentPage.description }}
             </p>
           </div>
@@ -233,9 +213,7 @@ const syncProducts = (
           <div class="text-center space-y-1">
             <Badge variant="outline" class="text-[10px]">Products</Badge>
             <h2 class="text-xl font-bold">Select Products</h2>
-            <p class="text-sm text-muted-foreground">
-              Choose items from available stores
-            </p>
+            <p class="text-sm text-muted-foreground">Choose items from available stores</p>
           </div>
           <BuilderRendererProducts
             :stores="form.stores ?? []"
@@ -249,9 +227,7 @@ const syncProducts = (
           <div class="text-center space-y-1">
             <Badge variant="outline" class="text-[10px]">Review</Badge>
             <h2 class="text-xl font-bold">Review & Submit</h2>
-            <p class="text-sm text-muted-foreground">
-              Check your details before submitting
-            </p>
+            <p class="text-sm text-muted-foreground">Check your details before submitting</p>
           </div>
           <BuilderRendererReview
             :form="form"
@@ -270,9 +246,7 @@ const syncProducts = (
     <footer
       class="sticky bottom-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div
-        class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4"
-      >
+      <div class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
         <Button variant="ghost" @click="prev" :disabled="currentStep === 1">
           <ArrowLeft class="w-4 h-4 mr-2" />
           Back
@@ -281,15 +255,12 @@ const syncProducts = (
         <Button
           @click="handleAction"
           :disabled="loading"
-          class="bg-gradient-to-r from-primary to-primary/90"
+          class="bg-linear-to-r from-primary to-primary/90"
         >
           <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
           {{ nextLabel }}
           <ArrowRight v-if="!loading && !isReviewStep" class="w-4 h-4 ml-2" />
-          <CreditCard
-            v-if="!loading && isReviewStep && hasPrice"
-            class="w-4 h-4 ml-2"
-          />
+          <CreditCard v-if="!loading && isReviewStep && hasPrice" class="w-4 h-4 ml-2" />
         </Button>
       </div>
     </footer>
