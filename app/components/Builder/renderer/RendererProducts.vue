@@ -27,7 +27,7 @@ const changeQty = (productId: string, storeId: string, delta: number) => {
 };
 
 const totalItems = computed(() =>
-  Object.values(props.selected).reduce((s, i) => s + i.quantity, 0)
+  Object.values(props.selected).reduce((s, i) => s + i.quantity, 0),
 );
 
 const totalPrice = computed(() => {
@@ -43,64 +43,64 @@ const totalPrice = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div class="space-y-4">
     <div v-for="store in stores" :key="store.id" class="space-y-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Package class="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h3 class="font-semibold">{{ store.name }}</h3>
-          <p v-if="store.description" class="text-sm text-muted-foreground">{{ store.description }}</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <Card
           v-for="product in store.items"
           :key="product.id"
-          class="transition-all"
-          :class="qty(product.id) > 0 ? 'border-primary/40 shadow-sm' : ''"
+          class="group overflow-hidden transition-all hover:shadow-md p-0"
+          :class="qty(product.id) > 0 ? 'border-primary/50 ring-1 ring-primary/20' : ''"
         >
-          <CardContent class="p-4">
-            <div class="flex items-start gap-3">
-              <div class="w-14 h-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <img
-                  v-if="product.images?.length"
-                  :src="product.images[0]"
-                  :alt="product.name"
-                  class="w-full h-full object-cover rounded-lg"
-                />
-                <Package v-else class="w-6 h-6 text-muted-foreground" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-sm">{{ product.name }}</h4>
-                <p v-if="product.description" class="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                  {{ product.description }}
-                </p>
-                <div class="flex items-center justify-between mt-3">
-                  <span class="font-semibold text-sm">KES {{ Number(product.price).toLocaleString() }}</span>
-                  <div class="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      class="h-7 w-7 p-0"
-                      @click="changeQty(product.id, store.id.toString(), -1)"
-                      :disabled="qty(product.id) === 0"
-                    >
-                      <Minus class="w-3 h-3" />
-                    </Button>
-                    <span class="w-8 text-center text-sm font-medium">{{ qty(product.id) }}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      class="h-7 w-7 p-0"
-                      @click="changeQty(product.id, store.id.toString(), 1)"
-                    >
-                      <Plus class="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
+          <div class="aspect-square relative overflow-hidden bg-muted">
+            <NuxtImg
+              v-if="product.images?.length"
+              :src="product.images[0]"
+              :alt="product.name"
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div v-else class="absolute inset-0 flex items-center justify-center">
+              <Package class="w-12 h-12 text-muted-foreground/50" />
+            </div>
+            <div
+              v-if="qty(product.id) > 0"
+              class="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full"
+            >
+              {{ qty(product.id) }}
+            </div>
+          </div>
+          <CardContent class="p-3 space-y-2">
+            <div class="min-h-10">
+              <h4 class="font-medium text-sm leading-tight line-clamp-2">
+                {{ product.name }}
+              </h4>
+            </div>
+            <p v-if="product.description" class="text-xs text-muted-foreground line-clamp-1">
+              {{ product.description }}
+            </p>
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <span class="font-semibold text-sm text-primary"
+                >KES {{ Number(product.price).toLocaleString() }}</span
+              >
+              <div class="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  class="h-7 w-7"
+                  @click="changeQty(product.id, store.id.toString(), -1)"
+                  :disabled="qty(product.id) === 0"
+                >
+                  <Minus class="w-3 h-3" />
+                </Button>
+                <span class="w-6 text-center text-xs font-medium">{{ qty(product.id) }}</span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  class="h-7 w-7"
+                  @click="changeQty(product.id, store.id.toString(), 1)"
+                >
+                  <Plus class="w-3 h-3" />
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -117,13 +117,23 @@ const totalPrice = computed(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <Card v-if="totalItems > 0" class="bg-primary/5 border-primary/20">
-        <CardContent class="p-4 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <ShoppingCart class="w-5 h-5 text-primary" />
-            <span class="font-medium text-sm">{{ totalItems }} item{{ totalItems !== 1 ? "s" : "" }}</span>
+      <Card
+        v-if="totalItems > 0"
+        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-80 bg-background/95 backdrop-blur-sm border-primary/30 shadow-lg"
+      >
+        <CardContent class="p-4 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <ShoppingCart class="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <span class="font-medium text-sm"
+                >{{ totalItems }} item{{ totalItems !== 1 ? "s" : "" }}</span
+              >
+              <p class="text-xs text-muted-foreground">Total</p>
+            </div>
           </div>
-          <span class="font-semibold">KES {{ totalPrice.toLocaleString() }}</span>
+          <span class="font-bold text-lg text-primary">KES {{ totalPrice.toLocaleString() }}</span>
         </CardContent>
       </Card>
     </Transition>
