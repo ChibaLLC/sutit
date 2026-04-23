@@ -39,6 +39,8 @@ const editPlaceholder = ref("");
 
 // drag state
 const dragOverIndex = ref<number | null>(null);
+const isDraggingOverCanvas = ref(false);
+const fieldsContainerRef = ref<HTMLElement | null>(null);
 
 const currentPage = computed(() => props.pages[currentPageIndex.value]);
 
@@ -213,88 +215,160 @@ const updatePageTitle = (index: number, title: string) => {
   emitPages(pages);
 };
 
-// --- drag from palette (add new field) ---
-
-const handlePaletteDragStart = (event: DragEvent, item: { type: string; label: string }) => {
-  event.dataTransfer?.setData("application/json", JSON.stringify({ action: "new", ...item }));
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
-};
-
-// --- drag from canvas (reorder) ---
-
-const handleCanvasDragStart = (event: DragEvent, index: number) => {
-  event.dataTransfer?.setData("text/plain", String(index));
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-};
-
-const handleDrop = (event: DragEvent, targetIndex: number) => {
+// --- Unified Canvas Drag & Drop ---
+const handleCanvasDragOver = (event: DragEvent) => {
   event.preventDefault();
-  dragOverIndex.value = null;
+  if (!fieldsContainerRef.value) return;
+  const dt = event.dataTransfer;
+  if (!dt) return;
 
-  // try palette drop (new field)
-  const jsonData = event.dataTransfer?.getData("application/json");
+  dt.dropEffect = dt.types.includes("application/json") ? "copy" : "move";
+  isDraggingOverCanvas.value = true;
+
+  const container = fieldsContainerRef.value;
+  const containerRect = container.getBoundingClientRect();
+  const mouseY = event.clientY;
+  const relativeY = mouseY - containerRect.top;
+  const fields = currentPage.value?.fields || [];
+  const fieldElements = container.querySelectorAll<HTMLElement>("[data-field-card]");
+
+  let targetIndex = fields.length;
+
+  if (fieldElements.length > 0) {
+    for (let i = 0; i < fieldElements.length; i++) {
+      const fieldRect = fieldElements[i].getBoundingClientRect();
+      const fieldTopRelative = fieldRect.top - containerRect.top;
+      if (relativeY < fieldTopRelative + fieldRect.height / 2) {
+        targetIndex = i;
+        break;
+      }
+    }
+  }
+
+  dragOverIndex.value = targetIndex;
+};
+
+const handleCanvasDragLeave = (event: DragEvent) => {
+  if (fieldsContainerRef.value && !fieldsContainerRef.value.contains(event.relatedTarget as Node)) {
+    dragOverIndex.value = null;
+    isDraggingOverCanvas.value = false;
+  }
+};
+
+const handleCanvasDrop = (event: DragEvent) => {
+  event.preventDefault();
+  const targetIdx = dragOverIndex.value ?? currentPage.value?.fields.length ?? 0;
+  dragOverIndex.value = null;
+  isDraggingOverCanvas.value = false;
+
+  const dt = event.dataTransfer;
+  if (!dt) return;
+
+  // Handle new field from palette
+  const jsonData = dt.getData("application/json");
   if (jsonData) {
     try {
       const data = JSON.parse(jsonData);
       if (data.action === "new") {
-        addField(data.type, data.label, targetIndex);
+        addField(data.type, data.label, targetIdx);
         return;
       }
     } catch {}
   }
 
-  // reorder existing field
-  const fromIndexStr = event.dataTransfer?.getData("text/plain");
-  if (fromIndexStr == null) return;
+  // Handle reorder existing field
+  const fromIndexStr = dt.getData("text/plain");
+  if (!fromIndexStr) return;
   const fromIndex = parseInt(fromIndexStr);
-  if (isNaN(fromIndex) || fromIndex === targetIndex) return;
+  if (isNaN(fromIndex)) return;
 
   const page = currentPage.value;
   if (!page) return;
   const fields = [...page.fields];
+  if (fromIndex === targetIdx) return;
+
   const [moved] = fields.splice(fromIndex, 1);
-  fields.splice(targetIndex, 0, moved);
+  const adjustedTargetIdx = fromIndex < targetIdx ? targetIdx - 1 : targetIdx;
+  fields.splice(adjustedTargetIdx, 0, moved);
   fields.forEach((f, i) => (f.orderIndex = i + 1));
   updateCurrentPage({ fields });
 };
 
-const handleDragOver = (event: DragEvent, index: number) => {
-  event.preventDefault();
-  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-  dragOverIndex.value = index;
+const handleCanvasDragEnd = (event: DragEvent) => {
+  const card = (event.target as HTMLElement).closest("[data-field-card]") as HTMLElement;
+  if (card) card.classList.remove("opacity-50");
+  dragOverIndex.value = null;
+  isDraggingOverCanvas.value = false;
 };
 
-const handleDragLeave = () => {
-  dragOverIndex.value = null;
+// --- Palette Drag (New Field) ---
+const handlePaletteDragStart = (event: DragEvent, item: { type: string; label: string }) => {
+  event.dataTransfer?.setData("application/json", JSON.stringify({ action: "new", ...item }));
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
+
+  // Custom drag ghost
+  const target = event.currentTarget as HTMLElement;
+  if (event.dataTransfer && target) {
+    const ghost = target.cloneNode(true) as HTMLElement;
+    ghost.style.width = `${target.offsetWidth}px`;
+    ghost.style.position = "absolute";
+    ghost.style.top = "-1000px";
+    document.body.appendChild(ghost);
+    event.dataTransfer.setDragImage(ghost, target.offsetWidth / 2, target.offsetHeight / 2);
+    nextTick(() => document.body.removeChild(ghost));
+  }
 };
 
-// drop at end of list
-const handleDropAtEnd = (event: DragEvent) => {
-  event.preventDefault();
-  dragOverIndex.value = null;
+// --- Canvas Field Drag (Reorder) ---
+const handleCanvasDragStart = (event: DragEvent, index: number) => {
+  event.dataTransfer?.setData("text/plain", String(index));
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
 
-  const jsonData = event.dataTransfer?.getData("application/json");
-  if (jsonData) {
-    try {
-      const data = JSON.parse(jsonData);
-      if (data.action === "new") {
-        addField(data.type, data.label);
-        return;
-      }
-    } catch {}
+  // Custom drag ghost and dim effect
+  const target = event.currentTarget as HTMLElement;
+  const card = target.closest("[data-field-card]") as HTMLElement;
+  if (event.dataTransfer && card) {
+    const ghost = card.cloneNode(true) as HTMLElement;
+    ghost.style.width = `${card.offsetWidth}px`;
+    ghost.style.position = "absolute";
+    ghost.style.top = "-1000px";
+    document.body.appendChild(ghost);
+    event.dataTransfer.setDragImage(ghost, event.offsetX, event.offsetY);
+    nextTick(() => document.body.removeChild(ghost));
+  }
+  if (card) card.classList.add("opacity-50");
+};
+
+// --- Drop Indicator Position ---
+const dropIndicatorStyle = computed(() => {
+  const container = fieldsContainerRef.value;
+  const idx = dragOverIndex.value;
+  if (idx === null || !container) return {};
+
+  const containerRect = container.getBoundingClientRect();
+  const fieldElements = container.querySelectorAll<HTMLElement>("[data-field-card]");
+  const fields = currentPage.value?.fields || [];
+
+  if (fieldElements.length === 0) {
+    return { top: "50%", transform: "translateY(-50%)", left: "20%", right: "20%" };
   }
 
-  const fromIndexStr = event.dataTransfer?.getData("text/plain");
-  if (fromIndexStr == null) return;
-  const fromIndex = parseInt(fromIndexStr);
-  const page = currentPage.value;
-  if (!page || isNaN(fromIndex)) return;
-  const fields = [...page.fields];
-  const [moved] = fields.splice(fromIndex, 1);
-  fields.push(moved);
-  fields.forEach((f, i) => (f.orderIndex = i + 1));
-  updateCurrentPage({ fields });
-};
+  // Above first field
+  if (idx === 0) {
+    const firstRect = fieldElements[0].getBoundingClientRect();
+    return { top: `${firstRect.top - containerRect.top}px`, left: "0", right: "0" };
+  }
+
+  // Below last field
+  if (idx >= fields.length) {
+    const lastRect = fieldElements[fieldElements.length - 1].getBoundingClientRect();
+    return { top: `${lastRect.bottom - containerRect.top}px`, left: "0", right: "0" };
+  }
+
+  // Between fields
+  const prevRect = fieldElements[idx - 1].getBoundingClientRect();
+  return { top: `${prevRect.bottom - containerRect.top}px`, left: "0", right: "0" };
+});
 
 const colorClasses: Record<string, string> = {
   blue: "bg-blue-100 text-blue-600",
@@ -384,25 +458,36 @@ const colorClasses: Record<string, string> = {
           </Button>
         </div>
 
-        <!-- Fields List -->
-        <div class="space-y-2 min-h-[300px]">
+        <!-- Fields List (Unified Drag Container) -->
+        <div
+          ref="fieldsContainerRef"
+          class="space-y-2 min-h-[300px] relative transition-all duration-200"
+          :class="[
+            isDraggingOverCanvas
+              ? 'bg-primary/5 border-2 border-dashed border-primary rounded-xl'
+              : 'border-2 border-transparent',
+          ]"
+          @dragover.prevent="handleCanvasDragOver"
+          @dragleave="handleCanvasDragLeave"
+          @drop="handleCanvasDrop"
+        >
+          <!-- Unified Drop Indicator -->
+          <div
+            v-if="dragOverIndex !== null"
+            class="absolute h-1 bg-primary rounded-full transition-all duration-150 pointer-events-none z-10"
+            :style="dropIndicatorStyle"
+          />
+
           <template v-if="currentPage?.fields.length">
             <div
               v-for="(field, index) in currentPage.fields"
               :key="field.id"
               draggable="true"
               @dragstart="handleCanvasDragStart($event, index)"
-              @dragover="handleDragOver($event, index)"
-              @dragleave="handleDragLeave"
-              @drop="handleDrop($event, index)"
+              @dragend="handleCanvasDragEnd"
+              data-field-card
               class="transition-all"
             >
-              <!-- drop indicator line -->
-              <div
-                v-if="dragOverIndex === index"
-                class="h-1 bg-primary rounded-full mb-1 transition-all"
-              />
-
               <Card
                 class="group transition-all"
                 :class="[
@@ -536,28 +621,16 @@ const colorClasses: Record<string, string> = {
             </div>
           </template>
 
-          <!-- Empty State / Drop zone at end -->
+          <!-- Empty State -->
           <div
-            @dragover.prevent="dragOverIndex = currentPage?.fields.length ?? 0"
-            @dragleave="dragOverIndex = null"
-            @drop="handleDropAtEnd"
-            class="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-xl transition-colors"
-            :class="
-              dragOverIndex === (currentPage?.fields.length ?? 0)
-                ? 'border-primary bg-primary/5'
-                : ''
-            "
+            v-if="!currentPage?.fields.length"
+            class="flex flex-col items-center justify-center h-full py-16 text-center"
           >
-            <template v-if="!currentPage?.fields.length">
-              <div class="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-4">
-                <Plus class="w-6 h-6 text-muted-foreground" />
-              </div>
-              <h3 class="font-semibold mb-1">No fields yet</h3>
-              <p class="text-sm text-muted-foreground">Drag or click a field type to add it</p>
-            </template>
-            <template v-else>
-              <p class="text-sm text-muted-foreground">Drop here to add at end</p>
-            </template>
+            <div class="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-4">
+              <Plus class="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h3 class="font-semibold mb-1">No fields yet</h3>
+            <p class="text-sm text-muted-foreground">Drag or click a field type to add it</p>
           </div>
         </div>
       </div>
