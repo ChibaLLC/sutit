@@ -1,16 +1,13 @@
 import db from "../db";
-import {
-  dispatches,
-  dispatchBatches,
-  formSubmissions,
-} from "../db/schema";
+import { dispatches, dispatchBatches, formSubmissions } from "../db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendMail } from "./email.service";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
 import { randomBytes } from "crypto";
 
-function generateToken(): string {
+const generateToken = (): string => {
   return randomBytes(32).toString("hex");
-}
+};
 
 export const getDispatchBySubmissionId = async (submissionId: string) => {
   return await db.query.dispatches.findFirst({
@@ -40,10 +37,7 @@ export const createDispatch = async (
   data: { dispatchedBy: string; dispatchDate: string; notes?: string },
 ) => {
   const submission = await db.query.formSubmissions.findFirst({
-    where: and(
-      eq(formSubmissions.id, submissionId),
-      isNull(formSubmissions.deletedAt),
-    ),
+    where: and(eq(formSubmissions.id, submissionId), isNull(formSubmissions.deletedAt)),
     with: {
       storeResponses: true,
       submitter: true,
@@ -54,8 +48,7 @@ export const createDispatch = async (
   });
 
   if (!submission) throw new Error("Submission not found");
-  if (!submission.storeResponses?.length)
-    throw new Error("Submission has no products to dispatch");
+  if (!submission.storeResponses?.length) throw new Error("Submission has no products to dispatch");
 
   const existing = await getDispatchBySubmissionId(submissionId);
   if (existing) throw new Error("Submission already has a dispatch record");
@@ -88,13 +81,26 @@ export const createDispatch = async (
     }
   }
 
+  const phone = findPhoneFromResponses(submission.responses || []);
+  if (phone) {
+    try {
+      await sendTextSmsTiara({
+        phone,
+        message: buildDispatchSms(
+          submission.submitter?.name || "Customer",
+          data.dispatchedBy,
+          data.dispatchDate,
+        ),
+      });
+    } catch (e) {
+      console.error("Failed to send dispatch SMS:", e);
+    }
+  }
+
   return dispatch;
 };
 
-export const markAsDelivered = async (
-  submissionId: string,
-  data: { deliveryDate: string },
-) => {
+export const markAsDelivered = async (submissionId: string, data: { deliveryDate: string }) => {
   const dispatch = await getDispatchBySubmissionId(submissionId);
   if (!dispatch) throw new Error("No dispatch record found");
   if (dispatch.status === "delivered" && dispatch.deliveryConfirmedAt)
@@ -142,6 +148,22 @@ export const markAsDelivered = async (
     }
   }
 
+  const phone = findPhoneFromResponses(submission?.responses || []);
+  if (phone) {
+    try {
+      await sendTextSmsTiara({
+        phone,
+        message: buildDeliverySms(
+          submission?.submitter?.name || "Customer",
+          data.deliveryDate,
+          confirmUrl,
+        ),
+      });
+    } catch (e) {
+      console.error("Failed to send delivery SMS:", e);
+    }
+  }
+
   return updated;
 };
 
@@ -165,8 +187,21 @@ export const confirmDelivery = async (token: string) => {
 function findEmailFromResponses(responses: any[]): string | null {
   for (const r of responses) {
     if (r.field?.type === "email" && r.value) return r.value;
-    if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(r.value || ""))
+    if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(r.value || "")) return r.value;
+  }
+  return null;
+}
+
+function findPhoneFromResponses(responses: any[]): string | null {
+  for (const r of responses) {
+    if (!r.value) continue;
+    const field = r.field;
+    if (!field) continue;
+    if (field.type === "phone") return r.value;
+    const label = field.label?.toLowerCase() || "";
+    if (label.includes("phone") || label.includes("mobile") || label.includes("cell")) {
       return r.value;
+    }
   }
   return null;
 }
@@ -193,6 +228,14 @@ function buildDeliveryEmail(name: string, deliveryDate: string, confirmUrl: stri
       <p style="color:#999;font-size:12px">Or copy this link: ${confirmUrl}</p>
       <p style="color:#888;font-size:12px">Powered by Sutit Forms</p>
     </div>`;
+}
+
+function buildDispatchSms(name: string, dispatchedBy: string, dispatchDate: string) {
+  return `Hi ${name}, your order has been dispatched by ${dispatchedBy} on ${new Date(dispatchDate).toLocaleDateString()}. You'll be notified on delivery. - Sutit Forms`;
+}
+
+function buildDeliverySms(name: string, deliveryDate: string, confirmUrl: string) {
+  return `Hi ${name}, your order was delivered on ${new Date(deliveryDate).toLocaleDateString()}. Confirm receipt: ${confirmUrl} - Sutit Forms`;
 }
 
 // ============================================
@@ -322,32 +365,45 @@ export const dispatchBatch = async (
         })
         .where(eq(dispatches.id, d.id));
 
-      const email = findEmailFromResponses(d.submission?.responses || []);
-      if (email) {
-        try {
-          await sendMail({
-            to: email,
-            subject: "Your order has been dispatched",
-            html: buildDispatchEmail(
-              d.submission?.submitter?.name || "Customer",
-              data.dispatchedBy,
-              data.dispatchDate,
-            ),
-          });
-        } catch (e) {
-          console.error("Failed to send dispatch email:", e);
-        }
+    const email = findEmailFromResponses(d.submission?.responses || []);
+    if (email) {
+      try {
+        await sendMail({
+          to: email,
+          subject: "Your order has been dispatched",
+          html: buildDispatchEmail(
+            d.submission?.submitter?.name || "Customer",
+            data.dispatchedBy,
+            data.dispatchDate,
+          ),
+        });
+      } catch (e) {
+        console.error("Failed to send dispatch email:", e);
       }
     }
+
+    const phone = findPhoneFromResponses(d.submission?.responses || []);
+    if (phone) {
+      try {
+        await sendTextSmsTiara({
+          phone,
+          message: buildDispatchSms(
+            d.submission?.submitter?.name || "Customer",
+            data.dispatchedBy,
+            data.dispatchDate,
+          ),
+        });
+      } catch (e) {
+        console.error("Failed to send dispatch SMS:", e);
+      }
+    }
+  }
 
     return batch;
   });
 };
 
-export const deliverBatch = async (
-  batchId: string,
-  data: { deliveryDate: string },
-) => {
+export const deliverBatch = async (batchId: string, data: { deliveryDate: string }) => {
   return await db.transaction(async (tx) => {
     const batch = await tx.query.dispatchBatches.findFirst({
       where: eq(dispatchBatches.id, batchId),
@@ -393,23 +449,39 @@ export const deliverBatch = async (
         })
         .where(eq(dispatches.id, d.id));
 
-      const email = findEmailFromResponses(d.submission?.responses || []);
-      if (email) {
-        try {
-          await sendMail({
-            to: email,
-            subject: "Your order has been delivered - Confirm receipt",
-            html: buildDeliveryEmail(
-              d.submission?.submitter?.name || "Customer",
-              data.deliveryDate,
-              confirmUrl,
-            ),
-          });
-        } catch (e) {
-          console.error("Failed to send delivery email:", e);
-        }
+    const email = findEmailFromResponses(d.submission?.responses || []);
+    if (email) {
+      try {
+        await sendMail({
+          to: email,
+          subject: "Your order has been delivered - Confirm receipt",
+          html: buildDeliveryEmail(
+            d.submission?.submitter?.name || "Customer",
+            data.deliveryDate,
+            confirmUrl,
+          ),
+        });
+      } catch (e) {
+        console.error("Failed to send delivery email:", e);
       }
     }
+
+    const phone = findPhoneFromResponses(d.submission?.responses || []);
+    if (phone) {
+      try {
+        await sendTextSmsTiara({
+          phone,
+          message: buildDeliverySms(
+            d.submission?.submitter?.name || "Customer",
+            data.deliveryDate,
+            confirmUrl,
+          ),
+        });
+      } catch (e) {
+        console.error("Failed to send delivery SMS:", e);
+      }
+    }
+  }
 
     return batch;
   });
@@ -443,11 +515,6 @@ export const removeFromBatch = async (submissionIds: string[]) => {
     await db
       .update(dispatches)
       .set({ batchId: null })
-      .where(
-        and(
-          eq(dispatches.submissionId, id),
-          eq(dispatches.status, "pending"),
-        ),
-      );
+      .where(and(eq(dispatches.submissionId, id), eq(dispatches.status, "pending")));
   }
 };
