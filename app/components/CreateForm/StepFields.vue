@@ -43,25 +43,37 @@ const dragOverIndex = ref<number | null>(null);
 const currentPage = computed(() => props.pages[currentPageIndex.value]);
 
 const fieldTypes = [
-  { category: "Basic", color: "blue", items: [
-    { type: "text", label: "Text", icon: Type },
-    { type: "email", label: "Email", icon: Mail },
-    { type: "phone", label: "Phone", icon: Phone },
-    { type: "url", label: "URL", icon: Link },
-    { type: "textarea", label: "Textarea", icon: AlignLeft },
-    { type: "number", label: "Number", icon: Hash },
-  ]},
-  { category: "Choice", color: "purple", items: [
-    { type: "select", label: "Dropdown", icon: List },
-    { type: "multiselect", label: "Multi-Select", icon: CheckSquare },
-    { type: "radio", label: "Radio", icon: Circle },
-    { type: "checkbox", label: "Checkbox", icon: CheckSquare },
-    { type: "toggle", label: "Toggle", icon: ToggleLeft },
-  ]},
-  { category: "Advanced", color: "green", items: [
-    { type: "date", label: "Date", icon: CalendarDays },
-    { type: "file", label: "File Upload", icon: Upload },
-  ]},
+  {
+    category: "Basic",
+    color: "blue",
+    items: [
+      { type: "text", label: "Text", icon: Type },
+      { type: "email", label: "Email", icon: Mail },
+      { type: "phone", label: "Phone", icon: Phone },
+      { type: "url", label: "URL", icon: Link },
+      { type: "textarea", label: "Textarea", icon: AlignLeft },
+      { type: "number", label: "Number", icon: Hash },
+    ],
+  },
+  {
+    category: "Choice",
+    color: "purple",
+    items: [
+      { type: "select", label: "Dropdown", icon: List },
+      { type: "multiselect", label: "Multi-Select", icon: CheckSquare },
+      { type: "radio", label: "Radio", icon: Circle },
+      { type: "checkbox", label: "Checkbox", icon: CheckSquare },
+      { type: "toggle", label: "Toggle", icon: ToggleLeft },
+    ],
+  },
+  {
+    category: "Advanced",
+    color: "green",
+    items: [
+      { type: "date", label: "Date", icon: CalendarDays },
+      { type: "file", label: "File Upload", icon: Upload },
+    ],
+  },
 ];
 
 // --- helpers ---
@@ -141,7 +153,8 @@ const flushFieldEdit = (fieldId: string) => {
   if (!field) return;
   const updates: Partial<FormField> = {};
   if (editLabel.value !== field.label) updates.label = editLabel.value;
-  if (editPlaceholder.value !== (field.placeholder || "")) updates.placeholder = editPlaceholder.value;
+  if (editPlaceholder.value !== (field.placeholder || ""))
+    updates.placeholder = editPlaceholder.value;
   if (Object.keys(updates).length) updateField(fieldId, updates);
 };
 
@@ -344,7 +357,7 @@ const colorClasses: Record<string, string> = {
                 :class="[
                   currentPageIndex === index
                     ? 'bg-primary text-primary-foreground font-medium shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 ]"
               >
                 <input
@@ -395,31 +408,39 @@ const colorClasses: Record<string, string> = {
                 :class="[
                   editingFieldId === field.id
                     ? 'border-primary ring-1 ring-primary/20 shadow-md'
-                    : 'hover:border-primary/30 hover:shadow-sm'
+                    : 'hover:border-primary/30 hover:shadow-sm',
                 ]"
               >
                 <CardContent class="p-4">
                   <!-- Field Header -->
-                  <div
-                    class="flex items-center gap-3 cursor-pointer"
-                    @click="startEditing(field)"
-                  >
-                    <GripVertical class="w-4 h-4 text-muted-foreground/30 shrink-0 cursor-grab active:cursor-grabbing" />
+                  <div class="flex items-center gap-3 cursor-pointer" @click="startEditing(field)">
+                    <GripVertical
+                      class="w-4 h-4 text-muted-foreground/30 shrink-0 cursor-grab active:cursor-grabbing"
+                    />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
                         <span class="font-medium text-sm">{{ field.label }}</span>
                         <Badge variant="secondary" class="text-[10px] px-1.5 py-0">
                           {{ field.type }}
                         </Badge>
-                        <Badge v-if="field.required" variant="destructive" class="text-[10px] px-1.5 py-0">
+                        <Badge
+                          v-if="field.required"
+                          variant="destructive"
+                          class="text-[10px] px-1.5 py-0"
+                        >
                           Required
                         </Badge>
                       </div>
-                      <p v-if="field.placeholder" class="text-xs text-muted-foreground truncate mt-0.5">
+                      <p
+                        v-if="field.placeholder"
+                        class="text-xs text-muted-foreground truncate mt-0.5"
+                      >
                         {{ field.placeholder }}
                       </p>
                     </div>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       <Button
                         variant="ghost"
                         size="sm"
@@ -449,7 +470,10 @@ const colorClasses: Record<string, string> = {
                     leave-from-class="opacity-100 max-h-[600px]"
                     leave-to-class="opacity-0 max-h-0"
                   >
-                    <div v-if="editingFieldId === field.id" class="mt-4 pt-4 border-t space-y-4 overflow-hidden">
+                    <div
+                      v-if="editingFieldId === field.id"
+                      class="mt-4 pt-4 border-t space-y-4 overflow-hidden"
+                    >
                       <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                           <Label class="text-xs">Label</Label>
@@ -464,7 +488,9 @@ const colorClasses: Record<string, string> = {
                       <div class="flex items-center gap-2">
                         <Switch
                           :checked="field.required"
-                          @update:checked="(val: boolean) => updateField(field.id, { required: val })"
+                          @update:checked="
+                            (val: boolean) => updateField(field.id, { required: val })
+                          "
                         />
                         <Label class="text-xs">Required</Label>
                       </div>
@@ -479,8 +505,8 @@ const colorClasses: Record<string, string> = {
                             class="flex items-center gap-2"
                           >
                             <Input
-                              :value="option"
-                              @input="updateOption(field.id, optIndex, ($event.target as HTMLInputElement).value)"
+                              :model-value="option"
+                              @update:model-value="updateOption(field.id, optIndex, $event)"
                               class="h-8 text-sm"
                             />
                             <Button
@@ -493,7 +519,12 @@ const colorClasses: Record<string, string> = {
                             </Button>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" class="text-xs h-7" @click="addOption(field.id)">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="text-xs h-7"
+                          @click="addOption(field.id)"
+                        >
                           <Plus class="w-3 h-3 mr-1" />
                           Add option
                         </Button>
@@ -507,20 +538,22 @@ const colorClasses: Record<string, string> = {
 
           <!-- Empty State / Drop zone at end -->
           <div
-            @dragover.prevent="dragOverIndex = (currentPage?.fields.length ?? 0)"
+            @dragover.prevent="dragOverIndex = currentPage?.fields.length ?? 0"
             @dragleave="dragOverIndex = null"
             @drop="handleDropAtEnd"
             class="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-xl transition-colors"
-            :class="dragOverIndex === (currentPage?.fields.length ?? 0) ? 'border-primary bg-primary/5' : ''"
+            :class="
+              dragOverIndex === (currentPage?.fields.length ?? 0)
+                ? 'border-primary bg-primary/5'
+                : ''
+            "
           >
             <template v-if="!currentPage?.fields.length">
               <div class="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-4">
                 <Plus class="w-6 h-6 text-muted-foreground" />
               </div>
               <h3 class="font-semibold mb-1">No fields yet</h3>
-              <p class="text-sm text-muted-foreground">
-                Drag or click a field type to add it
-              </p>
+              <p class="text-sm text-muted-foreground">Drag or click a field type to add it</p>
             </template>
             <template v-else>
               <p class="text-sm text-muted-foreground">Drop here to add at end</p>
