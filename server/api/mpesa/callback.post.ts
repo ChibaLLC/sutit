@@ -1,9 +1,8 @@
 import { completeFormPayment } from "~~/server/services/payment.service";
 import { StkCallbackHook } from "~~/shared/types";
 import {
-  stopSubmissionTAT,
-  getSubmissionById,
   sendStopTatNotification,
+  permanentDeleteSubmission,
 } from "~~/server/services/submissions.service";
 import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
 import { formPayments } from "~~/server/db/schema";
@@ -20,12 +19,15 @@ export default defineEventHandler(async (event) => {
         message: "No callback found",
       });
     }
+    console.log(hook);
 
     const result = await completeFormPayment(hook);
 
     // Only process successful payments
     if (callback.ResultCode === 0 && result) {
       await handleSuccessfulPayment(result);
+    } else if (callback.ResultCode !== 0 && result) {
+      await handleFailedPayment(result);
     }
   } catch (e: any) {
     console.log("Unable To Process Payment", e.message);
@@ -89,16 +91,9 @@ async function handleSuccessfulPayment(updatedPayment: any) {
     // Send email if submitter has email
     if (submission.submitter?.email) {
       try {
-        await sendStopTatNotification(
-          submission.submitter.email,
-          form.title,
-          stopTatUrl,
-        );
+        await sendStopTatNotification(submission.submitter.email, form.title, stopTatUrl);
       } catch (emailError) {
-        console.error(
-          "Failed to send stop TAT notification email:",
-          emailError,
-        );
+        console.error("Failed to send stop TAT notification email:", emailError);
       }
     }
 
@@ -111,20 +106,38 @@ async function handleSuccessfulPayment(updatedPayment: any) {
 
       if (emailResponse?.value) {
         try {
-          await sendStopTatNotification(
-            emailResponse.value,
-            form.title,
-            stopTatUrl,
-          );
+          await sendStopTatNotification(emailResponse.value, form.title, stopTatUrl);
         } catch (emailError) {
-          console.error(
-            "Failed to send stop TAT notification to response email:",
-            emailError,
-          );
+          console.error("Failed to send stop TAT notification to response email:", emailError);
         }
       }
     }
   } catch (error) {
     console.error("Error handling successful payment:", error);
+  }
+}
+
+async function handleFailedPayment(updatedPayment: any) {
+  try {
+    const formPayment = await db.query.formPayments.findFirst({
+      where: eq(formPayments.paymentId, updatedPayment.id),
+    });
+
+    if (!formPayment) {
+      console.log("No form payment found for failed payment:", updatedPayment.id);
+      return;
+    }
+
+    console.log(
+      "Payment failed for submission:",
+      formPayment.submissionId,
+      "Result code:",
+      updatedPayment.resultCode,
+    );
+
+    await permanentDeleteSubmission(formPayment.submissionId);
+    console.log("Deleted submission due to failed payment:", formPayment.submissionId);
+  } catch (error) {
+    console.error("Error handling failed payment:", error);
   }
 }

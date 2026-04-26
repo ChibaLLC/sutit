@@ -20,10 +20,7 @@ function generateToken(): string {
 }
 
 // Check if user has existing submission for this form
-export const checkExistingSubmission = async (
-  formId: string,
-  userId: string,
-) => {
+export const checkExistingSubmission = async (formId: string, userId: string) => {
   const existingSubmission = await db.query.formSubmissions.findFirst({
     where: and(
       eq(formSubmissions.formId, formId),
@@ -40,12 +37,7 @@ export const getSubmissionCount = async (formId: string): Promise<number> => {
   const result = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(formSubmissions)
-    .where(
-      and(
-        eq(formSubmissions.formId, formId),
-        isNull(formSubmissions.deletedAt),
-      ),
-    );
+    .where(and(eq(formSubmissions.formId, formId), isNull(formSubmissions.deletedAt)));
 
   return result[0]?.count || 0;
 };
@@ -65,7 +57,7 @@ export const submitForm = async (
     }
 
     let submission: any;
-    
+
     if (existingSubmissionId) {
       // If we have an existing submission ID, update that submission instead of creating new
       const existingSubmission = await tx.query.formSubmissions.findFirst({
@@ -124,10 +116,7 @@ export const submitForm = async (
       const stringValue = typeof value === "string" ? value : String(value);
 
       // Check if it looks like an email address
-      if (
-        !email &&
-        /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(stringValue)
-      ) {
+      if (!email && /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(stringValue)) {
         email = stringValue;
       }
       await tx.insert(fieldResponses).values({
@@ -141,9 +130,7 @@ export const submitForm = async (
     // 4. Insert store responses
     let storeTotal = 0;
 
-    for (const [itemId, { quantity }] of Object.entries(
-      data.selectedProducts,
-    )) {
+    for (const [itemId, { quantity }] of Object.entries(data.selectedProducts)) {
       const [storeItem] = await tx
         .select()
         .from(storeItems)
@@ -227,10 +214,7 @@ export const submitForm = async (
         try {
           await sendStopTatNotification(email, form.title, stopTatUrl);
         } catch (error) {
-          console.error(
-            "Failed to send stop TAT notification for free submission:",
-            error,
-          );
+          console.error("Failed to send stop TAT notification for free submission:", error);
         }
       }
     }
@@ -242,19 +226,14 @@ export const submitForm = async (
       },
       form: form,
       message:
-        totalPaid > 0
-          ? "Stk Push Has been sent to your phone Pay"
-          : "submitted successfully",
+        totalPaid > 0 ? "Stk Push Has been sent to your phone Pay" : "submitted successfully",
       pay,
     };
   });
 };
 export const getFormSubmissions = async (formId: string) => {
   let submissions = await db.query.formSubmissions.findMany({
-    where: and(
-      eq(formSubmissions.formId, formId),
-      isNull(formSubmissions.deletedAt),
-    ),
+    where: and(eq(formSubmissions.formId, formId), isNull(formSubmissions.deletedAt)),
     with: {
       form: true,
       responses: {
@@ -281,10 +260,7 @@ export const getFormSubmissions = async (formId: string) => {
 
 export const getSubmissionById = async (submissionId: string) => {
   const submission = await db.query.formSubmissions.findFirst({
-    where: and(
-      eq(formSubmissions.id, submissionId),
-      isNull(formSubmissions.deletedAt),
-    ),
+    where: and(eq(formSubmissions.id, submissionId), isNull(formSubmissions.deletedAt)),
     with: {
       form: true,
       responses: {
@@ -320,8 +296,7 @@ export const getSubmissionById = async (submissionId: string) => {
     // Calculate TAT if completed
     if (submission.completedAt && submission.submittedAt) {
       const tatMs =
-        new Date(submission.completedAt).getTime() -
-        new Date(submission.submittedAt).getTime();
+        new Date(submission.completedAt).getTime() - new Date(submission.submittedAt).getTime();
       submission.tat = Math.floor(tatMs / 1000); // in seconds
     } else {
       submission.tat = null;
@@ -331,19 +306,13 @@ export const getSubmissionById = async (submissionId: string) => {
   return submission;
 };
 
-export const updateSubmissionStatus = async (
-  submissionId: string,
-  status: string,
-) => {
+export const updateSubmissionStatus = async (submissionId: string, status: string) => {
   const updateData: any = { status };
   if (status === "completed") {
     updateData.completedAt = new Date();
   }
 
-  await db
-    .update(formSubmissions)
-    .set(updateData)
-    .where(eq(formSubmissions.id, submissionId));
+  await db.update(formSubmissions).set(updateData).where(eq(formSubmissions.id, submissionId));
 };
 
 export const stopSubmissionTAT = async (submissionId: string) => {
@@ -368,10 +337,7 @@ export const softDeleteSubmission = async (submissionId: string) => {
 
 export const getDeletedFormSubmissions = async (formId: string) => {
   let submissions = await db.query.formSubmissions.findMany({
-    where: and(
-      eq(formSubmissions.formId, formId),
-      isNotNull(formSubmissions.deletedAt),
-    ),
+    where: and(eq(formSubmissions.formId, formId), isNotNull(formSubmissions.deletedAt)),
     with: {
       form: true,
       responses: {
@@ -406,14 +372,10 @@ export const permanentDeleteSubmission = async (submissionId: string) => {
       .where(eq(formPayments.submissionId, submissionId));
 
     // Delete related field responses
-    await tx
-      .delete(fieldResponses)
-      .where(eq(fieldResponses.submissionId, submissionId));
+    await tx.delete(fieldResponses).where(eq(fieldResponses.submissionId, submissionId));
 
     // Delete related store responses
-    await tx
-      .delete(storeResponses)
-      .where(eq(storeResponses.submissionId, submissionId));
+    await tx.delete(storeResponses).where(eq(storeResponses.submissionId, submissionId));
 
     // Delete the actual payment records
     if (formPaymentRecords.length > 0) {
@@ -422,14 +384,10 @@ export const permanentDeleteSubmission = async (submissionId: string) => {
     }
 
     // Delete related form payments
-    await tx
-      .delete(formPayments)
-      .where(eq(formPayments.submissionId, submissionId));
+    await tx.delete(formPayments).where(eq(formPayments.submissionId, submissionId));
 
     // Delete the submission
-    await tx
-      .delete(formSubmissions)
-      .where(eq(formSubmissions.id, submissionId));
+    await tx.delete(formSubmissions).where(eq(formSubmissions.id, submissionId));
   });
 };
 
