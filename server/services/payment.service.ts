@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { callStkPush } from "./mpesa.service";
 import { sendMail } from "./email.service";
 import { type PgTransaction } from "drizzle-orm/pg-core";
-import { permanentDeleteSubmission } from "./submissions.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,
   form: Form,
@@ -219,4 +218,61 @@ export const getPaymentReferenceById = async (paymentId: string) => {
     return null;
   }
   return payment;
+};
+
+export const retryFormPayment = async (form: Form, submission: any) => {
+  if (!submission.metadata?.paymentData?.phoneNumber) {
+    throw new Error("No payment phone number found");
+  }
+
+  const paymentData = {
+    phone: submission.metadata.paymentData.phoneNumber,
+    amount: submission.pricePaid,
+    accountNumber: form.title,
+    description: `Payment for ${form.title}`,
+  };
+
+  const result = await callStkPush(
+    +paymentData.phone,
+    paymentData.amount!,
+    paymentData.description,
+    paymentData.accountNumber,
+  );
+
+  if (!result) {
+    throw new Error("STK push failed");
+  }
+
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      userId: submission.submitterId,
+      merchantId: result.MerchantRequestID,
+      checkoutId: result.CheckoutRequestID,
+      phoneNumber: paymentData.phone,
+      amount: submission.pricePaid,
+    })
+    .returning();
+
+  await db.insert(formPayments).values({
+    formId: form.id,
+    paymentId: payment.id,
+    submissionId: submission.id,
+  });
+
+  await db
+    .update(formSubmissions)
+    .set({
+      status: "pending",
+      updatedAt: new Date(),
+    })
+    .where(eq(formSubmissions.id, submission.id));
+
+  return {
+    payment: {
+      checkoutId: result.CheckoutRequestID,
+      merchantId: result.MerchantRequestID,
+    },
+    message: "Payment initiated successfully",
+  };
 };

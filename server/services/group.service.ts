@@ -67,10 +67,10 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         memberRecords.push(memberRecord);
       }
       let payment;
-      if (form.groupAmountPayable && parseInt(form.groupAmountPayable) > 0) {
+      const formPrice = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+      if (formPrice > 0) {
         const leaderPayingMembers = group.members.filter((m) => m.paymentOption === "leader_pays");
-        const leaderPaymentAmount =
-          leaderPayingMembers.length * parseInt(form.groupAmountPayable || form.price || "0");
+        const leaderPaymentAmount = leaderPayingMembers.length * formPrice;
         payment = await processGroupPayment(
           {
             phone: group.phoneNumber,
@@ -95,23 +95,30 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         }
       }
 
-      memberRecords.forEach(async (m) => {
-        let url = process.env.NUXT_PUBLIC_URL;
-        let link = `Here is the ${group.groupName.trim()} group invite link: ${url}/forms/${form.slug}?token=${m?.inviteToken}`;
-        if (m?.inviteEmail) {
-          await sendMail({
-            to: m.inviteEmail,
-            subject: "GROUP INVITE",
-            text: link,
-          });
-        }
-        if (m?.invitePhone) {
-          await sendTextSmsTiara({
-            phone: m.invitePhone,
-            message: link,
-          });
-        }
-      });
+      if (!payment) {
+        memberRecords.forEach(async (m) => {
+          let url = process.env.NUXT_PUBLIC_URL;
+          let link = `Here is the ${group.groupName.trim()} group invite link: ${url}/forms/${form.slug}?token=${m?.inviteToken}`;
+          if (m?.inviteEmail) {
+            await sendMail({
+              to: m.inviteEmail,
+              subject: "GROUP INVITE",
+              text: link,
+            });
+          }
+          if (m?.invitePhone) {
+            await sendTextSmsTiara({
+              phone: m.invitePhone,
+              message: link,
+            });
+          }
+        });
+      } else {
+        await db
+          .update(formGroups)
+          .set({ paymentId: payment.id })
+          .where(eq(formGroups.id, formGroup.id));
+      }
 
       return {
         payment: payment ?? null,
@@ -166,20 +173,62 @@ export const processGroupPayment = async (
   },
   user: User,
 ) => {
-  try {
-    let result = await callStkPush(+data.phone, data.amount!, data.description, data.accountNumber);
-    const [payment] = await db
-      .insert(payments)
-      .values({
-        userId: user.id,
-        merchantId: result.MerchantRequestID,
-        checkoutId: result.CheckoutRequestID,
-        phoneNumber: data.phone,
-        amount: data.amount,
-      })
-      .returning();
-    return payment;
-  } catch (e: any) {
-    console.log(e);
+  const result = await callStkPush(+data.phone, data.amount!, data.description, data.accountNumber);
+  if (!result) {
+    throw new Error("STK push failed. Please try again.");
   }
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      userId: user.id,
+      merchantId: result.MerchantRequestID,
+      checkoutId: result.CheckoutRequestID,
+      phoneNumber: data.phone,
+      amount: data.amount,
+    })
+    .returning();
+  return payment;
+};
+
+export const retryGroupPayment = async (group: any, user: User) => {
+  const form = await getFormById(group.formId);
+  if (!form) {
+    throw new Error("Form not found");
+  }
+
+  const groupAmount = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+  const totalAmount = group.currentMemberCount * groupAmount;
+
+  const result = await callStkPush(
+    +group.phoneNumber,
+    totalAmount,
+    `Payment for group ${group.groupName}`,
+    `group ${group.groupName}`,
+  );
+
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      userId: user.id,
+      merchantId: result.MerchantRequestID,
+      checkoutId: result.CheckoutRequestID,
+      phoneNumber: group.phoneNumber,
+      amount: totalAmount,
+    })
+    .returning();
+
+  await db
+    .update(formGroups)
+    .set({
+      paymentId: payment.id,
+    })
+    .where(eq(formGroups.id, group.id));
+
+  return {
+    payment: {
+      checkoutId: result.CheckoutRequestID,
+      merchantId: result.MerchantRequestID,
+    },
+    group,
+  };
 };

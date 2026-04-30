@@ -12,6 +12,7 @@ import {
   UserCheck,
   ArrowLeft,
   Info,
+  RefreshCw,
 } from "lucide-vue-next";
 import { authHeaders } from "~/lib/auth-client";
 import { buttonVariants } from "~/components/ui/button";
@@ -22,8 +23,10 @@ definePageMeta({
   middleware: ["auth"],
 });
 
+const formId = route.params.id as string;
+
 // Fetch form data
-const { data: form } = await useFetch(`/api/forms/${route.params.id}`);
+const { data: form } = await useFetch(`/api/forms/${formId}`);
 
 // Form state
 const group = ref({
@@ -31,33 +34,25 @@ const group = ref({
   phoneNumber: "",
 });
 const members = ref([
-  { email: "", phone: "", paymentOption: "leader_pays" }, // First member
+  { email: "", phone: "" },
 ]);
 const isSubmitting = ref(false);
+const isRetryingPayment = ref(false);
 
-// Payment options
-const paymentOptions = [
-  { value: "leader_pays", label: "I will pay for this person" },
-  { value: "member_pays", label: "They will pay for themselves" },
-];
+// For storing created group info for retry
+const createdGroup = ref<any>(null);
 
 // Computed values
 const totalMembers = computed(() => members.value.length);
-const leaderPayingFor = computed(
-  () => members.value.filter((m) => m.paymentOption === "leader_pays").length,
-);
-const membersPayingThemselves = computed(
-  () => members.value.filter((m) => m.paymentOption === "member_pays").length,
-);
 const totalLeaderAmount = computed(() => {
   const basePrice = form.value?.price || 0;
   const groupPrice = form.value?.groupAmountPayable || basePrice;
-  return leaderPayingFor.value * parseInt(groupPrice.toString());
+  return totalMembers.value * parseInt(groupPrice.toString());
 });
 
 // Validation
 const isValidEmail = (email: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  /^[^\s@]+@[^\s@]+\.[A-Z]{2,}$/i.test(email);
 const isValidPhone = (phone: string) => /^(\+254|0)[17]\d{8}$/.test(phone);
 
 const isFormValid = computed(() => {
@@ -84,7 +79,6 @@ const addMember = () => {
   members.value.push({
     email: "",
     phone: "",
-    paymentOption: "leader_pays",
   });
 };
 
@@ -108,12 +102,12 @@ const handleSubmit = async () => {
       members: members.value.map((m) => ({
         email: m.email.trim(),
         phone: m.phone.trim(),
-        paymentOption: m.paymentOption,
+        paymentOption: "leader_pays",
       })),
       phoneNumber: group.value.phoneNumber,
     };
 
-    const response = await $fetch(`/api/forms/${route.params.id}/group`, {
+    const response = await $fetch(`/api/forms/${formId}/group`, {
       method: "POST",
       body: payload,
       headers: {
@@ -122,44 +116,72 @@ const handleSubmit = async () => {
       onResponse({ response }) {
         if (response.status == 401) {
           navigateTo(
-            `/auth/login?redirect=/forms/${route.params.id}/group/invite`,
+            `/auth/login?redirect=/forms/${formId}/group/invite`,
           );
         }
       },
     });
 
     if (response.success && response.data) {
+      createdGroup.value = response.data;
       toast.success("Group created successfully!");
 
-      // If leader needs to pay, handle payment
       if (totalLeaderAmount.value > 0) {
-        try {
-          if (response.data.payment?.checkoutId) {
+        if (response.data.payment?.checkoutId) {
+          try {
             const paymentResult = await checkPayment(
               response.data.payment?.checkoutId,
             );
             toast.success("Payment completed!");
-            await navigateTo(
-              `/forms/${route.params.id}/group/${response.data.group?.id}/dashboard`,
-            );
+          } catch (paymentError) {
+            toast.error(paymentError.message || "Payment failed");
           }
-        } catch (paymentError) {
-          toast.error(paymentError.message || "Payment failed");
-          await navigateTo(
-            `/forms/${route.params.id}/group/${response.data.group?.id}/dashboard`,
-          );
         }
-      } else {
-        // No payment required, go to group dashboard
-        await navigateTo(
-          `/forms/${route.params.id}/group/${response.data.group?.id}/dashboard`,
-        );
       }
+      
+      await navigateTo(
+        `/forms/${formId}/group/${response.data.group?.id}/dashboard`,
+      );
     }
-  } catch (error) {
-    toast.error(error.data?.message || "Failed to create group");
+  } catch (error: any) {
+    if (error.data?.message?.includes("Group Already Exists")) {
+      toast.error("A group with this name already exists. Please choose a different name.");
+    } else {
+      toast.error(error.data?.message || "Failed to create group");
+    }
   } finally {
     isSubmitting.value = false;
+  }
+};
+
+const retryPayment = async () => {
+  if (!createdGroup.value?.group?.id) {
+    toast.error("No group found to retry payment");
+    return;
+  }
+
+  isRetryingPayment.value = true;
+
+  try {
+    const response = await $fetch(`/api/forms/${formId}/group/${createdGroup.value.group.id}/retry-payment`, {
+      method: "POST",
+      headers: {
+        ...(await authHeaders()),
+      },
+    });
+
+    if (response.success && response.data?.payment?.checkoutId) {
+      try {
+        const paymentResult = await checkPayment(response.data.payment.checkoutId);
+        toast.success("Payment completed!");
+      } catch (paymentError) {
+        toast.error(paymentError.message || "Payment failed. You can try again.");
+      }
+    }
+  } catch (error: any) {
+    toast.error(error.data?.message || "Failed to retry payment");
+  } finally {
+    isRetryingPayment.value = false;
   }
 };
 
@@ -336,25 +358,6 @@ const checkPayment = async (
                       </div>
                     </div>
                   </div>
-
-                  <!-- Payment Option -->
-                  <div class="space-y-2">
-                    <Label>Payment Option</Label>
-                    <Select v-model="member.paymentOption">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem
-                          v-for="option in paymentOptions"
-                          :key="option.value"
-                          :value="option.value"
-                        >
-                          {{ option.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <!-- Add Member Button -->
@@ -388,24 +391,12 @@ const checkPayment = async (
                 <span class="font-medium">{{ totalMembers }}</span>
               </div>
 
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-muted-foreground"
-                  >You're paying for</span
-                >
-                <span class="font-medium">{{ leaderPayingFor }}</span>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-muted-foreground">Self-paying</span>
-                <span class="font-medium">{{ membersPayingThemselves }}</span>
-              </div>
-
               <Separator />
 
               <div
                 class="flex items-center justify-between text-lg font-semibold"
               >
-                <span>Your Payment</span>
+                <span>Total Payment</span>
                 <span>Kes {{ totalLeaderAmount.toLocaleString() }}</span>
               </div>
 
@@ -423,11 +414,8 @@ const checkPayment = async (
             <Info class="w-4 h-4" />
             <AlertTitle>Payment Information</AlertTitle>
             <AlertDescription class="space-y-2">
-              <p>You will pay upfront for members you selected to pay for.</p>
-              <p>
-                Members who pay themselves will receive payment links with their
-                invites.
-              </p>
+              <p>You will pay for all {{ totalMembers }} member{{ totalMembers > 1 ? 's' : '' }} upfront.</p>
+              <p>Invites will be sent after successful payment.</p>
             </AlertDescription>
           </Alert>
 

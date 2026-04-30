@@ -2,8 +2,10 @@ import { auth } from "~~/server/lib/auth";
 import {
   submitForm,
   checkExistingSubmission,
+  checkFailedPaymentSubmission,
 } from "~~/server/services/submissions.service";
 import { getFormById } from "~~/server/services/form.service";
+import { retryFormPayment } from "~~/server/services/payment.service";
 
 export default defineEventHandler(async (event) => {
   const formId = getRouterParam(event, "id");
@@ -35,11 +37,33 @@ export default defineEventHandler(async (event) => {
 
   if (!form.allowMultipleSubmissions && session?.user) {
     const existing = await checkExistingSubmission(form.id, session.user.id);
-    if (existing) {
+    if (existing && existing.status !== "failed_payment") {
       throw createError({
         statusCode: 400,
         message: "You have already submitted this form",
       });
+    }
+
+    if (existing?.status === "failed_payment") {
+      const body = await readBody(event);
+
+      try {
+        const retryResult = await retryFormPayment(form, existing);
+
+        return {
+          data: {
+            ...retryResult.payment,
+            submissionId: existing.id,
+          },
+          message: "Payment retry initiated. Please complete on your phone.",
+        };
+      } catch (e: any) {
+        console.error("Payment retry error:", e);
+        throw createError({
+          statusCode: 500,
+          message: e.message || "Failed to retry payment. Please try again.",
+        });
+      }
     }
   }
 

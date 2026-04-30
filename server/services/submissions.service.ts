@@ -32,6 +32,20 @@ export const checkExistingSubmission = async (formId: string, userId: string) =>
   return existingSubmission;
 };
 
+// Check if user has a failed payment submission for this form
+export const checkFailedPaymentSubmission = async (formId: string, userId: string) => {
+  const failedSubmission = await db.query.formSubmissions.findFirst({
+    where: and(
+      eq(formSubmissions.formId, formId),
+      eq(formSubmissions.submitterId, userId),
+      eq(formSubmissions.status, "failed_payment"),
+      isNull(formSubmissions.deletedAt),
+    ),
+  });
+
+  return failedSubmission;
+};
+
 // Get submission count for a form
 export const getSubmissionCount = async (formId: string): Promise<number> => {
   const result = await db
