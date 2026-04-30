@@ -42,25 +42,19 @@ const paymentSummary = computed(() => dashboard.value?.data?.paymentSummary);
 // Progress calculations
 const progressPercentage = computed(() => {
   if (!stats.value?.totalMembers) return 0;
-  return Math.round(
-    (stats.value.formsSubmitted / stats.value.totalMembers) * 100,
-  );
+  return Math.round((stats.value.formsSubmitted / stats.value.totalMembers) * 100);
 });
 
 const paymentProgress = computed(() => {
   if (!paymentSummary.value?.totalAmount) return 0;
-  const paidAmount =
-    paymentSummary.value.leaderPaidAmount +
-    paymentSummary.value.membersPaidAmount;
+  const paidAmount = paymentSummary.value.leaderPaidAmount + paymentSummary.value.membersPaidAmount;
   return Math.round((paidAmount / paymentSummary.value.totalAmount) * 100);
 });
 
 // Actions
 const copyInviteLink = async () => {
   try {
-    await navigator.clipboard.writeText(
-      dashboard.value?.data?.inviteLink || "",
-    );
+    await navigator.clipboard.writeText(dashboard.value?.data?.inviteLink || "");
     toast.success("Invite link copied to clipboard");
   } catch {
     toast.error("Failed to copy link");
@@ -69,16 +63,13 @@ const copyInviteLink = async () => {
 
 const resendInvite = async (memberId: string) => {
   try {
-    await $fetch(
-      `/api/forms/${route.params.id}/group/${route.params.groupId}/resend-invite`,
-      {
-        method: "POST",
-        body: { memberId },
-        headers: {
-          ...(await authHeaders()),
-        },
+    await $fetch(`/api/forms/${route.params.id}/group/${route.params.groupId}/resend-invite`, {
+      method: "POST",
+      body: { memberId },
+      headers: {
+        ...(await authHeaders()),
       },
-    );
+    });
     toast.success("Invitation resent successfully");
   } catch (error) {
     toast.error("Failed to resend invitation");
@@ -87,16 +78,13 @@ const resendInvite = async (memberId: string) => {
 
 const removeMember = async (memberId: string) => {
   try {
-    await $fetch(
-      `/api/forms/${route.params.id}/group/${route.params.groupId}/remove-member`,
-      {
-        method: "POST",
-        body: { memberId },
-        headers: {
-          ...(await authHeaders()),
-        },
+    await $fetch(`/api/forms/${route.params.id}/group/${route.params.groupId}/remove-member`, {
+      method: "POST",
+      body: { memberId },
+      headers: {
+        ...(await authHeaders()),
       },
-    );
+    });
     toast.success("Member removed successfully");
     refresh();
   } catch (error) {
@@ -135,9 +123,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
           {{ group?.groupName }}
         </h1>
         <p class="text-muted-foreground mt-1">
-          {{
-            isLeader ? "Manage your group registration" : "View group progress"
-          }}
+          {{ isLeader ? "Manage your group registration" : "View group progress" }}
         </p>
       </div>
 
@@ -150,9 +136,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
                 <Users class="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p class="text-sm font-medium text-muted-foreground">
-                  Total Members
-                </p>
+                <p class="text-sm font-medium text-muted-foreground">Total Members</p>
                 <p class="text-2xl font-bold">{{ stats?.totalMembers || 0 }}</p>
               </div>
             </div>
@@ -166,9 +150,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
                 <UserCheck class="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p class="text-sm font-medium text-muted-foreground">
-                  Forms Submitted
-                </p>
+                <p class="text-sm font-medium text-muted-foreground">Forms Submitted</p>
                 <p class="text-2xl font-bold">
                   {{ stats?.formsSubmitted || 0 }}
                 </p>
@@ -181,14 +163,10 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
           <CardContent class="p-6">
             <div class="flex items-center gap-3">
               <div class="p-2 bg-purple-50 dark:bg-purple-950/50 rounded-lg">
-                <CreditCard
-                  class="w-5 h-5 text-purple-600 dark:text-purple-400"
-                />
+                <CreditCard class="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p class="text-sm font-medium text-muted-foreground">
-                  Payments Complete
-                </p>
+                <p class="text-sm font-medium text-muted-foreground">Payments Complete</p>
                 <p class="text-2xl font-bold">
                   {{ stats?.paymentsCompleted || 0 }}
                 </p>
@@ -204,9 +182,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
                 <Mail class="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <p class="text-sm font-medium text-muted-foreground">
-                  Invites Accepted
-                </p>
+                <p class="text-sm font-medium text-muted-foreground">Invites Accepted</p>
                 <p class="text-2xl font-bold">
                   {{ stats?.invitesAccepted || 0 }}
                 </p>
@@ -281,11 +257,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
         </CardHeader>
         <CardContent>
           <div class="flex items-center gap-2">
-            <Input
-              :value="dashboard?.data?.inviteLink"
-              readonly
-              class="font-mono text-sm"
-            />
+            <Input :value="dashboard?.data?.inviteLink" readonly class="font-mono text-sm" />
             <Button @click="copyInviteLink" size="sm">
               <Copy class="w-4 h-4" />
             </Button>
@@ -312,18 +284,14 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
               class="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
             >
               <div class="flex items-center gap-4">
-                <div
-                  class="w-10 h-10 bg-muted rounded-full flex items-center justify-center"
-                >
+                <div class="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                   <Users class="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p class="font-medium">
                     {{ member.user?.name || member.email }}
                   </p>
-                  <div
-                    class="flex items-center gap-4 text-sm text-muted-foreground"
-                  >
+                  <div class="flex items-center gap-4 text-sm text-muted-foreground">
                     <div class="flex items-center gap-1">
                       <Mail class="w-3 h-3" />
                       {{ member.email }}
@@ -349,33 +317,19 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
                   >
                     {{ member.inviteAccepted ? "Joined" : "Invited" }}
                   </Badge>
-                  <Badge
-                    :class="getStatusColor(member.paymentStatus)"
-                    variant="secondary"
-                  >
-                    {{
-                      member.paymentStatus === "completed"
-                        ? "Paid"
-                        : "Pending Payment"
-                    }}
+                  <Badge :class="getStatusColor(member.paymentStatus)" variant="secondary">
+                    {{ member.paymentStatus === "completed" ? "Paid" : "Pending Payment" }}
                   </Badge>
                 </div>
 
                 <!-- Payment Option -->
                 <div class="text-sm text-muted-foreground">
-                  {{
-                    member.paymentOption === "leader_pays"
-                      ? "Leader paying"
-                      : "Self paying"
-                  }}
+                  {{ "Leader paying" }}
                 </div>
 
                 <!-- Form Status -->
                 <div class="flex items-center gap-1">
-                  <Check
-                    v-if="member.hasSubmitted"
-                    class="w-4 h-4 text-green-600"
-                  />
+                  <Check v-if="member.hasSubmitted" class="w-4 h-4 text-green-600" />
                   <Clock v-else class="w-4 h-4 text-yellow-600" />
                   <span class="text-sm">
                     {{ member.hasSubmitted ? "Submitted" : "Pending" }}
@@ -429,30 +383,21 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
         <CardContent>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="space-y-2">
-              <p class="text-sm font-medium text-muted-foreground">
-                Total Amount
-              </p>
+              <p class="text-sm font-medium text-muted-foreground">Total Amount</p>
               <p class="text-lg font-bold">
                 {{ formatCurrency(paymentSummary.totalAmount) }}
               </p>
             </div>
             <div class="space-y-2">
-              <p class="text-sm font-medium text-muted-foreground">
-                Amount Paid
-              </p>
+              <p class="text-sm font-medium text-muted-foreground">Amount Paid</p>
               <p class="text-lg font-bold text-green-600">
                 {{
-                  formatCurrency(
-                    paymentSummary.leaderPaidAmount +
-                      paymentSummary.membersPaidAmount,
-                  )
+                  formatCurrency(paymentSummary.leaderPaidAmount + paymentSummary.membersPaidAmount)
                 }}
               </p>
             </div>
             <div class="space-y-2">
-              <p class="text-sm font-medium text-muted-foreground">
-                Pending Amount
-              </p>
+              <p class="text-sm font-medium text-muted-foreground">Pending Amount</p>
               <p class="text-lg font-bold text-yellow-600">
                 {{ formatCurrency(paymentSummary.pendingAmount) }}
               </p>
