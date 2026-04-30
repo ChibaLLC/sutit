@@ -67,7 +67,9 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         memberRecords.push(memberRecord);
       }
       let payment;
-      const formPrice = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+      const formPrice = parseInt(
+        form.groupAmountPayable?.toString() || form.price?.toString() || "0",
+      );
       if (formPrice > 0) {
         const leaderPayingMembers = group.members.filter((m) => m.paymentOption === "leader_pays");
         const leaderPaymentAmount = leaderPayingMembers.length * formPrice;
@@ -196,7 +198,9 @@ export const retryGroupPayment = async (group: any, user: User) => {
     throw new Error("Form not found");
   }
 
-  const groupAmount = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+  const groupAmount = parseInt(
+    form.groupAmountPayable?.toString() || form.price?.toString() || "0",
+  );
   const totalAmount = group.currentMemberCount * groupAmount;
 
   const result = await callStkPush(

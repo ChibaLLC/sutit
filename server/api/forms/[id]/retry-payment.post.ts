@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Submission does not belong to this form" });
   }
 
-  if (submission.status !== "failed_payment") {
-    throw createError({ statusCode: 400, message: "Submission is not in failed payment status" });
+  if (submission.status !== "pending" && submission.status !== "abandoned") {
+    throw createError({ statusCode: 400, message: "Submission cannot retry payment in current state" });
   }
 
   if (session?.user && submission.submitterId !== session.user.id) {
