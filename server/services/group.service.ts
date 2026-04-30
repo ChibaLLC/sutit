@@ -154,16 +154,77 @@ export const getFormGroups = async (formId: string) => {
 };
 
 export const getGroupById = async (groupId: string) => {
-  return await db.query.formGroups.findFirst({
+  const group = await db.query.formGroups.findFirst({
     where: eq(formGroups.id, groupId),
     with: {
       form: true,
       leader: true,
       members: true,
-      memberPayments: true,
+      memberPayments: {
+        with: {
+          payment: true,
+        },
+      },
       payment: true,
     },
   });
+
+  if (!group) return null;
+
+  const members = group.members.map((member) => {
+    const memberPayment = group.memberPayments?.find((mp) => mp.memberId === member.id);
+    const actualPayment = memberPayment?.payment;
+
+    return {
+      id: member.id,
+      groupId: member.groupId,
+      userId: member.userId,
+      submissionId: member.submissionId,
+      paymentId: member.paymentId,
+      email: member.inviteEmail,
+      phone: member.invitePhone,
+      inviteAccepted: member.isInviteAccepted,
+      role: member.role,
+      joinedAt: member.joinedAt,
+      metadata: member.metadata,
+      paymentOption: member.metadata?.paymentOption || "self_pays",
+      paymentStatus: actualPayment?.status || memberPayment?.status || "pending",
+      paymentAmount: memberPayment?.amount || 0,
+      hasSubmitted: !!member.submissionId,
+    };
+  });
+
+  const stats = {
+    totalMembers: members.length,
+    formsSubmitted: members.filter((m) => m.hasSubmitted).length,
+    paymentsCompleted: members.filter((m) => m.paymentStatus === "completed").length,
+    invitesAccepted: members.filter((m) => m.inviteAccepted).length,
+  };
+
+  const totalAmount = members.reduce((sum, m) => {
+    const price = parseInt(group.form?.price?.toString() || "0");
+    return sum + (price || 0);
+  }, 0);
+
+  const leaderPaidAmount = members
+    .filter((m) => m.paymentOption === "leader_pays")
+    .reduce((sum, m) => sum + (group.form?.price ? parseInt(group.form.price.toString()) : 0), 0);
+
+  const membersPaidAmount = members
+    .filter((m) => m.paymentOption !== "leader_pays" && m.paymentStatus === "completed")
+    .reduce((sum, m) => sum + m.paymentAmount, 0);
+
+  return {
+    ...group,
+    members,
+    stats,
+    paymentSummary: {
+      totalAmount,
+      leaderPaidAmount,
+      membersPaidAmount,
+      pendingAmount: totalAmount - (leaderPaidAmount + membersPaidAmount),
+    },
+  };
 };
 
 export const processGroupPayment = async (
