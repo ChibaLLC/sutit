@@ -227,6 +227,50 @@ export const getGroupById = async (groupId: string) => {
   };
 };
 
+export const resendMemberInvite = async (groupId: string, memberId: string) => {
+  const group = await db.query.formGroups.findFirst({
+    where: eq(formGroups.id, groupId),
+    with: {
+      form: true,
+    },
+  });
+
+  if (!group) {
+    throw new Error("Group not found");
+  }
+
+  const member = await db.query.formGroupMembers.findFirst({
+    where: eq(formGroupMembers.id, memberId),
+  });
+
+  if (!member) {
+    throw new Error("Member not found");
+  }
+
+  if (member.isInviteAccepted) {
+    throw new Error("Member has already accepted the invite");
+  }
+
+  const inviteLink = `${process.env.BASE_URL || "http://localhost:3000"}/forms/${group.form?.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
+
+  if (member.inviteEmail) {
+    await sendMail({
+      to: member.inviteEmail,
+      subject: "GROUP INVITE - Resent",
+      text: `You have been invited to join the group "${group.groupName}". Here is your invite link: ${inviteLink}`,
+    });
+  }
+
+  if (member.invitePhone) {
+    await sendTextSmsTiara({
+      phone: member.invitePhone,
+      message: `You have been invited to join the group "${group.groupName}". Here is your invite link: ${inviteLink}`,
+    });
+  }
+
+  return { success: true };
+};
+
 export const processGroupPayment = async (
   data: {
     phone: string;
