@@ -67,10 +67,10 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         memberRecords.push(memberRecord);
       }
       let payment;
-      if (form.groupAmountPayable && parseInt(form.groupAmountPayable) > 0) {
+      const formPrice = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+      if (formPrice > 0) {
         const leaderPayingMembers = group.members.filter((m) => m.paymentOption === "leader_pays");
-        const leaderPaymentAmount =
-          leaderPayingMembers.length * parseInt(form.groupAmountPayable || form.price || "0");
+        const leaderPaymentAmount = leaderPayingMembers.length * formPrice;
         payment = await processGroupPayment(
           {
             phone: group.phoneNumber,
@@ -173,22 +173,21 @@ export const processGroupPayment = async (
   },
   user: User,
 ) => {
-  try {
-    let result = await callStkPush(+data.phone, data.amount!, data.description, data.accountNumber);
-    const [payment] = await db
-      .insert(payments)
-      .values({
-        userId: user.id,
-        merchantId: result.MerchantRequestID,
-        checkoutId: result.CheckoutRequestID,
-        phoneNumber: data.phone,
-        amount: data.amount,
-      })
-      .returning();
-    return payment;
-  } catch (e: any) {
-    console.log(e);
+  const result = await callStkPush(+data.phone, data.amount!, data.description, data.accountNumber);
+  if (!result) {
+    throw new Error("STK push failed. Please try again.");
   }
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      userId: user.id,
+      merchantId: result.MerchantRequestID,
+      checkoutId: result.CheckoutRequestID,
+      phoneNumber: data.phone,
+      amount: data.amount,
+    })
+    .returning();
+  return payment;
 };
 
 export const retryGroupPayment = async (group: any, user: User) => {
