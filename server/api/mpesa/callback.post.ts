@@ -2,10 +2,10 @@ import { completeFormPayment } from "~~/server/services/payment.service";
 import { StkCallbackHook } from "~~/shared/types";
 import {
   sendStopTatNotification,
-  permanentDeleteSubmission,
 } from "~~/server/services/submissions.service";
 import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
-import { formPayments } from "~~/server/db/schema";
+import { sendMail } from "~~/server/services/email.service";
+import { formPayments, formGroups, formGroupMembers } from "~~/server/db/schema";
 import db from "~~/server/db";
 import { eq } from "drizzle-orm";
 
@@ -23,7 +23,25 @@ export default defineEventHandler(async (event) => {
 
     const result = await completeFormPayment(hook);
 
-    // Only process successful payments
+    // Check if this is a group payment
+    const groupPayment = await db.query.formGroups.findFirst({
+      where: eq(formGroups.paymentId, result?.id ?? ""),
+      with: {
+        members: true,
+        form: true,
+      },
+    });
+
+    if (groupPayment) {
+      if (callback.ResultCode === 0) {
+        await handleSuccessfulGroupPayment(groupPayment, result);
+      } else {
+        await handleFailedGroupPayment(groupPayment);
+      }
+      return;
+    }
+
+    // Only process successful payments for form submissions
     if (callback.ResultCode === 0 && result) {
       await handleSuccessfulPayment(result);
     } else if (callback.ResultCode !== 0 && result) {
@@ -33,6 +51,66 @@ export default defineEventHandler(async (event) => {
     console.log("Unable To Process Payment", e.message);
   }
 });
+
+async function handleSuccessfulGroupPayment(group: any, payment: any) {
+  try {
+    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    for (const member of group.members) {
+      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+
+      if (member.invitePhone) {
+        const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+        await sendTextSmsTiara({
+          phone: member.invitePhone,
+          message: smsMessage,
+        });
+      }
+
+      if (member.inviteEmail) {
+        await sendMail({
+          to: member.inviteEmail,
+          subject: `You're invited to join "${group.groupName}"`,
+          text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+        });
+      }
+    }
+
+    console.log(`Sent invites for group ${group.id} after successful payment`);
+  } catch (error) {
+    console.error("Error sending group invites after payment:", error);
+  }
+}
+
+async function handleFailedGroupPayment(group: any) {
+  try {
+    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    for (const member of group.members) {
+      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+
+      if (member.invitePhone) {
+        const smsMessage = `You've been invited to join the "${group.groupName}" group. Complete your payment here: ${inviteUrl}`;
+        await sendTextSmsTiara({
+          phone: member.invitePhone,
+          message: smsMessage,
+        });
+      }
+
+      if (member.inviteEmail) {
+        await sendMail({
+          to: member.inviteEmail,
+          subject: `You're invited to join "${group.groupName}"`,
+          text: `You've been invited to join "${group.groupName}". Complete your payment here: ${inviteUrl}`,
+        });
+      }
+    }
+
+    console.log(`Sent invites for group ${group.id} after failed payment (for member self-payment)`);
+  } catch (error) {
+    console.error("Error sending group invites after failed payment:", error);
+  }
+}
 
 async function handleSuccessfulPayment(updatedPayment: any) {
   try {
@@ -135,8 +213,10 @@ async function handleFailedPayment(updatedPayment: any) {
       updatedPayment.resultCode,
     );
 
-    await permanentDeleteSubmission(formPayment.submissionId);
-    console.log("Deleted submission due to failed payment:", formPayment.submissionId);
+    console.log(
+      "Submission marked as failed_payment for retry. Submission ID:",
+      formPayment.submissionId,
+    );
   } catch (error) {
     console.error("Error handling failed payment:", error);
   }
