@@ -37,16 +37,15 @@ export default defineEventHandler(async (event) => {
 
   if (!form.allowMultipleSubmissions && session?.user) {
     const existing = await checkExistingSubmission(form.id, session.user.id);
-    if (existing && existing.status !== "failed_payment") {
+    if (existing && existing.status === "completed") {
       throw createError({
         statusCode: 400,
         message: "You have already submitted this form",
       });
     }
 
-    if (existing?.status === "failed_payment") {
+    if (existing && (existing.status === "pending" || existing.status === "abandoned")) {
       const body = await readBody(event);
-
       try {
         const retryResult = await retryFormPayment(form, existing);
 
@@ -69,7 +68,10 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
 
-  if (form.requireMerch && (!body.selectedProducts || Object.keys(body.selectedProducts).length === 0)) {
+  if (
+    form.requireMerch &&
+    (!body.selectedProducts || Object.keys(body.selectedProducts).length === 0)
+  ) {
     throw createError({
       statusCode: 400,
       message: "This form requires you to select at least one product",

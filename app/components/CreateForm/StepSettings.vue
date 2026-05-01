@@ -24,8 +24,18 @@ const emit = defineEmits<{
 const localLimit = ref(props.submissionLimit ?? "");
 const localMessage = ref(props.afterSubmissionMessage);
 
-watch(() => props.submissionLimit, (v) => { localLimit.value = v ?? ""; });
-watch(() => props.afterSubmissionMessage, (v) => { localMessage.value = v; });
+watch(
+  () => props.submissionLimit,
+  (v) => {
+    localLimit.value = v ?? "";
+  },
+);
+watch(
+  () => props.afterSubmissionMessage,
+  (v) => {
+    localMessage.value = v;
+  },
+);
 
 const flushLimit = () => {
   const val = parseInt(String(localLimit.value));
@@ -64,10 +74,7 @@ const flushMessage = () => {
               <p class="text-sm font-medium">Public form</p>
               <p class="text-xs text-muted-foreground">Anyone with the link can access</p>
             </div>
-            <Switch
-              :checked="isPublic"
-              @update:checked="emit('update:isPublic', $event)"
-            />
+            <Switch :modelValue="isPublic" @update:modelValue="emit('update:isPublic', $event)" />
           </div>
           <div class="flex items-center justify-between p-3 rounded-lg border bg-card/50">
             <div>
@@ -75,8 +82,8 @@ const flushMessage = () => {
               <p class="text-xs text-muted-foreground">Users must sign in to submit</p>
             </div>
             <Switch
-              :checked="requiresLogin"
-              @update:checked="emit('update:requiresLogin', $event)"
+              :modelValue="requiresLogin"
+              @update:modelValue="emit('update:requiresLogin', $event)"
             />
           </div>
         </CardContent>
@@ -99,8 +106,8 @@ const flushMessage = () => {
               <p class="text-xs text-muted-foreground">Allow users to submit more than once</p>
             </div>
             <Switch
-              :checked="allowMultipleSubmissions"
-              @update:checked="emit('update:allowMultipleSubmissions', $event)"
+              :modelValue="allowMultipleSubmissions"
+              @update:modelValue="emit('update:allowMultipleSubmissions', $event)"
             />
           </div>
 
@@ -146,10 +153,7 @@ const flushMessage = () => {
               <p class="text-sm font-medium">Allow group submissions</p>
               <p class="text-xs text-muted-foreground">Users can register as a group</p>
             </div>
-            <Switch
-              :checked="allowGroups"
-              @update:checked="emit('update:allowGroups', $event)"
-            />
+            <Switch :modelValue="allowGroups" @update:modelValue="emit('update:allowGroups', $event)" />
           </div>
         </CardContent>
       </Card>

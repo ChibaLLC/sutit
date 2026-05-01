@@ -106,7 +106,6 @@ const getStatusColor = (status: string) => {
 };
 
 const formatCurrency = (amount: number) => `Kes ${amount.toLocaleString()}`;
-const formatDate = (date: string) => new Date(date).toLocaleDateString();
 </script>
 
 <template>
@@ -257,7 +256,8 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString();
         </CardHeader>
         <CardContent>
           <div class="flex items-center gap-2">
-            <Input :value="dashboard?.data?.inviteLink" readonly class="font-mono text-sm" />
+            <Input :modelValue="dashboard?.data?.inviteLink" readonly class="font-mono text-sm" />
+
             <Button @click="copyInviteLink" size="sm">
               <Copy class="w-4 h-4" />
             </Button>

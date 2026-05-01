@@ -67,7 +67,9 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         memberRecords.push(memberRecord);
       }
       let payment;
-      const formPrice = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+      const formPrice = parseInt(
+        form.groupAmountPayable?.toString() || form.price?.toString() || "0",
+      );
       if (formPrice > 0) {
         const leaderPayingMembers = group.members.filter((m) => m.paymentOption === "leader_pays");
         const leaderPaymentAmount = leaderPayingMembers.length * formPrice;
@@ -152,16 +154,121 @@ export const getFormGroups = async (formId: string) => {
 };
 
 export const getGroupById = async (groupId: string) => {
-  return await db.query.formGroups.findFirst({
+  const group = await db.query.formGroups.findFirst({
     where: eq(formGroups.id, groupId),
     with: {
       form: true,
       leader: true,
       members: true,
-      memberPayments: true,
+      memberPayments: {
+        with: {
+          payment: true,
+        },
+      },
       payment: true,
     },
   });
+
+  if (!group) return null;
+
+  const members = group.members.map((member) => {
+    const memberPayment = group.memberPayments?.find((mp) => mp.memberId === member.id);
+    const actualPayment = memberPayment?.payment;
+
+    return {
+      id: member.id,
+      groupId: member.groupId,
+      userId: member.userId,
+      submissionId: member.submissionId,
+      paymentId: member.paymentId,
+      email: member.inviteEmail,
+      phone: member.invitePhone,
+      inviteAccepted: member.isInviteAccepted,
+      role: member.role,
+      joinedAt: member.joinedAt,
+      metadata: member.metadata,
+      paymentOption: member.metadata?.paymentOption || "self_pays",
+      paymentStatus: actualPayment?.status || memberPayment?.status || "pending",
+      paymentAmount: memberPayment?.amount || 0,
+      hasSubmitted: !!member.submissionId,
+    };
+  });
+
+  const stats = {
+    totalMembers: members.length,
+    formsSubmitted: members.filter((m) => m.hasSubmitted).length,
+    paymentsCompleted: members.filter((m) => m.paymentStatus === "completed").length,
+    invitesAccepted: members.filter((m) => m.inviteAccepted).length,
+  };
+
+  const totalAmount = members.reduce((sum, m) => {
+    const price = parseInt(group.form?.price?.toString() || "0");
+    return sum + (price || 0);
+  }, 0);
+
+  const leaderPaidAmount = members
+    .filter((m) => m.paymentOption === "leader_pays")
+    .reduce((sum, m) => sum + (group.form?.price ? parseInt(group.form.price.toString()) : 0), 0);
+
+  const membersPaidAmount = members
+    .filter((m) => m.paymentOption !== "leader_pays" && m.paymentStatus === "completed")
+    .reduce((sum, m) => sum + m.paymentAmount, 0);
+
+  return {
+    ...group,
+    members,
+    stats,
+    paymentSummary: {
+      totalAmount,
+      leaderPaidAmount,
+      membersPaidAmount,
+      pendingAmount: totalAmount - (leaderPaidAmount + membersPaidAmount),
+    },
+  };
+};
+
+export const resendMemberInvite = async (groupId: string, memberId: string) => {
+  const group = await db.query.formGroups.findFirst({
+    where: eq(formGroups.id, groupId),
+    with: {
+      form: true,
+    },
+  });
+
+  if (!group) {
+    throw new Error("Group not found");
+  }
+
+  const member = await db.query.formGroupMembers.findFirst({
+    where: eq(formGroupMembers.id, memberId),
+  });
+
+  if (!member) {
+    throw new Error("Member not found");
+  }
+
+  if (member.isInviteAccepted) {
+    throw new Error("Member has already accepted the invite");
+  }
+
+  const inviteLink = `${process.env.BASE_URL || "http://localhost:3000"}/forms/${group.form?.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
+
+  if (member.inviteEmail) {
+    await sendMail({
+      to: member.inviteEmail,
+      subject: "GROUP INVITE - Resent",
+      text: `You have been invited to join the group "${group.groupName}". Here is your invite link: ${inviteLink}`,
+    });
+  }
+
+  if (member.invitePhone) {
+    await sendTextSmsTiara({
+      phone: member.invitePhone,
+      message: `You have been invited to join the group "${group.groupName}". Here is your invite link: ${inviteLink}`,
+    });
+  }
+
+  return { success: true };
 };
 
 export const processGroupPayment = async (
@@ -196,7 +303,9 @@ export const retryGroupPayment = async (group: any, user: User) => {
     throw new Error("Form not found");
   }
 
-  const groupAmount = parseInt(form.groupAmountPayable?.toString() || form.price?.toString() || "0");
+  const groupAmount = parseInt(
+    form.groupAmountPayable?.toString() || form.price?.toString() || "0",
+  );
   const totalAmount = group.currentMemberCount * groupAmount;
 
   const result = await callStkPush(

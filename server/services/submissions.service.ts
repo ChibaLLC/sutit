@@ -27,6 +27,13 @@ export const checkExistingSubmission = async (formId: string, userId: string) =>
       eq(formSubmissions.submitterId, userId),
       isNull(formSubmissions.deletedAt),
     ),
+    with: {
+      payments: {
+        with: {
+          payment: true,
+        },
+      },
+    },
   });
 
   return existingSubmission;

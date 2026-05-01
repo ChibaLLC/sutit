@@ -562,18 +562,18 @@ const colorClasses: Record<string, string> = {
                       <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                           <Label class="text-xs">Label</Label>
-                          <Input v-model="editLabel" class="h-9 text-sm" />
+                          <Input v-model="editLabel" class="h-9 text-sm" @blur="flushFieldEdit(field.id)" />
                         </div>
                         <div class="space-y-1.5">
                           <Label class="text-xs">Placeholder</Label>
-                          <Input v-model="editPlaceholder" class="h-9 text-sm" />
+                          <Input v-model="editPlaceholder" class="h-9 text-sm" @blur="flushFieldEdit(field.id)" />
                         </div>
                       </div>
 
                       <div class="flex items-center gap-2">
                         <Switch
-                          :checked="field.required"
-                          @update:checked="
+                          :modelValue="field.required"
+                          @update:modelValue="
                             (val: boolean) => updateField(field.id, { required: val })
                           "
                         />
