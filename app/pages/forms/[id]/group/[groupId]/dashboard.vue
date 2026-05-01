@@ -257,6 +257,7 @@ const formatCurrency = (amount: number) => `Kes ${amount.toLocaleString()}`;
         <CardContent>
           <div class="flex items-center gap-2">
             <Input :modelValue="dashboard?.data?.inviteLink" readonly class="font-mono text-sm" />
+
             <Button @click="copyInviteLink" size="sm">
               <Copy class="w-4 h-4" />
             </Button>
@@ -323,7 +324,7 @@ const formatCurrency = (amount: number) => `Kes ${amount.toLocaleString()}`;
 
                 <!-- Payment Option -->
                 <div class="text-sm text-muted-foreground">
-                  {{ member.paymentOption === "leader_pays" ? "Leader paying" : "Self paying" }}
+                  {{ "Leader paying" }}
                 </div>
 
                 <!-- Form Status -->
