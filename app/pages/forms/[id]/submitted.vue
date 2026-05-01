@@ -38,20 +38,53 @@
   const submissionId = computed(() => route.query.submissionId as string);
   const checkoutId = computed(() => route.query.checkoutId as string);
 
-  const { data: paymentData, refresh: refreshPayment } = await useFetch("/api/payments/" + checkoutId.value, {
+  const { data: submissionData } = await useFetch(`/api/submissions/${submissionId.value}`, {
+    key: `submission-${submissionId.value}`,
+    server: false,
+  });
+
+  const previousPhoneNumber = computed(() => {
+    if (submissionData.value?.data?.metadata?.paymentData?.phoneNumber) {
+      return submissionData.value.data.metadata.paymentData.phoneNumber;
+    }
+    return "";
+  });
+
+  const hasTat = computed(() => form.value?.calculateTat === true);
+
+  const { data: paymentData, refresh: refreshPayment, status: paymentStatus } = await useFetch("/api/payments/" + checkoutId.value, {
     query: { checkoutId: checkoutId.value },
     key: `payment-${checkoutId.value}`,
     server: false,
   });
 
-  const paymentStatus = computed(() => paymentData.value?.data?.status as string | undefined);
-  
-  const isCompleted = computed(() => paymentStatus.value === "completed");
-  const isPending = computed(() => paymentStatus.value === "pending");
-  const isFailed = computed(() => paymentStatus.value === "failed");
-  
+  const paymentStatusValue = computed(() => paymentData.value?.data?.status as string | undefined);
+
+  const isCompleted = computed(() => paymentStatusValue.value === "completed");
+  const isPending = computed(() => paymentStatusValue.value === "pending");
+  const isFailed = computed(() => paymentStatusValue.value === "failed");
+  const isChecking = computed(() => paymentStatus.value === "pending");
+
   const showRetryDialog = ref(false);
   const retryingPayment = ref(false);
+  const retryPhoneNumber = ref("");
+
+  const checkPayment = async (checkoutId: string, maxRetries = 10, interval = 3000) => {
+    let attempts = 0;
+    while (attempts < maxRetries) {
+      try {
+        const res = await $fetch(`/api/payments/${checkoutId}`);
+        if (res.success && res.data && (res.data.status == "completed" || res.data.status == "failed")) {
+          return res;
+        }
+      } catch (err) {
+        console.error("Check payment error:", err);
+      }
+      attempts++;
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+    return null;
+  };
 
   const retryPayment = async () => {
     if (!submissionId.value) return;
@@ -59,10 +92,25 @@
     try {
       const result = await $fetch(`/api/forms/${route.params.id}/retry-payment`, {
         method: "post",
-        body: { submissionId: submissionId.value },
+        body: { 
+          submissionId: submissionId.value,
+          phoneNumber: retryPhoneNumber.value || undefined
+        },
       });
       toast.success(result.message || "Payment initiated. Please complete on your phone.");
       showRetryDialog.value = false;
+      
+      try {
+        const checkResult = await checkPayment(result.data.payment.checkoutId, 15);
+        if (checkResult?.data?.status === "completed") {
+          toast.success("Payment completed!");
+        } else if (checkResult?.data?.status === "failed") {
+          toast.error("Payment failed. Please try again.");
+        }
+      } catch (e) {
+        // Let the user check manually
+      }
+      
       await refreshPayment();
     } catch (e: any) {
       toast.error(e.data?.message || "Failed to retry payment");
@@ -71,8 +119,13 @@
     }
   };
 
+  const openRetryDialog = () => {
+    retryPhoneNumber.value = previousPhoneNumber.value;
+    showRetryDialog.value = true;
+  };
+
   const stopTatUrl = computed(() => {
-    if (!submissionId.value) return null;
+    if (!submissionId.value || !hasTat.value || !isCompleted.value) return null;
     return `${window.location.origin}/submission/${submissionId.value}/stop-tat`;
   });
 
@@ -165,10 +218,10 @@
               ></div>
               <div v-else-if="isFailed" class="h-3 w-3 rounded-full bg-red-500"></div>
               <div v-else class="h-3 w-3 rounded-full bg-gray-500"></div>
-              <span class="font-medium capitalize">{{ paymentStatus || "loading..." }}</span>
+              <span class="font-medium capitalize">{{ paymentStatusValue || "loading..." }}</span>
             </div>
-            <Button variant="outline" size="sm" @click="refreshPayment">
-              <RefreshCw class="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" :disabled="isChecking" @click="refreshPayment">
+              <RefreshCw :class="{ 'animate-spin': isChecking }" class="mr-2 h-4 w-4" />
               Refresh
             </Button>
           </div>
@@ -181,7 +234,7 @@
           <div v-if="isFailed" class="pt-2">
             <Dialog v-model:open="showRetryDialog">
               <DialogTrigger as-child>
-                <Button class="w-full">
+                <Button class="w-full" @click="openRetryDialog">
                   <RefreshCw class="mr-2 h-4 w-4" />
                   Retry Payment
                 </Button>
@@ -190,10 +243,23 @@
                 <DialogHeader>
                   <DialogTitle>Retry Payment</DialogTitle>
                   <DialogDescription>
-                    A new STK push request will be sent to your phone. Please complete it to
-                    finalize your submission.
+                    Enter your phone number to receive the STK push. A new payment request will be sent to your phone.
                   </DialogDescription>
                 </DialogHeader>
+                <div class="space-y-4 py-4">
+                  <div class="space-y-2">
+                    <Label for="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      v-model="retryPhoneNumber"
+                      placeholder="e.g. 712345678"
+                      type="tel"
+                    />
+                    <p v-if="previousPhoneNumber" class="text-muted-foreground text-xs">
+                      Previous: {{ previousPhoneNumber }}
+                    </p>
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button variant="outline" @click="showRetryDialog = false">Cancel</Button>
                   <Button :disabled="retryingPayment" @click="retryPayment">
@@ -207,8 +273,8 @@
         </CardContent>
       </Card>
 
-      <!-- Submission Details Card -->
-      <Card>
+      <!-- Submission Details Card (only show for completed payments) -->
+      <Card v-if="isCompleted">
         <CardHeader>
           <CardTitle class="text-xl">Submission Details</CardTitle>
         </CardHeader>
@@ -229,7 +295,7 @@
         </CardContent>
       </Card>
 
-      <!-- Stop TAT Card -->
+      <!-- Stop TAT Card (only show for forms with TAT enabled and completed payments) -->
       <Card v-if="stopTatUrl">
         <CardHeader>
           <CardTitle class="flex items-center gap-2">

@@ -216,13 +216,15 @@ export const getPaymentReferenceById = async (paymentId: string) => {
   return payment;
 };
 
-export const retryFormPayment = async (form: Form, submission: any) => {
-  if (!submission.metadata?.paymentData?.phoneNumber) {
+export const retryFormPayment = async (form: Form, submission: any, phoneNumber?: string) => {
+  const paymentPhone = phoneNumber || submission.metadata?.paymentData?.phoneNumber;
+  
+  if (!paymentPhone) {
     throw new Error("No payment phone number found");
   }
 
   const paymentData = {
-    phone: submission.metadata.paymentData.phoneNumber,
+    phone: paymentPhone,
     amount: submission.pricePaid,
     accountNumber: form.title,
     description: `Payment for ${form.title}`,
@@ -256,12 +258,24 @@ export const retryFormPayment = async (form: Form, submission: any) => {
     submissionId: submission.id,
   });
 
+  const updateData: any = {
+    status: "pending",
+    updatedAt: new Date(),
+  };
+  
+  if (phoneNumber && phoneNumber !== submission.metadata?.paymentData?.phoneNumber) {
+    updateData.metadata = {
+      ...submission.metadata,
+      paymentData: {
+        ...submission.metadata?.paymentData,
+        phoneNumber: phoneNumber,
+      },
+    };
+  }
+
   await db
     .update(formSubmissions)
-    .set({
-      status: "pending",
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(formSubmissions.id, submission.id));
 
   return {

@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   const session = await auth.api.getSession({ headers: event.headers });
   const body = await readBody(event);
-  const { submissionId } = body;
+  const { submissionId, phoneNumber } = body;
 
   if (!submissionId) {
     throw createError({ statusCode: 400, message: "Submission ID is required" });
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const result = await retryFormPayment(form, submission);
+    const result = await retryFormPayment(form, submission, phoneNumber);
 
     return {
       data: {
