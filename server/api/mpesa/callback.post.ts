@@ -209,26 +209,6 @@ async function handleSuccessfulPayment(updatedPayment: any) {
 
 async function handleFailedPayment(updatedPayment: any) {
   try {
-    const formPayment = await db.query.formPayments.findFirst({
-      where: eq(formPayments.paymentId, updatedPayment.id),
-    });
-
-    if (!formPayment) {
-      console.log("No form payment found for failed payment:", updatedPayment.id);
-      return;
-    }
-
-    console.log(
-      "Payment failed for submission:",
-      formPayment.submissionId,
-      "Result code:",
-      updatedPayment.resultCode,
-    );
-
-    console.log(
-      "Submission marked as failed_payment for retry. Submission ID:",
-      formPayment.submissionId,
-    );
   } catch (error) {
     console.error("Error handling failed payment:", error);
   }
