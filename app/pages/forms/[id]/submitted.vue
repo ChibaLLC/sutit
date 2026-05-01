@@ -59,6 +59,10 @@
   });
 
   const paymentStatusValue = computed(() => paymentData.value?.data?.status as string | undefined);
+  const paymentAmount = computed(() => paymentData.value?.data?.amount as number | undefined);
+  const receiptNumber = computed(() => paymentData.value?.data?.receiptNumber as string | undefined);
+  const paidAt = computed(() => paymentData.value?.data?.paidAt as string | undefined);
+  const paymentPhone = computed(() => paymentData.value?.data?.phoneNumber as string | undefined);
 
   const isCompleted = computed(() => paymentStatusValue.value === "completed");
   const isPending = computed(() => paymentStatusValue.value === "pending");
@@ -269,6 +273,46 @@
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Payment Details Card (only show for completed payments) -->
+      <Card v-if="isCompleted">
+        <CardHeader>
+          <CardTitle class="flex items-center gap-2">
+            <CheckCircle class="h-5 w-5 text-green-600" />
+            Payment Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-sm font-medium">Amount Paid</Label>
+              <p class="bg-muted rounded-md px-3 py-2 text-sm font-semibold">
+                Kes {{ paymentAmount?.toLocaleString() }}
+              </p>
+            </div>
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-sm font-medium">Status</Label>
+              <p class="bg-muted rounded-md px-3 py-2 text-sm font-semibold capitalize text-green-600">
+                {{ paymentStatusValue }}
+              </p>
+            </div>
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-sm font-medium">Phone Number</Label>
+              <p class="bg-muted rounded-md px-3 py-2 text-sm">{{ paymentPhone }}</p>
+            </div>
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-sm font-medium">Receipt Number</Label>
+              <p class="bg-muted rounded-md px-3 py-2 text-sm font-mono">{{ receiptNumber }}</p>
+            </div>
+            <div v-if="paidAt" class="col-span-2 space-y-1">
+              <Label class="text-muted-foreground text-sm font-medium">Paid At</Label>
+              <p class="bg-muted rounded-md px-3 py-2 text-sm">
+                {{ new Date(paidAt).toLocaleString() }}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
