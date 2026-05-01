@@ -1,146 +1,140 @@
 import type { User } from "better-auth";
 import { toast } from "vue-sonner";
+
 import { authClient } from "~/lib/auth-client";
 
 export const useAuthStore = defineStore(
-	"auth",
-	() => {
-		const user = ref<User | null>(null);
-		const token = ref<string | null>(null);
-		const loading = ref({
-			signIn: false,
-			signUp: false,
-		});
-		const isAuthenticated = computed(() => !!(user.value && token.value));
-		const router = useRouter();
+  "auth",
+  () => {
+    const user = ref<User | null>(null);
+    const token = ref<string | null>(null);
+    const loading = ref({
+      signIn: false,
+      signUp: false,
+    });
+    const isAuthenticated = computed(() => !!(user.value && token.value));
+    const router = useRouter();
 
-		const signInWithEmail = async (form: {
-			email: string;
-			password: string;
-		}) => {
-			// loading.value.signIn = true;
-			try {
-				const { data, error } = await authClient.signIn.email(form);
-				if (error && error.message) {
-					toast.error(error.message);
-					return;
-				}
-				if (data) {
-					user.value = data.user;
-					token.value = data.token;
-					const route = useRoute();
+    const signInWithEmail = async (form: { email: string; password: string }) => {
+      // loading.value.signIn = true;
+      try {
+        const { data, error } = await authClient.signIn.email(form);
+        if (error && error.message) {
+          toast.error(error.message);
+          return;
+        }
+        if (data) {
+          user.value = data.user;
+          token.value = data.token;
+          const route = useRoute();
 
-					let redirect = route.query.redirect;
-					await router.push(redirect ? `${redirect}` : "/dashboard");
+          let redirect = route.query.redirect;
+          await router.push(redirect ? `${redirect}` : "/dashboard");
 
-					toast.success("Login successfully");
-				}
-			} catch (error) {
-				console.error("Email sign-in failed:", error);
-			} finally {
-				// loading.value.signIn = false;
-			}
-		};
+          toast.success("Login successfully");
+        }
+      } catch (error) {
+        console.error("Email sign-in failed:", error);
+      } finally {
+        // loading.value.signIn = false;
+      }
+    };
 
-		const signUpWithEmail = async (form: {
-			name: string;
-			email: string;
-			password: string;
-		}) => {
-			loading.value.signUp = true;
-			try {
-				const { error, data } = await authClient.signUp.email(form, {
-					onSuccess(context) {
-						toast.success("User created successfully");
-					},
-					onError(context) {
-						toast.error(context.error.message);
-					},
-				});
-				if (data) {
-					user.value = data.user;
-					token.value = data.token;
-					await navigateTo("/dashboard");
-				}
-			} catch (error) {
-				console.log("Email sign-in failed:", error);
-			} finally {
-				loading.value.signUp = false;
-			}
-		};
-		const logout = async () => {
-			try {
-				await authClient
-					.signOut({
-						fetchOptions: {
-							onSuccess(context) {
-								navigateTo("/auth/login");
-							},
-						},
-					})
-					.finally(() => {
-						user.value = null;
-						token.value = null;
-					});
-			} catch (e) {}
-		};
-		const setAuthUser = (usr: User, tk: string) => {
-			user.value = usr;
-			token.value = tk;
-		};
+    const signUpWithEmail = async (form: { name: string; email: string; password: string }) => {
+      loading.value.signUp = true;
+      try {
+        const { error, data } = await authClient.signUp.email(form, {
+          onSuccess(context) {
+            toast.success("User created successfully");
+          },
+          onError(context) {
+            toast.error(context.error.message);
+          },
+        });
+        if (data) {
+          user.value = data.user;
+          token.value = data.token;
+          await navigateTo("/dashboard");
+        }
+      } catch (error) {
+        console.log("Email sign-in failed:", error);
+      } finally {
+        loading.value.signUp = false;
+      }
+    };
+    const logout = async () => {
+      try {
+        await authClient
+          .signOut({
+            fetchOptions: {
+              onSuccess(context) {
+                navigateTo("/auth/login");
+              },
+            },
+          })
+          .finally(() => {
+            user.value = null;
+            token.value = null;
+          });
+      } catch (e) {}
+    };
+    const setAuthUser = (usr: User, tk: string) => {
+      user.value = usr;
+      token.value = tk;
+    };
 
-		const signinWithGoogle = async () => {
-			try {
-				const { data, error } = await authClient.signIn.social({
-					provider: "google",
-					callbackURL: "/dashboard",
-				});
-				
-				if (error) {
-					throw error;
-				}
-				
-				// The redirect is handled automatically by Better Auth
-			} catch (error: any) {
-				console.error("Google sign-in failed:", error);
-				toast.error(error.message || "Failed to sign in with Google");
-			}
-		};
+    const signinWithGoogle = async () => {
+      try {
+        const { data, error } = await authClient.signIn.social({
+          provider: "google",
+          callbackURL: "/dashboard",
+        });
 
-		const forgotPassword = async (form: { email: string }) => {
-			const { data, error } = await authClient.forgotPassword(form);
-			if (error && error.message) {
-				toast.error(error.message);
-				return { error };
-			}
-			return { data };
-		};
+        if (error) {
+          throw error;
+        }
 
-		const resetPassword = async (form: { password: string; token: string }) => {
-			const { data, error } = await authClient.resetPassword(form);
-			if (error && error.message) {
-				toast.error(error.message);
-				return { error };
-			}
-			return { data };
-		};
+        // The redirect is handled automatically by Better Auth
+      } catch (error: any) {
+        console.error("Google sign-in failed:", error);
+        toast.error(error.message || "Failed to sign in with Google");
+      }
+    };
 
-		return {
-			user,
-			token,
-			loading,
-			isAuthenticated,
+    const forgotPassword = async (form: { email: string }) => {
+      const { data, error } = await authClient.forgotPassword(form);
+      if (error && error.message) {
+        toast.error(error.message);
+        return { error };
+      }
+      return { data };
+    };
 
-			signUpWithEmail,
-			signInWithEmail,
-			logout,
-			setAuthUser,
-			signinWithGoogle,
-			forgotPassword,
-			resetPassword,
-		};
-	},
-	{
-		persist: true,
-	},
+    const resetPassword = async (form: { password: string; token: string }) => {
+      const { data, error } = await authClient.resetPassword(form);
+      if (error && error.message) {
+        toast.error(error.message);
+        return { error };
+      }
+      return { data };
+    };
+
+    return {
+      user,
+      token,
+      loading,
+      isAuthenticated,
+
+      signUpWithEmail,
+      signInWithEmail,
+      logout,
+      setAuthUser,
+      signinWithGoogle,
+      forgotPassword,
+      resetPassword,
+    };
+  },
+  {
+    persist: true,
+  },
 );

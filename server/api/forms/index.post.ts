@@ -93,8 +93,7 @@ export default defineEventHandler(async (event) => {
         data: {
           type: "slug_conflict",
           field: "slug",
-          suggestion:
-            "Try adding numbers or modifying the slug to make it unique.",
+          suggestion: "Try adding numbers or modifying the slug to make it unique.",
         },
       });
     }
@@ -115,12 +114,10 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 500,
       statusCode: 500,
-      message:
-        e?.message || "An unexpected error occurred while creating the form",
+      message: e?.message || "An unexpected error occurred while creating the form",
       data: {
         type: "server_error",
-        details:
-          "Please try again later or contact support if the issue persists.",
+        details: "Please try again later or contact support if the issue persists.",
       },
     });
   }

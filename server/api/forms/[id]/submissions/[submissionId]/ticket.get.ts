@@ -31,11 +31,7 @@ export default defineEventHandler(async (event) => {
 
   // Set headers for download
   setHeader(event, "Content-Type", "application/json");
-  setHeader(
-    event,
-    "Content-Disposition",
-    `attachment; filename="ticket-${submission.id}.json"`,
-  );
+  setHeader(event, "Content-Disposition", `attachment; filename="ticket-${submission.id}.json"`);
 
   return ticket;
 });

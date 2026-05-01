@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { FormSchema } from "~~/shared/types";
+  import type { FormSchema } from "~~/shared/types";
 
-const props = defineProps<{
-  isOpen: boolean;
-  form: FormSchema;
-}>();
-const emits = defineEmits(["close"]);
+  const props = defineProps<{
+    isOpen: boolean;
+    form: FormSchema;
+  }>();
+  const emits = defineEmits(["close"]);
 </script>
 <template>
   <Dialog :open="isOpen" @update:open="$emit('close')">

@@ -1,5 +1,9 @@
 import { randomBytes, randomInt } from "crypto";
-import { getFormById } from "./form.service";
+
+import { User } from "better-auth";
+import { and, eq } from "drizzle-orm";
+import { CreateGroupRequest } from "~~/shared/types";
+
 import db from "../db";
 import {
   formGroupMemberPayments,
@@ -8,12 +12,10 @@ import {
   forms,
   payments,
 } from "../db/schema";
-import { and, eq } from "drizzle-orm";
-import { CreateGroupRequest } from "~~/shared/types";
-import { User } from "better-auth";
-import { callStkPush } from "./mpesa.service";
-import { sendMail } from "./email.service";
 import { sendTextSmsTiara } from "../utils/sms/tiara";
+import { sendMail } from "./email.service";
+import { getFormById } from "./form.service";
+import { callStkPush } from "./mpesa.service";
 const generateInviteCode = () => randomBytes(10).toString("hex");
 
 const generateInviteToken = () => randomBytes(32).toString("hex");
@@ -297,7 +299,7 @@ export const processGroupPayment = async (
   return payment;
 };
 
-export const retryGroupPayment = async (group: any, user: User) => {
+export const retryGroupPayment = async (group: any, user: User, phoneNumber?: string) => {
   const form = await getFormById(group.formId);
   if (!form) {
     throw new Error("Form not found");
@@ -308,8 +310,14 @@ export const retryGroupPayment = async (group: any, user: User) => {
   );
   const totalAmount = group.currentMemberCount * groupAmount;
 
+  const paymentPhone = phoneNumber || group.phoneNumber;
+
+  if (!paymentPhone) {
+    throw new Error("No payment phone number found");
+  }
+
   const result = await callStkPush(
-    +group.phoneNumber,
+    +paymentPhone,
     totalAmount,
     `Payment for group ${group.groupName}`,
     `group ${group.groupName}`,
@@ -321,17 +329,20 @@ export const retryGroupPayment = async (group: any, user: User) => {
       userId: user.id,
       merchantId: result.MerchantRequestID,
       checkoutId: result.CheckoutRequestID,
-      phoneNumber: group.phoneNumber,
+      phoneNumber: paymentPhone,
       amount: totalAmount,
     })
     .returning();
 
-  await db
-    .update(formGroups)
-    .set({
-      paymentId: payment.id,
-    })
-    .where(eq(formGroups.id, group.id));
+  const updateData: any = {
+    paymentId: payment?.id,
+  };
+
+  if (phoneNumber && phoneNumber !== group.phoneNumber) {
+    updateData.phoneNumber = phoneNumber;
+  }
+
+  await db.update(formGroups).set(updateData).where(eq(formGroups.id, group.id));
 
   return {
     payment: {

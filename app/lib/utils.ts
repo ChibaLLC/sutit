@@ -1,9 +1,9 @@
-import type { ClassValue } from "clsx"
-import { clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import type { ClassValue } from "clsx";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export const formatSecondsToTime = (seconds: number | null): string => {
@@ -24,7 +24,9 @@ export const formatSecondsToTime = (seconds: number | null): string => {
   return parts.join(" ");
 };
 
-export const formatSecondsToDetailedTime = (seconds: number | null): {
+export const formatSecondsToDetailedTime = (
+  seconds: number | null,
+): {
   days: number;
   hours: number;
   minutes: number;
@@ -78,7 +80,7 @@ export const formatCountdown = (startTime: Date | string): string => {
 
 export const getTatStatus = (
   tatSeconds: number | null,
-  targetSeconds?: number | null
+  targetSeconds?: number | null,
 ): "completed" | "in-progress" | "at-risk" | "overdue" => {
   if (!tatSeconds) return "completed";
 

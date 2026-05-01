@@ -1,13 +1,11 @@
-import { completeFormPayment } from "~~/server/services/payment.service";
-import { StkCallbackHook } from "~~/shared/types";
-import {
-  sendStopTatNotification,
-} from "~~/server/services/submissions.service";
-import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
-import { sendMail } from "~~/server/services/email.service";
-import { formPayments, formGroups, formGroupMembers } from "~~/server/db/schema";
-import db from "~~/server/db";
 import { eq } from "drizzle-orm";
+import db from "~~/server/db";
+import { formPayments, formGroups, formGroupMemberPayments } from "~~/server/db/schema";
+import { sendMail } from "~~/server/services/email.service";
+import { completeFormPayment } from "~~/server/services/payment.service";
+import { sendStopTatNotification } from "~~/server/services/submissions.service";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
+import { StkCallbackHook } from "~~/shared/types";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -36,7 +34,7 @@ export default defineEventHandler(async (event) => {
       if (callback.ResultCode === 0) {
         await handleSuccessfulGroupPayment(groupPayment, result);
       } else {
-        await handleFailedGroupPayment(groupPayment);
+        await handleFailedGroupPayment(groupPayment, result);
       }
       return;
     }
@@ -54,6 +52,25 @@ export default defineEventHandler(async (event) => {
 
 async function handleSuccessfulGroupPayment(group: any, payment: any) {
   try {
+    // Update group status to published
+    await db
+      .update(formGroups)
+      .set({
+        status: "published",
+      })
+      .where(eq(formGroups.id, group.id));
+
+    // Update all member payments to completed
+    if (group.members && group.members.length > 0) {
+      await db
+        .update(formGroupMemberPayments)
+        .set({
+          status: "completed",
+          updatedAt: new Date(),
+        })
+        .where(eq(formGroupMemberPayments.groupId, group.id));
+    }
+
     const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     for (const member of group.members) {
@@ -82,33 +99,28 @@ async function handleSuccessfulGroupPayment(group: any, payment: any) {
   }
 }
 
-async function handleFailedGroupPayment(group: any) {
+async function handleFailedGroupPayment(group: any, payment: any) {
   try {
-    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    // Update group status to failed_payment so leader can retry
+    await db
+      .update(formGroups)
+      .set({
+        status: "draft",
+      })
+      .where(eq(formGroups.id, group.id));
 
-    for (const member of group.members) {
-      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
-
-      if (member.invitePhone) {
-        const smsMessage = `You've been invited to join the "${group.groupName}" group. Complete your payment here: ${inviteUrl}`;
-        await sendTextSmsTiara({
-          phone: member.invitePhone,
-          message: smsMessage,
-        });
-      }
-
-      if (member.inviteEmail) {
-        await sendMail({
-          to: member.inviteEmail,
-          subject: `You're invited to join "${group.groupName}"`,
-          text: `You've been invited to join "${group.groupName}". Complete your payment here: ${inviteUrl}`,
-        });
-      }
+    // Update all member payments to failed
+    if (group.members && group.members.length > 0) {
+      await db
+        .update(formGroupMemberPayments)
+        .set({
+          status: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(formGroupMemberPayments.groupId, group.id));
     }
-
-    console.log(`Sent invites for group ${group.id} after failed payment (for member self-payment)`);
   } catch (error) {
-    console.error("Error sending group invites after failed payment:", error);
+    console.error("Error handling failed group payment:", error);
   }
 }
 
@@ -197,26 +209,6 @@ async function handleSuccessfulPayment(updatedPayment: any) {
 
 async function handleFailedPayment(updatedPayment: any) {
   try {
-    const formPayment = await db.query.formPayments.findFirst({
-      where: eq(formPayments.paymentId, updatedPayment.id),
-    });
-
-    if (!formPayment) {
-      console.log("No form payment found for failed payment:", updatedPayment.id);
-      return;
-    }
-
-    console.log(
-      "Payment failed for submission:",
-      formPayment.submissionId,
-      "Result code:",
-      updatedPayment.resultCode,
-    );
-
-    console.log(
-      "Submission marked as failed_payment for retry. Submission ID:",
-      formPayment.submissionId,
-    );
   } catch (error) {
     console.error("Error handling failed payment:", error);
   }

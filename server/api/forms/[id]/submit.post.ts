@@ -1,11 +1,11 @@
 import { auth } from "~~/server/lib/auth";
+import { getFormById } from "~~/server/services/form.service";
+import { retryFormPayment } from "~~/server/services/payment.service";
 import {
   submitForm,
   checkExistingSubmission,
   checkFailedPaymentSubmission,
 } from "~~/server/services/submissions.service";
-import { getFormById } from "~~/server/services/form.service";
-import { retryFormPayment } from "~~/server/services/payment.service";
 
 export default defineEventHandler(async (event) => {
   const formId = getRouterParam(event, "id");
@@ -51,7 +51,8 @@ export default defineEventHandler(async (event) => {
 
         return {
           data: {
-            ...retryResult.payment,
+            payment: retryResult.payment,
+            ...existing,
             submissionId: existing.id,
           },
           message: "Payment retry initiated. Please complete on your phone.",

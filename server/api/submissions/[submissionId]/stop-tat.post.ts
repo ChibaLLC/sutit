@@ -1,12 +1,13 @@
+import { randomBytes } from "crypto";
+
+import { eq } from "drizzle-orm";
+import db from "~~/server/db";
+import { payments, formPayments } from "~~/server/db/schema";
 import {
   getSubmissionById,
   stopSubmissionTAT,
   updateSubmissionStatus,
 } from "~~/server/services/submissions.service";
-import { eq } from "drizzle-orm";
-import { payments, formPayments } from "~~/server/db/schema";
-import db from "~~/server/db";
-import { randomBytes } from "crypto";
 
 export default defineEventHandler(async (event) => {
   const { submissionId } = getRouterParams(event);
@@ -53,8 +54,7 @@ export default defineEventHandler(async (event) => {
     if (!token) {
       throw createError({
         statusCode: 401,
-        statusMessage:
-          "Authentication required - please provide a token or login",
+        statusMessage: "Authentication required - please provide a token or login",
       });
     }
 
@@ -83,10 +83,7 @@ export default defineEventHandler(async (event) => {
 
     // Additional validation: ensure token is generated for the paying phone number
     const storedTokenData = submission.metadata?.tokenData;
-    if (
-      !storedTokenData ||
-      storedTokenData.phoneNumber !== formPayment.payment.phoneNumber
-    ) {
+    if (!storedTokenData || storedTokenData.phoneNumber !== formPayment.payment.phoneNumber) {
       throw createError({
         statusCode: 403,
         statusMessage: "Token validation failed - phone number mismatch",

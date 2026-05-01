@@ -12,16 +12,16 @@ const createRedisClient = (): Redis | null => {
   }
 
   try {
-     const client = new Redis(redisUrl, {
-       retryDelayOnFailover: 100,
-       maxRetriesPerRequest: 3,
-       lazyConnect: true, // Don't connect immediately
-       keepAlive: 30000,
-       connectTimeout: 10000,
-       commandTimeout: 5000,
-       enableReadyCheck: false,
-       showFriendlyErrorStack: process.env.NODE_ENV === "development",
-     } as const);
+    const client = new Redis(redisUrl, {
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true, // Don't connect immediately
+      keepAlive: 30000,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+      enableReadyCheck: false,
+      showFriendlyErrorStack: process.env.NODE_ENV === "development",
+    } as const);
 
     // Handle connection events
     client.on("connect", () => {
@@ -77,11 +77,7 @@ export const cacheGet = async <T>(key: string): Promise<T | null> => {
   }
 };
 
-export const cacheSet = async <T>(
-  key: string,
-  value: T,
-  ttlSeconds = 300,
-): Promise<boolean> => {
+export const cacheSet = async <T>(key: string, value: T, ttlSeconds = 300): Promise<boolean> => {
   const client = getRedisClient();
   if (!client) return false;
 
@@ -109,9 +105,7 @@ export const cacheDel = async (key: string): Promise<boolean> => {
 };
 
 // Pattern-based cache invalidation
-export const cacheInvalidatePattern = async (
-  pattern: string,
-): Promise<boolean> => {
+export const cacheInvalidatePattern = async (pattern: string): Promise<boolean> => {
   const client = getRedisClient();
   if (!client) return false;
 

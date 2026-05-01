@@ -5,8 +5,7 @@ export const hasFiles = (form: any) => {
     if (Array.isArray(value)) {
       return value.some(
         (item) =>
-          item instanceof File ||
-          (typeof item === "object" && item !== null && checkValue(item)),
+          item instanceof File || (typeof item === "object" && item !== null && checkValue(item)),
       );
     }
     if (typeof value === "object" && value !== null) {

@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 // schemas/database.schema.ts
 import {
   pgTable,
@@ -16,22 +17,12 @@ import {
   date,
   real,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+
 import { user } from "./auth";
 import { formGroupMemberPayments, formPayments, payments } from "./payments";
 
-export const userStatusEnum = pgEnum("user_status", [
-  "active",
-  "inactive",
-  "suspended",
-  "pending",
-]);
-export const formStatusEnum = pgEnum("form_status", [
-  "draft",
-  "published",
-  "archived",
-  "closed",
-]);
+export const userStatusEnum = pgEnum("user_status", ["active", "inactive", "suspended", "pending"]);
+export const formStatusEnum = pgEnum("form_status", ["draft", "published", "archived", "closed"]);
 export const submissionStatusEnum = pgEnum("submission_status", [
   "pending",
   "completed",
@@ -47,12 +38,7 @@ export const ticketStatusEnum = pgEnum("ticket_status", [
   "closed",
   "cancelled",
 ]);
-export const ticketPriorityEnum = pgEnum("ticket_priority", [
-  "low",
-  "medium",
-  "high",
-  "urgent",
-]);
+export const ticketPriorityEnum = pgEnum("ticket_priority", ["low", "medium", "high", "urgent"]);
 export const fieldTypeEnum = pgEnum("field_type", [
   "text",
   "textarea",
@@ -85,11 +71,7 @@ export const workflowStatusEnum = pgEnum("workflow_status", [
   "completed",
   "failed",
 ]);
-export const registrationTypeEnum = pgEnum("registration_type", [
-  "single",
-  "recurring",
-  "group",
-]);
+export const registrationTypeEnum = pgEnum("registration_type", ["single", "recurring", "group"]);
 
 export const activityTypeEnum = pgEnum("activity_type", [
   "form_created",
@@ -120,9 +102,7 @@ export const forms = pgTable(
     isPublic: boolean("is_public").default(true),
     isFeatured: boolean("is_featured").default(false),
     requiresLogin: boolean("requires_login").default(false),
-    allowMultipleSubmissions: boolean("allow_multiple_submissions").default(
-      false,
-    ),
+    allowMultipleSubmissions: boolean("allow_multiple_submissions").default(false),
     allowRegistrationReuse: boolean("allow_registration_reuse").default(false), // for recurring events
     submissionLimit: integer("submission_limit"),
     tags: jsonb("tags").default([]),
@@ -150,10 +130,7 @@ export const forms = pgTable(
     deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
-    slugUserUnique: unique("form_slug_user_unique").on(
-      table.slug,
-      table.createdBy,
-    ),
+    slugUserUnique: unique("form_slug_user_unique").on(table.slug, table.createdBy),
     statusIdx: index("form_status_idx").on(table.status),
     createdByIdx: index("form_created_by_idx").on(table.createdBy),
     createdAtIdx: index("form_created_at_idx").on(table.createdAt),
@@ -287,10 +264,7 @@ export const activities = pgTable(
   (table) => ({
     userIdx: index("activity_user_idx").on(table.userId),
     typeIdx: index("activity_type_idx").on(table.type),
-    resourceIdx: index("activity_resource_idx").on(
-      table.resourceType,
-      table.resourceId,
-    ),
+    resourceIdx: index("activity_resource_idx").on(table.resourceType, table.resourceId),
     createdAtIdx: index("activity_created_at_idx").on(table.createdAt),
   }),
 );
@@ -319,10 +293,7 @@ export const formGroups = pgTable(
       .notNull(),
   },
   (table) => ({
-    groupNameFormUnique: unique("group_name_form_unique").on(
-      table.groupName,
-      table.formId,
-    ), // Unique group name per form
+    groupNameFormUnique: unique("group_name_form_unique").on(table.groupName, table.formId), // Unique group name per form
     formIdIdx: index("form_group_form_id_idx").on(table.formId),
     leaderIdIdx: index("form_group_leader_id_idx").on(table.leaderId),
     paymentIdIdx: index("form_group_payment_id_idx").on(table.paymentId),
@@ -360,10 +331,7 @@ export const formGroupMembers = pgTable(
       .notNull(),
   },
   (table) => ({
-    groupUserUnique: unique("group_member_group_user_unique").on(
-      table.groupId,
-      table.userId,
-    ), // A user can only be a member of a group once
+    groupUserUnique: unique("group_member_group_user_unique").on(table.groupId, table.userId), // A user can only be a member of a group once
     groupEmailUnique: unique("group_member_group_email_unique").on(
       table.groupId,
       table.inviteEmail,
@@ -374,12 +342,8 @@ export const formGroupMembers = pgTable(
     ), // A phone can only be invited to a group once
     groupIdx: index("form_group_member_group_id_idx").on(table.groupId),
     userIdx: index("form_group_member_user_id_idx").on(table.userId),
-    submissionIdx: index("form_group_member_submission_id_idx").on(
-      table.submissionId,
-    ),
-    inviteTokenIdx: index("form_group_member_invite_token_idx").on(
-      table.inviteToken,
-    ),
+    submissionIdx: index("form_group_member_submission_id_idx").on(table.submissionId),
+    inviteTokenIdx: index("form_group_member_invite_token_idx").on(table.inviteToken),
   }),
 );
 // ============================================
@@ -463,11 +427,7 @@ export const storeResponses = pgTable("store_responses", {
     .notNull(),
 });
 
-export const dispatchStatusEnum = pgEnum("dispatch_status", [
-  "pending",
-  "dispatched",
-  "delivered",
-]);
+export const dispatchStatusEnum = pgEnum("dispatch_status", ["pending", "dispatched", "delivered"]);
 
 export const batchStatusEnum = pgEnum("batch_status", [
   "open",
@@ -553,10 +513,7 @@ export const formAnalytics = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
-    formDateUnique: unique("analytics_form_date").on(
-      table.formId,
-      table.analyticsDate,
-    ),
+    formDateUnique: unique("analytics_form_date").on(table.formId, table.analyticsDate),
     formIdx: index("analytics_form_idx").on(table.formId),
     dateIdx: index("analytics_date_idx").on(table.analyticsDate),
     createdAtIdx: index("analytics_created_at_idx").on(table.createdAt),
@@ -629,19 +586,16 @@ export const fieldResponsesRelations = relations(fieldResponses, ({ one }) => ({
     references: [formFields.id],
   }),
 }));
-export const storeResponsesRelations = relations(
-  storeResponses,
-  ({ one, many }) => ({
-    submission: one(formSubmissions, {
-      fields: [storeResponses.submissionId],
-      references: [formSubmissions.id],
-    }),
-    item: one(storeItems, {
-      fields: [storeResponses.storeItemId],
-      references: [storeItems.id],
-    }),
+export const storeResponsesRelations = relations(storeResponses, ({ one, many }) => ({
+  submission: one(formSubmissions, {
+    fields: [storeResponses.submissionId],
+    references: [formSubmissions.id],
   }),
-);
+  item: one(storeItems, {
+    fields: [storeResponses.storeItemId],
+    references: [storeItems.id],
+  }),
+}));
 
 export const formAnalyticsRelations = relations(formAnalytics, ({ one }) => ({
   form: one(forms, {
@@ -650,25 +604,22 @@ export const formAnalyticsRelations = relations(formAnalytics, ({ one }) => ({
   }),
 }));
 
-export const formSubmissionsRelations = relations(
-  formSubmissions,
-  ({ one, many }) => ({
-    form: one(forms, {
-      fields: [formSubmissions.formId],
-      references: [forms.id],
-    }),
-
-    submitter: one(user, {
-      fields: [formSubmissions.submitterId],
-      references: [user.id],
-    }),
-    responses: many(fieldResponses),
-    storeResponses: many(storeResponses),
-    payments: one(formPayments),
-    groupMembers: many(formGroupMembers),
-    dispatch: one(dispatches),
+export const formSubmissionsRelations = relations(formSubmissions, ({ one, many }) => ({
+  form: one(forms, {
+    fields: [formSubmissions.formId],
+    references: [forms.id],
   }),
-);
+
+  submitter: one(user, {
+    fields: [formSubmissions.submitterId],
+    references: [user.id],
+  }),
+  responses: many(fieldResponses),
+  storeResponses: many(storeResponses),
+  payments: many(formPayments),
+  groupMembers: many(formGroupMembers),
+  dispatch: one(dispatches),
+}));
 
 export const formGroupsRelations = relations(formGroups, ({ one, many }) => ({
   form: one(forms, {
@@ -687,28 +638,25 @@ export const formGroupsRelations = relations(formGroups, ({ one, many }) => ({
   memberPayments: many(formGroupMemberPayments),
 }));
 
-export const formGroupMembersRelations = relations(
-  formGroupMembers,
-  ({ one, many }) => ({
-    group: one(formGroups, {
-      fields: [formGroupMembers.groupId],
-      references: [formGroups.id],
-    }),
-    user: one(user, {
-      fields: [formGroupMembers.userId],
-      references: [user.id],
-    }),
-    submission: one(formSubmissions, {
-      fields: [formGroupMembers.submissionId],
-      references: [formSubmissions.id],
-    }),
-    payment: one(payments, {
-      fields: [formGroupMembers.paymentId],
-      references: [payments.id],
-    }),
-    memberPayments: many(formGroupMemberPayments),
+export const formGroupMembersRelations = relations(formGroupMembers, ({ one, many }) => ({
+  group: one(formGroups, {
+    fields: [formGroupMembers.groupId],
+    references: [formGroups.id],
   }),
-);
+  user: one(user, {
+    fields: [formGroupMembers.userId],
+    references: [user.id],
+  }),
+  submission: one(formSubmissions, {
+    fields: [formGroupMembers.submissionId],
+    references: [formSubmissions.id],
+  }),
+  payment: one(payments, {
+    fields: [formGroupMembers.paymentId],
+    references: [payments.id],
+  }),
+  memberPayments: many(formGroupMemberPayments),
+}));
 
 export const dispatchesRelations = relations(dispatches, ({ one }) => ({
   submission: one(formSubmissions, {
@@ -721,13 +669,10 @@ export const dispatchesRelations = relations(dispatches, ({ one }) => ({
   }),
 }));
 
-export const dispatchBatchesRelations = relations(
-  dispatchBatches,
-  ({ one, many }) => ({
-    form: one(forms, {
-      fields: [dispatchBatches.formId],
-      references: [forms.id],
-    }),
-    dispatches: many(dispatches),
+export const dispatchBatchesRelations = relations(dispatchBatches, ({ one, many }) => ({
+  form: one(forms, {
+    fields: [dispatchBatches.formId],
+    references: [forms.id],
   }),
-);
+  dispatches: many(dispatches),
+}));

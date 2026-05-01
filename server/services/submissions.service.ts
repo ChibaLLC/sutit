@@ -1,4 +1,8 @@
+import { randomBytes } from "crypto";
+
+import { eq, isNull, isNotNull, and, inArray, sql, desc } from "drizzle-orm";
 import { SubmissionData } from "~~/shared/types";
+
 import db from "../db";
 import {
   fieldResponses,
@@ -8,12 +12,10 @@ import {
   storeResponses,
   payments,
 } from "../db/schema";
-import { eq, isNull, isNotNull, and, inArray, sql } from "drizzle-orm";
+import { sendTextSmsTiara } from "../utils/sms/tiara";
+import { sendMail } from "./email.service";
 import { getFormById } from "./form.service";
 import { processFormPayment } from "./payment.service";
-import { sendMail } from "./email.service";
-import { sendTextSmsTiara } from "../utils/sms/tiara";
-import { randomBytes } from "crypto";
 
 function generateToken(): string {
   return randomBytes(32).toString("hex");
@@ -305,6 +307,7 @@ export const getSubmissionById = async (submissionId: string) => {
         },
       },
       payments: {
+        orderBy: [desc(formPayments.createdAt)],
         with: {
           payment: true,
         },

@@ -1,4 +1,5 @@
 import { auth } from "~~/server/lib/auth";
+import { getFormById } from "~~/server/services/form.service";
 import { getGroupById } from "~~/server/services/group.service";
 import { retryGroupPayment } from "~~/server/services/group.service";
 
@@ -9,18 +10,22 @@ export default defineEventHandler(async (event) => {
   if (!formId || !groupId) {
     throw createError({ statusCode: 400, message: "Form ID and Group ID are required" });
   }
+  const form = await getFormById(formId);
 
   const session = await auth.api.getSession({ headers: event.headers });
   if (!session?.user) {
     throw createError({ statusCode: 401, message: "You must be logged in" });
   }
 
+  const body = await readBody(event);
+  const { phoneNumber } = body;
+
   const group = await getGroupById(groupId);
   if (!group) {
     throw createError({ statusCode: 404, message: "Group not found" });
   }
 
-  if (group.formId !== formId) {
+  if (group.formId !== form.id) {
     throw createError({ statusCode: 400, message: "Group does not belong to this form" });
   }
 
@@ -29,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const result = await retryGroupPayment(group, session.user);
+    const result = await retryGroupPayment(group, session.user, phoneNumber);
 
     return {
       success: true,

@@ -1,68 +1,69 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Shield, Lock, CheckCircle } from "lucide-vue-next";
-import { authClient } from "~/lib/auth-client";
-import { toast } from "vue-sonner";
-definePageMeta({
-  middleware: ["guest"],
-});
-const isLoading = ref(false);
-const form = ref({
-  name: "",
-  email: "",
-  password: "",
-  rememberMe: false,
-});
-const authStore = useAuthStore();
+  import { Shield, Lock, CheckCircle } from "lucide-vue-next";
+  import { ref } from "vue";
+  import { toast } from "vue-sonner";
 
-// Methods
-const signInWithGoogle = async () => {
-  isLoading.value = true;
-  try {
-    const { data, error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/dashboard",
-    });
-    
-    if (error) {
-      throw error;
+  import { authClient } from "~/lib/auth-client";
+  definePageMeta({
+    middleware: ["guest"],
+  });
+  const isLoading = ref(false);
+  const form = ref({
+    name: "",
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
+  const authStore = useAuthStore();
+
+  // Methods
+  const signInWithGoogle = async () => {
+    isLoading.value = true;
+    try {
+      const { data, error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The redirect is handled automatically by Better Auth
+    } catch (error: any) {
+      console.error("Google sign-in failed:", error);
+      toast.error(error.message || "Failed to sign in with Google");
+    } finally {
+      isLoading.value = false;
     }
-    
-    // The redirect is handled automatically by Better Auth
-  } catch (error: any) {
-    console.error("Google sign-in failed:", error);
-    toast.error(error.message || "Failed to sign in with Google");
-  } finally {
-    isLoading.value = false;
-  }
-};
+  };
 
-const signUpWithEmail = async () => {
-  isLoading.value = true;
-  try {
-    await authStore.signUpWithEmail(form.value);
-  } catch (error) {
-    console.log("Email sign-in failed:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
+  const signUpWithEmail = async () => {
+    isLoading.value = true;
+    try {
+      await authStore.signUpWithEmail(form.value);
+    } catch (error) {
+      console.log("Email sign-in failed:", error);
+    } finally {
+      isLoading.value = false;
+    }
+  };
 </script>
 <template>
   <div>
     <!-- Login Section -->
     <section class="relative overflow-hidden">
       <div
-        class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none"
+        class="from-primary/10 to-primary/5 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent"
       ></div>
       <div class="container mx-auto px-4 py-20 lg:py-32">
-        <div class="max-w-md mx-auto">
+        <div class="mx-auto max-w-md">
           <!-- Login Card -->
           <Card class="p-8">
-            <div class="text-center mb-8">
-              <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="mb-8 text-center">
+              <div class="mb-6 flex items-center justify-center gap-2">
                 <div
-                  class="h-10 w-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg"
+                  class="bg-primary text-primary-foreground flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold"
                 >
                   <NuxtImg
                     src="/logo.jpeg"
@@ -72,9 +73,7 @@ const signUpWithEmail = async () => {
                 <span class="text-2xl font-bold">SUTIT</span>
               </div>
 
-              <h1 class="text-2xl font-bold text-foreground mb-2">
-                Welcome Back
-              </h1>
+              <h1 class="text-foreground mb-2 text-2xl font-bold">Welcome Back</h1>
               <p class="text-muted-foreground">
                 Sign up to your account to continue building amazing forms
               </p>
@@ -84,7 +83,7 @@ const signUpWithEmail = async () => {
             <Button
               variant="outline"
               size="lg"
-              class="w-full mb-6 group hover:shadow-md transition-all duration-200"
+              class="group mb-6 w-full transition-all duration-200 hover:shadow-md"
               @click="signInWithGoogle"
             >
               <svg class="mr-3 h-5 w-5" viewBox="0 0 24 24">
@@ -111,10 +110,10 @@ const signUpWithEmail = async () => {
             <!-- Divider -->
             <div class="relative mb-6">
               <div class="absolute inset-0 flex items-center">
-                <span class="w-full border-t border-border" />
+                <span class="border-border w-full border-t" />
               </div>
               <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">
+                <span class="bg-background text-muted-foreground px-2">
                   Or continue with email
                 </span>
               </div>
@@ -157,31 +156,17 @@ const signUpWithEmail = async () => {
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                   <Checkbox id="remember" v-model="form.rememberMe" />
-                  <Label
-                    for="remember"
-                    class="text-sm font-normal cursor-pointer"
-                  >
+                  <Label for="remember" class="cursor-pointer text-sm font-normal">
                     Remember me
                   </Label>
                 </div>
-                <a href="#" class="text-sm text-primary hover:underline">
-                  Forgot password?
-                </a>
+                <a href="#" class="text-primary text-sm hover:underline"> Forgot password? </a>
               </div>
 
-              <Button
-                type="submit"
-                size="lg"
-                class="w-full group"
-                :disabled="isLoading"
-              >
+              <Button type="submit" size="lg" class="group w-full" :disabled="isLoading">
                 <span v-if="!isLoading">Sign Up</span>
                 <span v-else class="flex items-center">
-                  <svg
-                    class="animate-spin -ml-1 mr-2 h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg class="mr-2 -ml-1 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle
                       class="opacity-25"
                       cx="12"
@@ -202,13 +187,10 @@ const signUpWithEmail = async () => {
             </form>
 
             <!-- Sign Up Link -->
-            <div class="text-center mt-6 pt-6 border-t border-border">
-              <p class="text-sm text-muted-foreground">
+            <div class="border-border mt-6 border-t pt-6 text-center">
+              <p class="text-muted-foreground text-sm">
                 Already have an account?
-                <NuxtLink
-                  :to="`/auth/login`"
-                  class="text-primary hover:underline font-medium"
-                >
+                <NuxtLink :to="`/auth/login`" class="text-primary font-medium hover:underline">
                   Sign in
                 </NuxtLink>
               </p>
@@ -217,21 +199,19 @@ const signUpWithEmail = async () => {
 
           <!-- Trust Indicators -->
           <div class="mt-8 text-center">
-            <div
-              class="flex items-center justify-center gap-6 text-xs text-muted-foreground"
-            >
+            <div class="text-muted-foreground flex items-center justify-center gap-6 text-xs">
               <div class="flex items-center gap-1">
-                <Shield class="w-4 h-4" />
+                <Shield class="h-4 w-4" />
                 <span>Secure Login</span>
               </div>
-              <div class="w-px h-4 bg-border"></div>
+              <div class="bg-border h-4 w-px"></div>
               <div class="flex items-center gap-1">
-                <Lock class="w-4 h-4" />
+                <Lock class="h-4 w-4" />
                 <span>256-bit SSL</span>
               </div>
-              <div class="w-px h-4 bg-border"></div>
+              <div class="bg-border h-4 w-px"></div>
               <div class="flex items-center gap-1">
-                <CheckCircle class="w-4 h-4" />
+                <CheckCircle class="h-4 w-4" />
                 <span>GDPR Compliant</span>
               </div>
             </div>

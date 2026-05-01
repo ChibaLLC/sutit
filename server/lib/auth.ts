@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import db from "~~/server/db";
-import { sendMail } from "~~/server/services/email.service";
 import { accounts, sessions, user, verifications } from "~~/server/db/schema";
+import { sendMail } from "~~/server/services/email.service";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

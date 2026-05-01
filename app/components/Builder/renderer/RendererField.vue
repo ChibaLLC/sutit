@@ -1,48 +1,48 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { X, Upload } from "lucide-vue-next";
-import { toast } from "vue-sonner";
-import type { FormField } from "~~/shared/types";
+  import { X, Upload } from "lucide-vue-next";
+  import { ref } from "vue";
+  import { toast } from "vue-sonner";
+  import type { FormField } from "~~/shared/types";
 
-const props = defineProps<{
-  field: FormField;
-  modelValue: any;
-}>();
+  const props = defineProps<{
+    field: FormField;
+    modelValue: any;
+  }>();
 
-const emit = defineEmits<{
-  "update:modelValue": [value: any];
-}>();
+  const emit = defineEmits<{
+    "update:modelValue": [value: any];
+  }>();
 
-const uploading = ref(false);
+  const uploading = ref(false);
 
-const handleFileUpload = async (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
+  const handleFileUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
 
-  uploading.value = true;
-  try {
-    const fd = new FormData();
-    fd.append("file", file);
-    const { data } = await $fetch("/api/uploads", { method: "POST", body: fd });
-    emit("update:modelValue", (data as any)?.path ?? file.name);
-  } catch {
-    toast.error("Upload failed");
-  } finally {
-    uploading.value = false;
-  }
-};
+    uploading.value = true;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data } = await $fetch("/api/uploads", { method: "POST", body: fd });
+      emit("update:modelValue", (data as any)?.path ?? file.name);
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      uploading.value = false;
+    }
+  };
 
-const toggleMultiselect = (option: string) => {
-  const current: string[] = Array.isArray(props.modelValue) ? [...props.modelValue] : [];
-  const idx = current.indexOf(option);
-  if (idx > -1) current.splice(idx, 1);
-  else current.push(option);
-  emit("update:modelValue", current);
-};
+  const toggleMultiselect = (option: string) => {
+    const current: string[] = Array.isArray(props.modelValue) ? [...props.modelValue] : [];
+    const idx = current.indexOf(option);
+    if (idx > -1) current.splice(idx, 1);
+    else current.push(option);
+    emit("update:modelValue", current);
+  };
 
-const hasOption = (option: string) =>
-  Array.isArray(props.modelValue) && props.modelValue.includes(option);
+  const hasOption = (option: string) =>
+    Array.isArray(props.modelValue) && props.modelValue.includes(option);
 </script>
 
 <template>
@@ -50,9 +50,9 @@ const hasOption = (option: string) =>
     <!-- Label -->
     <div class="flex items-center gap-2">
       <Label :for="field.id" class="text-sm font-medium">{{ field.label }}</Label>
-      <span v-if="field.required" class="text-[10px] font-semibold text-destructive">Required</span>
+      <span v-if="field.required" class="text-destructive text-[10px] font-semibold">Required</span>
     </div>
-    <p v-if="field.description" class="text-xs text-muted-foreground">{{ field.description }}</p>
+    <p v-if="field.description" class="text-muted-foreground text-xs">{{ field.description }}</p>
 
     <!-- Text / Email / Phone / URL / Number -->
     <Input
@@ -113,11 +113,11 @@ const hasOption = (option: string) =>
       <div
         v-for="opt in field.options"
         :key="opt"
-        class="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+        class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors"
         @click="emit('update:modelValue', opt)"
       >
         <RadioGroupItem :value="opt" class="pointer-events-none" />
-        <Label class="cursor-pointer flex-1 text-sm">{{ opt }}</Label>
+        <Label class="flex-1 cursor-pointer text-sm">{{ opt }}</Label>
       </div>
     </RadioGroup>
 
@@ -126,13 +126,13 @@ const hasOption = (option: string) =>
       <div
         v-for="opt in field.options"
         :key="opt"
-        class="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+        class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors"
         @click="toggleMultiselect(opt)"
       >
         <Checkbox :model-value="hasOption(opt)" class="pointer-events-none" />
-        <Label class="cursor-pointer flex-1 text-sm">{{ opt }}</Label>
+        <Label class="flex-1 cursor-pointer text-sm">{{ opt }}</Label>
       </div>
-      <p v-if="(modelValue ?? []).length" class="text-xs text-primary font-medium">
+      <p v-if="(modelValue ?? []).length" class="text-primary text-xs font-medium">
         {{ (modelValue ?? []).length }} selected
       </p>
     </div>
@@ -140,17 +140,17 @@ const hasOption = (option: string) =>
     <!-- Checkbox -->
     <div
       v-else-if="field.type === 'checkbox'"
-      class="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+      class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors"
       @click="emit('update:modelValue', !modelValue)"
     >
       <Checkbox :model-value="!!modelValue" class="pointer-events-none" />
-      <Label class="cursor-pointer flex-1 text-sm">{{ field.placeholder || "I agree" }}</Label>
+      <Label class="flex-1 cursor-pointer text-sm">{{ field.placeholder || "I agree" }}</Label>
     </div>
 
     <!-- Toggle -->
     <div
       v-else-if="field.type === 'toggle'"
-      class="flex items-center justify-between p-3 rounded-lg border"
+      class="flex items-center justify-between rounded-lg border p-3"
     >
       <Label class="text-sm">{{ field.placeholder || field.label }}</Label>
       <Switch :model-value="!!modelValue" @update:model-value="emit('update:modelValue', $event)" />
@@ -160,10 +160,10 @@ const hasOption = (option: string) =>
     <div v-else-if="field.type === 'file'" class="space-y-2">
       <label
         :for="field.id"
-        class="flex items-center justify-center gap-2 h-20 rounded-lg border-2 border-dashed hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-colors"
+        class="hover:border-primary/50 hover:bg-primary/5 flex h-20 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors"
       >
-        <Upload class="w-5 h-5 text-muted-foreground" />
-        <span class="text-sm text-muted-foreground">
+        <Upload class="text-muted-foreground h-5 w-5" />
+        <span class="text-muted-foreground text-sm">
           {{ uploading ? "Uploading..." : "Click to upload a file" }}
         </span>
       </label>
@@ -174,10 +174,15 @@ const hasOption = (option: string) =>
         @change="handleFileUpload"
         :required="field.required"
       />
-      <div v-if="modelValue" class="flex items-center gap-2 p-2 rounded-lg bg-muted text-sm">
-        <span class="truncate flex-1">{{ modelValue }}</span>
-        <Button variant="ghost" size="sm" class="h-6 w-6 p-0" @click="emit('update:modelValue', null)">
-          <X class="w-3 h-3" />
+      <div v-if="modelValue" class="bg-muted flex items-center gap-2 rounded-lg p-2 text-sm">
+        <span class="flex-1 truncate">{{ modelValue }}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="h-6 w-6 p-0"
+          @click="emit('update:modelValue', null)"
+        >
+          <X class="h-3 w-3" />
         </Button>
       </div>
     </div>

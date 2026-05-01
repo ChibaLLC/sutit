@@ -1,227 +1,217 @@
 <script setup lang="ts">
-import {
-  Copy,
-  Facebook,
-  Mail,
-  MessageCircle,
-  Twitter,
-  Share2,
-  Download,
-  QrCode,
-  Loader,
-} from "lucide-vue-next";
-import { toast } from "vue-sonner";
-import QRCode from "qrcode";
-import type { FormSchema } from "~~/shared/types";
-import { authHeaders } from "~/lib/auth-client";
+  import {
+    Copy,
+    Facebook,
+    Mail,
+    MessageCircle,
+    Twitter,
+    Share2,
+    Download,
+    QrCode,
+    Loader,
+  } from "lucide-vue-next";
+  import QRCode from "qrcode";
+  import { toast } from "vue-sonner";
+  import type { FormSchema } from "~~/shared/types";
 
-interface ShareSettings {
-  isPublic: boolean;
-  requirePassword: boolean;
-  password: string;
-  hasExpiration: boolean;
-  expirationDate: string;
-}
+  import { authHeaders } from "~/lib/auth-client";
 
-interface EmbedOptions {
-  width: string;
-  height: string;
-}
-const props = defineProps<{
-  form: FormSchema;
-  isOpen: boolean;
-}>();
-const emits = defineEmits<{
-  close: [];
-  settingsUpdated: [form: FormSchema];
-}>();
+  interface ShareSettings {
+    isPublic: boolean;
+    requirePassword: boolean;
+    password: string;
+    hasExpiration: boolean;
+    expirationDate: string;
+  }
 
-// Initialize settings from form data
-const shareSettings = ref<ShareSettings>({
-  isPublic: props.form?.isPublic ?? true,
-  requirePassword: props.form?.requirePassword ?? false,
-  password: props.form?.password ?? "",
-  hasExpiration: !!props.form?.expiresAt,
-  expirationDate: props.form?.expiresAt
-    ? new Date(props.form.expiresAt).toISOString().slice(0, 16)
-    : "",
-});
+  interface EmbedOptions {
+    width: string;
+    height: string;
+  }
+  const props = defineProps<{
+    form: FormSchema;
+    isOpen: boolean;
+  }>();
+  const emits = defineEmits<{
+    close: [];
+    settingsUpdated: [form: FormSchema];
+  }>();
 
-// Update settings when form prop changes
-watch(
-  () => props.form,
-  (newForm) => {
-    if (newForm) {
-      shareSettings.value = {
-        isPublic: newForm.isPublic ?? true,
-        requirePassword: newForm.requirePassword ?? false,
-        password: newForm.password ?? "",
-        hasExpiration: !!newForm.expiresAt,
-        expirationDate: newForm.expiresAt
-          ? new Date(newForm.expiresAt).toISOString().slice(0, 16)
-          : "",
-      };
+  // Initialize settings from form data
+  const shareSettings = ref<ShareSettings>({
+    isPublic: props.form?.isPublic ?? true,
+    requirePassword: props.form?.requirePassword ?? false,
+    password: props.form?.password ?? "",
+    hasExpiration: !!props.form?.expiresAt,
+    expirationDate: props.form?.expiresAt
+      ? new Date(props.form.expiresAt).toISOString().slice(0, 16)
+      : "",
+  });
+
+  // Update settings when form prop changes
+  watch(
+    () => props.form,
+    (newForm) => {
+      if (newForm) {
+        shareSettings.value = {
+          isPublic: newForm.isPublic ?? true,
+          requirePassword: newForm.requirePassword ?? false,
+          password: newForm.password ?? "",
+          hasExpiration: !!newForm.expiresAt,
+          expirationDate: newForm.expiresAt
+            ? new Date(newForm.expiresAt).toISOString().slice(0, 16)
+            : "",
+        };
+      }
+    },
+    { immediate: true },
+  );
+
+  const isSaving = ref(false);
+  const embedOptions = ref<EmbedOptions>({
+    width: "100%",
+    height: "600px",
+  });
+  const sharePlatforms = [
+    {
+      name: "Email",
+      icon: Mail,
+      url: "mailto:?subject=Check out this form&body=",
+    },
+    { name: "WhatsApp", icon: MessageCircle, url: "https://wa.me/?text=" },
+    {
+      name: "Facebook",
+      icon: Facebook,
+      url: "https://www.facebook.com/sharer/sharer.php?u=",
+    },
+    {
+      name: "Twitter",
+      icon: Twitter,
+      url: "https://twitter.com/intent/tweet?url=",
+    },
+  ];
+  const shareUrl = ref({
+    formsUrl: props.form ? `${window.location.origin}/forms/${props.form.slug}` : "",
+    mainUrl: props.form ? `${window.location.origin}/${props.form.slug}` : "",
+  });
+
+  const qrCodeDataUrl = ref<string>("");
+  const qrCodeLoading = ref(false);
+
+  const generateQRCode = async (url: string) => {
+    qrCodeLoading.value = true;
+    try {
+      qrCodeDataUrl.value = await QRCode.toDataURL(url, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      });
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      toast.error("Failed to generate QR code");
+    } finally {
+      qrCodeLoading.value = false;
     }
-  },
-  { immediate: true },
-);
+  };
 
-const isSaving = ref(false);
-const embedOptions = ref<EmbedOptions>({
-  width: "100%",
-  height: "600px",
-});
-const sharePlatforms = [
-  {
-    name: "Email",
-    icon: Mail,
-    url: "mailto:?subject=Check out this form&body=",
-  },
-  { name: "WhatsApp", icon: MessageCircle, url: "https://wa.me/?text=" },
-  {
-    name: "Facebook",
-    icon: Facebook,
-    url: "https://www.facebook.com/sharer/sharer.php?u=",
-  },
-  {
-    name: "Twitter",
-    icon: Twitter,
-    url: "https://twitter.com/intent/tweet?url=",
-  },
-];
-const shareUrl = ref({
-  formsUrl: props.form
-    ? `${window.location.origin}/forms/${props.form.slug}`
-    : "",
-  mainUrl: props.form ? `${window.location.origin}/${props.form.slug}` : "",
-});
+  const downloadQRCode = () => {
+    if (!qrCodeDataUrl.value) return;
 
-const qrCodeDataUrl = ref<string>("");
-const qrCodeLoading = ref(false);
+    const link = document.createElement("a");
+    link.href = qrCodeDataUrl.value;
+    link.download = `${props.form?.slug || "form"}-qrcode.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("QR code downloaded successfully");
+  };
 
-const generateQRCode = async (url: string) => {
-  qrCodeLoading.value = true;
-  try {
-    qrCodeDataUrl.value = await QRCode.toDataURL(url, {
-      width: 256,
-      margin: 2,
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF",
-      },
-    });
-  } catch (error) {
-    console.error("Error generating QR code:", error);
-    toast.error("Failed to generate QR code");
-  } finally {
-    qrCodeLoading.value = false;
-  }
-};
-
-const downloadQRCode = () => {
-  if (!qrCodeDataUrl.value) return;
-
-  const link = document.createElement("a");
-  link.href = qrCodeDataUrl.value;
-  link.download = `${props.form?.slug || "form"}-qrcode.png`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  toast.success("QR code downloaded successfully");
-};
-
-// Generate QR code when component mounts or form changes
-watchEffect(() => {
-  if (props.form && shareUrl.value.formsUrl) {
-    generateQRCode(shareUrl.value.formsUrl);
-  }
-});
-
-const embedCode = computed(() => {
-  if (!props.form) return "";
-  return `<iframe src="${shareUrl.value.formsUrl}" width="${embedOptions.value.width}" height="${embedOptions.value.height}" frameborder="0"></iframe>`;
-});
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success("Link copied successfully");
-  } catch (err) {
-    console.error("Failed to copy:", err);
-  }
-};
-
-const shareOnPlatform = (platform: any) => {
-  const url = platform.url + encodeURIComponent(shareUrl.value.formsUrl);
-  window.open(url, "_blank");
-};
-
-const saveShareSettings = async () => {
-  if (!props.form?.id) {
-    toast.error("Form ID is required");
-    return;
-  }
-
-  // Validation
-  if (shareSettings.value.requirePassword && !shareSettings.value.password) {
-    toast.error("Please enter a password");
-    return;
-  }
-
-  if (
-    shareSettings.value.hasExpiration &&
-    !shareSettings.value.expirationDate
-  ) {
-    toast.error("Please select an expiration date");
-    return;
-  }
-
-  isSaving.value = true;
-
-  try {
-    const response = await $fetch(`/api/forms/${props.form.id}/share`, {
-      method: "PATCH",
-      headers: {
-        ...(await authHeaders()),
-      },
-      body: {
-        isPublic: shareSettings.value.isPublic,
-        requirePassword: shareSettings.value.requirePassword,
-        password: shareSettings.value.requirePassword
-          ? shareSettings.value.password
-          : null,
-        expiresAt: shareSettings.value.hasExpiration
-          ? shareSettings.value.expirationDate
-          : null,
-      },
-    });
-
-    if (response.success) {
-      toast.success("Share settings saved successfully");
-      emits("settingsUpdated", response.data);
-      emits("close");
-    } else {
-      throw new Error(response.message || "Failed to save settings");
+  // Generate QR code when component mounts or form changes
+  watchEffect(() => {
+    if (props.form && shareUrl.value.formsUrl) {
+      generateQRCode(shareUrl.value.formsUrl);
     }
-  } catch (error: any) {
-    console.error("Error saving share settings:", error);
-    toast.error(error.message || "Failed to save share settings");
-  } finally {
-    isSaving.value = false;
-  }
-};
+  });
+
+  const embedCode = computed(() => {
+    if (!props.form) return "";
+    return `<iframe src="${shareUrl.value.formsUrl}" width="${embedOptions.value.width}" height="${embedOptions.value.height}" frameborder="0"></iframe>`;
+  });
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Link copied successfully");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const shareOnPlatform = (platform: any) => {
+    const url = platform.url + encodeURIComponent(shareUrl.value.formsUrl);
+    window.open(url, "_blank");
+  };
+
+  const saveShareSettings = async () => {
+    if (!props.form?.id) {
+      toast.error("Form ID is required");
+      return;
+    }
+
+    // Validation
+    if (shareSettings.value.requirePassword && !shareSettings.value.password) {
+      toast.error("Please enter a password");
+      return;
+    }
+
+    if (shareSettings.value.hasExpiration && !shareSettings.value.expirationDate) {
+      toast.error("Please select an expiration date");
+      return;
+    }
+
+    isSaving.value = true;
+
+    try {
+      const response = await $fetch(`/api/forms/${props.form.id}/share`, {
+        method: "PATCH",
+        headers: {
+          ...(await authHeaders()),
+        },
+        body: {
+          isPublic: shareSettings.value.isPublic,
+          requirePassword: shareSettings.value.requirePassword,
+          password: shareSettings.value.requirePassword ? shareSettings.value.password : null,
+          expiresAt: shareSettings.value.hasExpiration ? shareSettings.value.expirationDate : null,
+        },
+      });
+
+      if (response.success) {
+        toast.success("Share settings saved successfully");
+        emits("settingsUpdated", response.data);
+        emits("close");
+      } else {
+        throw new Error(response.message || "Failed to save settings");
+      }
+    } catch (error: any) {
+      console.error("Error saving share settings:", error);
+      toast.error(error.message || "Failed to save share settings");
+    } finally {
+      isSaving.value = false;
+    }
+  };
 </script>
 <template>
   <Dialog :open="isOpen" @update:open="$emit('close')">
-    <DialogContent class="max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent class="max-h-[90vh] max-w-md overflow-y-auto md:max-w-2xl">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <Share2 class="h-5 w-5" />
           Share Form: {{ form?.title }}
         </DialogTitle>
-        <DialogDescription>
-          Share your form with others using the options below
-        </DialogDescription>
+        <DialogDescription> Share your form with others using the options below </DialogDescription>
       </DialogHeader>
 
       <Tabs default-value="link" class="w-full">
@@ -257,7 +247,7 @@ const saveShareSettings = async () => {
 
           <div class="space-y-3">
             <Label>Quick Share</Label>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button
                 v-for="platform in sharePlatforms"
                 :key="platform.name"
@@ -280,11 +270,11 @@ const saveShareSettings = async () => {
             <div class="flex flex-col items-center space-y-4">
               <div
                 v-if="qrCodeLoading"
-                class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg"
+                class="flex h-64 w-64 items-center justify-center rounded-lg border-2 border-dashed border-gray-300"
               >
                 <div class="text-center">
                   <div
-                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"
+                    class="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"
                   ></div>
                   <p class="text-sm text-gray-500">Generating QR Code...</p>
                 </div>
@@ -293,23 +283,19 @@ const saveShareSettings = async () => {
                 <img
                   :src="qrCodeDataUrl"
                   alt="Form QR Code"
-                  class="border-2 border-gray-200 rounded-lg shadow-sm"
+                  class="rounded-lg border-2 border-gray-200 shadow-sm"
                 />
-                <Button
-                  @click="downloadQRCode"
-                  class="w-full sm:w-auto"
-                  :disabled="!qrCodeDataUrl"
-                >
-                  <Download class="h-4 w-4 mr-2" />
+                <Button @click="downloadQRCode" class="w-full sm:w-auto" :disabled="!qrCodeDataUrl">
+                  <Download class="mr-2 h-4 w-4" />
                   Download QR Code
                 </Button>
               </div>
               <div
                 v-else
-                class="w-64 h-64 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg"
+                class="flex h-64 w-64 items-center justify-center rounded-lg border-2 border-dashed border-gray-300"
               >
                 <div class="text-center">
-                  <QrCode class="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <QrCode class="mx-auto mb-2 h-12 w-12 text-gray-400" />
                   <p class="text-sm text-gray-500">QR Code unavailable</p>
                 </div>
               </div>
@@ -320,7 +306,7 @@ const saveShareSettings = async () => {
 
           <div class="space-y-3">
             <Label>QR Code Info</Label>
-            <div class="text-sm text-muted-foreground space-y-1">
+            <div class="text-muted-foreground space-y-1 text-sm">
               <p>• QR code links to: {{ shareUrl.formsUrl }}</p>
               <p>• Scan with any QR code reader to access the form</p>
               <p>• Download and share the QR code image</p>
@@ -333,12 +319,8 @@ const saveShareSettings = async () => {
           <div class="space-y-3">
             <Label>Embed Code</Label>
             <Textarea v-model="embedCode" rows="4" class="font-mono text-sm" />
-            <Button
-              @click="copyToClipboard(embedCode)"
-              size="sm"
-              class="w-full"
-            >
-              <Copy class="h-4 w-4 mr-2" />
+            <Button @click="copyToClipboard(embedCode)" size="sm" class="w-full">
+              <Copy class="mr-2 h-4 w-4" />
               Copy Embed Code
             </Button>
           </div>
@@ -350,19 +332,11 @@ const saveShareSettings = async () => {
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label for="embed-width">Width</Label>
-                <Input
-                  id="embed-width"
-                  v-model="embedOptions.width"
-                  placeholder="100%"
-                />
+                <Input id="embed-width" v-model="embedOptions.width" placeholder="100%" />
               </div>
               <div class="space-y-2">
                 <Label for="embed-height">Height</Label>
-                <Input
-                  id="embed-height"
-                  v-model="embedOptions.height"
-                  placeholder="600px"
-                />
+                <Input id="embed-height" v-model="embedOptions.height" placeholder="600px" />
               </div>
             </div>
           </div>
@@ -374,9 +348,7 @@ const saveShareSettings = async () => {
             <div class="flex items-center justify-between">
               <div class="space-y-0.5">
                 <Label>Public Access</Label>
-                <p class="text-sm text-muted-foreground">
-                  Allow anyone with the link to access
-                </p>
+                <p class="text-muted-foreground text-sm">Allow anyone with the link to access</p>
               </div>
               <Switch v-model:checked="shareSettings.isPublic" />
             </div>
@@ -384,9 +356,7 @@ const saveShareSettings = async () => {
             <div class="flex items-center justify-between">
               <div class="space-y-0.5">
                 <Label>Password Protection</Label>
-                <p class="text-sm text-muted-foreground">
-                  Require password to access
-                </p>
+                <p class="text-muted-foreground text-sm">Require password to access</p>
               </div>
               <Switch v-model:checked="shareSettings.requirePassword" />
             </div>
@@ -404,26 +374,20 @@ const saveShareSettings = async () => {
             <div class="flex items-center justify-between">
               <div class="space-y-0.5">
                 <Label>Link Expiration</Label>
-                <p class="text-sm text-muted-foreground">
-                  Set expiration date for the link
-                </p>
+                <p class="text-muted-foreground text-sm">Set expiration date for the link</p>
               </div>
               <Switch v-model:checked="shareSettings.hasExpiration" />
             </div>
 
             <div v-if="shareSettings.hasExpiration" class="space-y-2">
               <Label for="expiration">Expiration Date</Label>
-              <Input
-                id="expiration"
-                v-model="shareSettings.expirationDate"
-                type="datetime-local"
-              />
+              <Input id="expiration" v-model="shareSettings.expirationDate" type="datetime-local" />
             </div>
           </div>
         </TabsContent>
       </Tabs>
 
-      <DialogFooter class="flex flex-col sm:flex-row gap-2">
+      <DialogFooter class="flex flex-col gap-2 sm:flex-row">
         <Button
           variant="outline"
           @click="$emit('close')"
@@ -432,12 +396,8 @@ const saveShareSettings = async () => {
         >
           Cancel
         </Button>
-        <Button
-          @click="saveShareSettings"
-          class="w-full sm:w-auto"
-          :disabled="isSaving"
-        >
-          <Loader v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
+        <Button @click="saveShareSettings" class="w-full sm:w-auto" :disabled="isSaving">
+          <Loader v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
           {{ isSaving ? "Saving..." : "Save Settings" }}
         </Button>
       </DialogFooter>

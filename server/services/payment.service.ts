@@ -1,11 +1,12 @@
 import { Mpesa } from "daraja.js";
-import { Form, StkCallbackHook, Submission } from "~~/shared/types";
-import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
-import db from "../db";
 import { eq } from "drizzle-orm";
-import { callStkPush } from "./mpesa.service";
-import { sendMail } from "./email.service";
 import { type PgTransaction } from "drizzle-orm/pg-core";
+import { Form, StkCallbackHook, Submission } from "~~/shared/types";
+
+import db from "../db";
+import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
+import { sendMail } from "./email.service";
+import { callStkPush } from "./mpesa.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,
   form: Form,
@@ -115,10 +116,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   if (stkCallback.CallbackMetadata?.Item) {
     for (const item of stkCallback.CallbackMetadata.Item) {
       meta[item.Name] = item.Value;
-      if (
-        item.Name === "MpesaReceiptNumber" &&
-        typeof item.Value === "string"
-      ) {
+      if (item.Name === "MpesaReceiptNumber" && typeof item.Value === "string") {
         receiptNumber = item.Value;
       }
       if (item.Name === "Amount" && typeof item.Value === "number") {
@@ -198,9 +196,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   return updatedPayment;
 };
 
-export const findPaymentWithCheckoutId = async (data: {
-  checkoutId: string;
-}) => {
+export const findPaymentWithCheckoutId = async (data: { checkoutId: string }) => {
   const payment = await db.query.payments.findFirst({
     where: eq(payments.checkoutId, data.checkoutId),
   });
@@ -220,13 +216,15 @@ export const getPaymentReferenceById = async (paymentId: string) => {
   return payment;
 };
 
-export const retryFormPayment = async (form: Form, submission: any) => {
-  if (!submission.metadata?.paymentData?.phoneNumber) {
+export const retryFormPayment = async (form: Form, submission: any, phoneNumber?: string) => {
+  const paymentPhone = phoneNumber || submission.metadata?.paymentData?.phoneNumber;
+  
+  if (!paymentPhone) {
     throw new Error("No payment phone number found");
   }
 
   const paymentData = {
-    phone: submission.metadata.paymentData.phoneNumber,
+    phone: paymentPhone,
     amount: submission.pricePaid,
     accountNumber: form.title,
     description: `Payment for ${form.title}`,
@@ -260,12 +258,24 @@ export const retryFormPayment = async (form: Form, submission: any) => {
     submissionId: submission.id,
   });
 
+  const updateData: any = {
+    status: "pending",
+    updatedAt: new Date(),
+  };
+  
+  if (phoneNumber && phoneNumber !== submission.metadata?.paymentData?.phoneNumber) {
+    updateData.metadata = {
+      ...submission.metadata,
+      paymentData: {
+        ...submission.metadata?.paymentData,
+        phoneNumber: phoneNumber,
+      },
+    };
+  }
+
   await db
     .update(formSubmissions)
-    .set({
-      status: "pending",
-      updatedAt: new Date(),
-    })
+    .set(updateData)
     .where(eq(formSubmissions.id, submission.id));
 
   return {

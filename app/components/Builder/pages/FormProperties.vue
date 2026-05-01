@@ -1,51 +1,49 @@
 <script setup lang="ts">
-import { X, Plus, Copy, Trash2 } from "lucide-vue-next";
-import type { FormField, PageSchema } from "~~/shared/types";
+  import { X, Plus, Copy, Trash2 } from "lucide-vue-next";
+  import type { FormField, PageSchema } from "~~/shared/types";
 
-const props = defineProps<{
-  selectedElement: FormField;
-  currentPage: PageSchema;
-}>();
+  const props = defineProps<{
+    selectedElement: FormField;
+    currentPage: PageSchema;
+  }>();
 
-const deleteElement = (index) => {
-  if (props.currentPage) {
-    const removed = props.currentPage.fields.splice(index, 1)[0];
-    if (removed && props.selectedElement?.id === removed.id) {
-      //props.selectedElement.value = null;
+  const deleteElement = (index) => {
+    if (props.currentPage) {
+      const removed = props.currentPage.fields.splice(index, 1)[0];
+      if (removed && props.selectedElement?.id === removed.id) {
+        //props.selectedElement.value = null;
+      }
     }
-  }
-};
-
-const deleteSelectedElement = () => {
-  if (props.selectedElement && props.currentPage) {
-    const index = props.currentPage.fields.findIndex(
-      (el) => el.id === props.selectedElement.id,
-    );
-    if (index !== -1) {
-      deleteElement(index);
-    }
-  }
-};
-
-const duplicateElement = (element) => {
-  const newElement = {
-    ...element,
-    id: Date.now().toString(),
-    label: element.label + " (Copy)",
   };
 
-  if (props.currentPage) {
-    props.currentPage.fields.push(newElement);
-  }
-};
+  const deleteSelectedElement = () => {
+    if (props.selectedElement && props.currentPage) {
+      const index = props.currentPage.fields.findIndex((el) => el.id === props.selectedElement.id);
+      if (index !== -1) {
+        deleteElement(index);
+      }
+    }
+  };
 
-const addOption = () => {
-  props.selectedElement.options?.push("");
-};
+  const duplicateElement = (element) => {
+    const newElement = {
+      ...element,
+      id: Date.now().toString(),
+      label: element.label + " (Copy)",
+    };
 
-const removeOption = (index) => {
-  props.selectedElement.options?.splice(index, 1);
-};
+    if (props.currentPage) {
+      props.currentPage.fields.push(newElement);
+    }
+  };
+
+  const addOption = () => {
+    props.selectedElement.options?.push("");
+  };
+
+  const removeOption = (index) => {
+    props.selectedElement.options?.splice(index, 1);
+  };
 </script>
 <template>
   <Card v-if="selectedElement">
@@ -58,28 +56,18 @@ const removeOption = (index) => {
         <div class="space-y-6">
           <!-- Basic Properties -->
           <div>
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <h3 class="text-sm font-semibold text-foreground">
-                Basic Properties
-              </h3>
-              <div
-                class="h-px bg-gradient-to-r from-blue-500/20 to-transparent flex-1"
-              ></div>
+            <div class="mb-3 flex items-center gap-2">
+              <div class="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
+              <h3 class="text-foreground text-sm font-semibold">Basic Properties</h3>
+              <div class="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent"></div>
             </div>
             <div class="space-y-3">
-              <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
-              >
+              <Card class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md">
                 <div class="space-y-2">
-                  <Label
-                    class="text-sm font-medium text-foreground flex items-center gap-2"
-                  >
-                    <div
-                      class="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center"
-                    >
+                  <Label class="text-foreground flex items-center gap-2 text-sm font-medium">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100">
                       <svg
-                        class="w-3 h-3 text-blue-600"
+                        class="h-3 w-3 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -97,23 +85,17 @@ const removeOption = (index) => {
                   <Input
                     v-model="selectedElement.label"
                     placeholder="Enter element label"
-                    class="h-9 border-0 bg-muted/50 focus:bg-muted transition-all duration-200"
+                    class="bg-muted/50 focus:bg-muted h-9 border-0 transition-all duration-200"
                   />
                 </div>
               </Card>
 
-              <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
-              >
+              <Card class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md">
                 <div class="space-y-2">
-                  <Label
-                    class="text-sm font-medium text-foreground flex items-center gap-2"
-                  >
-                    <div
-                      class="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center"
-                    >
+                  <Label class="text-foreground flex items-center gap-2 text-sm font-medium">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-green-100">
                       <svg
-                        class="w-3 h-3 text-green-600"
+                        class="h-3 w-3 text-green-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -131,23 +113,17 @@ const removeOption = (index) => {
                   <Input
                     v-model="selectedElement.placeholder"
                     placeholder="Enter placeholder text"
-                    class="h-9 border-0 bg-muted/50 focus:bg-muted transition-all duration-200"
+                    class="bg-muted/50 focus:bg-muted h-9 border-0 transition-all duration-200"
                   />
                 </div>
               </Card>
 
-              <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
-              >
+              <Card class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md">
                 <div class="space-y-2">
-                  <Label
-                    class="text-sm font-medium text-foreground flex items-center gap-2"
-                  >
-                    <div
-                      class="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center"
-                    >
+                  <Label class="text-foreground flex items-center gap-2 text-sm font-medium">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100">
                       <svg
-                        class="w-3 h-3 text-purple-600"
+                        class="h-3 w-3 text-purple-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -165,7 +141,7 @@ const removeOption = (index) => {
                   <Textarea
                     v-model="selectedElement.description"
                     placeholder="Enter description text"
-                    class="resize-none border-0 bg-muted/50 focus:bg-muted transition-all duration-200"
+                    class="bg-muted/50 focus:bg-muted resize-none border-0 transition-all duration-200"
                     rows="3"
                   />
                 </div>
@@ -175,43 +151,24 @@ const removeOption = (index) => {
 
           <!-- Advanced Options -->
           <div>
-            <div class="flex items-center gap-2 mb-3">
-              <div
-                class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"
-              ></div>
-              <h3 class="text-sm font-semibold text-foreground">
-                Advanced Options
-              </h3>
-              <div
-                class="h-px bg-gradient-to-r from-purple-500/20 to-transparent flex-1"
-              ></div>
+            <div class="mb-3 flex items-center gap-2">
+              <div class="h-2 w-2 animate-pulse rounded-full bg-purple-500"></div>
+              <h3 class="text-foreground text-sm font-semibold">Advanced Options</h3>
+              <div class="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent"></div>
             </div>
             <div class="space-y-3">
-              <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
-              >
+              <Card class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md">
                 <div class="flex items-center gap-3">
-                  <Checkbox
-                    v-model="selectedElement.required"
-                    class="w-4 h-4"
-                  />
+                  <Checkbox v-model="selectedElement.required" class="h-4 w-4" />
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-foreground">
-                      Required Field
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                      Users must fill this field
-                    </div>
+                    <div class="text-foreground text-sm font-medium">Required Field</div>
+                    <div class="text-muted-foreground text-xs">Users must fill this field</div>
                   </div>
                   <div
                     v-if="selectedElement.required"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded-full text-[10px] font-medium"
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600"
                   >
-                    <svg
-                      class="w-2.5 h-2.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
+                    <svg class="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fill-rule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -223,31 +180,18 @@ const removeOption = (index) => {
                 </div>
               </Card>
 
-              <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
-              >
+              <Card class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md">
                 <div class="flex items-center gap-3">
-                  <Checkbox
-                    v-model="selectedElement.validation"
-                    class="w-4 h-4"
-                  />
+                  <Checkbox v-model="selectedElement.validation" class="h-4 w-4" />
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-foreground">
-                      Custom Validation
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                      Add validation rules
-                    </div>
+                    <div class="text-foreground text-sm font-medium">Custom Validation</div>
+                    <div class="text-muted-foreground text-xs">Add validation rules</div>
                   </div>
                   <div
                     v-if="selectedElement.validation"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 border border-green-200 rounded-full text-[10px] font-medium"
+                    class="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-600"
                   >
-                    <svg
-                      class="w-2.5 h-2.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
+                    <svg class="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fill-rule="evenodd"
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -264,44 +208,34 @@ const removeOption = (index) => {
           <!-- Options for select/radio/multiselect elements -->
           <div
             v-if="
-              ['select', 'radio', 'checkbox-group', 'multiselect'].includes(
-                selectedElement.type,
-              )
+              ['select', 'radio', 'checkbox-group', 'multiselect'].includes(selectedElement.type)
             "
           >
-            <div class="flex items-center gap-2 mb-3">
-              <div
-                class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"
-              ></div>
-              <h3 class="text-sm font-semibold text-foreground">Options</h3>
-              <div
-                class="h-px bg-gradient-to-r from-orange-500/20 to-transparent flex-1"
-              ></div>
+            <div class="mb-3 flex items-center gap-2">
+              <div class="h-2 w-2 animate-pulse rounded-full bg-orange-500"></div>
+              <h3 class="text-foreground text-sm font-semibold">Options</h3>
+              <div class="h-px flex-1 bg-gradient-to-r from-orange-500/20 to-transparent"></div>
             </div>
             <div class="space-y-3">
-              <div
-                v-for="(option, index) in selectedElement.options"
-                :key="index"
-                class="group"
-              >
+              <div v-for="(option, index) in selectedElement.options" :key="index" class="group">
                 <Card
-                  class="p-3 hover:shadow-md transition-all duration-200 border border-border/50"
+                  class="border-border/50 border p-3 transition-all duration-200 hover:shadow-md"
                 >
                   <div class="flex items-center gap-2">
                     <div class="flex-1">
                       <Input
                         v-model="selectedElement.options[index]"
                         placeholder="Option text"
-                        class="h-9 border-0 bg-muted/50 focus:bg-muted transition-all duration-200"
+                        class="bg-muted/50 focus:bg-muted h-9 border-0 transition-all duration-200"
                       />
                     </div>
                     <Button
                       @click="removeOption(index)"
                       variant="ghost"
                       size="sm"
-                      class="px-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 hover:scale-110 opacity-0 group-hover:opacity-100"
+                      class="text-destructive/70 hover:text-destructive hover:bg-destructive/10 px-2 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:scale-110"
                     >
-                      <X class="w-3.5 h-3.5" />
+                      <X class="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </Card>
@@ -309,9 +243,9 @@ const removeOption = (index) => {
               <Button
                 @click="addOption()"
                 variant="outline"
-                class="w-full h-9 border-dashed hover:border-solid transition-all duration-200 hover:scale-[1.02]"
+                class="h-9 w-full border-dashed transition-all duration-200 hover:scale-[1.02] hover:border-solid"
               >
-                <Plus class="w-3.5 h-3.5 mr-2" />
+                <Plus class="mr-2 h-3.5 w-3.5" />
                 Add Option
               </Button>
             </div>
@@ -319,52 +253,42 @@ const removeOption = (index) => {
 
           <!-- Actions -->
           <div>
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <h3 class="text-sm font-semibold text-foreground">Actions</h3>
-              <div
-                class="h-px bg-gradient-to-r from-red-500/20 to-transparent flex-1"
-              ></div>
+            <div class="mb-3 flex items-center gap-2">
+              <div class="h-2 w-2 animate-pulse rounded-full bg-red-500"></div>
+              <h3 class="text-foreground text-sm font-semibold">Actions</h3>
+              <div class="h-px flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
             </div>
             <div class="space-y-3">
               <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50 group cursor-pointer"
+                class="border-border/50 group cursor-pointer border p-3 transition-all duration-200 hover:shadow-md"
                 @click="duplicateElement"
               >
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 transition-transform duration-200 group-hover:scale-110"
                   >
-                    <Copy class="w-4 h-4 text-blue-600" />
+                    <Copy class="h-4 w-4 text-blue-600" />
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-foreground">
-                      Duplicate Element
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                      Create a copy of this element
-                    </div>
+                    <div class="text-foreground text-sm font-medium">Duplicate Element</div>
+                    <div class="text-muted-foreground text-xs">Create a copy of this element</div>
                   </div>
                 </div>
               </Card>
 
               <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50 group cursor-pointer"
+                class="border-border/50 group cursor-pointer border p-3 transition-all duration-200 hover:shadow-md"
                 @click="deleteSelectedElement"
               >
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 transition-transform duration-200 group-hover:scale-110"
                   >
-                    <Trash2 class="w-4 h-4 text-red-600" />
+                    <Trash2 class="h-4 w-4 text-red-600" />
                   </div>
                   <div class="flex-1">
-                    <div class="text-sm font-medium text-foreground">
-                      Delete Element
-                    </div>
-                    <div class="text-xs text-muted-foreground">
-                      Remove this element permanently
-                    </div>
+                    <div class="text-foreground text-sm font-medium">Delete Element</div>
+                    <div class="text-muted-foreground text-xs">Remove this element permanently</div>
                   </div>
                 </div>
               </Card>

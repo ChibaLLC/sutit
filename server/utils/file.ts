@@ -3,10 +3,7 @@ import { handleSingleFileUpload } from "../services/upload.service";
 function isFileField(fieldName, formSchema) {
   for (const page of formSchema.pages) {
     for (const field of page.fields) {
-      if (
-        field.id === fieldName &&
-        (field.type === "file" || field.type === "image")
-      ) {
+      if (field.id === fieldName && (field.type === "file" || field.type === "image")) {
         return field;
       }
     }
@@ -17,11 +14,7 @@ function isFileField(fieldName, formSchema) {
 /**
  * Process form data and handle file uploads
  */
-export const processFormData = async (
-  formSchema,
-  rawData,
-  isMultipart = false,
-) => {
+export const processFormData = async (formSchema, rawData, isMultipart = false) => {
   let formData = {};
   let fileUploads = [];
 
@@ -58,10 +51,7 @@ export const processFormData = async (
               ...uploadResult,
             });
           } catch (error) {
-            console.error(
-              `Failed to upload file for field ${fieldName}:`,
-              error,
-            );
+            console.error(`Failed to upload file for field ${fieldName}:`, error);
             throw createError({
               statusCode: 400,
               message: `Failed to upload file for ${fieldName}: ${error.message}`,

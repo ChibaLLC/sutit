@@ -1,6 +1,6 @@
 <script setup lang="ts"></script>
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
+  <div class="from-background to-muted/20 flex min-h-screen flex-col bg-gradient-to-b">
     <LayoutAppHeader />
     <main class="flex-1">
       <slot />
