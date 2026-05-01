@@ -27,13 +27,10 @@ const enteredPassword = ref("");
 const showPasswordForm = ref(false);
 
 // Fetch form with password if provided
-const { data: form, error } = await useFetch<FormSchema>(
-  `/api/forms/${route.params.id}`,
-  {
-    key: `form-${route.params.id}`,
-    query: queryPassword ? { password: queryPassword } : {},
-  },
-);
+const { data: form, error } = await useFetch<FormSchema>(`/api/forms/${route.params.id}`, {
+  key: `form-${route.params.id}`,
+  query: queryPassword ? { password: queryPassword } : {},
+});
 
 // Handle different error states
 const errorCode = computed(() => {
@@ -59,9 +56,7 @@ generateSEO();
 
 const hasToken = computed(() => !!route.query.token);
 
-const showGroupSelection = computed(
-  () => form.value?.allowGroups && !hasToken.value,
-);
+const showGroupSelection = computed(() => form.value?.allowGroups && !hasToken.value);
 const showSelection = ref(showGroupSelection.value);
 
 const submitPassword = async () => {
@@ -85,27 +80,22 @@ const submit = async (formData: object) => {
     return;
   }
   try {
-    const { data: submitData, message } = await $fetch(
-      `/api/forms/${route.params.id}/submit`,
-      {
-        method: "post",
-        body: formData,
-        headers: {
-          ...(await authHeaders()),
-        },
-        onResponse({}) {
-          loading.value = false;
-          finish();
-        },
-        onResponseError(e) {
-          toast.error(
-            e.response._data.message ??
-              e.response._data.statusMessage ??
-              "An error occurred ",
-          );
-        },
+    const { data: submitData, message } = await $fetch(`/api/forms/${route.params.id}/submit`, {
+      method: "post",
+      body: formData,
+      headers: {
+        ...(await authHeaders()),
       },
-    );
+      onResponse({}) {
+        loading.value = false;
+        finish();
+      },
+      onResponseError(e) {
+        toast.error(
+          e.response._data.message ?? e.response._data.statusMessage ?? "An error occurred ",
+        );
+      },
+    });
     if (submitData) {
       toast.success(message);
       if (!submitData.payment) {
@@ -127,11 +117,7 @@ const submit = async (formData: object) => {
   }
 };
 
-const checkPayment = async (
-  checkoutId: string,
-  maxRetries = 10,
-  interval = 3000,
-) => {
+const checkPayment = async (checkoutId: string, maxRetries = 10, interval = 3000) => {
   let attempts = 0;
   while (attempts < maxRetries) {
     try {
@@ -166,9 +152,7 @@ const handleIndividualFill = () => {
     >
       <div class="text-center">
         <h1 class="text-6xl font-bold text-muted-foreground mb-4">404</h1>
-        <h2 class="text-2xl font-semibold text-foreground mb-2">
-          Form Not Found
-        </h2>
+        <h2 class="text-2xl font-semibold text-foreground mb-2">Form Not Found</h2>
         <p class="text-muted-foreground">
           The form you're looking for doesn't exist or has been removed.
         </p>
@@ -182,12 +166,8 @@ const handleIndividualFill = () => {
     >
       <div class="text-center">
         <EyeOff class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-        <h2 class="text-2xl font-semibold text-foreground mb-2">
-          Private Form
-        </h2>
-        <p class="text-muted-foreground">
-          This form is private and not accessible to the public.
-        </p>
+        <h2 class="text-2xl font-semibold text-foreground mb-2">Private Form</h2>
+        <p class="text-muted-foreground">This form is private and not accessible to the public.</p>
       </div>
     </div>
 
@@ -198,9 +178,7 @@ const handleIndividualFill = () => {
     >
       <div class="text-center">
         <AlertCircle class="w-16 h-16 text-destructive mx-auto mb-4" />
-        <h2 class="text-2xl font-semibold text-foreground mb-2">
-          Form Expired
-        </h2>
+        <h2 class="text-2xl font-semibold text-foreground mb-2">Form Expired</h2>
         <p class="text-muted-foreground">
           This form has expired and is no longer accepting responses.
         </p>
@@ -216,12 +194,8 @@ const handleIndividualFill = () => {
         <Card>
           <CardContent class="p-8 text-center">
             <Lock class="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 class="text-xl font-semibold text-foreground mb-2">
-              Incorrect Password
-            </h2>
-            <p class="text-muted-foreground mb-6">
-              The password you entered is incorrect.
-            </p>
+            <h2 class="text-xl font-semibold text-foreground mb-2">Incorrect Password</h2>
+            <p class="text-muted-foreground mb-6">The password you entered is incorrect.</p>
             <Button
               @click="
                 () => {
@@ -247,9 +221,7 @@ const handleIndividualFill = () => {
           <CardContent class="p-8">
             <div class="text-center mb-6">
               <Lock class="w-12 h-12 text-primary mx-auto mb-4" />
-              <h2 class="text-xl font-semibold text-foreground mb-2">
-                Password Required
-              </h2>
+              <h2 class="text-xl font-semibold text-foreground mb-2">Password Required</h2>
               <p class="text-muted-foreground">
                 This form is protected. Please enter the password to continue.
               </p>
@@ -262,9 +234,7 @@ const handleIndividualFill = () => {
                 placeholder="Enter password"
                 @keyup.enter="submitPassword"
               />
-              <Button @click="submitPassword" class="w-full">
-                Access Form
-              </Button>
+              <Button @click="submitPassword" class="w-full"> Access Form </Button>
             </div>
           </CardContent>
         </Card>
@@ -284,10 +254,7 @@ const handleIndividualFill = () => {
             <h1 class="text-4xl font-bold text-foreground mb-4">
               {{ form.title }}
             </h1>
-            <p
-              v-if="form.description"
-              class="text-lg text-muted-foreground max-w-2xl mx-auto"
-            >
+            <p v-if="form.description" class="text-lg text-muted-foreground max-w-2xl mx-auto">
               {{ form.description }}
             </p>
           </div>
@@ -304,46 +271,27 @@ const handleIndividualFill = () => {
                     <User class="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 class="text-xl font-semibold text-foreground">
-                      Fill for Yourself
-                    </h3>
-                    <p class="text-sm text-muted-foreground">
-                      Individual registration
-                    </p>
+                    <h3 class="text-xl font-semibold text-foreground">Fill for Yourself</h3>
+                    <p class="text-sm text-muted-foreground">Individual registration</p>
                   </div>
                 </div>
 
                 <div class="space-y-4 mb-8">
-                  <div
-                    class="flex items-center gap-3 text-sm text-muted-foreground"
-                  >
+                  <div class="flex items-center gap-3 text-sm text-muted-foreground">
                     <Clock class="w-4 h-4" />
                     <span>Quick and simple process</span>
                   </div>
-                  <div
-                    class="flex items-center gap-3 text-sm text-muted-foreground"
-                  >
+                  <div class="flex items-center gap-3 text-sm text-muted-foreground">
                     <DollarSign class="w-4 h-4" />
                     <span
-                      >Pay:
-                      {{
-                        form.price
-                          ? `Kes ${form.price.toLocaleString()}`
-                          : "Free"
-                      }}</span
+                      >Pay: {{ form.price ? `Kes ${form.price.toLocaleString()}` : "Free" }}</span
                     >
                   </div>
                 </div>
 
-                <Button
-                  @click="handleIndividualFill"
-                  class="w-full group"
-                  size="lg"
-                >
+                <Button @click="handleIndividualFill" class="w-full group" size="lg">
                   <span>Start Registration</span>
-                  <ArrowRight
-                    class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
-                  />
+                  <ArrowRight class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </CardContent>
             </Card>
@@ -358,28 +306,17 @@ const handleIndividualFill = () => {
                     <Users class="w-8 h-8 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <h3 class="text-xl font-semibold text-foreground">
-                      Create Group
-                    </h3>
-                    <p class="text-sm text-muted-foreground">
-                      Register multiple people
-                    </p>
+                    <h3 class="text-xl font-semibold text-foreground">Create Group</h3>
+                    <p class="text-sm text-muted-foreground">Register multiple people</p>
                   </div>
                 </div>
 
                 <div class="space-y-4 mb-8">
-                  <div
-                    class="flex items-center gap-3 text-sm text-muted-foreground"
-                  >
+                  <div class="flex items-center gap-3 text-sm text-muted-foreground">
                     <Users class="w-4 h-4" />
-                    <span
-                      >Up to
-                      {{ form.groupMemberLimit || "unlimited" }} members</span
-                    >
+                    <span>Up to {{ form.groupMemberLimit || "unlimited" }} members</span>
                   </div>
-                  <div
-                    class="flex items-center gap-3 text-sm text-muted-foreground"
-                  >
+                  <div class="flex items-center gap-3 text-sm text-muted-foreground">
                     <DollarSign class="w-4 h-4" />
                     <span>
                       Group rate:
@@ -399,9 +336,7 @@ const handleIndividualFill = () => {
                   size="lg"
                 >
                   <span>Create Group</span>
-                  <ArrowRight
-                    class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
-                  />
+                  <ArrowRight class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </CardContent>
             </Card>
@@ -434,16 +369,12 @@ const handleIndividualFill = () => {
         >
           <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between">
-              <div
-                class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300"
-              >
+              <div class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
                 <User class="w-4 h-4" />
                 <span class="font-medium">Individual Registration</span>
                 <span class="text-blue-600 dark:text-blue-400">
                   •
-                  {{
-                    hasToken ? "Filling for yourself" : "Personal registration"
-                  }}
+                  {{ hasToken ? "Filling for yourself" : "Personal registration" }}
                 </span>
               </div>
               <!-- Back button for manual selection (not for token users) -->
