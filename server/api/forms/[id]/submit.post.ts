@@ -51,7 +51,8 @@ export default defineEventHandler(async (event) => {
 
         return {
           data: {
-            ...retryResult.payment,
+            payment: retryResult.payment,
+            ...existing,
             submissionId: existing.id,
           },
           message: "Payment retry initiated. Please complete on your phone.",

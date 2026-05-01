@@ -28,11 +28,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: "Submission not found" });
   }
 
-  if (submission.formId !== formId) {
+  if (submission.formId !== form.id) {
     throw createError({ statusCode: 400, message: "Submission does not belong to this form" });
   }
 
-  if (submission.status !== "pending" && submission.status !== "abandoned") {
+  if (
+    submission.status !== "pending" &&
+    submission.status !== "abandoned" &&
+    submission.status !== "failed_payment"
+  ) {
     throw createError({
       statusCode: 400,
       message: "Submission cannot retry payment in current state",

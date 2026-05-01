@@ -106,9 +106,14 @@
         try {
           const result = await checkPayment(submitData.payment.checkoutId, 15);
           toast.success("Payment completed!");
-          await router.push(`/forms/${route.params.id}/submitted`);
+          await router.push(
+            `/forms/${route.params.id}/submitted?submissionId=${submitData.submissionId}&checkoutId=${submitData.payment.checkoutId}`,
+          );
         } catch (e: any) {
-          toast.error(e.message ?? "An error occurred");
+          // Payment check timed out - navigate to submitted page with the info
+          await router.push(
+            `/forms/${route.params.id}/submitted?submissionId=${submitData.submissionId}&checkoutId=${submitData.payment.checkoutId}`,
+          );
         }
       }
     } catch (e) {
@@ -123,7 +128,11 @@
     while (attempts < maxRetries) {
       try {
         const res = await $fetch(`/api/payments/${checkoutId}`);
-        if (res.success && res.data && res.data.status == "completed") {
+        if (
+          res.success &&
+          res.data &&
+          (res.data.status == "completed" || res.data.status == "failed")
+        ) {
           return res;
         }
       } catch (err) {

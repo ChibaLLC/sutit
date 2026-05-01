@@ -9,6 +9,8 @@
     Download,
     Copy,
     Clock,
+    AlertCircle,
+    RefreshCw,
   } from "lucide-vue-next";
   import { toast } from "vue-sonner";
   import type { FormSchema } from "~~/shared/types";
@@ -19,14 +21,59 @@
   import { Input } from "~/components/ui/input";
   import { Label } from "~/components/ui/label";
   import { Separator } from "~/components/ui/separator";
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "~/components/ui/dialog";
 
   const route = useRoute();
+  const router = useRouter();
   const { data: form } = useNuxtData<FormSchema>(`form-${route.params.id}`);
 
+  const submissionId = computed(() => route.query.submissionId as string);
+  const checkoutId = computed(() => route.query.checkoutId as string);
+
+  const { data: paymentData, refresh: refreshPayment } = await useFetch("/api/payments/" + checkoutId.value, {
+    query: { checkoutId: checkoutId.value },
+    key: `payment-${checkoutId.value}`,
+    server: false,
+  });
+
+  const paymentStatus = computed(() => paymentData.value?.data?.status as string | undefined);
+  
+  const isCompleted = computed(() => paymentStatus.value === "completed");
+  const isPending = computed(() => paymentStatus.value === "pending");
+  const isFailed = computed(() => paymentStatus.value === "failed");
+  
+  const showRetryDialog = ref(false);
+  const retryingPayment = ref(false);
+
+  const retryPayment = async () => {
+    if (!submissionId.value) return;
+    retryingPayment.value = true;
+    try {
+      const result = await $fetch(`/api/forms/${route.params.id}/retry-payment`, {
+        method: "post",
+        body: { submissionId: submissionId.value },
+      });
+      toast.success(result.message || "Payment initiated. Please complete on your phone.");
+      showRetryDialog.value = false;
+      await refreshPayment();
+    } catch (e: any) {
+      toast.error(e.data?.message || "Failed to retry payment");
+    } finally {
+      retryingPayment.value = false;
+    }
+  };
+
   const stopTatUrl = computed(() => {
-    const submissionId = route.query.submissionId;
-    if (!submissionId) return null;
-    return `${window.location.origin}/submission/${submissionId}/stop-tat`;
+    if (!submissionId.value) return null;
+    return `${window.location.origin}/submission/${submissionId.value}/stop-tat`;
   });
 
   const copyStopTatUrl = () => {
@@ -42,24 +89,123 @@
 
   const downloadResponse = () => {
     console.log("Downloading response...");
-    // Download response data
   };
 </script>
+
 <template>
   <div class="bg-background flex min-h-screen items-center justify-center p-4">
     <div class="w-full max-w-2xl space-y-8">
       <!-- Success Header -->
       <div class="space-y-4 text-center">
+        <!-- Success State -->
         <div
+          v-if="isCompleted"
           class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
         >
           <CheckCircle class="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
+        <!-- Pending State -->
+        <div
+          v-else-if="isPending"
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20"
+        >
+          <Clock class="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+        </div>
+        <!-- Failed State -->
+        <div
+          v-else-if="isFailed"
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
+        >
+          <AlertCircle class="h-8 w-8 text-red-600 dark:text-red-400" />
+        </div>
+        <!-- Unknown/Loading State -->
+        <div v-else class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/20">
+          <Clock class="h-8 w-8 text-gray-600 dark:text-gray-400" />
+        </div>
+
         <div class="space-y-2">
-          <h1 class="text-foreground text-3xl font-bold tracking-tight">Successfully Submitted!</h1>
-          <p class="text-muted-foreground text-lg">Your response has been recorded</p>
+          <h1 v-if="isCompleted" class="text-foreground text-3xl font-bold tracking-tight">
+            Successfully Submitted!
+          </h1>
+          <h1 v-else-if="isPending" class="text-foreground text-3xl font-bold tracking-tight">
+            Payment Pending
+          </h1>
+          <h1 v-else-if="isFailed" class="text-foreground text-3xl font-bold tracking-tight">
+            Payment Failed
+          </h1>
+          <h1 v-else class="text-foreground text-3xl font-bold tracking-tight">
+            Checking Payment...
+          </h1>
+
+          <p v-if="isCompleted" class="text-muted-foreground text-lg">Your response has been recorded</p>
+          <p v-else-if="isPending" class="text-muted-foreground text-lg">
+            Please complete the payment on your phone
+          </p>
+          <p v-else-if="isFailed" class="text-muted-foreground text-lg">
+            Your payment was not completed. Please try again.
+          </p>
+          <p v-else class="text-muted-foreground text-lg">Verifying payment status...</p>
         </div>
       </div>
+
+      <!-- Payment Status Card (for pending/failed states) -->
+      <Card v-if="checkoutId && !isCompleted">
+        <CardHeader>
+          <CardTitle class="flex items-center gap-2">
+            <Clock class="h-5 w-5" />
+            Payment Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="flex items-center justify-between rounded-lg bg-muted p-4">
+            <div class="flex items-center gap-3">
+              <div
+                v-if="isPending"
+                class="h-3 w-3 animate-pulse rounded-full bg-yellow-500"
+              ></div>
+              <div v-else-if="isFailed" class="h-3 w-3 rounded-full bg-red-500"></div>
+              <div v-else class="h-3 w-3 rounded-full bg-gray-500"></div>
+              <span class="font-medium capitalize">{{ paymentStatus || "loading..." }}</span>
+            </div>
+            <Button variant="outline" size="sm" @click="refreshPayment">
+              <RefreshCw class="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+
+          <p v-if="isPending" class="text-muted-foreground text-sm">
+            Check your phone for the STK push message and enter your PIN to complete payment.
+          </p>
+
+          <!-- Retry Button for Failed Payments -->
+          <div v-if="isFailed" class="pt-2">
+            <Dialog v-model:open="showRetryDialog">
+              <DialogTrigger as-child>
+                <Button class="w-full">
+                  <RefreshCw class="mr-2 h-4 w-4" />
+                  Retry Payment
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Retry Payment</DialogTitle>
+                  <DialogDescription>
+                    A new STK push request will be sent to your phone. Please complete it to
+                    finalize your submission.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" @click="showRetryDialog = false">Cancel</Button>
+                  <Button :disabled="retryingPayment" @click="retryPayment">
+                    <RefreshCw v-if="retryingPayment" class="mr-2 h-4 w-4 animate-spin" />
+                    {{ retryingPayment ? "Sending..." : "Send STK Push" }}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Submission Details Card -->
       <Card>
@@ -146,11 +292,6 @@
           <Share2 class="mr-2 h-4 w-4" />
           Share This Form
         </Button>
-
-        <!-- <Button variant="ghost" size="sm" @click="downloadResponse"> -->
-        <!--   <Download class="w-4 h-4 mr-2" /> -->
-        <!--   Download Response -->
-        <!-- </Button> -->
       </div>
     </div>
     <LazyFormsShareCard
