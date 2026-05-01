@@ -1,8 +1,9 @@
-import type { H3Event, MultiPartData } from "h3";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { extname, join } from "path";
 import { randomUUID } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
+import { extname, join } from "path";
+
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import type { H3Event, MultiPartData } from "h3";
 
 interface UploadOptions {
   multiple?: boolean;
@@ -35,10 +36,7 @@ const minioClient = new S3Client({
   forcePathStyle: true,
 });
 
-export const handleFileUpload = async (
-  event: H3Event,
-  options?: UploadOptions,
-) => {
+export const handleFileUpload = async (event: H3Event, options?: UploadOptions) => {
   const {
     multiple = true,
     maxFiles = 10,
@@ -84,9 +82,7 @@ export const handleFileUpload = async (
         );
       }
       // Upload all files
-      const uploadPromises = filesToProcess.map((file) =>
-        handleSingleFileUpload(file),
-      );
+      const uploadPromises = filesToProcess.map((file) => handleSingleFileUpload(file));
       const uploadResults = await Promise.all(uploadPromises);
 
       // Return single object for single file mode, array for multiple

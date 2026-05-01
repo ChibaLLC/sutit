@@ -1,9 +1,11 @@
+import { randomBytes } from "crypto";
+
+import { eq, and, isNull } from "drizzle-orm";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
+
 import db from "../db";
 import { dispatches, dispatchBatches, formSubmissions } from "../db/schema";
-import { eq, and, isNull } from "drizzle-orm";
 import { sendMail } from "./email.service";
-import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
-import { randomBytes } from "crypto";
 
 const generateToken = (): string => {
   return randomBytes(32).toString("hex");
@@ -365,39 +367,39 @@ export const dispatchBatch = async (
         })
         .where(eq(dispatches.id, d.id));
 
-    const email = findEmailFromResponses(d.submission?.responses || []);
-    if (email) {
-      try {
-        await sendMail({
-          to: email,
-          subject: "Your order has been dispatched",
-          html: buildDispatchEmail(
-            d.submission?.submitter?.name || "Customer",
-            data.dispatchedBy,
-            data.dispatchDate,
-          ),
-        });
-      } catch (e) {
-        console.error("Failed to send dispatch email:", e);
+      const email = findEmailFromResponses(d.submission?.responses || []);
+      if (email) {
+        try {
+          await sendMail({
+            to: email,
+            subject: "Your order has been dispatched",
+            html: buildDispatchEmail(
+              d.submission?.submitter?.name || "Customer",
+              data.dispatchedBy,
+              data.dispatchDate,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send dispatch email:", e);
+        }
       }
-    }
 
-    const phone = findPhoneFromResponses(d.submission?.responses || []);
-    if (phone) {
-      try {
-        await sendTextSmsTiara({
-          phone,
-          message: buildDispatchSms(
-            d.submission?.submitter?.name || "Customer",
-            data.dispatchedBy,
-            data.dispatchDate,
-          ),
-        });
-      } catch (e) {
-        console.error("Failed to send dispatch SMS:", e);
+      const phone = findPhoneFromResponses(d.submission?.responses || []);
+      if (phone) {
+        try {
+          await sendTextSmsTiara({
+            phone,
+            message: buildDispatchSms(
+              d.submission?.submitter?.name || "Customer",
+              data.dispatchedBy,
+              data.dispatchDate,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send dispatch SMS:", e);
+        }
       }
     }
-  }
 
     return batch;
   });
@@ -449,39 +451,39 @@ export const deliverBatch = async (batchId: string, data: { deliveryDate: string
         })
         .where(eq(dispatches.id, d.id));
 
-    const email = findEmailFromResponses(d.submission?.responses || []);
-    if (email) {
-      try {
-        await sendMail({
-          to: email,
-          subject: "Your order has been delivered - Confirm receipt",
-          html: buildDeliveryEmail(
-            d.submission?.submitter?.name || "Customer",
-            data.deliveryDate,
-            confirmUrl,
-          ),
-        });
-      } catch (e) {
-        console.error("Failed to send delivery email:", e);
+      const email = findEmailFromResponses(d.submission?.responses || []);
+      if (email) {
+        try {
+          await sendMail({
+            to: email,
+            subject: "Your order has been delivered - Confirm receipt",
+            html: buildDeliveryEmail(
+              d.submission?.submitter?.name || "Customer",
+              data.deliveryDate,
+              confirmUrl,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send delivery email:", e);
+        }
       }
-    }
 
-    const phone = findPhoneFromResponses(d.submission?.responses || []);
-    if (phone) {
-      try {
-        await sendTextSmsTiara({
-          phone,
-          message: buildDeliverySms(
-            d.submission?.submitter?.name || "Customer",
-            data.deliveryDate,
-            confirmUrl,
-          ),
-        });
-      } catch (e) {
-        console.error("Failed to send delivery SMS:", e);
+      const phone = findPhoneFromResponses(d.submission?.responses || []);
+      if (phone) {
+        try {
+          await sendTextSmsTiara({
+            phone,
+            message: buildDeliverySms(
+              d.submission?.submitter?.name || "Customer",
+              data.deliveryDate,
+              confirmUrl,
+            ),
+          });
+        } catch (e) {
+          console.error("Failed to send delivery SMS:", e);
+        }
       }
     }
-  }
 
     return batch;
   });

@@ -69,11 +69,7 @@ export default defineEventHandler(async (event) => {
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
-    setHeader(
-      event,
-      "Content-Disposition",
-      `attachment; filename=${form.slug}.xlsx`,
-    );
+    setHeader(event, "Content-Disposition", `attachment; filename=${form.slug}.xlsx`);
 
     return buffer;
   } catch (e: any) {

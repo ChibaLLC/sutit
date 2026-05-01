@@ -1,95 +1,88 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import {
-  Settings,
-  FileText,
-  Sliders,
-  Users,
-  DollarSign,
-  Save,
-  RotateCcw,
-  Link,
-  Tag,
-  Shield,
-  Send,
-  Hash,
-  Calendar,
-  CheckCircle,
-  Loader,
-} from "lucide-vue-next";
-import type { FormSchema } from "~~/shared/types";
-import { slugify } from "~~/shared/utils/form.schema";
-import { toast } from "vue-sonner";
-interface Props {
-  form: FormSchema;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<{
-  update: [form: FormSchema];
-}>();
-
-const isSaving = ref(false);
-const lastSaved = ref<Date | null>(null);
-
-const updateTags = (event: Event) => {
-  const target = event.target as HTMLTextAreaElement;
-  const tagsString = target.value;
-  props.form.tags = tagsString
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
-};
-
-const saveForm = async () => {
-  isSaving.value = true;
-  try {
-    // Emit the update event with the current form data
-    emit("update", { ...props.form });
-    lastSaved.value = new Date();
-    toast.success("Settings saved successfully");
-  } catch (error) {
-    console.error("Error saving form settings:", error);
-    toast.error("Failed to save settings");
-  } finally {
-    isSaving.value = false;
+  import {
+    Settings,
+    FileText,
+    Sliders,
+    Users,
+    DollarSign,
+    Save,
+    RotateCcw,
+    Link,
+    Tag,
+    Shield,
+    Send,
+    Hash,
+    Calendar,
+    CheckCircle,
+    Loader,
+  } from "lucide-vue-next";
+  import { ref } from "vue";
+  import { toast } from "vue-sonner";
+  import type { FormSchema } from "~~/shared/types";
+  import { slugify } from "~~/shared/utils/form.schema";
+  interface Props {
+    form: FormSchema;
   }
-};
 
-const resetForm = () => {
-  if (confirm("Are you sure you want to reset all changes?")) {
-    window.location.reload();
-  }
-};
-const slugUrl = computed(() => {
-  let host = window.location.host;
-  return `${host}/forms/${props.form.slug}`;
-});
+  const props = defineProps<Props>();
+  const emit = defineEmits<{
+    update: [form: FormSchema];
+  }>();
+
+  const isSaving = ref(false);
+  const lastSaved = ref<Date | null>(null);
+
+  const updateTags = (event: Event) => {
+    const target = event.target as HTMLTextAreaElement;
+    const tagsString = target.value;
+    props.form.tags = tagsString
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+  };
+
+  const saveForm = async () => {
+    isSaving.value = true;
+    try {
+      // Emit the update event with the current form data
+      emit("update", { ...props.form });
+      lastSaved.value = new Date();
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving form settings:", error);
+      toast.error("Failed to save settings");
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
+  const resetForm = () => {
+    if (confirm("Are you sure you want to reset all changes?")) {
+      window.location.reload();
+    }
+  };
+  const slugUrl = computed(() => {
+    let host = window.location.host;
+    return `${host}/forms/${props.form.slug}`;
+  });
 </script>
 <template>
-  <div class="min-h-screen bg-background p-6">
+  <div class="bg-background min-h-screen p-6">
     <div class="mx-auto max-w-4xl space-y-8">
       <!-- Header Section -->
-      <div class="bg-primary rounded-xl p-6 text-primary-foreground">
-        <div class="flex items-center gap-3 mb-2">
-          <div
-            class="h-8 w-8 rounded-lg bg-primary-foreground/20 flex items-center justify-center"
-          >
+      <div class="bg-primary text-primary-foreground rounded-xl p-6">
+        <div class="mb-2 flex items-center gap-3">
+          <div class="bg-primary-foreground/20 flex h-8 w-8 items-center justify-center rounded-lg">
             <Settings class="h-4 w-4" />
           </div>
           <h1 class="text-2xl font-bold">Form Settings</h1>
         </div>
-        <p class="text-primary-foreground/80">
-          Configure your form properties and behavior
-        </p>
-        <div
-          class="mt-4 flex items-center gap-2 text-sm text-primary-foreground/60"
-        >
+        <p class="text-primary-foreground/80">Configure your form properties and behavior</p>
+        <div class="text-primary-foreground/60 mt-4 flex items-center gap-2 text-sm">
           <span>Form ID:</span>
-          <code
-            class="bg-primary-foreground/10 px-2 py-1 rounded text-primary-foreground"
-            >{{ form.id }}</code
-          >
+          <code class="bg-primary-foreground/10 text-primary-foreground rounded px-2 py-1">{{
+            form.id
+          }}</code>
         </div>
       </div>
 
@@ -97,20 +90,16 @@ const slugUrl = computed(() => {
       <Card class="overflow-hidden">
         <CardHeader class="bg-card border-b">
           <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center"
-            >
-              <FileText class="h-5 w-5 text-secondary" />
+            <div class="bg-secondary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+              <FileText class="text-secondary h-5 w-5" />
             </div>
             <div>
               <CardTitle class="text-xl">Basic Information</CardTitle>
-              <CardDescription
-                >Set up your form's basic details</CardDescription
-              >
+              <CardDescription>Set up your form's basic details</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent class="p-6 space-y-6">
+        <CardContent class="space-y-6 p-6">
           <div class="space-y-2">
             <Label for="title" class="text-sm font-medium">Form Title</Label>
             <Input
@@ -118,20 +107,18 @@ const slugUrl = computed(() => {
               v-model="form.title"
               @input="(e) => (form.slug = slugify(e.target.value))"
               placeholder="Enter form title"
-              class="transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+              class="focus:ring-ring/20 transition-all duration-200 focus:ring-2"
             />
           </div>
 
           <div class="space-y-2">
-            <Label for="description" class="text-sm font-medium"
-              >Description</Label
-            >
+            <Label for="description" class="text-sm font-medium">Description</Label>
             <Textarea
               id="description"
               v-model="form.description"
               placeholder="Enter form description (optional)"
               rows="3"
-              class="transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+              class="focus:ring-ring/20 resize-none transition-all duration-200 focus:ring-2"
             />
           </div>
           <div class="space-y-2">
@@ -140,7 +127,7 @@ const slugUrl = computed(() => {
               v-model="form.afterSubmissionMessage"
               placeholder="Enter after form submission message "
               rows="3"
-              class="transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+              class="focus:ring-ring/20 resize-none transition-all duration-200 focus:ring-2"
             />
           </div>
 
@@ -149,16 +136,16 @@ const slugUrl = computed(() => {
             <Label for="slug" class="text-sm font-medium">URL Slug</Label>
             <div class="relative">
               <Link
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
               />
               <Input
                 id="slug"
                 v-model="form.slug"
                 placeholder="form-url-slug"
-                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
               />
             </div>
-            <p class="text-sm text-black dark:text-white font-semibold">
+            <p class="text-sm font-semibold text-black dark:text-white">
               {{ slugUrl }}
             </p>
           </div>
@@ -168,7 +155,7 @@ const slugUrl = computed(() => {
               <Label for="price" class="text-sm font-medium">Price</Label>
               <div class="relative">
                 <DollarSign
-                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                  class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
                 />
                 <Input
                   id="price"
@@ -177,7 +164,7 @@ const slugUrl = computed(() => {
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                  class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
                 />
               </div>
             </div>
@@ -186,9 +173,7 @@ const slugUrl = computed(() => {
             <div class="space-y-2">
               <Label for="status" class="text-sm font-medium">Status</Label>
               <Select v-model="form.status">
-                <SelectTrigger
-                  class="transition-all duration-200 focus:ring-2 focus:ring-ring/20"
-                >
+                <SelectTrigger class="focus:ring-ring/20 transition-all duration-200 focus:ring-2">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,7 +189,7 @@ const slugUrl = computed(() => {
           <div class="space-y-2">
             <Label for="tags" class="text-sm font-medium">Tags</Label>
             <div class="relative">
-              <div class="flex gap-3 mb-2">
+              <div class="mb-2 flex gap-3">
                 <Badge v-for="tag in form.tags" :key="tag">{{ tag }}</Badge>
               </div>
               <Textarea
@@ -212,12 +197,10 @@ const slugUrl = computed(() => {
                 @input="updateTags"
                 placeholder="Enter tags separated by commas"
                 rows="2"
-                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+                class="focus:ring-ring/20 resize-none pl-10 transition-all duration-200 focus:ring-2"
               />
             </div>
-            <p class="text-xs text-muted-foreground">
-              Separate multiple tags with commas
-            </p>
+            <p class="text-muted-foreground text-xs">Separate multiple tags with commas</p>
           </div>
         </CardContent>
       </Card>
@@ -227,29 +210,23 @@ const slugUrl = computed(() => {
       <Card class="overflow-hidden">
         <CardHeader class="bg-card border-b">
           <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center"
-            >
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
               <Shield class="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <CardTitle class="text-xl">Access & Permissions</CardTitle>
-              <CardDescription
-                >Control who can access and submit your form</CardDescription
-              >
+              <CardDescription>Control who can access and submit your form</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent class="p-6 space-y-6">
+        <CardContent class="space-y-6 p-6">
           <div class="grid gap-6 md:grid-cols-2">
             <div
-              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+              class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
             >
               <div class="space-y-1">
                 <Label class="text-sm font-medium">Public Form</Label>
-                <p class="text-xs text-muted-foreground">
-                  Make form publicly accessible
-                </p>
+                <p class="text-muted-foreground text-xs">Make form publicly accessible</p>
               </div>
               <Switch
                 :checked="form.isPublic"
@@ -259,13 +236,11 @@ const slugUrl = computed(() => {
             </div>
 
             <div
-              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+              class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
             >
               <div class="space-y-1">
                 <Label class="text-sm font-medium">Require Login</Label>
-                <p class="text-xs text-muted-foreground">
-                  Users must be logged in to submit
-                </p>
+                <p class="text-muted-foreground text-xs">Users must be logged in to submit</p>
               </div>
               <Switch
                 :checked="form.requiresLogin"
@@ -282,29 +257,23 @@ const slugUrl = computed(() => {
       <Card class="overflow-hidden">
         <CardHeader class="bg-card border-b">
           <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"
-            >
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
               <Send class="h-5 w-5 text-green-500" />
             </div>
             <div>
               <CardTitle class="text-xl">Submission Settings</CardTitle>
-              <CardDescription
-                >Configure how users can submit responses</CardDescription
-              >
+              <CardDescription>Configure how users can submit responses</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent class="p-6 space-y-6">
+        <CardContent class="space-y-6 p-6">
           <div class="grid gap-6 md:grid-cols-2">
             <div
-              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+              class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
             >
               <div class="space-y-1">
                 <Label class="text-sm font-medium">Multiple Submissions</Label>
-                <p class="text-xs text-muted-foreground">
-                  Allow users to submit multiple times
-                </p>
+                <p class="text-muted-foreground text-xs">Allow users to submit multiple times</p>
               </div>
               <Switch
                 :checked="form.allowMultipleSubmissions"
@@ -314,13 +283,11 @@ const slugUrl = computed(() => {
             </div>
 
             <div
-              class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+              class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
             >
               <div class="space-y-1">
                 <Label class="text-sm font-medium">Registration Reuse</Label>
-                <p class="text-xs text-muted-foreground">
-                  Allow reusing registration data
-                </p>
+                <p class="text-muted-foreground text-xs">Allow reusing registration data</p>
               </div>
               <Switch
                 :checked="form.allowRegistrationReuse"
@@ -331,12 +298,10 @@ const slugUrl = computed(() => {
           </div>
 
           <div class="space-y-2">
-            <Label for="submissionLimit" class="text-sm font-medium"
-              >Submission Limit</Label
-            >
+            <Label for="submissionLimit" class="text-sm font-medium">Submission Limit</Label>
             <div class="relative">
               <Hash
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
               />
               <Input
                 id="submissionLimit"
@@ -344,12 +309,10 @@ const slugUrl = computed(() => {
                 type="number"
                 min="1"
                 placeholder="No limit"
-                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
               />
             </div>
-            <p class="text-xs text-muted-foreground">
-              Leave empty for unlimited submissions
-            </p>
+            <p class="text-muted-foreground text-xs">Leave empty for unlimited submissions</p>
           </div>
         </CardContent>
       </Card>
@@ -358,31 +321,25 @@ const slugUrl = computed(() => {
       <Card class="overflow-hidden">
         <CardHeader class="bg-card border-b">
           <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center"
-            >
-              <Sliders class="h-5 w-5 text-accent" />
+            <div class="bg-accent/10 flex h-10 w-10 items-center justify-center rounded-lg">
+              <Sliders class="text-accent h-5 w-5" />
             </div>
             <div>
               <CardTitle class="text-xl">Configuration Options</CardTitle>
-              <CardDescription
-                >Customize form behavior and features</CardDescription
-              >
+              <CardDescription>Customize form behavior and features</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent class="p-6 space-y-8">
+        <CardContent class="space-y-8 p-6">
           <!-- Toggle Options -->
           <div class="grid gap-6 md:grid-cols-2">
             <div class="space-y-4">
               <div
-                class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+                class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
               >
                 <div class="space-y-1">
                   <Label class="text-sm font-medium">Require Merchandise</Label>
-                  <p class="text-xs text-muted-foreground">
-                    Require users to purchase merchandise
-                  </p>
+                  <p class="text-muted-foreground text-xs">Require users to purchase merchandise</p>
                 </div>
                 <Switch
                   :checked="form.requireMerch"
@@ -392,13 +349,11 @@ const slugUrl = computed(() => {
               </div>
 
               <div
-                class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+                class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
               >
                 <div class="space-y-1">
                   <Label class="text-sm font-medium">Calculate TAT</Label>
-                  <p class="text-xs text-muted-foreground">
-                    Enable turnaround time calculation
-                  </p>
+                  <p class="text-muted-foreground text-xs">Enable turnaround time calculation</p>
                 </div>
                 <Switch
                   :checked="form.calculateTat"
@@ -410,13 +365,11 @@ const slugUrl = computed(() => {
 
             <div class="space-y-4">
               <div
-                class="flex items-center justify-between p-4 rounded-lg border bg-card/50 transition-all duration-200 hover:bg-card"
+                class="bg-card/50 hover:bg-card flex items-center justify-between rounded-lg border p-4 transition-all duration-200"
               >
                 <div class="space-y-1">
                   <Label class="text-sm font-medium">Allow Groups</Label>
-                  <p class="text-xs text-muted-foreground">
-                    Enable group submissions
-                  </p>
+                  <p class="text-muted-foreground text-xs">Enable group submissions</p>
                 </div>
                 <Switch
                   :checked="form.allowGroups"
@@ -437,23 +390,19 @@ const slugUrl = computed(() => {
             leave-to-class="opacity-0 transform -translate-y-4"
           >
             <div v-if="form.allowGroups" class="space-y-6">
-              <div class="flex items-center gap-3 pt-4 border-t">
-                <div
-                  class="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center"
-                >
-                  <Users class="h-4 w-4 text-accent" />
+              <div class="flex items-center gap-3 border-t pt-4">
+                <div class="bg-accent/10 flex h-8 w-8 items-center justify-center rounded-lg">
+                  <Users class="text-accent h-4 w-4" />
                 </div>
                 <h3 class="text-lg font-semibold">Group Settings</h3>
               </div>
 
               <div class="grid gap-6 md:grid-cols-2">
                 <div class="space-y-2">
-                  <Label for="groupAmount" class="text-sm font-medium"
-                    >Group Amount Payable</Label
-                  >
+                  <Label for="groupAmount" class="text-sm font-medium">Group Amount Payable</Label>
                   <div class="relative">
                     <DollarSign
-                      class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                      class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
                     />
                     <Input
                       id="groupAmount"
@@ -462,18 +411,16 @@ const slugUrl = computed(() => {
                       min="0"
                       step="0.01"
                       placeholder="0.00"
-                      class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                      class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
                     />
                   </div>
                 </div>
 
                 <div class="space-y-2">
-                  <Label for="memberLimit" class="text-sm font-medium"
-                    >Member Limit</Label
-                  >
+                  <Label for="memberLimit" class="text-sm font-medium">Member Limit</Label>
                   <div class="relative">
                     <Users
-                      class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                      class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
                     />
                     <Input
                       id="memberLimit"
@@ -481,22 +428,20 @@ const slugUrl = computed(() => {
                       type="number"
                       min="1"
                       placeholder="10"
-                      class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                      class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
                     />
                   </div>
                 </div>
               </div>
 
               <div class="space-y-2">
-                <Label for="infoPrompt" class="text-sm font-medium"
-                  >Info Prompt Message</Label
-                >
+                <Label for="infoPrompt" class="text-sm font-medium">Info Prompt Message</Label>
                 <Textarea
                   id="infoPrompt"
                   v-model="form.infoPromptMessage"
                   placeholder="Enter message to display to group members"
                   rows="3"
-                  class="transition-all duration-200 focus:ring-2 focus:ring-ring/20 resize-none"
+                  class="focus:ring-ring/20 resize-none transition-all duration-200 focus:ring-2"
                 />
               </div>
             </div>
@@ -509,47 +454,37 @@ const slugUrl = computed(() => {
       <Card class="overflow-hidden">
         <CardHeader class="bg-card border-b">
           <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center"
-            >
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
               <Calendar class="h-5 w-5 text-purple-500" />
             </div>
             <div>
               <CardTitle class="text-xl">Publishing Settings</CardTitle>
-              <CardDescription
-                >Control when and how your form is published</CardDescription
-              >
+              <CardDescription>Control when and how your form is published</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent class="p-6 space-y-6">
+        <CardContent class="space-y-6 p-6">
           <div class="space-y-2">
-            <Label for="publishedAt" class="text-sm font-medium"
-              >Published Date</Label
-            >
+            <Label for="publishedAt" class="text-sm font-medium">Published Date</Label>
             <div class="relative">
               <Calendar
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
               />
               <Input
                 id="publishedAt"
                 v-model="form.publishedAt"
                 type="datetime-local"
-                class="pl-10 transition-all duration-200 focus:ring-2 focus:ring-ring/20"
+                class="focus:ring-ring/20 pl-10 transition-all duration-200 focus:ring-2"
               />
             </div>
-            <p class="text-xs text-muted-foreground">
-              Set when the form should be published
-            </p>
+            <p class="text-muted-foreground text-xs">Set when the form should be published</p>
           </div>
         </CardContent>
       </Card>
 
       <!-- Action Buttons -->
-      <div
-        class="flex items-center justify-between p-6 bg-card rounded-xl border"
-      >
-        <div class="text-sm text-muted-foreground">
+      <div class="bg-card flex items-center justify-between rounded-xl border p-6">
+        <div class="text-muted-foreground text-sm">
           <span v-if="lastSaved" class="flex items-center gap-2">
             <CheckCircle class="h-4 w-4 text-green-500" />
             Last saved {{ lastSaved.toLocaleTimeString() }}
@@ -563,16 +498,16 @@ const slugUrl = computed(() => {
             :disabled="isSaving"
             class="transition-all duration-200 hover:scale-105"
           >
-            <RotateCcw class="h-4 w-4 mr-2" />
+            <RotateCcw class="mr-2 h-4 w-4" />
             Reset
           </Button>
           <Button
             @click="saveForm"
             :disabled="isSaving"
-            class="transition-all duration-200 hover:scale-105 bg-secondary hover:bg-secondary/90"
+            class="bg-secondary hover:bg-secondary/90 transition-all duration-200 hover:scale-105"
           >
-            <Loader v-if="isSaving" class="h-4 w-4 mr-2 animate-spin" />
-            <Save v-else class="h-4 w-4 mr-2" />
+            <Loader v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
+            <Save v-else class="mr-2 h-4 w-4" />
             {{ isSaving ? "Saving..." : "Save Changes" }}
           </Button>
         </div>

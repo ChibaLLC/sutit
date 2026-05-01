@@ -39,11 +39,7 @@ export async function callStkPush(
   return response.data;
 }
 
-export async function callB2c(data: {
-  phone_number: string;
-  reason: string;
-  amount: number;
-}) {
+export async function callB2c(data: { phone_number: string; reason: string; amount: number }) {
   const phone = +`254${data.phone_number.slice(-9)}`;
   const response = await app
     .b2c()
@@ -90,11 +86,7 @@ async function businessPayBill(payload: {
   return response.data;
 }
 
-async function businessBuyGoods(payload: {
-  amount: number;
-  till: string;
-  requester?: string;
-}) {
+async function businessBuyGoods(payload: { amount: number; till: string; requester?: string }) {
   const response = await app
     .b2b()
     .amount(payload.amount)
@@ -138,8 +130,6 @@ export async function callB2b(data: {
       requester: data.requester,
     });
   } else {
-    throw new Error(
-      "Both Paybill and Till Number cannot be empty for B2B transactions",
-    );
+    throw new Error("Both Paybill and Till Number cannot be empty for B2B transactions");
   }
 }

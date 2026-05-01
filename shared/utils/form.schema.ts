@@ -20,19 +20,9 @@ export const validationRuleSchema = z.object({
 export const formSettingsSchema = z.object({
   submitText: z.string().optional(),
   resetText: z.string().optional(),
-  layout: z
-    .union([
-      z.literal("vertical"),
-      z.literal("horizontal"),
-      z.literal("inline"),
-    ])
-    .optional(),
-  spacing: z
-    .union([z.literal("tight"), z.literal("normal"), z.literal("loose")])
-    .optional(),
-  theme: z
-    .union([z.literal("light"), z.literal("dark"), z.literal("auto")])
-    .optional(),
+  layout: z.union([z.literal("vertical"), z.literal("horizontal"), z.literal("inline")]).optional(),
+  spacing: z.union([z.literal("tight"), z.literal("normal"), z.literal("loose")]).optional(),
+  theme: z.union([z.literal("light"), z.literal("dark"), z.literal("auto")]).optional(),
 });
 
 export const storeItemSchema = z.object({
@@ -73,9 +63,7 @@ export const dragItemSchema = z.object({
 export const storeSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  items: z
-    .array(storeItemSchema)
-    .min(1, "At least on store item should be set"),
+  items: z.array(storeItemSchema).min(1, "At least on store item should be set"),
 });
 
 export const formSchemaSchema = z.object({

@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-   "ignorePatterns": ["app/components/ui/**", "dist/**"],
+  "ignorePatterns": ["app/components/ui/**", "dist/**", "server/db/drizzle/**"],
   "vueIndentScriptAndStyle": true,
   "sortTailwindcss": true,
   "sortImports": true

@@ -1,11 +1,12 @@
 import { Mpesa } from "daraja.js";
-import { Form, StkCallbackHook, Submission } from "~~/shared/types";
-import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
-import db from "../db";
 import { eq } from "drizzle-orm";
-import { callStkPush } from "./mpesa.service";
-import { sendMail } from "./email.service";
 import { type PgTransaction } from "drizzle-orm/pg-core";
+import { Form, StkCallbackHook, Submission } from "~~/shared/types";
+
+import db from "../db";
+import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
+import { sendMail } from "./email.service";
+import { callStkPush } from "./mpesa.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,
   form: Form,
@@ -115,10 +116,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   if (stkCallback.CallbackMetadata?.Item) {
     for (const item of stkCallback.CallbackMetadata.Item) {
       meta[item.Name] = item.Value;
-      if (
-        item.Name === "MpesaReceiptNumber" &&
-        typeof item.Value === "string"
-      ) {
+      if (item.Name === "MpesaReceiptNumber" && typeof item.Value === "string") {
         receiptNumber = item.Value;
       }
       if (item.Name === "Amount" && typeof item.Value === "number") {
@@ -198,9 +196,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   return updatedPayment;
 };
 
-export const findPaymentWithCheckoutId = async (data: {
-  checkoutId: string;
-}) => {
+export const findPaymentWithCheckoutId = async (data: { checkoutId: string }) => {
   const payment = await db.query.payments.findFirst({
     where: eq(payments.checkoutId, data.checkoutId),
   });

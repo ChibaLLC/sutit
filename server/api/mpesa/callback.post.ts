@@ -1,13 +1,11 @@
-import { completeFormPayment } from "~~/server/services/payment.service";
-import { StkCallbackHook } from "~~/shared/types";
-import {
-  sendStopTatNotification,
-} from "~~/server/services/submissions.service";
-import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
-import { sendMail } from "~~/server/services/email.service";
-import { formPayments, formGroups, formGroupMembers } from "~~/server/db/schema";
-import db from "~~/server/db";
 import { eq } from "drizzle-orm";
+import db from "~~/server/db";
+import { formPayments, formGroups, formGroupMembers } from "~~/server/db/schema";
+import { sendMail } from "~~/server/services/email.service";
+import { completeFormPayment } from "~~/server/services/payment.service";
+import { sendStopTatNotification } from "~~/server/services/submissions.service";
+import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
+import { StkCallbackHook } from "~~/shared/types";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -106,7 +104,9 @@ async function handleFailedGroupPayment(group: any) {
       }
     }
 
-    console.log(`Sent invites for group ${group.id} after failed payment (for member self-payment)`);
+    console.log(
+      `Sent invites for group ${group.id} after failed payment (for member self-payment)`,
+    );
   } catch (error) {
     console.error("Error sending group invites after failed payment:", error);
   }

@@ -1,103 +1,103 @@
 <script setup lang="ts">
-import {
-  Type,
-  Mail,
-  Phone,
-  Link,
-  AlignLeft,
-  List,
-  CheckSquare,
-  Circle,
-  CalendarDays,
-  Upload,
-  Hash,
-  ToggleLeft,
-} from "lucide-vue-next";
+  import {
+    Type,
+    Mail,
+    Phone,
+    Link,
+    AlignLeft,
+    List,
+    CheckSquare,
+    Circle,
+    CalendarDays,
+    Upload,
+    Hash,
+    ToggleLeft,
+  } from "lucide-vue-next";
 
-const basicElements = [
-  {
-    type: "text",
-    label: "Text Input",
-    icon: Type,
-    description: "Single line text input",
-  },
-  {
-    type: "email",
-    label: "Email",
-    icon: Mail,
-    description: "Email address input",
-  },
-  {
-    type: "phone",
-    label: "Phone",
-    icon: Phone,
-    description: "Phone number input",
-  },
-  { type: "url", label: "URL", icon: Link, description: "Website URL input" },
-  {
-    type: "textarea",
-    label: "Textarea",
-    icon: AlignLeft,
-    description: "Multi-line text input",
-  },
-  {
-    type: "number",
-    label: "Number",
-    icon: Hash,
-    description: "Numeric input field",
-  },
-];
+  const basicElements = [
+    {
+      type: "text",
+      label: "Text Input",
+      icon: Type,
+      description: "Single line text input",
+    },
+    {
+      type: "email",
+      label: "Email",
+      icon: Mail,
+      description: "Email address input",
+    },
+    {
+      type: "phone",
+      label: "Phone",
+      icon: Phone,
+      description: "Phone number input",
+    },
+    { type: "url", label: "URL", icon: Link, description: "Website URL input" },
+    {
+      type: "textarea",
+      label: "Textarea",
+      icon: AlignLeft,
+      description: "Multi-line text input",
+    },
+    {
+      type: "number",
+      label: "Number",
+      icon: Hash,
+      description: "Numeric input field",
+    },
+  ];
 
-const selectionElements = [
-  {
-    type: "select",
-    label: "Dropdown",
-    icon: List,
-    description: "Single selection dropdown",
-  },
-  {
-    type: "multiselect",
-    label: "Multi-Select",
-    icon: CheckSquare,
-    description: "Multiple selections from options",
-  },
-  {
-    type: "radio",
-    label: "Radio Group",
-    icon: Circle,
-    description: "Single choice from options",
-  },
-  {
-    type: "checkbox",
-    label: "Checkbox",
-    icon: CheckSquare,
-    description: "Yes/No choice",
-  },
-  {
-    type: "toggle",
-    label: "Toggle",
-    icon: ToggleLeft,
-    description: "On/off switch",
-  },
-];
+  const selectionElements = [
+    {
+      type: "select",
+      label: "Dropdown",
+      icon: List,
+      description: "Single selection dropdown",
+    },
+    {
+      type: "multiselect",
+      label: "Multi-Select",
+      icon: CheckSquare,
+      description: "Multiple selections from options",
+    },
+    {
+      type: "radio",
+      label: "Radio Group",
+      icon: Circle,
+      description: "Single choice from options",
+    },
+    {
+      type: "checkbox",
+      label: "Checkbox",
+      icon: CheckSquare,
+      description: "Yes/No choice",
+    },
+    {
+      type: "toggle",
+      label: "Toggle",
+      icon: ToggleLeft,
+      description: "On/off switch",
+    },
+  ];
 
-const advancedElements = [
-  {
-    type: "date",
-    label: "Date Picker",
-    icon: CalendarDays,
-    description: "Date selection input",
-  },
-  {
-    type: "file",
-    label: "File Upload",
-    icon: Upload,
-    description: "File attachment input",
-  },
-];
-const handleDragStart = (event: DragEvent, element: any) => {
-  event.dataTransfer?.setData("application/json", JSON.stringify(element));
-};
+  const advancedElements = [
+    {
+      type: "date",
+      label: "Date Picker",
+      icon: CalendarDays,
+      description: "Date selection input",
+    },
+    {
+      type: "file",
+      label: "File Upload",
+      icon: Upload,
+      description: "File attachment input",
+    },
+  ];
+  const handleDragStart = (event: DragEvent, element: any) => {
+    event.dataTransfer?.setData("application/json", JSON.stringify(element));
+  };
 </script>
 <template>
   <Card>
@@ -109,12 +109,10 @@ const handleDragStart = (event: DragEvent, element: any) => {
       <div class="space-y-6">
         <!-- Basic Inputs -->
         <div>
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            <h3 class="text-sm font-semibold text-foreground">Basic Inputs</h3>
-            <div
-              class="h-px bg-gradient-to-r from-blue-500/20 to-transparent flex-1"
-            ></div>
+          <div class="mb-3 flex items-center gap-2">
+            <div class="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
+            <h3 class="text-foreground text-sm font-semibold">Basic Inputs</h3>
+            <div class="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent"></div>
           </div>
           <div class="grid gap-2">
             <div
@@ -122,33 +120,28 @@ const handleDragStart = (event: DragEvent, element: any) => {
               :key="element.type"
               :draggable="true"
               @dragstart="handleDragStart($event, element)"
-              class="group cursor-move transform transition-all duration-200 hover:scale-[1.02]"
+              class="group transform cursor-move transition-all duration-200 hover:scale-[1.02]"
             >
               <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50 hover:border-blue-200 hover:bg-blue-50/30"
+                class="border-border/50 border p-3 transition-all duration-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-md"
               >
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 transition-transform duration-200 group-hover:scale-110"
                   >
-                    <component
-                      :is="element.icon"
-                      class="h-4 w-4 text-blue-600"
-                    />
+                    <component :is="element.icon" class="h-4 w-4 text-blue-600" />
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm text-foreground">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-foreground text-sm font-medium">
                       {{ element.label }}
                     </p>
-                    <p class="text-xs text-muted-foreground truncate">
+                    <p class="text-muted-foreground truncate text-xs">
                       {{ element.description }}
                     </p>
                   </div>
-                  <div
-                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  >
+                  <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     <svg
-                      class="w-4 h-4 text-muted-foreground"
+                      class="text-muted-foreground h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -169,12 +162,10 @@ const handleDragStart = (event: DragEvent, element: any) => {
 
         <!-- Selection Elements -->
         <div>
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-            <h3 class="text-sm font-semibold text-foreground">Selection</h3>
-            <div
-              class="h-px bg-gradient-to-r from-purple-500/20 to-transparent flex-1"
-            ></div>
+          <div class="mb-3 flex items-center gap-2">
+            <div class="h-2 w-2 animate-pulse rounded-full bg-purple-500"></div>
+            <h3 class="text-foreground text-sm font-semibold">Selection</h3>
+            <div class="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent"></div>
           </div>
           <div class="grid gap-2">
             <div
@@ -182,33 +173,28 @@ const handleDragStart = (event: DragEvent, element: any) => {
               :key="element.type"
               :draggable="true"
               @dragstart="handleDragStart($event, element)"
-              class="group cursor-move transform transition-all duration-200 hover:scale-[1.02]"
+              class="group transform cursor-move transition-all duration-200 hover:scale-[1.02]"
             >
               <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50 hover:border-purple-200 hover:bg-purple-50/30"
+                class="border-border/50 border p-3 transition-all duration-200 hover:border-purple-200 hover:bg-purple-50/30 hover:shadow-md"
               >
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 transition-transform duration-200 group-hover:scale-110"
                   >
-                    <component
-                      :is="element.icon"
-                      class="h-4 w-4 text-purple-600"
-                    />
+                    <component :is="element.icon" class="h-4 w-4 text-purple-600" />
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm text-foreground">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-foreground text-sm font-medium">
                       {{ element.label }}
                     </p>
-                    <p class="text-xs text-muted-foreground truncate">
+                    <p class="text-muted-foreground truncate text-xs">
                       {{ element.description }}
                     </p>
                   </div>
-                  <div
-                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  >
+                  <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     <svg
-                      class="w-4 h-4 text-muted-foreground"
+                      class="text-muted-foreground h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -229,12 +215,10 @@ const handleDragStart = (event: DragEvent, element: any) => {
 
         <!-- Advanced Elements -->
         <div>
-          <div class="flex items-center gap-2 mb-3">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <h3 class="text-sm font-semibold text-foreground">Advanced</h3>
-            <div
-              class="h-px bg-gradient-to-r from-green-500/20 to-transparent flex-1"
-            ></div>
+          <div class="mb-3 flex items-center gap-2">
+            <div class="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+            <h3 class="text-foreground text-sm font-semibold">Advanced</h3>
+            <div class="h-px flex-1 bg-gradient-to-r from-green-500/20 to-transparent"></div>
           </div>
           <div class="grid gap-2">
             <div
@@ -242,33 +226,28 @@ const handleDragStart = (event: DragEvent, element: any) => {
               :key="element.type"
               :draggable="true"
               @dragstart="handleDragStart($event, element)"
-              class="group cursor-move transform transition-all duration-200 hover:scale-[1.02]"
+              class="group transform cursor-move transition-all duration-200 hover:scale-[1.02]"
             >
               <Card
-                class="p-3 hover:shadow-md transition-all duration-200 border border-border/50 hover:border-green-200 hover:bg-green-50/30"
+                class="border-border/50 border p-3 transition-all duration-200 hover:border-green-200 hover:bg-green-50/30 hover:shadow-md"
               >
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 transition-transform duration-200 group-hover:scale-110"
                   >
-                    <component
-                      :is="element.icon"
-                      class="h-4 w-4 text-green-600"
-                    />
+                    <component :is="element.icon" class="h-4 w-4 text-green-600" />
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-sm text-foreground">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-foreground text-sm font-medium">
                       {{ element.label }}
                     </p>
-                    <p class="text-xs text-muted-foreground truncate">
+                    <p class="text-muted-foreground truncate text-xs">
                       {{ element.description }}
                     </p>
                   </div>
-                  <div
-                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  >
+                  <div class="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     <svg
-                      class="w-4 h-4 text-muted-foreground"
+                      class="text-muted-foreground h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

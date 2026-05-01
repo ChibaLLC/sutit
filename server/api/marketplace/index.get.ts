@@ -11,8 +11,7 @@ export default defineEventHandler(async (event) => {
     from: query.from?.toString(),
     to: query.to?.toString(),
     sort: query.sort?.toString(),
-    order:
-      query.order === "asc" || query.order === "desc" ? query.order : "desc",
+    order: query.order === "asc" || query.order === "desc" ? query.order : "desc",
     featured: ["true", "1"].includes(query.featured?.toString() || ""),
   };
   try {

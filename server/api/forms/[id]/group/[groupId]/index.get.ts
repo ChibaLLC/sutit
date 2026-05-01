@@ -1,5 +1,5 @@
-import { getGroupById } from "~~/server/services/group.service";
 import { auth } from "~~/server/lib/auth";
+import { getGroupById } from "~~/server/services/group.service";
 
 export default defineEventHandler(async (event) => {
   const params = getRouterParams(event);

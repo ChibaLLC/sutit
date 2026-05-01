@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { Github, Twitter, Linkedin, Mail } from "lucide-vue-next";
+  import { Github, Twitter, Linkedin, Mail } from "lucide-vue-next";
 
-const socialLinks = [
-  { icon: Github, href: "#", label: "GitHub" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Mail, href: "#", label: "Email" },
-];
+  const socialLinks = [
+    { icon: Github, href: "#", label: "GitHub" },
+    { icon: Twitter, href: "#", label: "Twitter" },
+    { icon: Linkedin, href: "#", label: "LinkedIn" },
+    { icon: Mail, href: "#", label: "Email" },
+  ];
 </script>
 
 <template>
   <footer
-    class="w-full border-t border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 mt-auto"
+    class="border-border/40 bg-background/80 supports-[backdrop-filter]:bg-background/60 mt-auto w-full border-t backdrop-blur-md"
   >
     <div class="container mx-auto px-4 py-6">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
         <!-- Brand -->
         <div class="flex items-center gap-2">
           <div
-            class="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center"
+            class="from-primary to-primary/60 flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br"
           >
             <NuxtImg src="/logo.jpeg" class="rounded-md"></NuxtImg>
           </div>
           <span
-            class="text-sm font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+            class="from-primary to-primary/70 bg-gradient-to-r bg-clip-text text-sm font-semibold text-transparent"
           >
             SUTIT
           </span>
@@ -34,10 +34,16 @@ const socialLinks = [
           <NuxtLink to="/about" class="text-muted-foreground hover:text-primary transition-colors">
             About
           </NuxtLink>
-          <NuxtLink to="/marketplace" class="text-muted-foreground hover:text-primary transition-colors">
+          <NuxtLink
+            to="/marketplace"
+            class="text-muted-foreground hover:text-primary transition-colors"
+          >
             Marketplace
           </NuxtLink>
-          <NuxtLink to="/contact" class="text-muted-foreground hover:text-primary transition-colors">
+          <NuxtLink
+            to="/contact"
+            class="text-muted-foreground hover:text-primary transition-colors"
+          >
             Contact
           </NuxtLink>
         </div>
@@ -49,19 +55,19 @@ const socialLinks = [
             :key="social.label"
             :href="social.href"
             :aria-label="social.label"
-            class="w-7 h-7 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+            class="bg-muted hover:bg-primary/10 group flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-300 hover:scale-110"
           >
             <component
               :is="social.icon"
-              class="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors"
+              class="text-muted-foreground group-hover:text-primary h-3.5 w-3.5 transition-colors"
             />
           </a>
         </div>
       </div>
 
       <!-- Copyright -->
-      <div class="text-center mt-4 pt-4 border-t border-border/20">
-        <p class="text-xs text-muted-foreground">
+      <div class="border-border/20 mt-4 border-t pt-4 text-center">
+        <p class="text-muted-foreground text-xs">
           &copy; {{ new Date().getFullYear() }} SUTIT. All rights reserved.
         </p>
       </div>
@@ -70,19 +76,19 @@ const socialLinks = [
 </template>
 
 <style scoped>
-/* Smooth animations */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  /* Smooth animations */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-footer {
-  animation: slideUp 0.6s ease-out;
-}
+  footer {
+    animation: slideUp 0.6s ease-out;
+  }
 </style>

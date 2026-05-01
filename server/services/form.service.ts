@@ -11,6 +11,10 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import type { Filters, FormSchema } from "~~/shared/types";
+import { slugify } from "~~/shared/utils/form.schema";
+
+import db from "../db";
 import {
   activities,
   fieldResponses,
@@ -23,9 +27,6 @@ import {
   formStores,
   storeItems,
 } from "../db/schema";
-import db from "../db";
-import type { Filters, FormSchema } from "~~/shared/types";
-import { slugify } from "~~/shared/utils/form.schema";
 
 export type NewForm = InferInsertModel<typeof forms>;
 export type NewFormSection = InferInsertModel<typeof formPages>;
@@ -62,9 +63,7 @@ export const createForm = async (payload: FormSchema) => {
       });
 
       if (existingForm) {
-        uniqueSlug = slugify(
-          uniqueSlug + "-" + new Date().getDate().toString(),
-        );
+        uniqueSlug = slugify(uniqueSlug + "-" + new Date().getDate().toString());
       }
       // 1. Create the Form
       const [newForm] = await tx
@@ -74,9 +73,7 @@ export const createForm = async (payload: FormSchema) => {
           slug: uniqueSlug,
           createdBy: payload.createdBy,
           status: formPayload.status || "draft",
-          publishedAt: formPayload.publishedAt
-            ? new Date(formPayload.publishedAt)
-            : new Date(),
+          publishedAt: formPayload.publishedAt ? new Date(formPayload.publishedAt) : new Date(),
           createdAt: new Date(),
           updatedAt: new Date(),
         })
@@ -114,9 +111,7 @@ export const createForm = async (payload: FormSchema) => {
             createdAt: new Date(),
             type: fieldPayload.type,
             name:
-              fieldPayload.label.split(" ").join("_").toLocaleLowerCase() +
-              "_" +
-              fieldPayload.name,
+              fieldPayload.label.split(" ").join("_").toLocaleLowerCase() + "_" + fieldPayload.name,
           });
         }
       }
@@ -175,15 +170,11 @@ export const createForm = async (payload: FormSchema) => {
 
 export async function getFormById(formId: string, token?: string) {
   try {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isUUID = uuidRegex.test(formId);
     const form = await db.query.forms.findFirst({
       where: isUUID
-        ? or(
-            eq(forms.id, formId),
-            eq(sql`lower(${forms.slug})`, formId.toLowerCase()),
-          )
+        ? or(eq(forms.id, formId), eq(sql`lower(${forms.slug})`, formId.toLowerCase()))
         : eq(sql`lower(${forms.slug})`, formId.toLowerCase()),
       with: {
         pages: {
@@ -229,9 +220,7 @@ export async function getFormById(formId: string, token?: string) {
           ),
         });
         if (memberPayment && memberPayment.paymentType == "leader_pays") {
-          form.price = (
-            parseInt(form.price || "0") - memberPayment.amount
-          ).toString();
+          form.price = (parseInt(form.price || "0") - memberPayment.amount).toString();
         }
       }
     }
@@ -278,9 +267,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         .update(forms)
         .set({
           ...formPayload,
-          publishedAt: formPayload.publishedAt
-            ? new Date(formPayload.publishedAt)
-            : undefined,
+          publishedAt: formPayload.publishedAt ? new Date(formPayload.publishedAt) : undefined,
           updatedAt: new Date(), // Enable this to track updates
         })
         .where(eq(forms.id, formId))
@@ -344,9 +331,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
                 ...fieldData,
                 type: fieldPayload.type,
                 name:
-                  fieldPayload.label.split(" ").join("_").toLowerCase() +
-                  "_" +
-                  fieldPayload.name,
+                  fieldPayload.label.split(" ").join("_").toLowerCase() + "_" + fieldPayload.name,
                 pageId: pageId, // Ensure field is linked to correct page
                 updatedAt: new Date(),
               })
@@ -365,9 +350,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
                 pageId: pageId,
                 type: fieldPayload.type,
                 name:
-                  fieldPayload.label.split(" ").join("_").toLowerCase() +
-                  "_" +
-                  fieldPayload.name,
+                  fieldPayload.label.split(" ").join("_").toLowerCase() + "_" + fieldPayload.name,
               })
               .returning();
 
@@ -399,19 +382,12 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
       const fieldsToCheck = await tx
         .select({ id: formFields.id })
         .from(formFields)
-        .where(
-          and(
-            inArray(formFields.pageId, existingPageIds),
-            isNull(formFields.deletedAt),
-          ),
-        );
+        .where(and(inArray(formFields.pageId, existingPageIds), isNull(formFields.deletedAt)));
 
       const currentFieldIds = fieldsToCheck.map((f) => f.id);
       console.log("Current field IDs in updated pages:", currentFieldIds);
 
-      const fieldsToDelete = currentFieldIds.filter(
-        (id) => !existingFieldIds.includes(id),
-      );
+      const fieldsToDelete = currentFieldIds.filter((id) => !existingFieldIds.includes(id));
 
       console.log("Fields to delete:", fieldsToDelete);
 
@@ -449,9 +425,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
                 description: store.description,
                 updatedAt: new Date(),
               })
-              .where(
-                and(eq(formStores.id, store.id), eq(formStores.formId, formId)),
-              )
+              .where(and(eq(formStores.id, store.id), eq(formStores.formId, formId)))
               .returning();
 
             if (updatedStore) {
@@ -577,17 +551,13 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
 
 // Helper function to check if a string is a valid UUID
 function isValidUUID(str: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 }
 
 export async function deleteForm(formId: string, deleterId: string) {
   return db.transaction(async (tx) => {
-    const [existingForm] = await tx
-      .select()
-      .from(forms)
-      .where(eq(forms.id, formId));
+    const [existingForm] = await tx.select().from(forms).where(eq(forms.id, formId));
     if (!existingForm) {
       tx.rollback();
       throw new Error("Form not found.");
@@ -646,10 +616,7 @@ interface ShareSettings {
   acceptResponses?: boolean;
 }
 
-export const updateShareSettings = async (
-  formId: string,
-  settings: ShareSettings,
-) => {
+export const updateShareSettings = async (formId: string, settings: ShareSettings) => {
   try {
     const form = await db.query.forms.findFirst({
       where: eq(forms.id, formId),
@@ -674,9 +641,7 @@ export const updateShareSettings = async (
     }
 
     if (settings.expiresAt !== undefined) {
-      updateData.expiresAt = settings.expiresAt
-        ? new Date(settings.expiresAt)
-        : null;
+      updateData.expiresAt = settings.expiresAt ? new Date(settings.expiresAt) : null;
     }
 
     if (settings.requiresLogin !== undefined) {
@@ -698,8 +663,6 @@ export const updateShareSettings = async (
     return updatedForm;
   } catch (e) {
     console.error("Error updating share settings:", e);
-    throw new Error(
-      e instanceof Error ? e.message : "Failed to update share settings",
-    );
+    throw new Error(e instanceof Error ? e.message : "Failed to update share settings");
   }
 };

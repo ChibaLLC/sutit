@@ -1,7 +1,7 @@
 import { auth } from "~~/server/lib/auth";
 import { getFormById } from "~~/server/services/form.service";
-import { getSubmissionById } from "~~/server/services/submissions.service";
 import { retryFormPayment } from "~~/server/services/payment.service";
+import { getSubmissionById } from "~~/server/services/submissions.service";
 
 export default defineEventHandler(async (event) => {
   const formId = getRouterParam(event, "id");
@@ -33,7 +33,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (submission.status !== "pending" && submission.status !== "abandoned") {
-    throw createError({ statusCode: 400, message: "Submission cannot retry payment in current state" });
+    throw createError({
+      statusCode: 400,
+      message: "Submission cannot retry payment in current state",
+    });
   }
 
   if (session?.user && submission.submitterId !== session.user.id) {

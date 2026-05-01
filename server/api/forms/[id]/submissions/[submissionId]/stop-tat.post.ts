@@ -1,8 +1,8 @@
-import { auth } from "~~/server/lib/auth";
-import { updateSubmissionStatus, getSubmissionById } from "~~/server/services/submissions.service";
-import { formSubmissions, forms } from "~~/server/db/schema";
 import { eq } from "drizzle-orm";
 import db from "~~/server/db";
+import { formSubmissions, forms } from "~~/server/db/schema";
+import { auth } from "~~/server/lib/auth";
+import { updateSubmissionStatus, getSubmissionById } from "~~/server/services/submissions.service";
 
 export default defineEventHandler(async (event) => {
   const { id: formId, submissionId } = getRouterParams(event);

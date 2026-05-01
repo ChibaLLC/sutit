@@ -1,40 +1,40 @@
 <script setup lang="ts">
-import {
-  FileText,
-  ShoppingBag,
-  Banknote,
-  Gift,
-  Link2,
-  Layers,
-  Package,
-  Shield,
-  Send,
-  Check,
-} from "lucide-vue-next";
-import type { PageSchema, Store } from "~~/shared/types";
+  import {
+    FileText,
+    ShoppingBag,
+    Banknote,
+    Gift,
+    Link2,
+    Layers,
+    Package,
+    Shield,
+    Send,
+    Check,
+  } from "lucide-vue-next";
+  import type { PageSchema, Store } from "~~/shared/types";
 
-const props = defineProps<{
-  name: string;
-  slug: string;
-  description: string;
-  formType: "regular" | "product";
-  isPaid: boolean;
-  price: number;
-  pages: PageSchema[];
-  stores: Store[];
-  isPublic: boolean;
-  requiresLogin: boolean;
-  allowMultipleSubmissions: boolean;
-  submissionLimit: number | null;
-}>();
+  const props = defineProps<{
+    name: string;
+    slug: string;
+    description: string;
+    formType: "regular" | "product";
+    isPaid: boolean;
+    price: number;
+    pages: PageSchema[];
+    stores: Store[];
+    isPublic: boolean;
+    requiresLogin: boolean;
+    allowMultipleSubmissions: boolean;
+    submissionLimit: number | null;
+  }>();
 
-const totalFields = props.pages.reduce((sum, p) => sum + p.fields.length, 0);
-const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
+  const totalFields = props.pages.reduce((sum, p) => sum + p.fields.length, 0);
+  const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto">
-    <div class="text-center space-y-2 mb-8">
+  <div class="mx-auto max-w-2xl">
+    <div class="mb-8 space-y-2 text-center">
       <h2 class="text-2xl font-bold tracking-tight">Review & create</h2>
       <p class="text-muted-foreground">Everything ready? Create your form</p>
     </div>
@@ -44,16 +44,18 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
       <Card>
         <CardContent class="p-5">
           <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <FileText class="w-5 h-5 text-primary" />
+            <div
+              class="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            >
+              <FileText class="text-primary h-5 w-5" />
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold truncate">{{ name || "Untitled form" }}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <Link2 class="w-3 h-3 text-muted-foreground" />
-                <span class="text-xs font-mono text-muted-foreground">/forms/{{ slug }}</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-semibold">{{ name || "Untitled form" }}</p>
+              <div class="mt-1 flex items-center gap-2">
+                <Link2 class="text-muted-foreground h-3 w-3" />
+                <span class="text-muted-foreground font-mono text-xs">/forms/{{ slug }}</span>
               </div>
-              <p v-if="description" class="text-sm text-muted-foreground mt-2 line-clamp-2">
+              <p v-if="description" class="text-muted-foreground mt-2 line-clamp-2 text-sm">
                 {{ description }}
               </p>
             </div>
@@ -67,14 +69,15 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
       <!-- Fields & Pages -->
       <Card>
         <CardContent class="p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Layers class="w-4 h-4 text-blue-500" />
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+              <Layers class="h-4 w-4 text-blue-500" />
             </div>
             <div>
               <p class="text-sm font-medium">Pages & Fields</p>
-              <p class="text-xs text-muted-foreground">
-                {{ pages.length }} page{{ pages.length !== 1 ? "s" : "" }}, {{ totalFields }} field{{ totalFields !== 1 ? "s" : "" }}
+              <p class="text-muted-foreground text-xs">
+                {{ pages.length }} page{{ pages.length !== 1 ? "s" : "" }},
+                {{ totalFields }} field{{ totalFields !== 1 ? "s" : "" }}
               </p>
             </div>
           </div>
@@ -82,10 +85,10 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
             <div
               v-for="(page, index) in pages"
               :key="page.id"
-              class="flex items-center gap-3 p-2 rounded-lg bg-muted/30"
+              class="bg-muted/30 flex items-center gap-3 rounded-lg p-2"
             >
-              <span class="text-xs font-medium text-muted-foreground w-5">{{ index + 1 }}</span>
-              <span class="text-sm font-medium flex-1">{{ page.title }}</span>
+              <span class="text-muted-foreground w-5 text-xs font-medium">{{ index + 1 }}</span>
+              <span class="flex-1 text-sm font-medium">{{ page.title }}</span>
               <Badge variant="secondary" class="text-[10px]">
                 {{ page.fields.length }} field{{ page.fields.length !== 1 ? "s" : "" }}
               </Badge>
@@ -97,14 +100,15 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
       <!-- Products (if product form) -->
       <Card v-if="formType === 'product'">
         <CardContent class="p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <ShoppingBag class="w-4 h-4 text-purple-500" />
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
+              <ShoppingBag class="h-4 w-4 text-purple-500" />
             </div>
             <div>
               <p class="text-sm font-medium">Stores & Products</p>
-              <p class="text-xs text-muted-foreground">
-                {{ stores.length }} store{{ stores.length !== 1 ? "s" : "" }}, {{ totalProducts }} product{{ totalProducts !== 1 ? "s" : "" }}
+              <p class="text-muted-foreground text-xs">
+                {{ stores.length }} store{{ stores.length !== 1 ? "s" : "" }},
+                {{ totalProducts }} product{{ totalProducts !== 1 ? "s" : "" }}
               </p>
             </div>
           </div>
@@ -112,10 +116,10 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
             <div
               v-for="store in stores"
               :key="store.id"
-              class="flex items-center gap-3 p-2 rounded-lg bg-muted/30"
+              class="bg-muted/30 flex items-center gap-3 rounded-lg p-2"
             >
-              <Package class="w-4 h-4 text-muted-foreground" />
-              <span class="text-sm font-medium flex-1">{{ store.name }}</span>
+              <Package class="text-muted-foreground h-4 w-4" />
+              <span class="flex-1 text-sm font-medium">{{ store.name }}</span>
               <Badge variant="secondary" class="text-[10px]">
                 {{ store.items.length }} product{{ store.items.length !== 1 ? "s" : "" }}
               </Badge>
@@ -128,10 +132,10 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
       <Card>
         <CardContent class="p-5">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <div class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg">
               <component
                 :is="isPaid ? Banknote : Gift"
-                class="w-4 h-4"
+                class="h-4 w-4"
                 :class="isPaid ? 'text-green-600' : 'text-muted-foreground'"
               />
             </div>
@@ -148,26 +152,27 @@ const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
       <!-- Settings Summary -->
       <Card>
         <CardContent class="p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-              <Shield class="w-4 h-4 text-muted-foreground" />
+          <div class="mb-4 flex items-center gap-3">
+            <div class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg">
+              <Shield class="text-muted-foreground h-4 w-4" />
             </div>
             <p class="text-sm font-medium">Settings</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <Badge v-if="isPublic" variant="secondary">
-              <Check class="w-3 h-3 mr-1" /> Public
+              <Check class="mr-1 h-3 w-3" /> Public
             </Badge>
             <Badge v-if="requiresLogin" variant="secondary">
-              <Check class="w-3 h-3 mr-1" /> Login required
+              <Check class="mr-1 h-3 w-3" /> Login required
             </Badge>
             <Badge v-if="allowMultipleSubmissions" variant="secondary">
-              <Check class="w-3 h-3 mr-1" /> Multiple submissions
+              <Check class="mr-1 h-3 w-3" /> Multiple submissions
             </Badge>
-            <Badge v-if="submissionLimit" variant="secondary">
-              Limit: {{ submissionLimit }}
-            </Badge>
-            <Badge v-if="!isPublic && !requiresLogin && !allowMultipleSubmissions && !submissionLimit" variant="outline">
+            <Badge v-if="submissionLimit" variant="secondary"> Limit: {{ submissionLimit }} </Badge>
+            <Badge
+              v-if="!isPublic && !requiresLogin && !allowMultipleSubmissions && !submissionLimit"
+              variant="outline"
+            >
               Default settings
             </Badge>
           </div>
