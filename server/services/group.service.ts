@@ -311,7 +311,7 @@ export const retryGroupPayment = async (group: any, user: User, phoneNumber?: st
   const totalAmount = group.currentMemberCount * groupAmount;
 
   const paymentPhone = phoneNumber || group.phoneNumber;
-  
+
   if (!paymentPhone) {
     throw new Error("No payment phone number found");
   }
@@ -335,17 +335,14 @@ export const retryGroupPayment = async (group: any, user: User, phoneNumber?: st
     .returning();
 
   const updateData: any = {
-    paymentId: payment.id,
+    paymentId: payment?.id,
   };
-  
+
   if (phoneNumber && phoneNumber !== group.phoneNumber) {
     updateData.phoneNumber = phoneNumber;
   }
 
-  await db
-    .update(formGroups)
-    .set(updateData)
-    .where(eq(formGroups.id, group.id));
+  await db.update(formGroups).set(updateData).where(eq(formGroups.id, group.id));
 
   return {
     payment: {
