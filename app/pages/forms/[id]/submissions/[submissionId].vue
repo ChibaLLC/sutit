@@ -509,6 +509,14 @@
     return submission.value?.dispatch?.status || null;
   });
 
+  const payments = computed(() => {
+    return submission.value?.payments || [];
+  });
+
+  const completedPayment = computed(() => {
+    return payments.value.find((p: any) => p.payment?.status === "completed")?.payment || null;
+  });
+
   onUnmounted(() => {
     if (countdownInterval) clearInterval(countdownInterval);
   });
@@ -854,6 +862,59 @@
               </div>
             </CardContent>
           </Card>
+
+          <!-- Payments History Card -->
+          <Card v-if="payments.length > 0">
+            <CardHeader>
+              <CardTitle class="flex items-center gap-3">
+                <CreditCard class="h-6 w-6" />
+                Payment History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="space-y-3">
+                <div
+                  v-for="fp in payments"
+                  :key="fp.id"
+                  class="bg-secondary/20 border-border rounded-lg border p-4"
+                >
+                  <div class="mb-2 flex items-center justify-between">
+                    <Badge
+                      :variant="fp.payment?.status === 'completed' ? 'default' : 'outline'"
+                      :class="{
+                        'border-green-300 bg-green-100 text-green-800': fp.payment?.status === 'completed',
+                        'border-red-300 bg-red-100 text-red-800': fp.payment?.status === 'failed',
+                        'border-yellow-300 bg-yellow-100 text-yellow-800': fp.payment?.status === 'pending',
+                      }"
+                    >
+                      {{ fp.payment?.status }}
+                    </Badge>
+                    <span class="text-muted-foreground text-xs">
+                      {{ new Date(fp.createdAt).toLocaleString() }}
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span class="text-muted-foreground">Phone: </span>
+                      <span class="font-medium">{{ fp.payment?.phoneNumber }}</span>
+                    </div>
+                    <div>
+                      <span class="text-muted-foreground">Amount: </span>
+                      <span class="font-medium">Kes {{ fp.payment?.amount }}</span>
+                    </div>
+                    <div v-if="fp.payment?.receiptNumber" class="col-span-2">
+                      <span class="text-muted-foreground">Receipt: </span>
+                      <span class="font-medium font-mono">{{ fp.payment.receiptNumber }}</span>
+                    </div>
+                    <div v-if="fp.payment?.checkoutId" class="col-span-2">
+                      <span class="text-muted-foreground">Checkout ID: </span>
+                      <span class="font-medium font-mono text-xs">{{ fp.payment.checkoutId }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <!-- Right Column - Submission Info & Actions -->
@@ -881,30 +942,31 @@
 
                 <Separator />
 
-                <div>
+                <!-- Completed Payment (shown on the side) -->
+                <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Payment Method</p>
-                  <p class="text-base font-medium">
-                    {{ submissionData?.data?.payments?.payment ? "MPESA" : "N/A" }}
-                  </p>
+                  <p class="text-base font-medium">MPESA</p>
                 </div>
-                <div>
+                <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Mobile/Bank Account</p>
                   <p class="text-base font-medium">
-                    {{ submissionData?.data?.payments?.payment?.phoneNumber || "N/A" }}
+                    {{ completedPayment.phoneNumber }}
                   </p>
                 </div>
-                <div>
+                <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Amount</p>
                   <p class="text-primary text-lg font-bold">
-                    Kes
-                    {{ submissionData?.data?.payments?.payment?.amount || "N/A" }}
+                    Kes {{ completedPayment.amount }}
                   </p>
                 </div>
-                <div>
+                <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Reference Number</p>
                   <p class="text-primary text-lg font-bold">
-                    {{ submissionData?.data?.payments?.payment?.receiptNumber || "N/A" }}
+                    {{ completedPayment.receiptNumber || "N/A" }}
                   </p>
+                </div>
+                <div v-else>
+                  <p class="text-muted-foreground text-sm">No completed payment</p>
                 </div>
               </div>
             </CardContent>

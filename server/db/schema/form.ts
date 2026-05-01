@@ -664,7 +664,7 @@ export const formSubmissionsRelations = relations(
     }),
     responses: many(fieldResponses),
     storeResponses: many(storeResponses),
-    payments: one(formPayments),
+    payments: many(formPayments),
     groupMembers: many(formGroupMembers),
     dispatch: one(dispatches),
   }),

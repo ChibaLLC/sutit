@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 
-import { eq, isNull, isNotNull, and, inArray, sql } from "drizzle-orm";
+import { eq, isNull, isNotNull, and, inArray, sql, desc } from "drizzle-orm";
 import { SubmissionData } from "~~/shared/types";
 
 import db from "../db";
@@ -307,6 +307,7 @@ export const getSubmissionById = async (submissionId: string) => {
         },
       },
       payments: {
+        orderBy: [desc(formPayments.createdAt)],
         with: {
           payment: true,
         },
