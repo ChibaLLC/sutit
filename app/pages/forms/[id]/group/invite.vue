@@ -11,11 +11,23 @@
     ArrowLeft,
     Info,
     RefreshCw,
+    Clock,
+    AlertCircle,
+    CheckCircle,
   } from "lucide-vue-next";
   import { ref, computed } from "vue";
   import { toast } from "vue-sonner";
 
   import { buttonVariants } from "~/components/ui/button";
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "~/components/ui/dialog";
   import { authHeaders } from "~/lib/auth-client";
 
   const route = useRoute();
@@ -36,10 +48,41 @@
   });
   const members = ref([{ email: "", phone: "" }]);
   const isSubmitting = ref(false);
-  const isRetryingPayment = ref(false);
 
   // For storing created group info for retry
   const createdGroup = ref<any>(null);
+
+  // Payment state
+  const currentCheckoutId = ref<string | null>(null);
+  const paymentStatus = ref<string | null>(null);
+  const showRetryDialog = ref(false);
+  const retryingPayment = ref(false);
+  const retryPhoneNumber = ref("");
+
+  // Payment computed
+  const isCompleted = computed(() => paymentStatus.value === "completed");
+  const isPending = computed(() => paymentStatus.value === "pending");
+  const isFailed = computed(() => paymentStatus.value === "failed");
+
+  // Check payment status from API
+  const checkPaymentStatus = async (checkoutId: string) => {
+    try {
+      const res = await $fetch(`/api/payments/${checkoutId}`);
+      return res;
+    } catch (err) {
+      console.error("Check payment error:", err);
+      return null;
+    }
+  };
+
+  // Refresh payment status
+  const refreshPaymentStatus = async () => {
+    if (!currentCheckoutId.value) return;
+    const res = await checkPaymentStatus(currentCheckoutId.value);
+    if (res?.success && res?.data) {
+      paymentStatus.value = res.data.status;
+    }
+  };
 
   // Computed values
   const totalMembers = computed(() => members.value.length);
@@ -117,20 +160,30 @@
 
       if (response.success && response.data) {
         createdGroup.value = response.data;
-        toast.success("Group created successfully!");
 
         if (totalLeaderAmount.value > 0) {
           if (response.data.payment?.checkoutId) {
+            currentCheckoutId.value = response.data.payment.checkoutId;
+
+            // Start polling for payment status
             try {
-              const paymentResult = await checkPayment(response.data.payment?.checkoutId);
-              toast.success("Payment completed!");
-            } catch (paymentError) {
-              toast.error(paymentError.message || "Payment failed");
+              const paymentResult = await checkPayment(response.data.payment.checkoutId, 15);
+              if (paymentResult?.data?.status === "completed") {
+                paymentStatus.value = "completed";
+                toast.success("Payment completed!");
+                await navigateTo(`/forms/${formId}/group/${response.data.group?.id}/dashboard`);
+              } else {
+                paymentStatus.value = paymentResult?.data?.status || "pending";
+                toast.info("Payment initiated. Please complete on your phone.");
+              }
+            } catch (paymentError: any) {
+              paymentStatus.value = "pending";
+              toast.info("Payment initiated. Check your phone to complete.");
             }
           }
+        } else {
+          await navigateTo(`/forms/${formId}/group/${response.data.group?.id}/dashboard`);
         }
-
-        await navigateTo(`/forms/${formId}/group/${response.data.group?.id}/dashboard`);
       }
     } catch (error: any) {
       if (error.data?.message?.includes("Group Already Exists")) {
@@ -143,46 +196,16 @@
     }
   };
 
-  const retryPayment = async () => {
-    if (!createdGroup.value?.group?.id) {
-      toast.error("No group found to retry payment");
-      return;
-    }
-
-    isRetryingPayment.value = true;
-
-    try {
-      const response = await $fetch(
-        `/api/forms/${formId}/group/${createdGroup.value.group.id}/retry-payment`,
-        {
-          method: "POST",
-          headers: {
-            ...(await authHeaders()),
-          },
-        },
-      );
-
-      if (response.success && response.data?.payment?.checkoutId) {
-        try {
-          const paymentResult = await checkPayment(response.data.payment.checkoutId);
-          toast.success("Payment completed!");
-        } catch (paymentError) {
-          toast.error(paymentError.message || "Payment failed. You can try again.");
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.data?.message || "Failed to retry payment");
-    } finally {
-      isRetryingPayment.value = false;
-    }
-  };
-
   const checkPayment = async (checkoutId: string, maxRetries = 10, interval = 3000) => {
     let attempts = 0;
     while (attempts < maxRetries) {
       try {
         const res = await $fetch(`/api/payments/${checkoutId}`);
         if (res.success && res.data && res.data.status === "completed") {
+          return res;
+        }
+        if (res.data?.status === "failed") {
+          toast.error("Payment failed please retry again");
           return res;
         }
       } catch (err) {
@@ -192,6 +215,59 @@
       await new Promise((resolve) => setTimeout(resolve, interval));
     }
     throw new Error("Payment not completed in time. Please try again later.");
+  };
+
+  const handleRetryPayment = async () => {
+    if (!createdGroup.value?.group?.id) {
+      toast.error("No group found to retry payment");
+      return;
+    }
+
+    retryingPayment.value = true;
+
+    try {
+      const response = await $fetch(
+        `/api/forms/${formId}/group/${createdGroup.value.group.id}/retry-payment`,
+        {
+          method: "POST",
+          body: {
+            phoneNumber: retryPhoneNumber.value || undefined,
+          },
+          headers: {
+            ...(await authHeaders()),
+          },
+        },
+      );
+
+      if (response.success && response.data?.payment?.checkoutId) {
+        currentCheckoutId.value = response.data.payment.checkoutId;
+        showRetryDialog.value = false;
+
+        try {
+          const paymentResult = await checkPayment(response.data.payment.checkoutId, 15);
+          if (paymentResult?.data?.status === "completed") {
+            paymentStatus.value = "completed";
+            toast.success("Payment completed!");
+            await navigateTo(`/forms/${formId}/group/${createdGroup.value.group.id}/dashboard`);
+          } else {
+            paymentStatus.value = "pending";
+            toast.success("Payment initiated. Please complete on your phone.");
+          }
+        } catch (paymentError: any) {
+          paymentStatus.value = "pending";
+          toast.info("Payment initiated. Check your phone to complete.");
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.data?.message || "Failed to retry payment");
+    } finally {
+      retryingPayment.value = false;
+    }
+  };
+
+  const openRetryDialog = () => {
+    retryPhoneNumber.value = group.value.phoneNumber;
+    showRetryDialog.value = true;
   };
 </script>
 
@@ -382,14 +458,85 @@
             <AlertTitle>Payment Information</AlertTitle>
             <AlertDescription class="space-y-2">
               <p>
-                You will pay for all {{ totalMembers }} member{{
-                  totalMembers > 1 ? "s" : ""
-                }}
+                You will pay for all {{ totalMembers }} member{{ totalMembers > 1 ? "s" : "" }}
                 upfront.
               </p>
               <p>Invites will be sent after successful payment.</p>
             </AlertDescription>
           </Alert>
+
+          <!-- Payment Status Card -->
+          <Card v-if="currentCheckoutId && !isCompleted">
+            <CardHeader>
+              <CardTitle class="flex items-center gap-2">
+                <Clock class="h-5 w-5" />
+                Payment Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+              <div class="bg-muted flex items-center justify-between rounded-lg p-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    v-if="isPending"
+                    class="h-3 w-3 animate-pulse rounded-full bg-yellow-500"
+                  ></div>
+                  <div v-else-if="isFailed" class="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div v-else class="h-3 w-3 rounded-full bg-gray-500"></div>
+                  <span class="font-medium capitalize">{{ paymentStatus || "checking..." }}</span>
+                </div>
+                <Button variant="outline" size="sm" @click="refreshPaymentStatus">
+                  <RefreshCw class="mr-2 h-4 w-4" />
+                  Refresh
+                </Button>
+              </div>
+
+              <p v-if="isPending" class="text-muted-foreground text-sm">
+                Check your phone for the STK push message and enter your PIN to complete payment.
+              </p>
+
+              <!-- Retry Button for Failed Payments -->
+              <div v-if="isFailed" class="pt-2">
+                <Dialog v-model:open="showRetryDialog">
+                  <DialogTrigger as-child>
+                    <Button class="w-full" @click="openRetryDialog">
+                      <RefreshCw class="mr-2 h-4 w-4" />
+                      Retry Payment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Retry Payment</DialogTitle>
+                      <DialogDescription>
+                        Enter your phone number to receive the STK push. A new payment request will
+                        be sent to your phone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div class="space-y-4 py-4">
+                      <div class="space-y-2">
+                        <Label for="retryPhone">Phone Number</Label>
+                        <Input
+                          id="retryPhone"
+                          v-model="retryPhoneNumber"
+                          placeholder="e.g. 712345678"
+                          type="tel"
+                        />
+                        <p class="text-muted-foreground text-xs">
+                          Previous: {{ group.phoneNumber }}
+                        </p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" @click="showRetryDialog = false">Cancel</Button>
+                      <Button :disabled="retryingPayment" @click="handleRetryPayment">
+                        <RefreshCw v-if="retryingPayment" class="mr-2 h-4 w-4 animate-spin" />
+                        {{ retryingPayment ? "Sending..." : "Send STK Push" }}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
 
           <!-- Submit Button -->
           <Button
@@ -397,6 +544,7 @@
             class="w-full"
             size="lg"
             :disabled="!isFormValid || isSubmitting"
+            v-if="!isFailed"
           >
             <CreditCard v-if="totalLeaderAmount > 0" class="mr-2 h-4 w-4" />
             <UserCheck v-else class="mr-2 h-4 w-4" />

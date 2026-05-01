@@ -299,7 +299,7 @@ export const processGroupPayment = async (
   return payment;
 };
 
-export const retryGroupPayment = async (group: any, user: User) => {
+export const retryGroupPayment = async (group: any, user: User, phoneNumber?: string) => {
   const form = await getFormById(group.formId);
   if (!form) {
     throw new Error("Form not found");
@@ -310,8 +310,14 @@ export const retryGroupPayment = async (group: any, user: User) => {
   );
   const totalAmount = group.currentMemberCount * groupAmount;
 
+  const paymentPhone = phoneNumber || group.phoneNumber;
+  
+  if (!paymentPhone) {
+    throw new Error("No payment phone number found");
+  }
+
   const result = await callStkPush(
-    +group.phoneNumber,
+    +paymentPhone,
     totalAmount,
     `Payment for group ${group.groupName}`,
     `group ${group.groupName}`,
@@ -323,16 +329,22 @@ export const retryGroupPayment = async (group: any, user: User) => {
       userId: user.id,
       merchantId: result.MerchantRequestID,
       checkoutId: result.CheckoutRequestID,
-      phoneNumber: group.phoneNumber,
+      phoneNumber: paymentPhone,
       amount: totalAmount,
     })
     .returning();
 
+  const updateData: any = {
+    paymentId: payment.id,
+  };
+  
+  if (phoneNumber && phoneNumber !== group.phoneNumber) {
+    updateData.phoneNumber = phoneNumber;
+  }
+
   await db
     .update(formGroups)
-    .set({
-      paymentId: payment.id,
-    })
+    .set(updateData)
     .where(eq(formGroups.id, group.id));
 
   return {
