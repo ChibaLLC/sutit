@@ -36,6 +36,7 @@ export async function callStkPush(
     console.error("STK PUSH FAILED: " + response);
     return null;
   }
+  console.log(response);
   return response.data;
 }
 
