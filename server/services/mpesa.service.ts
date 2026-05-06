@@ -58,7 +58,13 @@ const timestamp = () => {
 const password = () => {
   return Buffer.from(config.shortCode + config.passkey + timestamp()).toString("base64");
 };
-
+const cleanText = (text: string) => {
+  return text
+    .replace(/[\p{Extended_Pictographic}]/gu, "")
+    .replace(/[\uFE0F\u200D]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
 export const callStkPush = async (
   phone_number: number,
   amount: number,
@@ -78,8 +84,8 @@ export const callStkPush = async (
       PartyB: config.shortCode,
       PhoneNumber: phone,
       CallBackURL: process.env.MPESA_STK_CALLBACK_URL!,
-      AccountReference: accountNumber,
-      TransactionDesc: description,
+      AccountReference: cleanText(accountNumber),
+      TransactionDesc: cleanText(description),
     };
     console.log("Payload: ", payload);
     const res = await $fetch<StkPushResponse>(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
