@@ -81,6 +81,7 @@ export const callStkPush = async (
       AccountReference: accountNumber,
       TransactionDesc: description,
     };
+    console.log("Payload: ", payload);
     const res = await $fetch<StkPushResponse>(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
       method: "post",
       body: payload,
