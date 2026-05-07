@@ -200,43 +200,42 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
   }
   if (updatedPayment) {
     console.log("Updated Payment: ", updatedPayment);
-    const groupPayment = await db.query.formGroups.findFirst({
+    const group = await db.query.formGroups.findFirst({
       where: eq(formGroups.paymentId, updatedPayment?.id),
       with: {
         members: true,
         form: true,
       },
     });
-    await handleSuccessfulGroupPayment(groupPayment, updatedPayment);
+    // Send Invites
+    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    for (const member of group?.members) {
+      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+
+      if (member.invitePhone) {
+        const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+        await sendTextSmsTiara({
+          phone: member.invitePhone,
+          message: smsMessage,
+        });
+      }
+
+      if (member.inviteEmail) {
+        await sendMail({
+          to: member.inviteEmail,
+          subject: `You're invited to join "${group.groupName}"`,
+          text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+        });
+      }
+    }
+
+    await handleSuccessfulGroupPayment(groupPayment);
   }
   return updatedPayment;
 };
-const handleFailedGroupPayment = async (group: any, payment: any) => {
-  try {
-    // Update group status to failed_payment so leader can retry
-    await db
-      .update(formGroups)
-      .set({
-        status: "draft",
-      })
-      .where(eq(formGroups.id, group.id));
 
-    // Update all member payments to failed
-    if (group.members && group.members.length > 0) {
-      await db
-        .update(formGroupMemberPayments)
-        .set({
-          status: "failed",
-          updatedAt: new Date(),
-        })
-        .where(eq(formGroupMemberPayments.groupId, group.id));
-    }
-  } catch (error) {
-    console.error("Error handling failed group payment:", error);
-  }
-};
-
-const handleSuccessfulGroupPayment = async (group: any, payment: any) => {
+const handleSuccessfulGroupPayment = async (group: any) => {
   try {
     // Update group status to published
     await db

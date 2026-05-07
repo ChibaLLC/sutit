@@ -1,10 +1,7 @@
 import { eq } from "drizzle-orm";
 import db from "~~/server/db";
-import { formPayments, formGroups, formGroupMemberPayments } from "~~/server/db/schema";
-import { sendMail } from "~~/server/services/email.service";
+import { formPayments } from "~~/server/db/schema";
 import { completeFormPayment } from "~~/server/services/payment.service";
-import { sendStopTatNotification } from "~~/server/services/submissions.service";
-import { sendTextSmsTiara } from "~~/server/utils/sms/tiara";
 import { StkCallbackHook } from "~~/shared/types";
 
 export default defineEventHandler(async (event) => {
