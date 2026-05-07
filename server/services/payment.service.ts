@@ -4,7 +4,13 @@ import { type PgTransaction } from "drizzle-orm/pg-core";
 import { Form, StkCallbackHook, Submission } from "~~/shared/types";
 
 import db from "../db";
-import { formGroupMemberPayments, formPayments, formSubmissions, payments } from "../db/schema";
+import {
+  formGroupMemberPayments,
+  formGroups,
+  formPayments,
+  formSubmissions,
+  payments,
+} from "../db/schema";
 import { sendMail } from "./email.service";
 import { callStkPush } from "./mpesa.service";
 const createPayment = async (
@@ -192,10 +198,92 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
       });
     }
   }
-
+  if (updatedPayment) {
+    console.log("Updated Payment: ", updatedPayment);
+    const groupPayment = await db.query.formGroups.findFirst({
+      where: eq(formGroups.paymentId, updatedPayment?.id),
+      with: {
+        members: true,
+        form: true,
+      },
+    });
+    await handleSuccessfulGroupPayment(groupPayment, updatedPayment);
+  }
   return updatedPayment;
 };
+const handleFailedGroupPayment = async (group: any, payment: any) => {
+  try {
+    // Update group status to failed_payment so leader can retry
+    await db
+      .update(formGroups)
+      .set({
+        status: "draft",
+      })
+      .where(eq(formGroups.id, group.id));
 
+    // Update all member payments to failed
+    if (group.members && group.members.length > 0) {
+      await db
+        .update(formGroupMemberPayments)
+        .set({
+          status: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(formGroupMemberPayments.groupId, group.id));
+    }
+  } catch (error) {
+    console.error("Error handling failed group payment:", error);
+  }
+};
+
+const handleSuccessfulGroupPayment = async (group: any, payment: any) => {
+  try {
+    // Update group status to published
+    await db
+      .update(formGroups)
+      .set({
+        status: "published",
+      })
+      .where(eq(formGroups.id, group.id));
+
+    // Update all member payments to completed
+    if (group.members && group.members.length > 0) {
+      await db
+        .update(formGroupMemberPayments)
+        .set({
+          status: "completed",
+          updatedAt: new Date(),
+        })
+        .where(eq(formGroupMemberPayments.groupId, group.id));
+    }
+
+    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    for (const member of group.members) {
+      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+
+      if (member.invitePhone) {
+        const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+        await sendTextSmsTiara({
+          phone: member.invitePhone,
+          message: smsMessage,
+        });
+      }
+
+      if (member.inviteEmail) {
+        await sendMail({
+          to: member.inviteEmail,
+          subject: `You're invited to join "${group.groupName}"`,
+          text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+        });
+      }
+    }
+
+    console.log(`Sent invites for group ${group.id} after successful payment`);
+  } catch (error) {
+    console.error("Error sending group invites after payment:", error);
+  }
+};
 export const findPaymentWithCheckoutId = async (data: { checkoutId: string }) => {
   const payment = await db.query.payments.findFirst({
     where: eq(payments.checkoutId, data.checkoutId),
@@ -218,7 +306,7 @@ export const getPaymentReferenceById = async (paymentId: string) => {
 
 export const retryFormPayment = async (form: Form, submission: any, phoneNumber?: string) => {
   const paymentPhone = phoneNumber || submission.metadata?.paymentData?.phoneNumber;
-  
+
   if (!paymentPhone) {
     throw new Error("No payment phone number found");
   }
@@ -262,7 +350,7 @@ export const retryFormPayment = async (form: Form, submission: any, phoneNumber?
     status: "pending",
     updatedAt: new Date(),
   };
-  
+
   if (phoneNumber && phoneNumber !== submission.metadata?.paymentData?.phoneNumber) {
     updateData.metadata = {
       ...submission.metadata,
@@ -273,10 +361,7 @@ export const retryFormPayment = async (form: Form, submission: any, phoneNumber?
     };
   }
 
-  await db
-    .update(formSubmissions)
-    .set(updateData)
-    .where(eq(formSubmissions.id, submission.id));
+  await db.update(formSubmissions).set(updateData).where(eq(formSubmissions.id, submission.id));
 
   return {
     payment: {
