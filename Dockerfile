@@ -12,9 +12,9 @@ ENV TZ=Africa/Nairobi
 
 COPY package.json pnpm-lock.yaml /app/
 
-RUN corepack enable
-
 COPY . /app/
+
+RUN npm install -g pnpm@10
 
 RUN pnpm install --frozen-lockfile
 
