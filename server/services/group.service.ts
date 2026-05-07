@@ -253,7 +253,7 @@ export const resendMemberInvite = async (groupId: string, memberId: string) => {
     throw new Error("Member has already accepted the invite");
   }
 
-  const inviteLink = `${process.env.BASE_URL || "http://localhost:3000"}/forms/${group.form?.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
+  const inviteLink = `${process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000"}/forms/${group.form?.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
 
   if (member.inviteEmail) {
     await sendMail({
