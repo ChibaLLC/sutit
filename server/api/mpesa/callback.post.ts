@@ -149,8 +149,8 @@ async function handleSuccessfulPayment(updatedPayment: any) {
       return;
     }
 
-    const submission = formPayment.submission;
-    const form = formPayment.submission.form;
+    // const submission = formPayment.submission;
+    // const form = formPayment.submission.form;
 
     // // Stop TAT for the submission after successful payment
     // try {
@@ -160,48 +160,48 @@ async function handleSuccessfulPayment(updatedPayment: any) {
     // 	console.error("Failed to stop TAT for submission:", submission.id, tatError);
     // }
 
-    // Send stop TAT notification (SMS with token and/or email)
-    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const token = submission.metadata?.accessToken;
-    const stopTatUrl = token
-      ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${token}`
-      : `${baseUrl}/submission/${submission.id}/stop-tat`;
-
-    // Send SMS with stop TAT link
-    try {
-      const smsMessage = `Payment successful for "${form.title}". Your submission has been processed. Stop TAT: ${stopTatUrl}`;
-      await sendTextSmsTiara({
-        phone: updatedPayment.phoneNumber,
-        message: smsMessage,
-      });
-    } catch (smsError) {
-      console.error("Failed to send payment confirmation SMS:", smsError);
-    }
-
-    // Send email if submitter has email
-    if (submission.submitter?.email) {
-      try {
-        await sendStopTatNotification(submission.submitter.email, form.title, stopTatUrl);
-      } catch (emailError) {
-        console.error("Failed to send stop TAT notification email:", emailError);
-      }
-    }
-
-    // Also check for email in form responses in case submitter is not logged in
-    if (!submission.submitter?.email && submission.responses) {
-      const emailResponse = submission.responses.find((response) => {
-        const value = response.value?.toString().toLowerCase();
-        return value && value.includes("@") && value.includes(".");
-      });
-
-      if (emailResponse?.value) {
-        try {
-          await sendStopTatNotification(emailResponse.value, form.title, stopTatUrl);
-        } catch (emailError) {
-          console.error("Failed to send stop TAT notification to response email:", emailError);
-        }
-      }
-    }
+    // // Send stop TAT notification (SMS with token and/or email)
+    // const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    // const token = submission.metadata?.accessToken;
+    // const stopTatUrl = token
+    //   ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${token}`
+    //   : `${baseUrl}/submission/${submission.id}/stop-tat`;
+    //
+    // // Send SMS with stop TAT link
+    // try {
+    //   const smsMessage = `Payment successful for "${form.title}". Your submission has been processed. Stop TAT: ${stopTatUrl}`;
+    //   await sendTextSmsTiara({
+    //     phone: updatedPayment.phoneNumber,
+    //     message: smsMessage,
+    //   });
+    // } catch (smsError) {
+    //   console.error("Failed to send payment confirmation SMS:", smsError);
+    // }
+    //
+    // // Send email if submitter has email
+    // if (submission.submitter?.email) {
+    //   try {
+    //     await sendStopTatNotification(submission.submitter.email, form.title, stopTatUrl);
+    //   } catch (emailError) {
+    //     console.error("Failed to send stop TAT notification email:", emailError);
+    //   }
+    // }
+    //
+    // // Also check for email in form responses in case submitter is not logged in
+    // if (!submission.submitter?.email && submission.responses) {
+    //   const emailResponse = submission.responses.find((response) => {
+    //     const value = response.value?.toString().toLowerCase();
+    //     return value && value.includes("@") && value.includes(".");
+    //   });
+    //
+    //   if (emailResponse?.value) {
+    //     try {
+    //       await sendStopTatNotification(emailResponse.value, form.title, stopTatUrl);
+    //     } catch (emailError) {
+    //       console.error("Failed to send stop TAT notification to response email:", emailError);
+    //     }
+    //   }
+    // }
   } catch (error) {
     console.error("Error handling successful payment:", error);
   }
