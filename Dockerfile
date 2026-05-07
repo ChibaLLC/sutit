@@ -14,7 +14,7 @@ COPY package.json pnpm-lock.yaml /app/
 
 COPY . /app/
 
-RUN npm install -g pnpm@10
+RUN npm install -g pnpm
 
 RUN pnpm install --frozen-lockfile
 
