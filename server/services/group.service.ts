@@ -1,7 +1,7 @@
 import { randomBytes, randomInt } from "crypto";
 
 import { User } from "better-auth";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { CreateGroupRequest } from "~~/shared/types";
 
 import db from "../db";
@@ -9,6 +9,7 @@ import {
   formGroupMemberPayments,
   formGroupMembers,
   formGroups,
+  formSubmissions,
   forms,
   payments,
 } from "../db/schema";
@@ -174,6 +175,7 @@ export const getGroupById = async (groupId: string) => {
       members: true,
       memberPayments: {
         with: {
+          member: true,
           payment: true,
         },
       },
@@ -183,9 +185,23 @@ export const getGroupById = async (groupId: string) => {
 
   if (!group) return null;
 
+  // Fetch actual submissions for members who have submitted
+  const submissionIds = group.members
+    .filter((m) => m.submissionId)
+    .map((m) => m.submissionId as string);
+
+  const submissions =
+    submissionIds.length > 0
+      ? await db.query.formSubmissions.findMany({
+          where: inArray(formSubmissions.id, submissionIds),
+          with: { responses: { with: { field: true } } },
+        })
+      : [];
+
   const members = group.members.map((member) => {
     const memberPayment = group.memberPayments?.find((mp) => mp.memberId === member.id);
     const actualPayment = memberPayment?.payment;
+    const submission = submissions.find((s) => s.id === member.submissionId);
 
     return {
       id: member.id,
@@ -203,6 +219,8 @@ export const getGroupById = async (groupId: string) => {
       paymentStatus: actualPayment?.status || memberPayment?.status || "pending",
       paymentAmount: memberPayment?.amount || 0,
       hasSubmitted: !!member.submissionId,
+      submittedAt: submission?.submittedAt || null,
+      submissionStatus: submission?.status || null,
     };
   });
 
@@ -226,10 +244,41 @@ export const getGroupById = async (groupId: string) => {
     .filter((m) => m.paymentOption !== "leader_pays" && m.paymentStatus === "completed")
     .reduce((sum, m) => sum + m.paymentAmount, 0);
 
+  // Enrich member payments with member details
+  const enrichedPayments = (group.memberPayments || []).map((mp) => {
+    const member = members.find((m) => m.id === mp.memberId);
+    return {
+      id: mp.id,
+      memberId: mp.memberId,
+      paymentId: mp.paymentId,
+      paidBy: mp.paidBy,
+      amount: mp.amount,
+      paymentType: mp.paymentType,
+      status: mp.status,
+      createdAt: mp.createdAt,
+      metadata: mp.metadata,
+      memberEmail: member?.email || null,
+      memberPhone: member?.phone || null,
+      payment: mp.payment
+        ? {
+            id: mp.payment.id,
+            checkoutId: mp.payment.checkoutId,
+            phoneNumber: mp.payment.phoneNumber,
+            receiptNumber: mp.payment.receiptNumber,
+            status: mp.payment.status,
+            paidAt: mp.payment.paidAt,
+            amount: mp.payment.amount,
+          }
+        : null,
+    };
+  });
+
   return {
     ...group,
     formId: group.formId,
     members,
+    submissions,
+    memberPayments: enrichedPayments,
     stats,
     paymentSummary: {
       totalAmount,

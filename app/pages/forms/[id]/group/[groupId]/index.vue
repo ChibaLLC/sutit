@@ -1,83 +1,93 @@
 <script lang="ts" setup>
-  import { ArrowLeft, CreditCard, Search, FileText, Users, CheckCircle } from "lucide-vue-next";
+  import {
+    ArrowLeft,
+    Search,
+    FileText,
+    Users,
+    Phone,
+    Clock,
+    Wallet,
+    AlertCircle,
+  } from "lucide-vue-next";
   definePageMeta({
     middleware: ["auth"],
   });
 
   const route = useRoute();
+  const router = useRouter();
   const { id, groupId } = route.params;
   const { data: group } = await useFetch(`/api/forms/${id}/group/${groupId}`);
 
   const searchTerm = ref("");
   const statusFilter = ref("all");
   const currentTab = ref("members");
-  const isVerifyModalOpen = ref(false);
-  const verificationCode = ref("");
-  const selectedPaymentForVerification = ref(null);
-
-  const submissionsList = ref([
-    {
-      id: "sub_1",
-      userEmail: "kemboielvis22@gmail.com",
-      status: "completed",
-      createdAt: "2025-09-10T01:14:02.969Z",
-    },
-  ]);
-
-  const paymentsList = ref([
-    {
-      id: "pay_1",
-      amount: 1234,
-      phoneNumber: "+254712345678",
-      referenceCode: "REF123456",
-      status: "completed",
-      createdAt: "2025-09-10T01:14:02.969Z",
-    },
-    {
-      id: "pay_2",
-      amount: 21,
-      phoneNumber: "+254787654321",
-      referenceCode: "REF789012",
-      status: "pending",
-      createdAt: "2025-09-10T02:14:02.969Z",
-    },
-  ]);
 
   const statusVariant = computed(() => {
     return group.value?.data.status === "published" ? "default" : "secondary";
   });
 
+  const members = computed(() => group.value?.data?.members || []);
+  const submissions = computed(() => group.value?.data?.submissions || []);
+  const memberPayments = computed(() => group.value?.data?.memberPayments || []);
+  const stats = computed(() => group.value?.data?.stats || {});
+  const paymentSummary = computed(() => group.value?.data?.paymentSummary || {});
+
   const calculatedRevenue = computed(() => {
-    return paymentsList.value
-      .filter((p) => p.status === "completed")
-      .reduce((sum, p) => sum + p.amount, 0);
+    return memberPayments.value
+      .filter((p: any) => p.status === "completed")
+      .reduce((sum: number, p: any) => sum + p.amount, 0);
   });
 
-  const displayedMembers = computed(() => {
-    if (!searchTerm.value.trim()) return group.value?.data?.members;
-
-    const query = searchTerm.value.toLowerCase();
-    return group.value?.data?.members.filter((member) =>
-      member.inviteEmail?.toLowerCase().includes(query),
+  const filteredMembers = computed(() => {
+    const query = searchTerm.value.toLowerCase().trim();
+    if (!query) return members.value;
+    return members.value.filter(
+      (m: any) =>
+        m.email?.toLowerCase().includes(query) || m.phone?.includes(query),
     );
   });
 
-  const displayedSubmissions = computed(() => {
-    if (!searchTerm.value.trim()) return submissionsList.value;
-
-    const query = searchTerm.value.toLowerCase();
-    return submissionsList.value.filter((submission) =>
-      submission.userEmail.toLowerCase().includes(query),
-    );
+  const filteredSubmissions = computed(() => {
+    const query = searchTerm.value.toLowerCase().trim();
+    let items = submissions.value;
+    if (query) {
+      items = items.filter((s: any) => {
+        const member = members.value.find((m: any) => m.submissionId === s.id);
+        return member?.email?.toLowerCase().includes(query);
+      });
+    }
+    return items.map((s: any) => {
+      const member = members.value.find((m: any) => m.submissionId === s.id);
+      return { ...s, memberEmail: member?.email || "Unknown", memberPhone: member?.phone || "" };
+    });
   });
 
-  const getEmailInitials = (email) => {
+  const filteredPayments = computed(() => {
+    const query = searchTerm.value.toLowerCase().trim();
+    const filter = statusFilter.value;
+    let items = memberPayments.value;
+    if (filter !== "all") {
+      items = items.filter((p: any) => p.status === filter);
+    }
+    if (query) {
+      items = items.filter(
+        (p: any) =>
+          p.memberEmail?.toLowerCase().includes(query) ||
+          p.memberPhone?.includes(query),
+      );
+    }
+    return items;
+  });
+
+  const getEmailInitials = (email: string) => {
+    if (!email) return "??";
     return email.split("@")[0].substring(0, 2).toUpperCase();
   };
 
-  const getStatusVariant = (status) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
       case "completed":
+      case "paid":
         return "default";
       case "pending":
         return "secondary";
@@ -88,185 +98,201 @@
     }
   };
 
-  const handleGoBack = () => {
-    navigateTo("/form-dashboard");
+  const formatDate = (date: string | Date) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-KE", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  const handleVerifyPayment = (payment) => {
-    selectedPaymentForVerification.value = payment;
-    isVerifyModalOpen.value = true;
-  };
-
-  const handleVerifyMemberPayment = (memberPayment) => {
-    selectedPaymentForVerification.value = memberPayment;
-    isVerifyModalOpen.value = true;
-  };
-
-  const handleCloseModal = () => {
-    isVerifyModalOpen.value = false;
-    verificationCode.value = "";
-    selectedPaymentForVerification.value = null;
-  };
-
-  const handleConfirmVerification = () => {
-    console.log("Verifying payment with code:", verificationCode.value);
-    if (selectedPaymentForVerification.value) {
-      selectedPaymentForVerification.value.status = "completed";
-    }
-    handleCloseModal();
-  };
+  const goBack = () => router.back();
 </script>
+
 <template>
   <div class="bg-background min-h-screen p-6">
-    <div v-if="!group?.data">Not Found</div>
+    <div v-if="!group?.data" class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <AlertCircle class="text-destructive mx-auto mb-4 h-12 w-12" />
+        <h2 class="text-foreground text-xl font-semibold">Group Not Found</h2>
+        <Button variant="outline" class="mt-4" @click="goBack">Go Back</Button>
+      </div>
+    </div>
 
     <div v-else class="mx-auto max-w-7xl space-y-6">
       <!-- Header -->
-      <div class="flex items-center gap-4">
-        <Button variant="outline" size="sm" @click="handleGoBack" class="gap-2">
-          <ArrowLeft class="h-4 w-4" />
-          Back to Dashboard
-        </Button>
-        <br />
-        <div class="flex-1">
-          <h1 class="text-foreground text-3xl font-bold">
-            {{ group.data?.groupName }}
-          </h1>
-          <p class="text-muted-foreground mt-1">
-            Invite Code:
-            <code class="bg-muted rounded px-2 py-1">{{ group.data.inviteCode }}</code>
-          </p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-4">
+          <Button variant="outline" size="icon" @click="goBack">
+            <ArrowLeft class="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 class="text-foreground text-2xl font-bold sm:text-3xl">{{ group.data.groupName }}</h1>
+            <p class="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
+              <code class="bg-muted rounded px-2 py-0.5 text-xs">{{ group.data.inviteCode }}</code>
+              <span>{{ group.data.form?.title }}</span>
+            </p>
+          </div>
         </div>
-        <Badge :variant="statusVariant">
-          {{ group.data.status }}
-        </Badge>
+        <div class="flex items-center gap-2">
+          <Badge :variant="statusVariant" class="capitalize">{{ group.data.status }}</Badge>
+        </div>
       </div>
 
       <!-- Overview Cards -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader class="pb-2">
-            <CardTitle class="text-muted-foreground text-sm font-medium">Total Members</CardTitle>
+            <CardTitle class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+              <Users class="h-4 w-4" />
+              Members
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-foreground text-2xl font-bold">
-              {{ group.data.currentMemberCount }}
-            </div>
-            <p class="text-muted-foreground text-xs">of {{ group.data.maxMembers }} max</p>
+            <div class="text-foreground text-2xl font-bold">{{ stats.totalMembers }}</div>
+            <p class="text-muted-foreground text-xs">{{ stats.invitesAccepted }} accepted</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader class="pb-2">
-            <CardTitle class="text-muted-foreground text-sm font-medium">Submissions</CardTitle>
+            <CardTitle class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+              <FileText class="h-4 w-4" />
+              Submissions
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-foreground text-2xl font-bold">
-              {{ submissionsList.length }}
-            </div>
-            <p class="text-muted-foreground text-xs">form submissions</p>
+            <div class="text-foreground text-2xl font-bold">{{ stats.formsSubmitted }}</div>
+            <p class="text-muted-foreground text-xs">of {{ stats.totalMembers }} members</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader class="pb-2">
-            <CardTitle class="text-muted-foreground text-sm font-medium">Total Payments</CardTitle>
+            <CardTitle class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+              <Wallet class="h-4 w-4" />
+              Payments
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-foreground text-2xl font-bold">
-              {{ group?.data.memberPayments.length }}
-            </div>
-            <p class="text-muted-foreground text-xs">payment records</p>
+            <div class="text-foreground text-2xl font-bold">{{ memberPayments.length }}</div>
+            <p class="text-muted-foreground text-xs">{{ stats.paymentsCompleted }} completed</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader class="pb-2">
-            <CardTitle class="text-muted-foreground text-sm font-medium">Revenue</CardTitle>
+            <CardTitle class="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+              <Clock class="h-4 w-4" />
+              Revenue
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-foreground text-2xl font-bold">Ksh {{ calculatedRevenue }}</div>
-            <p class="text-muted-foreground text-xs">total collected</p>
+            <div class="text-foreground text-2xl font-bold">Ksh {{ calculatedRevenue.toLocaleString() }}</div>
+            <p class="text-muted-foreground text-xs">
+              Ksh {{ paymentSummary.pendingAmount?.toLocaleString() || 0 }} pending
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <!-- Search -->
-      <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div class="max-w-md flex-1">
-          <div class="relative">
-            <Search
-              class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
-            />
-            <Input
-              v-model="searchTerm"
-              placeholder="Search members, payments, or submissions..."
-              class="pl-10"
-            />
-          </div>
+      <!-- Search + Filter -->
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="relative max-w-md flex-1">
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input v-model="searchTerm" placeholder="Search by email or phone..." class="pl-10" />
         </div>
-        <div class="flex gap-2">
-          <Select v-model="statusFilter">
-            <SelectTrigger class="w-32">
-              <SelectValue placeholder="Payment Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select v-if="currentTab === 'member-payments'" v-model="statusFilter">
+          <SelectTrigger class="w-36">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <!-- Tabs -->
       <Tabs v-model="currentTab" class="w-full">
-        <TabsList class="grid w-full grid-cols-4">
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="submissions">Submissions</TabsTrigger>
-          <TabsTrigger value="member-payments">Member Payments</TabsTrigger>
+        <TabsList class="w-full sm:w-auto">
+          <TabsTrigger value="members" class="gap-2">
+            <Users class="h-4 w-4" />
+            <span class="hidden sm:inline">Members</span>
+          </TabsTrigger>
+          <TabsTrigger value="submissions" class="gap-2">
+            <FileText class="h-4 w-4" />
+            <span class="hidden sm:inline">Submissions</span>
+          </TabsTrigger>
+          <TabsTrigger value="member-payments" class="gap-2">
+            <Wallet class="h-4 w-4" />
+            <span class="hidden sm:inline">Payments</span>
+          </TabsTrigger>
         </TabsList>
 
-        <!-- Members Tab -->
+        <!-- ============ MEMBERS TAB ============ -->
         <TabsContent value="members" class="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Group Members</CardTitle>
-              <CardDescription>Manage group members and their status</CardDescription>
+              <CardTitle>Group Members ({{ filteredMembers.length }})</CardTitle>
+              <CardDescription>All current members of this group</CardDescription>
             </CardHeader>
             <CardContent>
-              <div class="space-y-4">
+              <div v-if="filteredMembers.length === 0" class="text-muted-foreground py-8 text-center">
+                <Users class="mx-auto mb-4 h-12 w-12 opacity-50" />
+                <p>No members match your search</p>
+              </div>
+              <div v-else class="space-y-3">
                 <div
-                  v-for="member in displayedMembers"
+                  v-for="member in filteredMembers"
                   :key="member.id"
-                  class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
+                  class="hover:bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div class="flex items-center gap-4">
                     <Avatar class="h-10 w-10">
-                      <AvatarFallback>{{ getEmailInitials(member.inviteEmail) }}</AvatarFallback>
+                      <AvatarFallback>{{ getEmailInitials(member.email) }}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p class="font-medium">{{ member.inviteEmail }}</p>
-                      <div class="mt-1 flex items-center gap-2">
-                        <Badge variant="outline" class="text-xs">{{ member.role }}</Badge>
+                    <div class="min-w-0">
+                      <p class="truncate font-medium">{{ member.email || "No email" }}</p>
+                      <div class="mt-1 flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" class="text-xs capitalize">{{ member.role }}</Badge>
                         <Badge
-                          :variant="member.isInviteAccepted ? 'default' : 'secondary'"
+                          :variant="member.inviteAccepted ? 'default' : 'secondary'"
                           class="text-xs"
                         >
-                          {{ member.isInviteAccepted ? "Accepted" : "Pending" }}
+                          {{ member.inviteAccepted ? "Accepted" : "Pending" }}
                         </Badge>
-                        <span class="text-muted-foreground text-xs">
-                          {{ member.metadata?.paymentOption || "N/A" }}
+                        <span class="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                          <Phone class="h-3 w-3" />{{ member.phone || "—" }}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <Badge :variant="member.paymentId ? 'default' : 'destructive'" class="text-xs">
-                      {{ member.paymentId ? "Paid" : "Unpaid" }}
+                  <div class="flex flex-wrap items-center gap-2">
+                    <Badge
+                      :variant="member.paymentOption === 'leader_pays' ? 'secondary' : 'outline'"
+                      class="text-xs capitalize"
+                    >
+                      {{ member.paymentOption === "leader_pays" ? "Leader Pays" : "Self Pay" }}
                     </Badge>
-                    <Button size="sm" variant="outline"> View Details </Button>
+                    <Badge
+                      :variant="getStatusVariant(member.paymentStatus)"
+                      class="text-xs capitalize"
+                    >
+                      {{ member.paymentStatus }}
+                    </Badge>
+                    <Badge
+                      v-if="member.hasSubmitted"
+                      variant="default"
+                      class="text-xs"
+                    >
+                      Submitted
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -274,101 +300,99 @@
           </Card>
         </TabsContent>
 
-        <!-- Submissions Tab -->
+        <!-- ============ SUBMISSIONS TAB ============ -->
         <TabsContent value="submissions" class="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Form Submissions</CardTitle>
+              <CardTitle>Form Submissions ({{ filteredSubmissions.length }})</CardTitle>
               <CardDescription>All form submissions from group members</CardDescription>
             </CardHeader>
             <CardContent>
-              <div class="space-y-4">
+              <div v-if="filteredSubmissions.length === 0" class="text-muted-foreground py-8 text-center">
+                <FileText class="mx-auto mb-4 h-12 w-12 opacity-50" />
+                <p>No submissions yet</p>
+                <p class="text-sm">Submissions will appear here once members submit the form</p>
+              </div>
+              <div v-else class="space-y-3">
                 <div
-                  v-for="submission in displayedSubmissions"
+                  v-for="submission in filteredSubmissions"
                   :key="submission.id"
-                  class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
+                  class="hover:bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div class="flex items-center gap-4">
                     <Avatar class="h-10 w-10">
-                      <AvatarFallback>{{ getEmailInitials(submission.userEmail) }}</AvatarFallback>
+                      <AvatarFallback>{{ getEmailInitials(submission.memberEmail) }}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p class="font-medium">{{ submission.userEmail }}</p>
+                      <p class="font-medium">{{ submission.memberEmail }}</p>
                       <p class="text-muted-foreground text-sm">
-                        Submitted {{ formatDate(submission.createdAt) }}
+                        Submitted {{ formatDate(submission.submittedAt) }}
                       </p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <Badge :variant="submission.status === 'completed' ? 'default' : 'secondary'">
+                    <Badge
+                      :variant="getStatusVariant(submission.status)"
+                      class="text-xs capitalize"
+                    >
                       {{ submission.status }}
                     </Badge>
-                    <Button size="sm" variant="outline"> View Submission </Button>
+                    <NuxtLink
+                      :to="`/forms/${id}/submissions/${submission.id}`"
+                    >
+                      <Button size="sm" variant="outline">View</Button>
+                    </NuxtLink>
                   </div>
-                </div>
-                <div
-                  v-if="displayedSubmissions.length === 0"
-                  class="text-muted-foreground py-8 text-center"
-                >
-                  <FileText class="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p>No submissions found</p>
-                  <p class="text-sm">Submissions will appear here once members submit the form</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <!-- Member Payments Tab -->
+        <!-- ============ MEMBER PAYMENTS TAB ============ -->
         <TabsContent value="member-payments" class="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Member Payment Records</CardTitle>
+              <CardTitle>Payment Records ({{ filteredPayments.length }})</CardTitle>
               <CardDescription>Individual member payment tracking</CardDescription>
             </CardHeader>
             <CardContent>
-              <div class="space-y-4">
+              <div v-if="filteredPayments.length === 0" class="text-muted-foreground py-8 text-center">
+                <Wallet class="mx-auto mb-4 h-12 w-12 opacity-50" />
+                <p>No payment records found</p>
+                <p class="text-sm">Payments will appear here once members complete payment</p>
+              </div>
+              <div v-else class="space-y-3">
                 <div
-                  v-for="memberPayment in group?.data.memberPayments"
-                  :key="memberPayment.id"
-                  class="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-colors"
+                  v-for="mp in filteredPayments"
+                  :key="mp.id"
+                  class="hover:bg-muted/50 flex flex-col gap-3 rounded-lg border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div class="flex items-center gap-4">
                     <Avatar class="h-10 w-10">
-                      <AvatarFallback>{{}}</AvatarFallback>
+                      <AvatarFallback>{{ getEmailInitials(mp.memberEmail) }}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p class="font-medium">{{ memberPayment.amount }}</p>
-                      <p class="text-muted-foreground text-sm">
-                        Amount: ${{ memberPayment.amount }} •
-                        {{ memberPayment.paymentType }}
+                      <p class="font-medium">{{ mp.memberEmail || "Unknown Member" }}</p>
+                      <p class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+                        <span>Kes {{ mp.amount?.toLocaleString() }}</span>
+                        <span>•</span>
+                        <span class="capitalize">{{ mp.paymentType?.replace("_", " ") }}</span>
                       </p>
-                      <p class="text-muted-foreground text-xs">
-                        {{ formatDate(memberPayment.createdAt) }}
-                      </p>
+                      <p class="text-muted-foreground text-xs">{{ formatDate(mp.createdAt) }}</p>
                     </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <Badge :variant="getStatusVariant(memberPayment.status)" class="text-xs">
-                      {{ memberPayment.status }}
+                  <div class="flex flex-wrap items-center gap-2">
+                    <Badge :variant="getStatusVariant(mp.status)" class="text-xs capitalize">
+                      {{ mp.status }}
                     </Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      @click="handleVerifyMemberPayment(memberPayment)"
-                      :disabled="memberPayment.status === 'completed'"
+                    <span
+                      v-if="mp.payment?.receiptNumber"
+                      class="text-muted-foreground text-xs"
                     >
-                      {{ memberPayment.status === "completed" ? "Verified" : "Verify" }}
-                    </Button>
+                      {{ mp.payment.receiptNumber }}
+                    </span>
                   </div>
-                </div>
-                <div
-                  v-if="group?.data.memberPayments.length === 0"
-                  class="text-muted-foreground py-8 text-center"
-                >
-                  <Users class="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p>No member payments found</p>
-                  <p class="text-sm">Member payment records will appear here</p>
                 </div>
               </div>
             </CardContent>
@@ -376,42 +400,5 @@
         </TabsContent>
       </Tabs>
     </div>
-
-    <!-- Verification Modal -->
-    <Dialog v-model:open="isVerifyModalOpen">
-      <DialogContent class="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Verify Payment</DialogTitle>
-          <DialogDescription> Enter the transaction code to verify this payment </DialogDescription>
-        </DialogHeader>
-        <div class="space-y-4">
-          <div class="bg-muted rounded-lg p-4">
-            <p class="text-sm font-medium">Payment Details</p>
-            <p class="text-muted-foreground text-sm">
-              Amount: ${{ selectedPaymentForVerification?.amount }}
-            </p>
-            <p class="text-muted-foreground text-sm">
-              Phone: {{ selectedPaymentForVerification?.phoneNumber }}
-            </p>
-          </div>
-          <div class="space-y-2">
-            <Label for="transaction-code">Transaction Code</Label>
-            <Input
-              id="transaction-code"
-              v-model="verificationCode"
-              placeholder="Enter transaction code"
-              class="w-full"
-            />
-          </div>
-          <div class="flex justify-end gap-2">
-            <Button variant="outline" @click="handleCloseModal"> Cancel </Button>
-            <Button @click="handleConfirmVerification" :disabled="!verificationCode.trim()">
-              <CheckCircle class="mr-2 h-4 w-4" />
-              Verify Payment
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   </div>
 </template>
