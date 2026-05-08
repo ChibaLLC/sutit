@@ -27,10 +27,21 @@
   const enteredPassword = ref("");
   const showPasswordForm = ref(false);
 
-  // Fetch form with password if provided
+  const queryToken = route.query.token as string | undefined;
+
+  // Fetch form with password/token if provided
   const { data: form, error } = await useFetch<FormSchema>(`/api/forms/${route.params.id}`, {
     key: `form-${route.params.id}`,
-    query: queryPassword ? { password: queryPassword } : {},
+    query: {
+      ...(queryPassword ? { password: queryPassword } : {}),
+      ...(queryToken ? { token: queryToken } : {}),
+    },
+    transform: (dt) => {
+      return {
+        ...dt,
+        price: queryToken ? 0 : dt.price,
+      };
+    },
   });
 
   // Handle different error states
@@ -81,13 +92,16 @@
       return;
     }
     try {
-      const { data: submitData, message } = await $fetch(`/api/forms/${route.params.id}/submit`, {
+      const submitUrl = queryToken
+        ? `/api/forms/${route.params.id}/submit?token=${queryToken}`
+        : `/api/forms/${route.params.id}/submit`;
+      const { data: submitData, message } = await $fetch(submitUrl, {
         method: "post",
         body: formData,
         headers: {
           ...(await authHeaders()),
         },
-        onResponse({}) {
+        onResponse() {
           loading.value = false;
           finish();
         },
@@ -100,7 +114,9 @@
       if (submitData) {
         toast.success(message);
         if (!submitData.payment) {
-          await navigateTo(`/forms/${route.params.id}/submitted`);
+          await navigateTo(
+            `/forms/${route.params.id}/submitted?submissionId=${submitData.submissionId}`,
+          );
           return;
         }
         try {

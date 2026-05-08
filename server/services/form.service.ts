@@ -212,7 +212,7 @@ export async function getFormById(formId: string, token?: string) {
           },
         },
       });
-      if (groupMember && groupMember.group.formId == formId) {
+      if (groupMember) {
         let memberPayment = await db.query.formGroupMemberPayments.findFirst({
           where: and(
             eq(formGroupMemberPayments.groupId, groupMember.groupId),
@@ -220,11 +220,10 @@ export async function getFormById(formId: string, token?: string) {
           ),
         });
         if (memberPayment && memberPayment.paymentType == "leader_pays") {
-          form.price = (parseInt(form.price || "0") - memberPayment.amount).toString();
+          form.price = "0".toString();
         }
       }
     }
-
     return form;
   } catch (error: any) {
     console.error("Error fetching form by ID:", error);

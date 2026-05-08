@@ -70,10 +70,11 @@ export const submitForm = async (
   data: SubmissionData,
   submitterId?: string,
   existingSubmissionId?: string,
+  inviteToken?: string,
 ) => {
   return db.transaction(async (tx) => {
-    // 1. Get form (to read base price)
-    const form = await getFormById(formId);
+    // 1. Get form (to read base price), pass token so group member price is waived
+    const form = await getFormById(formId, inviteToken);
 
     if (!form) {
       throw new Error(`Form not found: ${formId}`);
@@ -184,7 +185,6 @@ export const submitForm = async (
         quantity: storeItem.quantity ? storeItem.quantity - quantity : 0,
       });
     }
-
     // 5. Compute final total = base form price + store items total
     const totalPaid = (parseInt(form.price || "0") ?? 0) + storeTotal;
 
@@ -219,25 +219,24 @@ export const submitForm = async (
             })
             .where(eq(formSubmissions.id, submission.id));
         }
-
-        // For paid submissions, we'll send notifications after payment confirmation
-        // in the M-Pesa callback
       } catch (e: any) {
         tx.rollback();
         throw new Error(e);
       }
     } else {
-      const baseUrl = process.env.BETTER_AUTH_URL;
-      const stopTatUrl =
-        totalPaid > 0
-          ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${submission.metadata?.accessToken}`
-          : `${baseUrl}/submission/${submission.id}/stop-tat`;
-      // For free submissions (no payment), send stop TAT notification immediately
-      if (email) {
-        try {
-          await sendStopTatNotification(email, form.title, stopTatUrl);
-        } catch (error) {
-          console.error("Failed to send stop TAT notification for free submission:", error);
+      if (form.calculateTat) {
+        const baseUrl = process.env.BETTER_AUTH_URL;
+        const stopTatUrl =
+          totalPaid > 0
+            ? `${baseUrl}/submission/${submission.id}/stop-tat?token=${submission.metadata?.accessToken}`
+            : `${baseUrl}/submission/${submission.id}/stop-tat`;
+        // For free submissions (no payment), send stop TAT notification immediately
+        if (email) {
+          try {
+            await sendStopTatNotification(email, form.title, stopTatUrl);
+          } catch (error) {
+            console.error("Failed to send stop TAT notification for free submission:", error);
+          }
         }
       }
     }

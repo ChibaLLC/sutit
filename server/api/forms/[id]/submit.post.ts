@@ -1,20 +1,18 @@
 import { auth } from "~~/server/lib/auth";
 import { getFormById } from "~~/server/services/form.service";
 import { retryFormPayment } from "~~/server/services/payment.service";
-import {
-  submitForm,
-  checkExistingSubmission,
-  checkFailedPaymentSubmission,
-} from "~~/server/services/submissions.service";
+import { submitForm, checkExistingSubmission } from "~~/server/services/submissions.service";
 
 export default defineEventHandler(async (event) => {
   const formId = getRouterParam(event, "id");
+  const query = getQuery(event);
+  const token = query.token as string | undefined;
 
   if (!formId) {
     throw createError({ statusCode: 400, message: "Form ID is required" });
   }
 
-  const form = await getFormById(formId);
+  const form = await getFormById(formId, token);
   if (!form) {
     throw createError({ statusCode: 404, message: "Form not found" });
   }
@@ -58,7 +56,6 @@ export default defineEventHandler(async (event) => {
           message: "Payment retry initiated. Please complete on your phone.",
         };
       } catch (e: any) {
-        console.error("Payment retry error:", e);
         throw createError({
           statusCode: 500,
           message: e.message || "Failed to retry payment. Please try again.",
@@ -80,7 +77,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const submission = await submitForm(formId, body, session?.user?.id);
+    const submission = await submitForm(formId, body, session?.user?.id, undefined, token);
 
     return {
       data: {
