@@ -207,36 +207,44 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
         form: true,
       },
     });
-    // Send Invites
-    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    for (const member of group?.members) {
-      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+    // Send Invites if group exists
+    if (group && group.members && group.members.length > 0) {
+      const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-      if (member.invitePhone) {
-        const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
-        await sendTextSmsTiara({
-          phone: member.invitePhone,
-          message: smsMessage,
-        });
+      for (const member of group.members) {
+        const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+
+        if (member.invitePhone) {
+          const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+          await sendTextSmsTiara({
+            phone: member.invitePhone,
+            message: smsMessage,
+          });
+        }
+
+        if (member.inviteEmail) {
+          await sendMail({
+            to: member.inviteEmail,
+            subject: `You're invited to join "${group.groupName}"`,
+            text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+          });
+        }
       }
 
-      if (member.inviteEmail) {
-        await sendMail({
-          to: member.inviteEmail,
-          subject: `You're invited to join "${group.groupName}"`,
-          text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
-        });
-      }
+      await handleSuccessfulGroupPayment(group);
     }
-
-    await handleSuccessfulGroupPayment(groupPayment);
   }
   return updatedPayment;
 };
 
 const handleSuccessfulGroupPayment = async (group: any) => {
   try {
+    if (!group) {
+      console.log("No group found for payment");
+      return;
+    }
+
     // Update group status to published
     await db
       .update(formGroups)
@@ -254,27 +262,27 @@ const handleSuccessfulGroupPayment = async (group: any) => {
           updatedAt: new Date(),
         })
         .where(eq(formGroupMemberPayments.groupId, group.id));
-    }
 
-    const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    for (const member of group.members) {
-      const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+      for (const member of group.members) {
+        const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
 
-      if (member.invitePhone) {
-        const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
-        await sendTextSmsTiara({
-          phone: member.invitePhone,
-          message: smsMessage,
-        });
-      }
+        if (member.invitePhone) {
+          const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+          await sendTextSmsTiara({
+            phone: member.invitePhone,
+            message: smsMessage,
+          });
+        }
 
-      if (member.inviteEmail) {
-        await sendMail({
-          to: member.inviteEmail,
-          subject: `You're invited to join "${group.groupName}"`,
-          text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
-        });
+        if (member.inviteEmail) {
+          await sendMail({
+            to: member.inviteEmail,
+            subject: `You're invited to join "${group.groupName}"`,
+            text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+          });
+        }
       }
     }
 

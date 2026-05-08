@@ -100,7 +100,7 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
       }
 
       if (!payment) {
-        memberRecords.forEach(async (m) => {
+        for (const m of memberRecords) {
           let url = process.env.NUXT_PUBLIC_URL;
           let link = `Here is the ${group.groupName.trim()} group invite link: ${url}/forms/${form.slug}?token=${m?.inviteToken}`;
           if (m?.inviteEmail) {
@@ -116,7 +116,7 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
               message: link,
             });
           }
-        });
+        }
       } else {
         await db
           .update(formGroups)
@@ -218,6 +218,7 @@ export const getGroupById = async (groupId: string) => {
 
   return {
     ...group,
+    formId: group.formId,
     members,
     stats,
     paymentSummary: {
@@ -350,5 +351,35 @@ export const retryGroupPayment = async (group: any, user: User, phoneNumber?: st
       merchantId: result.MerchantRequestID,
     },
     group,
+  };
+};
+
+export const getUserGroups = async (userId: string) => {
+  const createdGroups = await db.query.formGroups.findMany({
+    where: eq(formGroups.leaderId, userId),
+    with: {
+      form: true,
+      members: true,
+      payment: true,
+    },
+  });
+
+  const memberGroups = await db.query.formGroupMembers.findMany({
+    where: eq(formGroupMembers.userId, userId),
+    with: {
+      group: {
+        with: {
+          form: true,
+          members: true,
+          payment: true,
+          leader: true,
+        },
+      },
+    },
+  });
+
+  return {
+    created: createdGroups,
+    joined: memberGroups.map((m) => m.group),
   };
 };
