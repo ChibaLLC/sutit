@@ -16,20 +16,6 @@
   import type { FormSchema } from "~~/shared/types";
 
   import { buttonVariants } from "~/components/ui/button";
-  import { Button } from "~/components/ui/button";
-  import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
-  import { Input } from "~/components/ui/input";
-  import { Label } from "~/components/ui/label";
-  import { Separator } from "~/components/ui/separator";
-  import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-  } from "~/components/ui/dialog";
 
   const route = useRoute();
   const router = useRouter();
@@ -37,6 +23,7 @@
 
   const submissionId = computed(() => route.query.submissionId as string);
   const checkoutId = computed(() => route.query.checkoutId as string);
+  const hasCheckout = computed(() => !!checkoutId.value);
 
   const { data: submissionData } = await useFetch(`/api/submissions/${submissionId.value}`, {
     key: `submission-${submissionId.value}`,
@@ -51,16 +38,22 @@
   });
 
   const hasTat = computed(() => form.value?.calculateTat === true);
-
-  const { data: paymentData, refresh: refreshPayment, status: paymentStatus } = await useFetch("/api/payments/" + checkoutId.value, {
-    query: { checkoutId: checkoutId.value },
-    key: `payment-${checkoutId.value}`,
-    server: false,
-  });
+  const {
+    data: paymentData,
+    refresh: refreshPayment,
+    status: paymentStatus,
+  } = checkoutId.value
+    ? await useFetch(`/api/payments/${checkoutId.value}`, {
+        key: `payment-${checkoutId.value}`,
+        server: false,
+      })
+    : { data: ref(null), refresh: (() => {}) as () => void, status: ref("idle") };
 
   const paymentStatusValue = computed(() => paymentData.value?.data?.status as string | undefined);
   const paymentAmount = computed(() => paymentData.value?.data?.amount as number | undefined);
-  const receiptNumber = computed(() => paymentData.value?.data?.receiptNumber as string | undefined);
+  const receiptNumber = computed(
+    () => paymentData.value?.data?.receiptNumber as string | undefined,
+  );
   const paidAt = computed(() => paymentData.value?.data?.paidAt as string | undefined);
   const paymentPhone = computed(() => paymentData.value?.data?.phoneNumber as string | undefined);
 
@@ -78,7 +71,11 @@
     while (attempts < maxRetries) {
       try {
         const res = await $fetch(`/api/payments/${checkoutId}`);
-        if (res.success && res.data && (res.data.status == "completed" || res.data.status == "failed")) {
+        if (
+          res.success &&
+          res.data &&
+          (res.data.status == "completed" || res.data.status == "failed")
+        ) {
           return res;
         }
       } catch (err) {
@@ -96,14 +93,14 @@
     try {
       const result = await $fetch(`/api/forms/${route.params.id}/retry-payment`, {
         method: "post",
-        body: { 
+        body: {
           submissionId: submissionId.value,
-          phoneNumber: retryPhoneNumber.value || undefined
+          phoneNumber: retryPhoneNumber.value || undefined,
         },
       });
       toast.success(result.message || "Payment initiated. Please complete on your phone.");
       showRetryDialog.value = false;
-      
+
       try {
         const checkResult = await checkPayment(result.data.payment.checkoutId, 15);
         if (checkResult?.data?.status === "completed") {
@@ -114,7 +111,7 @@
       } catch (e) {
         // Let the user check manually
       }
-      
+
       await refreshPayment();
     } catch (e: any) {
       toast.error(e.data?.message || "Failed to retry payment");
@@ -129,7 +126,8 @@
   };
 
   const stopTatUrl = computed(() => {
-    if (!submissionId.value || !hasTat.value || !isCompleted.value) return null;
+    if (!submissionId.value || !hasTat.value) return null;
+    if (hasCheckout.value && !isCompleted.value) return null;
     return `${window.location.origin}/submission/${submissionId.value}/stop-tat`;
   });
 
@@ -154,34 +152,47 @@
     <div class="w-full max-w-2xl space-y-8">
       <!-- Success Header -->
       <div class="space-y-4 text-center">
-        <!-- Success State -->
+        <!-- Submission Only (no checkout) -->
         <div
-          v-if="isCompleted"
+          v-if="!hasCheckout"
           class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
         >
           <CheckCircle class="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
-        <!-- Pending State -->
+        <!-- Payment Success State -->
+        <div
+          v-else-if="isCompleted"
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
+        >
+          <CheckCircle class="h-8 w-8 text-green-600 dark:text-green-400" />
+        </div>
+        <!-- Payment Pending State -->
         <div
           v-else-if="isPending"
           class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20"
         >
           <Clock class="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
         </div>
-        <!-- Failed State -->
+        <!-- Payment Failed State -->
         <div
           v-else-if="isFailed"
           class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
         >
           <AlertCircle class="h-8 w-8 text-red-600 dark:text-red-400" />
         </div>
-        <!-- Unknown/Loading State -->
-        <div v-else class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/20">
+        <!-- Payment Unknown/Loading State -->
+        <div
+          v-else
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900/20"
+        >
           <Clock class="h-8 w-8 text-gray-600 dark:text-gray-400" />
         </div>
 
         <div class="space-y-2">
-          <h1 v-if="isCompleted" class="text-foreground text-3xl font-bold tracking-tight">
+          <h1 v-if="!hasCheckout" class="text-foreground text-3xl font-bold tracking-tight">
+            Successfully Submitted!
+          </h1>
+          <h1 v-else-if="isCompleted" class="text-foreground text-3xl font-bold tracking-tight">
             Successfully Submitted!
           </h1>
           <h1 v-else-if="isPending" class="text-foreground text-3xl font-bold tracking-tight">
@@ -194,7 +205,12 @@
             Checking Payment...
           </h1>
 
-          <p v-if="isCompleted" class="text-muted-foreground text-lg">Your response has been recorded</p>
+          <p v-if="!hasCheckout" class="text-muted-foreground text-lg">
+            Your response has been recorded
+          </p>
+          <p v-else-if="isCompleted" class="text-muted-foreground text-lg">
+            Your response has been recorded
+          </p>
           <p v-else-if="isPending" class="text-muted-foreground text-lg">
             Please complete the payment on your phone
           </p>
@@ -214,12 +230,9 @@
           </CardTitle>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div class="flex items-center justify-between rounded-lg bg-muted p-4">
+          <div class="bg-muted flex items-center justify-between rounded-lg p-4">
             <div class="flex items-center gap-3">
-              <div
-                v-if="isPending"
-                class="h-3 w-3 animate-pulse rounded-full bg-yellow-500"
-              ></div>
+              <div v-if="isPending" class="h-3 w-3 animate-pulse rounded-full bg-yellow-500"></div>
               <div v-else-if="isFailed" class="h-3 w-3 rounded-full bg-red-500"></div>
               <div v-else class="h-3 w-3 rounded-full bg-gray-500"></div>
               <span class="font-medium capitalize">{{ paymentStatusValue || "loading..." }}</span>
@@ -247,7 +260,8 @@
                 <DialogHeader>
                   <DialogTitle>Retry Payment</DialogTitle>
                   <DialogDescription>
-                    Enter your phone number to receive the STK push. A new payment request will be sent to your phone.
+                    Enter your phone number to receive the STK push. A new payment request will be
+                    sent to your phone.
                   </DialogDescription>
                 </DialogHeader>
                 <div class="space-y-4 py-4">
@@ -295,7 +309,9 @@
             </div>
             <div class="space-y-1">
               <Label class="text-muted-foreground text-sm font-medium">Status</Label>
-              <p class="bg-muted rounded-md px-3 py-2 text-sm font-semibold capitalize text-green-600">
+              <p
+                class="bg-muted rounded-md px-3 py-2 text-sm font-semibold text-green-600 capitalize"
+              >
                 {{ paymentStatusValue }}
               </p>
             </div>
@@ -305,7 +321,7 @@
             </div>
             <div class="space-y-1">
               <Label class="text-muted-foreground text-sm font-medium">Receipt Number</Label>
-              <p class="bg-muted rounded-md px-3 py-2 text-sm font-mono">{{ receiptNumber }}</p>
+              <p class="bg-muted rounded-md px-3 py-2 font-mono text-sm">{{ receiptNumber }}</p>
             </div>
             <div v-if="paidAt" class="col-span-2 space-y-1">
               <Label class="text-muted-foreground text-sm font-medium">Paid At</Label>
@@ -317,8 +333,8 @@
         </CardContent>
       </Card>
 
-      <!-- Submission Details Card (only show for completed payments) -->
-      <Card v-if="isCompleted">
+      <!-- Submission Details Card -->
+      <Card v-if="isCompleted || !hasCheckout">
         <CardHeader>
           <CardTitle class="text-xl">Submission Details</CardTitle>
         </CardHeader>
@@ -327,7 +343,7 @@
             <div class="col-span-full space-y-1">
               <Label class="text-muted-foreground text-sm font-medium">Submitted At</Label>
               <p class="bg-muted rounded-md px-3 py-2 text-sm">
-                {{ new Date() }}
+                {{ submissionData?.data?.submittedAt ? new Date(submissionData.data.submittedAt).toLocaleString() : new Date().toLocaleString() }}
               </p>
             </div>
           </div>
@@ -412,3 +428,4 @@
     />
   </div>
 </template>
+
