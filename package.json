@@ -38,7 +38,7 @@
     "better-auth": "^1.6.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "daraja.js": "github:ChibaLLC/daraja.js#42e371dedfabbbca6b73895f26bd62f64e77ac14",
+    "daraja.js": "^1.0.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
