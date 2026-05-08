@@ -99,29 +99,39 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         }
       }
 
-      if (payment) {
-        for (const m of memberRecords) {
-          let url = process.env.NUXT_PUBLIC_URL;
-          let link = `Here is the ${group.groupName.trim()} group invite link: ${url}/forms/${form.slug}?token=${m?.inviteToken}`;
-          if (m?.inviteEmail) {
-            sendMail({
-              to: m.inviteEmail,
-              subject: "GROUP INVITE",
-              text: link,
-            });
-          }
-          if (m?.invitePhone) {
-            sendTextSmsTiara({
-              phone: m.invitePhone,
-              message: link,
-            });
-          }
-        }
-      } else {
+      if (payment && payment.id) {
         await db
           .update(formGroups)
           .set({ paymentId: payment.id })
           .where(eq(formGroups.id, formGroup.id));
+
+        for (const m of memberRecords) {
+          const url = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
+          const link = `You've been invited to join the "${group.groupName.trim()}" group. Click the link to accept: ${url}/forms/${form.slug}/group/join?code=${inviteCode}&token=${m?.inviteToken}`;
+
+          try {
+            if (m?.inviteEmail) {
+              await sendMail({
+                to: m.inviteEmail,
+                subject: `You're invited to join "${group.groupName.trim()}"`,
+                text: link,
+              });
+            }
+          } catch (e) {
+            console.error("Failed to send invite email to", m.inviteEmail, e);
+          }
+
+          try {
+            if (m?.invitePhone) {
+              await sendTextSmsTiara({
+                phone: m.invitePhone,
+                message: link,
+              });
+            }
+          } catch (e) {
+            console.error("Failed to send invite SMS to", m.invitePhone, e);
+          }
+        }
       }
 
       return {

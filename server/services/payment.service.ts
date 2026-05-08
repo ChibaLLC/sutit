@@ -12,6 +12,7 @@ import {
   payments,
 } from "../db/schema";
 import { sendMail } from "./email.service";
+import { sendTextSmsTiara } from "../utils/sms/tiara";
 import { callStkPush } from "./mpesa.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,
@@ -181,24 +182,34 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
     },
   });
 
-  await sendTextSmsTiara({
-    phone: updatedPayment.phoneNumber,
-    message: `[SUTIT] KSH ${updatedPayment.amount} received for ${formPayment?.form.title}. Receipt Number ${receiptNumber ?? updatedPayment.referenceCode}`,
-  });
-  if (formPayment?.form.afterSubmissionMessage) {
+  try {
     await sendTextSmsTiara({
       phone: updatedPayment.phoneNumber,
-      message: formPayment?.form.afterSubmissionMessage,
+      message: `[SUTIT] KSH ${updatedPayment.amount} received for ${formPayment?.form.title}. Receipt Number ${receiptNumber ?? updatedPayment.referenceCode}`,
     });
-    if (formPayment?.submission.submitter) {
-      await sendMail({
-        to: formPayment.submission.submitter.email,
-        text: formPayment.form.afterSubmissionMessage,
-        subject: "After Submission",
-      });
-    }
+  } catch (e) {
+    console.error("Failed to send payment confirmation SMS", e);
   }
-  if (updatedPayment) {
+
+  try {
+    if (formPayment?.form.afterSubmissionMessage) {
+      await sendTextSmsTiara({
+        phone: updatedPayment.phoneNumber,
+        message: formPayment?.form.afterSubmissionMessage,
+      });
+      if (formPayment?.submission.submitter) {
+        await sendMail({
+          to: formPayment.submission.submitter.email,
+          text: formPayment.form.afterSubmissionMessage,
+          subject: "After Submission",
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Failed to send after-submission message", e);
+  }
+
+  try {
     console.log("Updated Payment: ", updatedPayment);
     const group = await db.query.formGroups.findFirst({
       where: eq(formGroups.paymentId, updatedPayment?.id),
@@ -213,27 +224,37 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
       const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
       for (const member of group.members) {
-        const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+        const inviteUrl = `${baseUrl}/forms/${group.form.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
 
-        if (member.invitePhone) {
-          const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
-          await sendTextSmsTiara({
-            phone: member.invitePhone,
-            message: smsMessage,
-          });
+        try {
+          if (member.invitePhone) {
+            const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+            await sendTextSmsTiara({
+              phone: member.invitePhone,
+              message: smsMessage,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to send invite SMS to", member.invitePhone, e);
         }
 
-        if (member.inviteEmail) {
-          await sendMail({
-            to: member.inviteEmail,
-            subject: `You're invited to join "${group.groupName}"`,
-            text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
-          });
+        try {
+          if (member.inviteEmail) {
+            await sendMail({
+              to: member.inviteEmail,
+              subject: `You're invited to join "${group.groupName}"`,
+              text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to send invite email to", member.inviteEmail, e);
         }
       }
 
       await handleSuccessfulGroupPayment(group);
     }
+  } catch (e) {
+    console.error("Failed to process group invites after payment", e);
   }
   return updatedPayment;
 };
@@ -266,22 +287,30 @@ const handleSuccessfulGroupPayment = async (group: any) => {
       const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
       for (const member of group.members) {
-        const inviteUrl = `${baseUrl}/forms/${group.form.slug}?token=${member.inviteToken}`;
+        const inviteUrl = `${baseUrl}/forms/${group.form.slug}/group/join?code=${group.inviteCode}&token=${member.inviteToken}`;
 
-        if (member.invitePhone) {
-          const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
-          await sendTextSmsTiara({
-            phone: member.invitePhone,
-            message: smsMessage,
-          });
+        try {
+          if (member.invitePhone) {
+            const smsMessage = `You've been invited to join the "${group.groupName}" group on SUTIT. Click to accept: ${inviteUrl}`;
+            await sendTextSmsTiara({
+              phone: member.invitePhone,
+              message: smsMessage,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to send invite SMS in handleSuccessfulGroupPayment", e);
         }
 
-        if (member.inviteEmail) {
-          await sendMail({
-            to: member.inviteEmail,
-            subject: `You're invited to join "${group.groupName}"`,
-            text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
-          });
+        try {
+          if (member.inviteEmail) {
+            await sendMail({
+              to: member.inviteEmail,
+              subject: `You're invited to join "${group.groupName}"`,
+              text: `You've been invited to join the "${group.groupName}" group. Click the link to accept: ${inviteUrl}`,
+            });
+          }
+        } catch (e) {
+          console.error("Failed to send invite email in handleSuccessfulGroupPayment", e);
         }
       }
     }
