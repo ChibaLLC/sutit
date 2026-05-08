@@ -11,6 +11,7 @@
     Zap,
     Activity,
     Loader2,
+    Layers,
   } from "lucide-vue-next";
   import { computed } from "vue";
 
@@ -38,6 +39,12 @@
       description: "View and edit your forms",
       href: "/forms",
       icon: Settings,
+    },
+    {
+      name: "Manage My Groups",
+      description: "View groups you've created or joined",
+      href: "/groups",
+      icon: Layers,
     },
   ];
 
@@ -145,10 +152,12 @@
 
         <!-- Actual stats cards -->
         <template v-else>
-          <div
+          <NuxtLink
             v-for="(card, index) in dashboardCards"
             :key="card.name"
+            :to="card.name === 'Groups' ? '/groups' : undefined"
             class="group border-border/50 bg-card/50 hover:border-primary/30 relative overflow-hidden rounded-xl border backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+            :class="{ 'cursor-pointer': card.name === 'Groups' }"
             :style="{ animationDelay: `${index * 50}ms` }"
           >
             <div
@@ -187,14 +196,14 @@
                 {{ card.description }}
               </p>
             </div>
-          </div>
+          </NuxtLink>
         </template>
       </div>
 
       <!-- Quick Actions -->
       <div class="mb-12">
         <h2 class="text-foreground mb-6 text-2xl font-bold">Quick Actions</h2>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <NuxtLink
             v-for="action in quickActions"
             :key="action.href"

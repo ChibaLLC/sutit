@@ -22,7 +22,9 @@
   const route = useRoute();
 
   const { data: groupData, refresh } = await useFetch(`/api/groups/${route.params.id}`, {
-    headers: authHeaders,
+    headers: {
+      ...(await authHeaders()),
+    },
   });
 
   const isLeader = computed(() => groupData.value?.data?.userRole === "leader");
@@ -55,13 +57,16 @@
 
   const resendInvite = async (memberId: string) => {
     try {
-      await $fetch(`/api/forms/${groupData.value?.data?.formId}/group/${route.params.id}/resend-invite`, {
-        method: "POST",
-        body: { memberId },
-        headers: {
-          ...(await authHeaders()),
+      await $fetch(
+        `/api/forms/${groupData.value?.data?.formId}/group/${route.params.id}/resend-invite`,
+        {
+          method: "POST",
+          body: { memberId },
+          headers: {
+            ...(await authHeaders()),
+          },
         },
-      });
+      );
       toast.success("Invitation resent successfully");
     } catch (error) {
       toast.error("Failed to resend invitation");
@@ -70,13 +75,16 @@
 
   const removeMember = async (memberId: string) => {
     try {
-      await $fetch(`/api/forms/${groupData.value?.data?.formId}/group/${route.params.id}/remove-member`, {
-        method: "POST",
-        body: { memberId },
-        headers: {
-          ...(await authHeaders()),
+      await $fetch(
+        `/api/forms/${groupData.value?.data?.formId}/group/${route.params.id}/remove-member`,
+        {
+          method: "POST",
+          body: { memberId },
+          headers: {
+            ...(await authHeaders()),
+          },
         },
-      });
+      );
       toast.success("Member removed successfully");
       refresh();
     } catch (error) {
@@ -251,7 +259,7 @@
         </CardHeader>
         <CardContent>
           <div class="flex items-center gap-2">
-            <Input :modelValue="dashboard?.data?.inviteLink" readonly class="font-mono text-sm" />
+            <Input :modelValue="groupData.data.inviteLink" readonly class="font-mono text-sm" />
 
             <Button @click="copyInviteLink" size="sm">
               <Copy class="h-4 w-4" />
@@ -398,3 +406,4 @@
     </div>
   </div>
 </template>
+

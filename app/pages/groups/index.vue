@@ -5,10 +5,11 @@
   import { authHeaders } from "~/lib/auth-client";
 
   const router = useRouter();
-  const route = useRoute();
 
   const { data: groups, refresh } = await useFetch("/api/groups", {
-    headers: authHeaders,
+    headers: {
+      ...(await authHeaders()),
+    },
   });
 
   const createdGroups = computed(() => groups.value?.data?.created || []);
@@ -34,14 +35,12 @@
     <div class="container mx-auto max-w-6xl px-4 py-8">
       <div class="mb-8">
         <h1 class="text-foreground text-3xl font-bold">My Groups</h1>
-        <p class="text-muted-foreground mt-1">
-          Manage groups you've created or joined
-        </p>
+        <p class="text-muted-foreground mt-1">Manage groups you've created or joined</p>
       </div>
 
       <!-- Created Groups -->
       <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+        <h2 class="mb-4 flex items-center gap-2 text-xl font-semibold">
           <Crown class="h-5 w-5 text-yellow-500" />
           Groups You Created
         </h2>
@@ -49,7 +48,7 @@
           <Card
             v-for="group in createdGroups"
             :key="group.id"
-            class="cursor-pointer hover:border-primary transition-colors"
+            class="hover:border-primary cursor-pointer transition-colors"
             @click="goToGroup(group.id)"
           >
             <CardHeader class="pb-2">
@@ -67,16 +66,12 @@
                 </Badge>
               </div>
               <div class="mt-3 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  @click.stop="copyInviteLink(group)"
-                >
-                  <Copy class="h-4 w-4 mr-1" />
+                <Button size="sm" variant="outline" @click.stop="copyInviteLink(group)">
+                  <Copy class="mr-1 h-4 w-4" />
                   Copy Link
                 </Button>
                 <Button size="sm" @click.stop="goToGroup(group.id)">
-                  <ExternalLink class="h-4 w-4 mr-1" />
+                  <ExternalLink class="mr-1 h-4 w-4" />
                   Dashboard
                 </Button>
               </div>
@@ -86,16 +81,14 @@
         <Card v-else>
           <CardContent class="py-12 text-center">
             <Users class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <p class="text-muted-foreground mb-4">
-              You haven't created any groups yet
-            </p>
+            <p class="text-muted-foreground mb-4">You haven't created any groups yet</p>
           </CardContent>
         </Card>
       </div>
 
       <!-- Joined Groups -->
       <div>
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+        <h2 class="mb-4 flex items-center gap-2 text-xl font-semibold">
           <Users class="h-5 w-5" />
           Groups You Joined
         </h2>
@@ -103,7 +96,7 @@
           <Card
             v-for="group in joinedGroups"
             :key="group.id"
-            class="cursor-pointer hover:border-primary transition-colors"
+            class="hover:border-primary cursor-pointer transition-colors"
             @click="goToGroup(group.id)"
           >
             <CardHeader class="pb-2">
@@ -122,7 +115,7 @@
               </div>
               <div class="mt-3">
                 <Button size="sm" @click="goToGroup(group.id)">
-                  <ExternalLink class="h-4 w-4 mr-1" />
+                  <ExternalLink class="mr-1 h-4 w-4" />
                   View Dashboard
                 </Button>
               </div>
@@ -132,12 +125,11 @@
         <Card v-else>
           <CardContent class="py-12 text-center">
             <Users class="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <p class="text-muted-foreground">
-              You haven't joined any groups yet
-            </p>
+            <p class="text-muted-foreground">You haven't joined any groups yet</p>
           </CardContent>
         </Card>
       </div>
     </div>
   </div>
 </template>
+
