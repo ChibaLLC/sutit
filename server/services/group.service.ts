@@ -99,19 +99,19 @@ export const createGroup = async (formId: string, group: CreateGroupRequest, use
         }
       }
 
-      if (!payment) {
+      if (payment) {
         for (const m of memberRecords) {
           let url = process.env.NUXT_PUBLIC_URL;
           let link = `Here is the ${group.groupName.trim()} group invite link: ${url}/forms/${form.slug}?token=${m?.inviteToken}`;
           if (m?.inviteEmail) {
-            await sendMail({
+            sendMail({
               to: m.inviteEmail,
               subject: "GROUP INVITE",
               text: link,
             });
           }
           if (m?.invitePhone) {
-            await sendTextSmsTiara({
+            sendTextSmsTiara({
               phone: m.invitePhone,
               message: link,
             });
