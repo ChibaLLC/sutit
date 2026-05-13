@@ -160,6 +160,7 @@ export const getFormGroups = async (formId: string) => {
           },
           payment: true,
           members: true,
+          leader: true,
         },
       },
     },
