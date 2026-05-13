@@ -1,7 +1,7 @@
 import { randomBytes, randomInt } from "crypto";
 
 import { User } from "better-auth";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { CreateGroupRequest } from "~~/shared/types";
 
 import db from "../db";
@@ -151,6 +151,7 @@ export const getFormGroups = async (formId: string) => {
     where: eq(forms.id, formId),
     with: {
       groups: {
+        orderBy: [asc(formGroups.createdAt)],
         with: {
           memberPayments: {
             with: {
