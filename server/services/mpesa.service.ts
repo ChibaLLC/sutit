@@ -1,5 +1,7 @@
 import { Mpesa } from "daraja.js";
 
+import { cache } from "../utils/redis";
+
 const app = new Mpesa(
   {
     consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,
@@ -22,11 +24,13 @@ type AccessToken = {
   expires_in: number;
 };
 const baseUrl = "https://api.safaricom.co.ke";
-const cacheToken = defineCachedFunction(async () => await fetchToken(), {
-  maxAge: 3500,
-});
+
 const fetchToken = async () => {
   try {
+    let tk = await cache.get<string>("sutit:mpesa_token");
+    if (tk) {
+      return tk;
+    }
     let pass = Buffer.from(config.consumerKey + ":" + config.consumerSecret).toString("base64");
     const res = await $fetch<AccessToken>(`${baseUrl}/oauth/v1/generate`, {
       method: "get",
@@ -37,6 +41,7 @@ const fetchToken = async () => {
         Authorization: `Basic ${pass}`,
       },
     });
+    await cache.set("sutit:mpesa_token", res.access_token, 3500);
     return res.access_token;
   } catch (e) {
     console.log(e);
@@ -72,7 +77,7 @@ export const callStkPush = async (
   accountNumber: string,
 ) => {
   try {
-    const token = await cacheToken();
+    const token = await fetchToken();
     const phone = `254${phone_number.toString().slice(-9)}`;
     const payload = {
       BusinessShortCode: config.shortCode,
