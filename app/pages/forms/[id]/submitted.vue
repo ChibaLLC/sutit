@@ -343,7 +343,11 @@
             <div class="col-span-full space-y-1">
               <Label class="text-muted-foreground text-sm font-medium">Submitted At</Label>
               <p class="bg-muted rounded-md px-3 py-2 text-sm">
-                {{ submissionData?.data?.submittedAt ? new Date(submissionData.data.submittedAt).toLocaleString() : new Date().toLocaleString() }}
+                {{
+                  submissionData?.data?.submittedAt
+                    ? new Date(submissionData.data.submittedAt).toLocaleString()
+                    : new Date().toLocaleString()
+                }}
               </p>
             </div>
           </div>
@@ -428,4 +432,3 @@
     />
   </div>
 </template>
-

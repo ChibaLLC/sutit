@@ -882,9 +882,11 @@
                     <Badge
                       :variant="fp.payment?.status === 'completed' ? 'default' : 'outline'"
                       :class="{
-                        'border-green-300 bg-green-100 text-green-800': fp.payment?.status === 'completed',
+                        'border-green-300 bg-green-100 text-green-800':
+                          fp.payment?.status === 'completed',
                         'border-red-300 bg-red-100 text-red-800': fp.payment?.status === 'failed',
-                        'border-yellow-300 bg-yellow-100 text-yellow-800': fp.payment?.status === 'pending',
+                        'border-yellow-300 bg-yellow-100 text-yellow-800':
+                          fp.payment?.status === 'pending',
                       }"
                     >
                       {{ fp.payment?.status }}
@@ -904,11 +906,11 @@
                     </div>
                     <div v-if="fp.payment?.receiptNumber" class="col-span-2">
                       <span class="text-muted-foreground">Receipt: </span>
-                      <span class="font-medium font-mono">{{ fp.payment.receiptNumber }}</span>
+                      <span class="font-mono font-medium">{{ fp.payment.receiptNumber }}</span>
                     </div>
                     <div v-if="fp.payment?.checkoutId" class="col-span-2">
                       <span class="text-muted-foreground">Checkout ID: </span>
-                      <span class="font-medium font-mono text-xs">{{ fp.payment.checkoutId }}</span>
+                      <span class="font-mono text-xs font-medium">{{ fp.payment.checkoutId }}</span>
                     </div>
                   </div>
                 </div>
@@ -955,9 +957,7 @@
                 </div>
                 <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Amount</p>
-                  <p class="text-primary text-lg font-bold">
-                    Kes {{ completedPayment.amount }}
-                  </p>
+                  <p class="text-primary text-lg font-bold">Kes {{ completedPayment.amount }}</p>
                 </div>
                 <div v-if="completedPayment">
                   <p class="text-foreground mb-1 text-sm">Reference Number</p>

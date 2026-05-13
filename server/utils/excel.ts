@@ -313,9 +313,7 @@ const formatFormData = (submissions: FormSubmission[]) => {
   });
 
   submissions.forEach((sub) => {
-    const emailFromResponse = sub.responses.find(
-      (r) => r.field.type === "email",
-    )?.value;
+    const emailFromResponse = sub.responses.find((r) => r.field.type === "email")?.value;
 
     const baseRow: Record<string, any> = {
       "Submitter Name": sub.submitter?.name,
