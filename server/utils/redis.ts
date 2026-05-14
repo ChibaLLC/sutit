@@ -12,9 +12,16 @@ const createRedisClient = (): Redis | null => {
   }
 
   try {
-    const client = new Redis(redisUrl);
+    const client = new Redis(redisUrl, {
+      lazyConnect: true,
+      connectTimeout: 5000,
+      maxRetriesPerRequest: null,
+      retryStrategy(times) {
+        if (times > 3) return null;
+        return Math.min(times * 200, 1000);
+      },
+    });
 
-    // Handle connection events
     client.on("connect", () => {
       console.log("✅ Redis connected successfully");
     });
@@ -25,11 +32,13 @@ const createRedisClient = (): Redis | null => {
 
     client.on("error", (err) => {
       console.error("❌ Redis connection error:", err.message);
-      // Don't crash the app on Redis errors
     });
 
     client.on("close", () => {
       console.log("🔌 Redis connection closed");
+      if (redisClient === client) {
+        redisClient = null;
+      }
     });
 
     client.on("reconnecting", () => {
