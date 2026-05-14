@@ -42,8 +42,7 @@
     const query = searchTerm.value.toLowerCase().trim();
     if (!query) return members.value;
     return members.value.filter(
-      (m: any) =>
-        m.email?.toLowerCase().includes(query) || m.phone?.includes(query),
+      (m: any) => m.email?.toLowerCase().includes(query) || m.phone?.includes(query),
     );
   });
 
@@ -71,9 +70,7 @@
     }
     if (query) {
       items = items.filter(
-        (p: any) =>
-          p.memberEmail?.toLowerCase().includes(query) ||
-          p.memberPhone?.includes(query),
+        (p: any) => p.memberEmail?.toLowerCase().includes(query) || p.memberPhone?.includes(query),
       );
     }
     return items;
@@ -130,7 +127,9 @@
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div>
-            <h1 class="text-foreground text-2xl font-bold sm:text-3xl">{{ group.data.groupName }}</h1>
+            <h1 class="text-foreground text-2xl font-bold sm:text-3xl">
+              {{ group.data.groupName }}
+            </h1>
             <p class="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
               <code class="bg-muted rounded px-2 py-0.5 text-xs">{{ group.data.inviteCode }}</code>
               <span>{{ group.data.form?.title }}</span>
@@ -191,7 +190,9 @@
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-foreground text-2xl font-bold">Ksh {{ calculatedRevenue.toLocaleString() }}</div>
+            <div class="text-foreground text-2xl font-bold">
+              Ksh {{ calculatedRevenue.toLocaleString() }}
+            </div>
             <p class="text-muted-foreground text-xs">
               Ksh {{ paymentSummary.pendingAmount?.toLocaleString() || 0 }} pending
             </p>
@@ -243,7 +244,10 @@
               <CardDescription>All current members of this group</CardDescription>
             </CardHeader>
             <CardContent>
-              <div v-if="filteredMembers.length === 0" class="text-muted-foreground py-8 text-center">
+              <div
+                v-if="filteredMembers.length === 0"
+                class="text-muted-foreground py-8 text-center"
+              >
                 <Users class="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p>No members match your search</p>
               </div>
@@ -260,7 +264,9 @@
                     <div class="min-w-0">
                       <p class="truncate font-medium">{{ member.email || "No email" }}</p>
                       <div class="mt-1 flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" class="text-xs capitalize">{{ member.role }}</Badge>
+                        <Badge variant="outline" class="text-xs capitalize">{{
+                          member.role
+                        }}</Badge>
                         <Badge
                           :variant="member.inviteAccepted ? 'default' : 'secondary'"
                           class="text-xs"
@@ -286,11 +292,7 @@
                     >
                       {{ member.paymentStatus }}
                     </Badge>
-                    <Badge
-                      v-if="member.hasSubmitted"
-                      variant="default"
-                      class="text-xs"
-                    >
+                    <Badge v-if="member.hasSubmitted" variant="default" class="text-xs">
                       Submitted
                     </Badge>
                   </div>
@@ -308,7 +310,10 @@
               <CardDescription>All form submissions from group members</CardDescription>
             </CardHeader>
             <CardContent>
-              <div v-if="filteredSubmissions.length === 0" class="text-muted-foreground py-8 text-center">
+              <div
+                v-if="filteredSubmissions.length === 0"
+                class="text-muted-foreground py-8 text-center"
+              >
                 <FileText class="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p>No submissions yet</p>
                 <p class="text-sm">Submissions will appear here once members submit the form</p>
@@ -321,7 +326,9 @@
                 >
                   <div class="flex items-center gap-4">
                     <Avatar class="h-10 w-10">
-                      <AvatarFallback>{{ getEmailInitials(submission.memberEmail) }}</AvatarFallback>
+                      <AvatarFallback>{{
+                        getEmailInitials(submission.memberEmail)
+                      }}</AvatarFallback>
                     </Avatar>
                     <div>
                       <p class="font-medium">{{ submission.memberEmail }}</p>
@@ -337,9 +344,7 @@
                     >
                       {{ submission.status }}
                     </Badge>
-                    <NuxtLink
-                      :to="`/forms/${id}/submissions/${submission.id}`"
-                    >
+                    <NuxtLink :to="`/forms/${id}/submissions/${submission.id}`">
                       <Button size="sm" variant="outline">View</Button>
                     </NuxtLink>
                   </div>
@@ -357,7 +362,10 @@
               <CardDescription>Individual member payment tracking</CardDescription>
             </CardHeader>
             <CardContent>
-              <div v-if="filteredPayments.length === 0" class="text-muted-foreground py-8 text-center">
+              <div
+                v-if="filteredPayments.length === 0"
+                class="text-muted-foreground py-8 text-center"
+              >
                 <Wallet class="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p>No payment records found</p>
                 <p class="text-sm">Payments will appear here once members complete payment</p>
@@ -386,10 +394,7 @@
                     <Badge :variant="getStatusVariant(mp.status)" class="text-xs capitalize">
                       {{ mp.status }}
                     </Badge>
-                    <span
-                      v-if="mp.payment?.receiptNumber"
-                      class="text-muted-foreground text-xs"
-                    >
+                    <span v-if="mp.payment?.receiptNumber" class="text-muted-foreground text-xs">
                       {{ mp.payment.receiptNumber }}
                     </span>
                   </div>

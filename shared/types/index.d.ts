@@ -1,6 +1,8 @@
 import type {
   fieldResponses,
   formFields,
+  formGroupMembers,
+  formGroups,
   forms,
   formSubmissions,
   storeItems,
@@ -123,11 +125,16 @@ export type FormStoreResponse = typeof storeResponses.$inferSelect;
 export type FormField = typeof formFields.$inferSelect;
 export type FormStoreItem = typeof storeItems.$inferSelect;
 
+export type FormGroupMember = typeof formGroupMembers.$inferSelect & {
+  group?: typeof formGroups.$inferSelect;
+};
+
 export type FormSubmission = Submission & {
   form: Form;
   submitter: User;
   responses: (FormFieldResponse & { field: FormField })[];
   storeResponses: (FormStoreResponse & { item: FormStoreItem })[];
+  groupMembers?: FormGroupMember[];
 };
 export type StkCallback = {
   MerchantRequestID: string;

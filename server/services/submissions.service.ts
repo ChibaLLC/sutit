@@ -6,6 +6,7 @@ import { SubmissionData } from "~~/shared/types";
 import db from "../db";
 import {
   fieldResponses,
+  formGroupMembers,
   formPayments,
   formSubmissions,
   storeItems,
@@ -132,6 +133,13 @@ export const submitForm = async (
     if (!submission) {
       tx.rollback();
       throw new Error("Failed to create/update submission");
+    }
+
+    if (inviteToken) {
+      await tx
+        .update(formGroupMembers)
+        .set({ submissionId: submission.id })
+        .where(eq(formGroupMembers.inviteToken, inviteToken));
     }
 
     let email = null;
@@ -275,6 +283,11 @@ export const getFormSubmissions = async (formId: string) => {
       },
       submitter: true,
       dispatch: true,
+      groupMembers: {
+        with: {
+          group: true,
+        },
+      },
     },
   });
   return submissions;

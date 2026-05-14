@@ -11,8 +11,8 @@ import {
   formSubmissions,
   payments,
 } from "../db/schema";
-import { sendMail } from "./email.service";
 import { sendTextSmsTiara } from "../utils/sms/tiara";
+import { sendMail } from "./email.service";
 import { callStkPush } from "./mpesa.service";
 const createPayment = async (
   tx: PgTransaction<any, any, any>,

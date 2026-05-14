@@ -1,5 +1,6 @@
 import { auth } from "~~/server/lib/auth";
 import { getFormById } from "~~/server/services/form.service";
+import { getFormGroups } from "~~/server/services/group.service";
 import { getFormSubmissions } from "~~/server/services/submissions.service";
 import { exportToExcel } from "~~/server/utils/excel";
 
@@ -61,7 +62,9 @@ export default defineEventHandler(async (event) => {
       submissions = submissions.filter((s) => new Date(s.submittedAt) <= end);
     }
 
-    const buffer = await exportToExcel(submissions);
+    const groups = await getFormGroups(formId);
+
+    const buffer = await exportToExcel(submissions, groups?.groups || []);
     const form = await getFormById(formId);
 
     setHeader(

@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+
 import { and, eq } from "drizzle-orm";
 import db from "~~/server/db";
 import { formGroupMembers, formGroups } from "~~/server/db/schema";
@@ -77,7 +78,7 @@ export default defineEventHandler(async (event) => {
             isInviteAccepted: true,
             joinedAt: new Date(),
             invitePhone: phone?.trim() || member.invitePhone,
-            metadata: { ...(member.metadata || {}), paymentOption: "member_pays" },
+            metadata: { ...member.metadata, paymentOption: "member_pays" },
           })
           .where(eq(formGroupMembers.id, member.id));
       } else {
