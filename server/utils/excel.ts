@@ -18,6 +18,7 @@ interface GroupData {
   currentMemberCount: number;
   maxMembers?: number | null;
   members: {
+    id?: string;
     submissionId?: string | null;
     userId?: string | null;
     inviteEmail?: string | null;
@@ -25,6 +26,8 @@ interface GroupData {
     isInviteAccepted?: boolean | null;
   }[];
   leader?: { name?: string; email?: string } | null;
+  payment?: { receiptNumber?: string | null } | null;
+  memberPayments?: Array<{ memberId: string; payment?: { receiptNumber?: string | null } | null }>;
 }
 
 interface GroupMemberExportRow {
@@ -32,6 +35,7 @@ interface GroupMemberExportRow {
   memberPhone: string;
   displayStatus: string;
   submittedAt: string;
+  paymentRefCode: string;
 }
 
 interface GroupHeaderExport {
@@ -39,6 +43,7 @@ interface GroupHeaderExport {
   leaderName: string;
   leaderEmail: string;
   maxMembers: number | null;
+  paymentRefCode: string;
 }
 
 interface GroupExportData {
@@ -163,12 +168,14 @@ export const exportToExcel = async (submissions: FormSubmission[], groups: Group
 
     // Sheet 3: Groups
     if (groupData.length > 0) {
+      console.log(groupData);
       const groupsSheet = workbook.addWorksheet("Groups");
       groupsSheet.columns = [
         { header: "Member Email", key: "memberEmail", width: 30 },
         { header: "Member Phone", key: "memberPhone", width: 18 },
         { header: "Status", key: "displayStatus", width: 18 },
         { header: "Submitted At", key: "submittedAt", width: 22 },
+        { header: "Payment Reference", key: "paymentRefCode", width: 22 },
       ];
 
       let rowNum = 2;
@@ -178,11 +185,14 @@ export const exportToExcel = async (submissions: FormSubmission[], groups: Group
           ? `${gd.header.leaderName}${gd.header.leaderEmail ? ` (${gd.header.leaderEmail})` : ""}`
           : gd.header.leaderEmail || "";
         const membersInfo = `${gd.members.length}${gd.header.maxMembers ? ` / ${gd.header.maxMembers}` : ""}`;
-        const headerText = `Group: ${gd.header.groupName}  ·  Leader: ${leaderInfo}  ·  Members: ${membersInfo}`;
+        const refInfo = gd.header.paymentRefCode
+          ? `  ·  Payment Ref: ${gd.header.paymentRefCode}`
+          : "";
+        const headerText = `Group: ${gd.header.groupName}  ·  Leader: ${leaderInfo}  ·  Members: ${membersInfo}${refInfo}`;
 
         const headerRow = groupsSheet.getRow(rowNum);
         headerRow.getCell(1).value = headerText;
-        groupsSheet.mergeCells(`A${rowNum}:D${rowNum}`);
+        groupsSheet.mergeCells(`A${rowNum}:E${rowNum}`);
         headerRow.eachCell((cell) => {
           cell.fill = {
             type: "pattern",
@@ -200,6 +210,7 @@ export const exportToExcel = async (submissions: FormSubmission[], groups: Group
           dataRow.getCell(2).value = member.memberPhone;
           dataRow.getCell(3).value = member.displayStatus;
           dataRow.getCell(4).value = member.submittedAt;
+          dataRow.getCell(5).value = member.paymentRefCode;
 
           const isSubmitted = member.displayStatus.startsWith("✓");
           dataRow.eachCell((cell) => {
@@ -279,11 +290,18 @@ const buildGroupData = (
         submission = submissionsByResponseEmail.get(m.inviteEmail.toLowerCase());
       }
 
+      let paymentRefCode = "";
+      if (g.memberPayments && m.id) {
+        const mp = g.memberPayments.find((p) => p.memberId === m.id);
+        paymentRefCode = mp?.payment?.receiptNumber || "";
+      }
+
       exportMembers.push({
         memberEmail: m.inviteEmail || submission?.submitter?.email || "",
         memberPhone: m.invitePhone || "",
         displayStatus: submission ? "✓ Submitted" : "✗ Pending",
         submittedAt: submission?.submittedAt || "",
+        paymentRefCode,
       });
     });
 
@@ -293,6 +311,7 @@ const buildGroupData = (
         leaderName: g.leader?.name || "",
         leaderEmail: g.leader?.email || "",
         maxMembers: g.maxMembers ?? null,
+        paymentRefCode: g.payment?.receiptNumber || "",
       },
       members: exportMembers,
     });
@@ -315,17 +334,16 @@ const formatFormData = (submissions: FormSubmission[]) => {
   submissions.forEach((sub) => {
     const emailFromResponse = sub.responses.find((r) => r.field.type === "email")?.value;
 
+    const paymentRecord = sub.payments?.find((fp) => fp.payment?.status === "completed")?.payment;
     const baseRow: Record<string, any> = {
       "Submitter Name": sub.submitter?.name,
       "Submitter Email": sub.submitter?.email || emailFromResponse || "",
       Status: sub.status,
       "Submitted At": sub.submittedAt,
       "Price Paid": sub.pricePaid || 0,
+      "Payment Status": paymentRecord?.status || "",
+      "Receipt Number": paymentRecord?.receiptNumber || "",
     };
-    if (sub.payments?.payment) {
-      baseRow["Payment Status"] = sub.payments.payment.status;
-      baseRow["Receipt Number"] = sub.payments.payment.receiptNumber;
-    }
 
     const fieldRow = { ...baseRow };
     allFieldLabels.forEach((label) => {
