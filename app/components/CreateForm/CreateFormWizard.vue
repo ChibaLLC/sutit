@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-vue-next";
   import { ref, computed, watch } from "vue";
-  import type { FormSchema, PageSchema, Store } from "~~/shared/types";
+  import type { FormSchema, PageSchema, Store, EventSchema } from "~~/shared/types";
 
   const emit = defineEmits<{
     submit: [form: FormSchema];
@@ -10,31 +10,46 @@
   const props = defineProps<{
     isSubmitting?: boolean;
     initialForm?: FormSchema | null;
+    initialHasEvent?: boolean;
   }>();
 
   const isEdit = computed(() => !!props.initialForm);
 
-  // Step 1: Basic Info
   const formName = ref("");
   const formSlug = ref("");
   const formDescription = ref("");
 
-  // Step 2: Form Type
+  const hasEvent = ref(false);
+  const event = ref<EventSchema>({
+    title: "",
+    description: "",
+    slug: "",
+    startDate: "",
+    endDate: null,
+    timezone: "UTC",
+    venueName: "",
+    venueAddress: "",
+    contactPhone: "",
+    contactEmail: "",
+    category: "",
+    audience: "",
+    images: [],
+    isFree: true,
+    refundPolicy: "",
+  });
+
   const formType = ref<"regular" | "product">("regular");
 
-  // Step 3: Pricing
   const isPaid = ref(false);
   const price = ref(0);
+  const requireMerch = ref(false);
 
-  // Step 4: Fields
   const pages = ref<PageSchema[]>([
     { id: Date.now(), title: "Page 1", description: "", fields: [], orderIndex: 1 },
   ]);
 
-  // Step 5: Products (product forms only)
   const stores = ref<Store[]>([{ id: Date.now(), name: "Store 1", description: "", items: [] }]);
 
-  // Step 6: Settings
   const settings = ref({
     isPublic: true,
     requiresLogin: false,
@@ -46,7 +61,6 @@
     tags: [] as string[],
   });
 
-  // Pre-fill from initialForm (edit mode)
   watch(
     () => props.initialForm,
     (f) => {
@@ -57,6 +71,11 @@
       formType.value = f.requireMerch ? "product" : "regular";
       isPaid.value = Number(f.price) > 0;
       price.value = Number(f.price) || 0;
+      hasEvent.value = f.hasEvent ?? false;
+      requireMerch.value = f.requireMerch ?? false;
+      if (f.event) {
+        event.value = { ...event.value, ...f.event };
+      }
       if (f.pages?.length) {
         pages.value = f.pages.map((p: any) => ({
           ...p,
@@ -86,29 +105,89 @@
     { immediate: true },
   );
 
+  watch(
+    () => props.initialHasEvent,
+    (v) => {
+      if (v) hasEvent.value = true;
+    },
+    { immediate: true },
+  );
+
+  watch(hasEvent, () => {
+    const maxStep = steps.value.length;
+    if (currentStep.value > maxStep) {
+      currentStep.value = maxStep;
+    }
+  });
+
+  watch(() => formType.value, (v) => {
+    if (v === "product") requireMerch.value = true;
+  });
+
+  watch(() => formName.value, (name) => {
+    event.value.slug = slugify(name);
+  });
+
+  const slugify = (str: string): string => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
   const currentStep = ref(1);
 
   const steps = computed(() => {
+    const showProducts = hasEvent.value ? requireMerch.value : formType.value === "product";
     const base = [
       { id: 1, label: "Basics" },
-      { id: 2, label: "Type" },
-      { id: 3, label: "Pricing" },
-      { id: 4, label: "Fields" },
     ];
-    if (formType.value === "product") base.push({ id: 5, label: "Products" });
-    base.push({ id: formType.value === "product" ? 6 : 5, label: "Settings" });
-    base.push({ id: formType.value === "product" ? 7 : 6, label: "Review" });
+    if (hasEvent.value) {
+      base.push({ id: 2, label: "Event" });
+    } else {
+      base.push({ id: 2, label: "Type" });
+      base.push({ id: 3, label: "Pricing" });
+    }
+    if (showProducts) {
+      base.push({ id: base.length + 1, label: "Products" });
+    }
+    base.push({ id: base.length + 1, label: "Fields" });
+    base.push({ id: base.length + 1, label: "Settings" });
+    base.push({ id: base.length + 1, label: "Review" });
     return base;
   });
 
-  const settingsStep = computed(() => (formType.value === "product" ? 6 : 5));
-  const reviewStep = computed(() => (formType.value === "product" ? 7 : 6));
-  const productsStep = 5;
+  const eventStep = computed(() => hasEvent.value ? 2 : null);
+  const typeStep = computed(() => hasEvent.value ? null : 2);
+  const pricingStep = computed(() => hasEvent.value ? null : 3);
+  const productsStep = computed(() => {
+    const showProducts = hasEvent.value ? requireMerch.value : formType.value === "product";
+    if (!showProducts) return null;
+    return hasEvent.value ? 3 : (formType.value === "product" ? 5 : null);
+  });
+  const fieldsStep = computed(() => {
+    const showProducts = hasEvent.value ? requireMerch.value : formType.value === "product";
+    if (hasEvent.value) return showProducts ? 4 : 3;
+    return showProducts ? 5 : 4;
+  });
+  const settingsStep = computed(() => {
+    const showProducts = hasEvent.value ? requireMerch.value : formType.value === "product";
+    if (hasEvent.value) return showProducts ? 5 : 4;
+    return showProducts ? 6 : 5;
+  });
+  const reviewStep = computed(() => {
+    const showProducts = hasEvent.value ? requireMerch.value : formType.value === "product";
+    if (hasEvent.value) return showProducts ? 6 : 5;
+    return showProducts ? 7 : 6;
+  });
 
   const canProceed = computed(() => {
     const step = currentStep.value;
     if (step === 1) return formName.value.trim().length > 0 && formSlug.value.trim().length > 0;
-    if (step === 3) return !isPaid.value || price.value > 0;
+    if (step === pricingStep.value) return !isPaid.value || price.value > 0;
     return true;
   });
 
@@ -129,7 +208,7 @@
       price: isPaid.value ? price.value : 0,
       isPublic: settings.value.isPublic,
       requiresLogin: settings.value.requiresLogin,
-      requireMerch: formType.value === "product",
+      requireMerch: requireMerch.value,
       allowGroups: settings.value.allowGroups,
       calculateTat: false,
       allowMultipleSubmissions: settings.value.allowMultipleSubmissions,
@@ -137,9 +216,29 @@
       submissionLimit: settings.value.submissionLimit,
       tags: settings.value.tags,
       pages: pages.value,
-      stores: formType.value === "product" ? stores.value : [],
+      stores: requireMerch.value ? stores.value : [],
       afterSubmissionMessage: settings.value.afterSubmissionMessage,
       infoPromptMessage: "",
+      hasEvent: hasEvent.value,
+      event: hasEvent.value
+        ? {
+            title: event.value.title || formName.value,
+            description: event.value.description,
+            slug: event.value.slug || formSlug.value,
+            startDate: event.value.startDate,
+            endDate: event.value.endDate || null,
+            timezone: event.value.timezone,
+            venueName: event.value.venueName,
+            venueAddress: event.value.venueAddress,
+            contactPhone: event.value.contactPhone,
+            contactEmail: event.value.contactEmail,
+            category: event.value.category,
+            audience: event.value.audience,
+            images: event.value.images,
+            isFree: event.value.isFree,
+            refundPolicy: event.value.refundPolicy,
+          }
+        : null,
     };
 
     if (isEdit.value && props.initialForm) {
@@ -165,7 +264,6 @@
 
 <template>
   <div class="bg-background min-h-screen">
-    <!-- Top bar -->
     <header
       class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur"
     >
@@ -191,7 +289,6 @@
       </div>
     </header>
 
-    <!-- Step indicators -->
     <div class="mx-auto max-w-6xl px-6 pt-6">
       <div class="flex flex-wrap items-center justify-center gap-1.5">
         <template v-for="(step, index) in steps" :key="step.id">
@@ -230,7 +327,6 @@
       </div>
     </div>
 
-    <!-- Step content -->
     <main class="mx-auto max-w-6xl px-6 py-8">
       <Transition
         mode="out-in"
@@ -246,17 +342,26 @@
           :name="formName"
           :slug="formSlug"
           :description="formDescription"
+          :has-event="hasEvent"
           @update:name="formName = $event"
           @update:slug="formSlug = $event"
           @update:description="formDescription = $event"
+          @update:has-event="hasEvent = $event"
+        />
+        <CreateFormStepEvent
+          v-else-if="eventStep && currentStep === eventStep"
+          :event="event"
+          :require-merch="requireMerch"
+          @update:event="event = $event"
+          @update:require-merch="requireMerch = $event"
         />
         <CreateFormStepFormType
-          v-else-if="currentStep === 2"
+          v-else-if="typeStep && currentStep === typeStep"
           :model-value="formType"
           @update:model-value="formType = $event"
         />
         <CreateFormStepPricing
-          v-else-if="currentStep === 3"
+          v-else-if="pricingStep && currentStep === pricingStep"
           :is-paid="isPaid"
           :price="price"
           :form-type="formType"
@@ -264,12 +369,12 @@
           @update:price="price = $event"
         />
         <CreateFormStepFields
-          v-else-if="currentStep === 4"
+          v-else-if="currentStep === fieldsStep"
           :pages="pages"
           @update:pages="pages = $event"
         />
         <CreateFormStepProducts
-          v-else-if="formType === 'product' && currentStep === productsStep"
+          v-else-if="productsStep && currentStep === productsStep"
           :stores="stores"
           @update:stores="stores = $event"
         />
@@ -303,11 +408,12 @@
           :requires-login="settings.requiresLogin"
           :allow-multiple-submissions="settings.allowMultipleSubmissions"
           :submission-limit="settings.submissionLimit"
+          :has-event="hasEvent"
+          :event="event"
         />
       </Transition>
     </main>
 
-    <!-- Bottom nav -->
     <footer
       class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky bottom-0 border-t backdrop-blur"
     >

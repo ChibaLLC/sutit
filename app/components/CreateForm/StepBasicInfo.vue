@@ -1,17 +1,19 @@
 <script setup lang="ts">
-  import { Link2, Pencil, Sparkles } from "lucide-vue-next";
+  import { Calendar, Link2, Pencil, Sparkles } from "lucide-vue-next";
   import { ref, watch } from "vue";
 
   const props = defineProps<{
     name: string;
     slug: string;
     description: string;
+    hasEvent: boolean;
   }>();
 
   const emit = defineEmits<{
     "update:name": [value: string];
     "update:slug": [value: string];
     "update:description": [value: string];
+    "update:hasEvent": [value: boolean];
   }>();
 
   const isSlugManuallyEdited = ref(false);
@@ -20,25 +22,12 @@
   const localName = ref(props.name);
   const localSlug = ref(props.slug);
   const localDescription = ref(props.description);
+  const localHasEvent = ref(props.hasEvent);
 
-  watch(
-    () => props.name,
-    (v) => {
-      localName.value = v;
-    },
-  );
-  watch(
-    () => props.slug,
-    (v) => {
-      localSlug.value = v;
-    },
-  );
-  watch(
-    () => props.description,
-    (v) => {
-      localDescription.value = v;
-    },
-  );
+  watch(() => props.name, (v) => { localName.value = v; });
+  watch(() => props.slug, (v) => { localSlug.value = v; });
+  watch(() => props.description, (v) => { localDescription.value = v; });
+  watch(() => props.hasEvent, (v) => { localHasEvent.value = v; });
 
   const slugify = (str: string): string => {
     return str
@@ -96,6 +85,20 @@
         <h2 class="text-2xl font-bold tracking-tight">Name your form</h2>
         <p class="text-muted-foreground">Give your form a clear, descriptive name</p>
       </div>
+
+      <!-- Event Toggle -->
+      <Card class="border-primary/20 bg-primary/5 transition-colors" :class="localHasEvent ? 'border-primary/40 bg-primary/10' : ''">
+        <CardContent class="flex items-center gap-4 pt-6">
+          <div class="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+            <Calendar class="text-primary h-5 w-5" />
+          </div>
+          <div class="flex-1">
+            <p class="font-medium">This is an event</p>
+            <p class="text-muted-foreground text-sm">Add event details like date, venue, and ticketing</p>
+          </div>
+          <Switch v-model:checked="localHasEvent" @update:checked="emit('update:hasEvent', $event)" />
+        </CardContent>
+      </Card>
 
       <!-- Form Name Input -->
       <div class="space-y-2">

@@ -32,6 +32,7 @@
 
   const navs = [
     { label: "Marketplace", href: "/marketplace" },
+    { label: "Events", href: "/events" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];

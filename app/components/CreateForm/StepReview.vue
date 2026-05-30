@@ -10,8 +10,14 @@
     Shield,
     Send,
     Check,
+    Calendar,
+    Clock,
+    MapPin,
+    Users,
+    Ticket,
+    Tag,
   } from "lucide-vue-next";
-  import type { PageSchema, Store } from "~~/shared/types";
+  import type { PageSchema, Store, EventSchema } from "~~/shared/types";
 
   const props = defineProps<{
     name: string;
@@ -26,10 +32,30 @@
     requiresLogin: boolean;
     allowMultipleSubmissions: boolean;
     submissionLimit: number | null;
+    hasEvent: boolean;
+    event?: EventSchema | null;
   }>();
 
   const totalFields = props.pages.reduce((sum, p) => sum + p.fields.length, 0);
-  const totalProducts = props.stores.reduce((sum, s) => sum + s.items.length, 0);
+  const totalProducts = props.stores.reduce((sum, p) => sum + p.items.length, 0);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-AU", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleTimeString("en-AU", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
 </script>
 
 <template>
@@ -60,8 +86,51 @@
               </p>
             </div>
             <Badge variant="outline">
-              {{ formType === "product" ? "Product" : "Regular" }}
+              {{ hasEvent ? "Event" : formType === "product" ? "Product" : "Regular" }}
             </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Event Details -->
+      <Card v-if="hasEvent && event">
+        <CardContent class="p-5">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10">
+              <Calendar class="h-4 w-4 text-orange-500" />
+            </div>
+            <div>
+              <p class="text-sm font-medium">Event Details</p>
+              <p class="text-muted-foreground text-xs">{{ event.title || name }}</p>
+            </div>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div v-if="event.startDate" class="flex items-center gap-2 text-sm">
+              <Calendar class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span>{{ formatDate(event.startDate) }}</span>
+              <span v-if="event.endDate"> — {{ formatDate(event.endDate) }}</span>
+            </div>
+            <div v-if="event.startDate" class="flex items-center gap-2 text-sm">
+              <Clock class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span>{{ formatTime(event.startDate) }}</span>
+              <span v-if="event.endDate"> — {{ formatTime(event.endDate) }}</span>
+            </div>
+            <div v-if="event.venueName" class="flex items-center gap-2 text-sm">
+              <MapPin class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span>{{ event.venueName }}</span>
+            </div>
+            <div v-if="event.category" class="flex items-center gap-2 text-sm">
+              <Tag class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span class="capitalize">{{ event.category }}</span>
+            </div>
+            <div v-if="event.audience" class="flex items-center gap-2 text-sm">
+              <Users class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span>{{ event.audience }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <Ticket class="text-muted-foreground h-4 w-4 shrink-0" />
+              <span>{{ event.isFree ? "Free event" : "Paid event" }}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -134,15 +203,20 @@
           <div class="flex items-center gap-3">
             <div class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg">
               <component
-                :is="isPaid ? Banknote : Gift"
+                :is="hasEvent ? (event?.isFree ? Gift : Banknote) : (isPaid ? Banknote : Gift)"
                 class="h-4 w-4"
-                :class="isPaid ? 'text-green-600' : 'text-muted-foreground'"
+                :class="(hasEvent ? event?.isFree : !isPaid) ? 'text-muted-foreground' : 'text-green-600'"
               />
             </div>
             <div class="flex-1">
               <p class="text-sm font-medium">Pricing</p>
               <p class="text-sm font-semibold">
-                {{ isPaid ? `KES ${price.toLocaleString()}` : "Free" }}
+                <template v-if="hasEvent">
+                  {{ event?.isFree ? "Free" : "Paid event" }}
+                </template>
+                <template v-else>
+                  {{ isPaid ? `KES ${price.toLocaleString()}` : "Free" }}
+                </template>
               </p>
             </div>
           </div>
