@@ -66,6 +66,29 @@ export const storeSchema = z.object({
   items: z.array(storeItemSchema).min(1, "At least on store item should be set"),
 });
 
+export const eventSchemaSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Event title is required"),
+  description: z.string().optional(),
+  slug: z.string().min(1, "Event slug is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().optional().nullable(),
+  timezone: z.string().optional().default("UTC"),
+  venueName: z.string().optional(),
+  venueAddress: z.string().optional(),
+  venueMapUrl: z.string().optional(),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().optional(),
+  category: z.string().optional(),
+  audience: z.string().optional(),
+  images: z.array(z.string()).default([]),
+  isFeatured: z.boolean().optional().default(false),
+  isFree: z.boolean().optional().default(true),
+  refundPolicy: z.string().optional(),
+  status: z.string().optional().default("upcoming"),
+  publishedAt: z.string().optional().nullable(),
+});
+
 export const formSchemaSchema = z.object({
   id: z.string().optional(),
   createdBy: z.string().optional(),
@@ -96,6 +119,8 @@ export const formSchemaSchema = z.object({
   afterSubmissionMessage: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+  hasEvent: z.boolean().optional().default(false),
+  event: eventSchemaSchema.optional().nullable(),
 });
 export const slugify = (str: string) => {
   return str

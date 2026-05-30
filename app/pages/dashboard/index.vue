@@ -12,6 +12,7 @@
     Activity,
     Loader2,
     Layers,
+    Calendar,
   } from "lucide-vue-next";
   import { computed } from "vue";
 
@@ -29,8 +30,14 @@
   // Combined loading state
   const quickActions = [
     {
-      name: "Create New Form",
-      description: "Start building a new form",
+      name: "Create Event",
+      description: "Event with date, venue & registration",
+      href: "/forms/new?event=true",
+      icon: Calendar,
+    },
+    {
+      name: "Create Form",
+      description: "Survey, application, or general form",
       href: "/forms/new",
       icon: Plus,
     },
@@ -203,7 +210,7 @@
       <!-- Quick Actions -->
       <div class="mb-12">
         <h2 class="text-foreground mb-6 text-2xl font-bold">Quick Actions</h2>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NuxtLink
             v-for="action in quickActions"
             :key="action.href"
@@ -307,7 +314,14 @@
           <div class="border-border/50 from-primary/5 border-b bg-gradient-to-r to-transparent p-6">
             <div class="flex items-center justify-between">
               <h2 class="text-foreground text-xl font-bold">Recent Activity</h2>
-              <Button variant="ghost" size="sm">View All</Button>
+              <div class="flex gap-2">
+                <NuxtLink
+                  to="/events"
+                  class="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                >
+                  Events →
+                </NuxtLink>
+              </div>
             </div>
           </div>
           <div class="space-y-4 p-6">

@@ -70,6 +70,8 @@ export interface FormSchema {
   afterSubmissionMessage?: string;
   createdAt?: string;
   updatedAt?: string;
+  hasEvent?: boolean;
+  event?: EventSchema;
 }
 
 export interface FormSettings {
@@ -101,6 +103,30 @@ export interface StoreItem {
   quantity: number;
   infinite: boolean;
   images: string[];
+}
+
+export interface EventSchema {
+  id?: string;
+  formId?: string;
+  title: string;
+  description?: string;
+  slug: string;
+  startDate: string;
+  endDate?: string | null;
+  timezone?: string;
+  venueName?: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  category?: string;
+  audience?: string;
+  images: string[];
+  isFeatured?: boolean;
+  isFree?: boolean;
+  refundPolicy?: string;
+  status?: string;
+  publishedAt?: string | null;
 }
 
 export interface SubmissionData {

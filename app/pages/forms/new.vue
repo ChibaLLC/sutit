@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref } from "vue";
+  import { ref, computed } from "vue";
   import { toast } from "vue-sonner";
   import type { FormSchema } from "~~/shared/types";
 
@@ -9,7 +9,9 @@
     middleware: ["auth"],
   });
 
+  const route = useRoute();
   const isSubmitting = ref(false);
+  const initialHasEvent = computed(() => route.query.event === "true");
 
   const handleCreate = async (form: FormSchema) => {
     if (isSubmitting.value) return;
@@ -50,5 +52,5 @@
 </script>
 
 <template>
-  <CreateFormWizard :is-submitting="isSubmitting" @submit="handleCreate" />
+  <CreateFormWizard :is-submitting="isSubmitting" :initial-has-event="initialHasEvent" @submit="handleCreate" />
 </template>

@@ -17,6 +17,7 @@ import { slugify } from "~~/shared/utils/form.schema";
 import db from "../db";
 import {
   activities,
+  events,
   fieldResponses,
   formAnalytics,
   formFields,
@@ -51,7 +52,7 @@ export const getUserForms = async (createdBy: string, options?: Filters) => {
 };
 
 export const createForm = async (payload: FormSchema) => {
-  const { stores, pages, ...formPayload } = payload;
+  const { stores, pages, event: eventPayload, ...formPayload } = payload;
   return db.transaction(async (tx) => {
     try {
       // Generate unique slug by appending user ID
@@ -140,6 +141,39 @@ export const createForm = async (payload: FormSchema) => {
         });
       }
 
+      if (eventPayload && formPayload.hasEvent) {
+        let eventSlug = slugify(eventPayload.slug || eventPayload.title);
+        const existingEvent = await tx.query.events.findFirst({
+          where: eq(events.slug, eventSlug),
+        });
+        if (existingEvent) {
+          eventSlug = slugify(`${eventSlug}-${Date.now().toString(36)}`);
+        }
+
+        await tx.insert(events).values({
+          formId: newForm.id,
+          title: eventPayload.title,
+          description: eventPayload.description,
+          slug: eventSlug,
+          startDate: eventPayload.startDate ? new Date(eventPayload.startDate) : new Date(),
+          endDate: eventPayload.endDate ? new Date(eventPayload.endDate) : null,
+          timezone: eventPayload.timezone || "UTC",
+          venueName: eventPayload.venueName,
+          venueAddress: eventPayload.venueAddress,
+          venueMapUrl: eventPayload.venueMapUrl,
+          contactPhone: eventPayload.contactPhone,
+          contactEmail: eventPayload.contactEmail,
+          category: eventPayload.category,
+          audience: eventPayload.audience,
+          images: eventPayload.images || [],
+          isFeatured: eventPayload.isFeatured || false,
+          isFree: eventPayload.isFree !== undefined ? eventPayload.isFree : true,
+          refundPolicy: eventPayload.refundPolicy,
+          status: (eventPayload.status as any) || "upcoming",
+          publishedAt: new Date(),
+        });
+      }
+
       // 3. Log Activity
       await tx.insert(activities).values({
         userId: newForm.createdBy,
@@ -195,6 +229,7 @@ export async function getFormById(formId: string, token?: string) {
           },
           where: eq(formFields.deletedAt, isNull(formFields.deletedAt)),
         },
+        event: true,
       },
     });
     if (!form) {
@@ -231,7 +266,7 @@ export async function getFormById(formId: string, token?: string) {
   }
 }
 export const updateForm = async (formId: string, payload: FormSchema) => {
-  const { stores, pages, createdAt, updatedAt, ...formPayload } = payload;
+  const { stores, pages, createdAt, updatedAt, event: eventPayload, ...formPayload } = payload;
 
   return db.transaction(async (tx) => {
     try {
@@ -528,7 +563,57 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
           );
       }
 
-      // 7. Log Activity
+      // 7. Handle Event
+      const existingEvent = await tx.query.events.findFirst({
+        where: eq(events.formId, formId),
+      });
+
+      if (formPayload.hasEvent && eventPayload) {
+        let eventSlug = slugify(eventPayload.slug || eventPayload.title);
+        const existingSlug = await tx.query.events.findFirst({
+          where: and(eq(events.slug, eventSlug), existingEvent ? ne(events.id, existingEvent.id) : undefined),
+        });
+        if (existingSlug) {
+          eventSlug = slugify(`${eventSlug}-${Date.now().toString(36)}`);
+        }
+
+        const eventData = {
+          title: eventPayload.title,
+          description: eventPayload.description,
+          slug: eventSlug,
+          startDate: eventPayload.startDate ? new Date(eventPayload.startDate) : new Date(),
+          endDate: eventPayload.endDate ? new Date(eventPayload.endDate) : null,
+          timezone: eventPayload.timezone || "UTC",
+          venueName: eventPayload.venueName,
+          venueAddress: eventPayload.venueAddress,
+          venueMapUrl: eventPayload.venueMapUrl,
+          contactPhone: eventPayload.contactPhone,
+          contactEmail: eventPayload.contactEmail,
+          category: eventPayload.category,
+          audience: eventPayload.audience,
+          images: eventPayload.images || [],
+          isFeatured: eventPayload.isFeatured || false,
+          isFree: eventPayload.isFree !== undefined ? eventPayload.isFree : true,
+          refundPolicy: eventPayload.refundPolicy,
+          status: (eventPayload.status as any) || "upcoming",
+          updatedAt: new Date(),
+        };
+
+        if (existingEvent) {
+          await tx.update(events).set(eventData).where(eq(events.id, existingEvent.id));
+        } else {
+          await tx.insert(events).values({
+            formId,
+            ...eventData,
+            createdAt: new Date(),
+            publishedAt: new Date(),
+          });
+        }
+      } else if (!formPayload.hasEvent && existingEvent) {
+        await tx.delete(events).where(eq(events.id, existingEvent.id));
+      }
+
+      // 8. Log Activity
       await tx.insert(activities).values({
         userId: updatedForm.createdBy,
         formId: updatedForm.id,

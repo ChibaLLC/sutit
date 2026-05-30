@@ -20,6 +20,7 @@ import {
 
 import { user } from "./auth";
 import { formGroupMemberPayments, formPayments, payments } from "./payments";
+import { events } from "./event";
 
 export const userStatusEnum = pgEnum("user_status", ["active", "inactive", "suspended", "pending"]);
 export const formStatusEnum = pgEnum("form_status", ["draft", "published", "archived", "closed"]);
@@ -128,6 +129,7 @@ export const forms = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
     deletedAt: timestamp("deleted_at"),
+    hasEvent: boolean("has_event").default(false),
   },
   (table) => ({
     slugUserUnique: unique("form_slug_user_unique").on(table.slug, table.createdBy),
@@ -544,6 +546,7 @@ export const formsRelations = relations(forms, ({ one, many }) => ({
   stores: many(formStores),
   groups: many(formGroups),
   formPayments: many(payments),
+  event: one(events),
 }));
 
 export const formPagesRelations = relations(formPages, ({ one, many }) => ({
