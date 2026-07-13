@@ -15,10 +15,14 @@
     Calendar,
     CheckCircle,
     Loader,
+    Phone,
+    Store,
+    Building2,
+    Wallet,
   } from "lucide-vue-next";
-  import { ref } from "vue";
+  import { ref, computed } from "vue";
   import { toast } from "vue-sonner";
-  import type { FormSchema } from "~~/shared/types";
+  import type { FormPayoutMethod, FormSchema } from "~~/shared/types";
   import { slugify } from "~~/shared/utils/form.schema";
   interface Props {
     form: FormSchema;
@@ -31,6 +35,14 @@
 
   const isSaving = ref(false);
   const lastSaved = ref<Date | null>(null);
+
+  const needsPayout = computed(
+    () => Number(props.form.price) > 0 || !!props.form.requireMerch,
+  );
+
+  const setPayoutMethod = (method: FormPayoutMethod) => {
+    props.form.payoutMethod = method;
+  };
 
   const updateTags = (event: Event) => {
     const target = event.target as HTMLTextAreaElement;
@@ -183,6 +195,119 @@
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <!-- Payout destination for paid / product forms -->
+          <div v-if="needsPayout" class="space-y-4 rounded-xl border p-4 sm:p-5">
+            <div class="flex items-center gap-3">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Wallet class="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p class="text-sm font-semibold">Payout details</p>
+                <p class="text-muted-foreground text-xs">
+                  After each payment, funds are sent here via M-Pesa
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 sm:grid sm:grid-cols-3 sm:gap-2">
+              <button
+                type="button"
+                @click="setPayoutMethod('phone')"
+                class="flex flex-1 items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-xs transition-all sm:flex-col sm:px-3 sm:py-3 sm:text-center"
+                :class="
+                  form.payoutMethod === 'phone'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border hover:border-primary/40 text-muted-foreground hover:text-foreground'
+                "
+              >
+                <Phone class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+                <span class="text-xs font-medium sm:text-sm">Phone</span>
+              </button>
+              <button
+                type="button"
+                @click="setPayoutMethod('till')"
+                class="flex flex-1 items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-xs transition-all sm:flex-col sm:px-3 sm:py-3 sm:text-center"
+                :class="
+                  form.payoutMethod === 'till'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border hover:border-primary/40 text-muted-foreground hover:text-foreground'
+                "
+              >
+                <Store class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+                <span class="text-xs font-medium sm:text-sm">Till</span>
+              </button>
+              <button
+                type="button"
+                @click="setPayoutMethod('paybill')"
+                class="flex flex-1 items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-xs transition-all sm:flex-col sm:px-3 sm:py-3 sm:text-center"
+                :class="
+                  form.payoutMethod === 'paybill'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border hover:border-primary/40 text-muted-foreground hover:text-foreground'
+                "
+              >
+                <Building2 class="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+                <span class="text-xs font-medium sm:text-sm">Paybill</span>
+              </button>
+            </div>
+
+            <Transition
+              enter-active-class="transition-all duration-200 ease-out"
+              enter-from-class="opacity-0 -translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition-all duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 -translate-y-1"
+            >
+              <div v-if="form.payoutMethod" class="space-y-3 rounded-lg bg-muted/30 p-3 sm:p-4">
+                <div v-if="form.payoutMethod === 'phone'" class="space-y-2">
+                  <Label for="payoutPhone">M-Pesa phone number</Label>
+                  <Input
+                    id="payoutPhone"
+                    v-model="form.payoutPhone"
+                    placeholder="0712345678"
+                    type="tel"
+                    class="h-11 bg-background"
+                  />
+                  <p class="text-muted-foreground text-xs">Payouts sent via B2C</p>
+                </div>
+                <div v-else-if="form.payoutMethod === 'till'" class="space-y-2">
+                  <Label for="payoutTill">Till number</Label>
+                  <Input
+                    id="payoutTill"
+                    v-model="form.payoutTill"
+                    placeholder="e.g. 123456"
+                    class="h-11 bg-background"
+                  />
+                  <p class="text-muted-foreground text-xs">Buy Goods till — payouts via B2B</p>
+                </div>
+                <div v-else-if="form.payoutMethod === 'paybill'" class="space-y-3">
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="space-y-2">
+                      <Label for="payoutPaybill">Paybill number</Label>
+                      <Input
+                        id="payoutPaybill"
+                        v-model="form.payoutPaybill"
+                        placeholder="e.g. 400200"
+                        class="h-11 bg-background"
+                      />
+                    </div>
+                    <div class="space-y-2">
+                      <Label for="payoutAccount">Account number</Label>
+                      <Input
+                        id="payoutAccount"
+                        v-model="form.payoutAccountNumber"
+                        placeholder="e.g. INV-001"
+                        class="h-11 bg-background"
+                      />
+                    </div>
+                  </div>
+                  <p class="text-muted-foreground text-xs">Business paybill — payouts via B2B</p>
+                </div>
+              </div>
+            </Transition>
           </div>
 
           <!-- Added tags field -->

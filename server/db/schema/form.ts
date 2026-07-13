@@ -73,6 +73,9 @@ export const workflowStatusEnum = pgEnum("workflow_status", [
 ]);
 export const registrationTypeEnum = pgEnum("registration_type", ["single", "recurring", "group"]);
 
+/** Where form earnings are sent after a successful payment */
+export const formPayoutMethodEnum = pgEnum("form_payout_method", ["phone", "till", "paybill"]);
+
 export const activityTypeEnum = pgEnum("activity_type", [
   "form_created",
   "form_updated",
@@ -120,6 +123,12 @@ export const forms = pgTable(
     acceptResponses: boolean("accept_responses").default(true),
     requirePassword: boolean("require_password").default(false),
     password: text("password"),
+    /** How to disburse form earnings: M-Pesa phone (B2C), till (B2B buy goods), or paybill (B2B) */
+    payoutMethod: formPayoutMethodEnum("payout_method"),
+    payoutPhone: varchar("payout_phone", { length: 30 }),
+    payoutTill: varchar("payout_till", { length: 30 }),
+    payoutPaybill: varchar("payout_paybill", { length: 30 }),
+    payoutAccountNumber: varchar("payout_account_number", { length: 100 }),
     publishedAt: timestamp("published_at"),
     expiresAt: timestamp("expires_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

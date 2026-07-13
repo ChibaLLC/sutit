@@ -29,6 +29,20 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "authorized", // Added for multi-step payment flows
   "cancelled", // Added for clarity
 ]);
+
+export const disbursementStatusEnum = pgEnum("disbursement_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
+
+export const disbursementMethodEnum = pgEnum("disbursement_method", [
+  "phone",
+  "till",
+  "paybill",
+]);
+
 export const payments = pgTable(
   "payments",
   {
@@ -112,6 +126,43 @@ export const formGroupMemberPayments = pgTable(
   }),
 );
 
+/** Tracks payouts of collected form payments to form owners via B2C / B2B */
+export const disbursements = pgTable(
+  "disbursements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    paymentId: uuid("payment_id")
+      .notNull()
+      .references(() => payments.id, { onDelete: "cascade" }),
+    formId: uuid("form_id")
+      .notNull()
+      .references(() => forms.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    method: disbursementMethodEnum("method").notNull(),
+    destination: varchar("destination", { length: 100 }).notNull(),
+    accountNumber: varchar("account_number", { length: 100 }),
+    status: disbursementStatusEnum("status").default("pending").notNull(),
+    conversationId: text("conversation_id"),
+    originatorConversationId: text("originator_conversation_id"),
+    transactionId: varchar("transaction_id", { length: 100 }),
+    resultCode: integer("result_code"),
+    resultDesc: text("result_desc"),
+    metadata: jsonb("metadata").default({}),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    paymentIdIdx: index("disbursement_payment_id_idx").on(table.paymentId),
+    formIdIdx: index("disbursement_form_id_idx").on(table.formId),
+    statusIdx: index("disbursement_status_idx").on(table.status),
+    conversationIdIdx: index("disbursement_conversation_id_idx").on(table.conversationId),
+  }),
+);
+
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
   user: one(user, {
     fields: [payments.userId],
@@ -123,6 +174,18 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
     references: [formGroups.paymentId],
   }),
   groupMemberPayments: many(formGroupMemberPayments),
+  disbursements: many(disbursements),
+}));
+
+export const disbursementsRelations = relations(disbursements, ({ one }) => ({
+  payment: one(payments, {
+    fields: [disbursements.paymentId],
+    references: [payments.id],
+  }),
+  form: one(forms, {
+    fields: [disbursements.formId],
+    references: [forms.id],
+  }),
 }));
 
 export const formPaymentsRelations = relations(formPayments, ({ one }) => ({

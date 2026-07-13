@@ -1,52 +1,82 @@
-import { Mpesa } from "daraja.js";
+import { constants, publicEncrypt } from "crypto";
+import { getProductionCert, getSandboxCert } from "daraja.js/dist/utils";
 
 import { cache } from "../utils/redis";
 
-const app = new Mpesa(
-  {
-    consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,
-    consumerSecret: process.env.MPESA_APP_CONSUMER_SECRET!,
-    initiatorPassword: process.env.MPESA_PASSKEY!,
-    organizationShortCode: +process.env.MPESA_BUSINESS_SHORTCODE!,
-  },
-  "production",
-);
+const isProduction = process.env.ENV !== "dev" && process.env.NODE_ENV === "production";
+const baseUrl = isProduction
+  ? "https://api.safaricom.co.ke"
+  : process.env.MPESA_ENV === "production"
+    ? "https://api.safaricom.co.ke"
+    : "https://api.safaricom.co.ke"; // production shortcode configured
+
 const config = {
   consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,
   consumerSecret: process.env.MPESA_APP_CONSUMER_SECRET!,
   initiatorPassword: process.env.MPESA_PASSKEY!,
-  organizationShortCode: +process.env.MPESA_BUSINESS_SHORTCODE!,
+  initiatorName: process.env.MPESA_INITIATOR_NAME!,
   shortCode: process.env.MPESA_BUSINESS_SHORTCODE!,
   passkey: process.env.MPESA_LNM_PASSKEY!,
 };
+
 type AccessToken = {
   access_token: string;
   expires_in: number;
 };
-const baseUrl = "https://api.safaricom.co.ke";
 
 const fetchToken = async () => {
   try {
-    let tk = await cache.get<string>("sutit:mpesa_token");
-    if (tk) {
-      return tk;
-    }
-    let pass = Buffer.from(config.consumerKey + ":" + config.consumerSecret).toString("base64");
+    const tk = await cache.get<string>("sutit:mpesa_token");
+    if (tk) return tk;
+
+    const pass = Buffer.from(config.consumerKey + ":" + config.consumerSecret).toString("base64");
     const res = await $fetch<AccessToken>(`${baseUrl}/oauth/v1/generate`, {
       method: "get",
-      query: {
-        grant_type: "client_credentials",
-      },
-      headers: {
-        Authorization: `Basic ${pass}`,
-      },
+      query: { grant_type: "client_credentials" },
+      headers: { Authorization: `Basic ${pass}` },
     });
     await cache.set("sutit:mpesa_token", res.access_token, 3500);
     return res.access_token;
   } catch (e) {
-    console.log(e);
+    console.error("Failed to fetch M-Pesa token", e);
+    throw e;
   }
 };
+
+/** RSA-encrypt initiator password with Safaricom cert → SecurityCredential */
+const getSecurityCredential = () => {
+  const certificate =
+    process.env.MPESA_ENV === "sandbox" ? getSandboxCert() : getProductionCert();
+  return publicEncrypt(
+    { key: certificate, padding: constants.RSA_PKCS1_PADDING },
+    Buffer.from(config.initiatorPassword),
+  ).toString("base64");
+};
+
+const timestamp = () =>
+  new Date()
+    .toISOString()
+    .replace(/[^0-9]/g, "")
+    .slice(0, -3);
+
+const password = () =>
+  Buffer.from(config.shortCode + config.passkey + timestamp()).toString("base64");
+
+const cleanText = (text: string, maxLen = 100) =>
+  text
+    .replace(/[\p{Extended_Pictographic}]/gu, "")
+    .replace(/[\uFE0F\u200D]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen);
+
+export const normalizeMpesaPhone = (phone: string | number) => {
+  const digits = String(phone).replace(/\D/g, "");
+  return `254${digits.slice(-9)}`;
+};
+
+// ─── STK Push (C2B collection) ───────────────────────────────────────────────
+
 interface StkPushResponse {
   MerchantRequestID: string;
   CheckoutRequestID: string;
@@ -54,22 +84,7 @@ interface StkPushResponse {
   ResponseDescription: string;
   CustomerMessage: string;
 }
-const timestamp = () => {
-  return new Date()
-    .toISOString()
-    .replace(/[^0-9]/g, "")
-    .slice(0, -3);
-};
-const password = () => {
-  return Buffer.from(config.shortCode + config.passkey + timestamp()).toString("base64");
-};
-const cleanText = (text: string) => {
-  return text
-    .replace(/[\p{Extended_Pictographic}]/gu, "")
-    .replace(/[\uFE0F\u200D]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-};
+
 export const callStkPush = async (
   phone_number: number,
   amount: number,
@@ -78,155 +93,181 @@ export const callStkPush = async (
 ) => {
   try {
     const token = await fetchToken();
-    const phone = `254${phone_number.toString().slice(-9)}`;
+    const phone = normalizeMpesaPhone(phone_number);
     const payload = {
       BusinessShortCode: config.shortCode,
       Password: password(),
       Timestamp: timestamp(),
       TransactionType: "CustomerPayBillOnline",
-      Amount: amount,
+      Amount: Math.round(amount),
       PartyA: phone,
       PartyB: config.shortCode,
       PhoneNumber: phone,
       CallBackURL: process.env.MPESA_STK_CALLBACK_URL!,
-      AccountReference: cleanText(accountNumber),
-      TransactionDesc: cleanText(description),
+      AccountReference: cleanText(accountNumber, 12),
+      TransactionDesc: cleanText(description, 13),
     };
-    console.log("Payload: ", payload);
+    console.log("STK Payload:", { ...payload, Password: "[redacted]" });
     const res = await $fetch<StkPushResponse>(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
       method: "post",
       body: payload,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     return res;
   } catch (e) {
-    console.log(e);
+    console.error("STK Push failed", e);
+    return null;
   }
 };
-export async function callStkPushL(
-  phone_number: number,
-  amount: number,
-  description: string,
-  accountNumber: string,
-) {
-  const phone = `254${phone_number.toString().slice(-9)}`;
-  const res = await $fetch(``);
-  const response = await app
-    .stkPush()
-    .amount(amount)
-    .phoneNumber(parseInt(phone))
-    .description(description)
-    .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
-    .accountNumber(accountNumber)
-    .callbackURL(process.env.MPESA_STK_CALLBACK_URL!)
-    .lipaNaMpesaPassKey(process.env.MPESA_LNM_PASSKEY!)
-    .send()
-    .catch((err) => {
-      console.error(err);
-      return null;
-    });
 
-  if (!response || !response.isOkay()) {
-    console.error("STK PUSH FAILED: " + response);
-    return null;
-  }
-  console.log(response);
-  return response.data;
+// ─── B2C (disburse to phone) ─────────────────────────────────────────────────
+
+export interface MpesaAsyncResponse {
+  ConversationID: string;
+  OriginatorConversationID: string;
+  ResponseCode: string;
+  ResponseDescription: string;
 }
 
-export async function callB2c(data: { phone_number: string; reason: string; amount: number }) {
-  const phone = +`254${data.phone_number.slice(-9)}`;
-  const response = await app
-    .b2c()
-    .amount(data.amount)
-    .phoneNumber(phone)
-    .occassion(data.reason)
-    .resultURL(process.env.MPESA_B2C_CALLBACK_URL!)
-    .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
-    .initiatorName(process.env.MPESA_INITIATOR_NAME!)
-    .transactionType("BusinessPayment")
-    .timeoutURL(process.env.MPESA_B2C_TIMEOUT_URL!)
-    .send();
-
-  if (!response || !response.isOkay()) {
-    console.error(response);
-    return null;
-  }
-
-  return response.data;
-}
-
-async function businessPayBill(payload: {
+export const callB2c = async (data: {
+  phone_number: string;
+  reason: string;
   amount: number;
-  accountNumber: string;
+  remarks?: string;
+}) => {
+  try {
+    const token = await fetchToken();
+    const phone = normalizeMpesaPhone(data.phone_number);
+    const payload = {
+      InitiatorName: config.initiatorName,
+      SecurityCredential: getSecurityCredential(),
+      CommandID: "BusinessPayment",
+      Amount: Math.round(data.amount),
+      PartyA: config.shortCode,
+      PartyB: phone,
+      Remarks: cleanText(data.remarks || data.reason),
+      QueueTimeOutURL: process.env.MPESA_B2C_TIMEOUT_URL!,
+      ResultURL: process.env.MPESA_B2C_CALLBACK_URL!,
+      Occasion: cleanText(data.reason),
+    };
+    console.log("B2C Payload:", { ...payload, SecurityCredential: "[redacted]" });
+    const res = await $fetch<MpesaAsyncResponse>(`${baseUrl}/mpesa/b2c/v1/paymentrequest`, {
+      method: "post",
+      body: payload,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ResponseCode !== "0") {
+      console.error("B2C rejected:", res);
+      return null;
+    }
+    return res;
+  } catch (e) {
+    console.error("B2C failed", e);
+    return null;
+  }
+};
+
+// ─── B2B (disburse to till / paybill) ────────────────────────────────────────
+
+/** Pay to a business paybill number */
+export const callB2bPayBill = async (payload: {
+  amount: number;
   paybill: string;
-}) {
-  const response = await app
-    .b2b()
-    .amount(payload.amount)
-    .accountNumber(payload.accountNumber)
-    .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
-    .resultURL(process.env.MPESA_B2B_CALLBACK_URL!)
-    .timeoutURL(process.env.MPESA_B2B_TIMEOUT_URL!)
-    .initiatorName(process.env.MPESA_INITIATOR_NAME!)
-    .transactionType("BusinessPayBill")
-    .payBill(payload.paybill)
-    .send();
-
-  if (!response || !response.isOkay()) {
-    console.error(response);
+  accountNumber: string;
+  remarks?: string;
+}) => {
+  try {
+    const token = await fetchToken();
+    const body = {
+      Initiator: config.initiatorName,
+      SecurityCredential: getSecurityCredential(),
+      CommandID: "BusinessPayBill",
+      SenderIdentifierType: "4",
+      RecieverIdentifierType: "4",
+      Amount: Math.round(payload.amount),
+      PartyA: config.shortCode,
+      PartyB: payload.paybill,
+      AccountReference: cleanText(payload.accountNumber, 13),
+      Remarks: cleanText(payload.remarks || "Form payout", 100),
+      QueueTimeOutURL: process.env.MPESA_B2B_TIMEOUT_URL!,
+      ResultURL: process.env.MPESA_B2B_CALLBACK_URL!,
+    };
+    console.log("B2B PayBill Payload:", { ...body, SecurityCredential: "[redacted]" });
+    const res = await $fetch<MpesaAsyncResponse>(`${baseUrl}/mpesa/b2b/v1/paymentrequest`, {
+      method: "post",
+      body,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ResponseCode !== "0") {
+      console.error("B2B PayBill rejected:", res);
+      return null;
+    }
+    return res;
+  } catch (e) {
+    console.error("B2B PayBill failed", e);
     return null;
   }
+};
 
-  return response.data;
-}
-
-async function businessBuyGoods(payload: { amount: number; till: string; requester?: string }) {
-  const response = await app
-    .b2b()
-    .amount(payload.amount)
-    .shortCode(process.env.MPESA_BUSINESS_SHORTCODE!)
-    .resultURL(process.env.MPESA_B2B_CALLBACK_URL!)
-    .timeoutURL(process.env.MPESA_B2B_TIMEOUT_URL!)
-    .initiatorName(process.env.MPESA_INITIATOR_NAME!)
-    .transactionType("BusinessBuyGoods")
-    .senderType("PAYBILL")
-    .tillNumber(payload.till)
-    .requester(payload.requester)
-    .send();
-
-  if (!response || !response.isOkay()) {
-    console.error(response);
+/** Pay to a buy-goods till number */
+export const callB2bBuyGoods = async (payload: {
+  amount: number;
+  till: string;
+  remarks?: string;
+}) => {
+  try {
+    const token = await fetchToken();
+    const body = {
+      Initiator: config.initiatorName,
+      SecurityCredential: getSecurityCredential(),
+      CommandID: "BusinessBuyGoods",
+      SenderIdentifierType: "4",
+      RecieverIdentifierType: "2",
+      Amount: Math.round(payload.amount),
+      PartyA: config.shortCode,
+      PartyB: payload.till,
+      AccountReference: cleanText(payload.remarks || "Form payout"),
+      Remarks: cleanText(payload.remarks || "Form payout"),
+      QueueTimeOutURL: process.env.MPESA_B2B_TIMEOUT_URL!,
+      ResultURL: process.env.MPESA_B2B_CALLBACK_URL!,
+    };
+    console.log("B2B BuyGoods Payload:", { ...body, SecurityCredential: "[redacted]" });
+    const res = await $fetch<MpesaAsyncResponse>(`${baseUrl}/mpesa/b2b/v1/paymentrequest`, {
+      method: "post",
+      body,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ResponseCode !== "0") {
+      console.error("B2B BuyGoods rejected:", res);
+      return null;
+    }
+    return res;
+  } catch (e) {
+    console.error("B2B BuyGoods failed", e);
     return null;
   }
-
-  return response.data;
-}
+};
 
 export async function callB2b(data: {
-  paybill?: {
-    business_no: string;
-    account_no: string;
-  };
+  paybill?: { business_no: string; account_no: string };
   till_number?: string;
   amount: number;
-  requester?: string;
+  remarks?: string;
 }) {
   if (data.paybill) {
-    return businessPayBill({
+    return callB2bPayBill({
       amount: data.amount,
-      accountNumber: data.paybill.account_no,
       paybill: data.paybill.business_no,
+      accountNumber: data.paybill.account_no,
+      remarks: data.remarks,
     });
-  } else if (data.till_number) {
-    return businessBuyGoods({
+  }
+  if (data.till_number) {
+    return callB2bBuyGoods({
       amount: data.amount,
       till: data.till_number,
-      requester: data.requester,
+      remarks: data.remarks,
     });
-  } else {
-    throw new Error("Both Paybill and Till Number cannot be empty for B2B transactions");
   }
+  throw new Error("Either paybill or till_number is required for B2B");
 }
