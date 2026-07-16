@@ -13,10 +13,11 @@ const baseUrl = isProduction
 const config = {
   consumerKey: process.env.MPESA_APP_CONSUMER_KEY!,
   consumerSecret: process.env.MPESA_APP_CONSUMER_SECRET!,
-  initiatorPassword: process.env.MPESA_PASSKEY!,
+  initiatorPassword: process.env.MPESA_INITIATOR_PASSWORD!,
   initiatorName: process.env.MPESA_INITIATOR_NAME!,
   shortCode: process.env.MPESA_BUSINESS_SHORTCODE!,
   passkey: process.env.MPESA_LNM_PASSKEY!,
+  securityCredential: process.env.MPESA_SECURITY_CREDENTIAL,
 };
 
 type AccessToken = {
@@ -129,6 +130,7 @@ export interface MpesaAsyncResponse {
 }
 
 export const callB2c = async (data: {
+  originatorConversationID: string;
   phone_number: string;
   reason: string;
   amount: number;
@@ -138,8 +140,9 @@ export const callB2c = async (data: {
     const token = await fetchToken();
     const phone = normalizeMpesaPhone(data.phone_number);
     const payload = {
+      OriginatorConversationID: data.originatorConversationID,
       InitiatorName: config.initiatorName,
-      SecurityCredential: getSecurityCredential(),
+      SecurityCredential: config.securityCredential,
       CommandID: "BusinessPayment",
       Amount: Math.round(data.amount),
       PartyA: config.shortCode,

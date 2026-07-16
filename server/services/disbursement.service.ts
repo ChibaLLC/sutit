@@ -102,7 +102,9 @@ export async function disburseToFormOwner(
     } | null = null;
 
     if (payout.method === "phone") {
+      let convId = record?.id ?? crypto.randomUUID();
       result = await callB2c({
+        originatorConversationID: convId,
         phone_number: payout.destination,
         amount,
         reason,
