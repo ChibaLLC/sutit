@@ -46,7 +46,7 @@ export function resolvePayout(form: FormPayoutDetails): {
  */
 export async function disburseToFormOwner(
   payment: PaymentRow,
-  form: Form | FormPayoutDetails & { id: string; title?: string | null },
+  form: Form | (FormPayoutDetails & { id: string; title?: string | null }),
 ) {
   // Avoid double-payout for the same payment
   const existing = await db.query.disbursements.findFirst({
@@ -203,11 +203,7 @@ export async function completeDisbursement(body: any) {
   const params = result.ResultParameters?.ResultParameter;
   if (Array.isArray(params)) {
     for (const p of params) {
-      if (
-        p.Key === "TransactionReceipt" ||
-        p.Key === "TransactionID" ||
-        p.Key === "ReceiptNo"
-      ) {
+      if (p.Key === "TransactionReceipt" || p.Key === "TransactionID" || p.Key === "ReceiptNo") {
         transactionId = String(p.Value);
       }
     }
@@ -234,9 +230,7 @@ export async function completeDisbursement(body: any) {
     .where(eq(disbursements.id, record.id))
     .returning();
 
-  console.log(
-    `Disbursement ${updated.id} ${success ? "completed" : "failed"}: ${resultDesc}`,
-  );
+  console.log(`Disbursement ${updated.id} ${success ? "completed" : "failed"}: ${resultDesc}`);
   return updated;
 }
 
@@ -253,4 +247,59 @@ export async function getFormPayoutDetails(formId: string) {
       payoutAccountNumber: true,
     },
   });
+}
+
+/**
+ * Retry a failed (or missing) disbursement for a completed payment.
+ * Blocks if an active/completed disbursement already exists.
+ */
+export async function retryDisbursement(paymentId: string, formId: string) {
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+  });
+  if (!payment) {
+    throw createDisbursementError(404, "Payment not found");
+  }
+  if (payment.status !== "completed") {
+    throw createDisbursementError(400, "Can only disburse completed payments");
+  }
+
+  const active = await db.query.disbursements.findFirst({
+    where: and(
+      eq(disbursements.paymentId, paymentId),
+      inArray(disbursements.status, ["pending", "processing", "completed"]),
+    ),
+  });
+  if (active) {
+    if (active.status === "completed") {
+      throw createDisbursementError(400, "Disbursement already completed for this payment");
+    }
+    throw createDisbursementError(400, "A disbursement is already in progress for this payment");
+  }
+
+  const form = await getFormPayoutDetails(formId);
+  if (!form) {
+    throw createDisbursementError(404, "Form not found");
+  }
+
+  const payout = resolvePayout(form);
+  if (!payout) {
+    throw createDisbursementError(
+      400,
+      "Form has no valid payout details. Configure phone, till, or paybill in form settings.",
+    );
+  }
+
+  return disburseToFormOwner(payment, form);
+}
+
+export async function getDisbursementsForPayment(paymentId: string) {
+  return db.query.disbursements.findMany({
+    where: eq(disbursements.paymentId, paymentId),
+    orderBy: (d, { desc }) => [desc(d.createdAt)],
+  });
+}
+
+function createDisbursementError(statusCode: number, message: string) {
+  return createError({ statusCode, message, statusMessage: message });
 }

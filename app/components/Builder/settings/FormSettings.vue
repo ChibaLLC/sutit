@@ -36,9 +36,7 @@
   const isSaving = ref(false);
   const lastSaved = ref<Date | null>(null);
 
-  const needsPayout = computed(
-    () => Number(props.form.price) > 0 || !!props.form.requireMerch,
-  );
+  const needsPayout = computed(() => Number(props.form.price) > 0 || !!props.form.requireMerch);
 
   const setPayoutMethod = (method: FormPayoutMethod) => {
     props.form.payoutMethod = method;
@@ -200,8 +198,8 @@
           <!-- Payout destination for paid / product forms -->
           <div v-if="needsPayout" class="space-y-4 rounded-xl border p-4 sm:p-5">
             <div class="flex items-center gap-3">
-              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <Wallet class="h-4 w-4 text-primary" />
+              <div class="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
+                <Wallet class="text-primary h-4 w-4" />
               </div>
               <div>
                 <p class="text-sm font-semibold">Payout details</p>
@@ -261,7 +259,7 @@
               leave-from-class="opacity-100 translate-y-0"
               leave-to-class="opacity-0 -translate-y-1"
             >
-              <div v-if="form.payoutMethod" class="space-y-3 rounded-lg bg-muted/30 p-3 sm:p-4">
+              <div v-if="form.payoutMethod" class="bg-muted/30 space-y-3 rounded-lg p-3 sm:p-4">
                 <div v-if="form.payoutMethod === 'phone'" class="space-y-2">
                   <Label for="payoutPhone">M-Pesa phone number</Label>
                   <Input
@@ -269,7 +267,7 @@
                     v-model="form.payoutPhone"
                     placeholder="0712345678"
                     type="tel"
-                    class="h-11 bg-background"
+                    class="bg-background h-11"
                   />
                   <p class="text-muted-foreground text-xs">Payouts sent via B2C</p>
                 </div>
@@ -279,7 +277,7 @@
                     id="payoutTill"
                     v-model="form.payoutTill"
                     placeholder="e.g. 123456"
-                    class="h-11 bg-background"
+                    class="bg-background h-11"
                   />
                   <p class="text-muted-foreground text-xs">Buy Goods till — payouts via B2B</p>
                 </div>
@@ -291,7 +289,7 @@
                         id="payoutPaybill"
                         v-model="form.payoutPaybill"
                         placeholder="e.g. 400200"
-                        class="h-11 bg-background"
+                        class="bg-background h-11"
                       />
                     </div>
                     <div class="space-y-2">
@@ -300,7 +298,7 @@
                         id="payoutAccount"
                         v-model="form.payoutAccountNumber"
                         placeholder="e.g. INV-001"
-                        class="h-11 bg-background"
+                        class="bg-background h-11"
                       />
                     </div>
                   </div>

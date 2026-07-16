@@ -127,8 +127,7 @@
     }
     if (payoutMethod.value === "paybill") {
       return (
-        /^\d{5,10}$/.test(payoutPaybill.value.trim()) &&
-        payoutAccountNumber.value.trim().length > 0
+        /^\d{5,10}$/.test(payoutPaybill.value.trim()) && payoutAccountNumber.value.trim().length > 0
       );
     }
     return false;
@@ -179,9 +178,7 @@
       payoutPaybill:
         needsPayout && payoutMethod.value === "paybill" ? payoutPaybill.value.trim() : null,
       payoutAccountNumber:
-        needsPayout && payoutMethod.value === "paybill"
-          ? payoutAccountNumber.value.trim()
-          : null,
+        needsPayout && payoutMethod.value === "paybill" ? payoutAccountNumber.value.trim() : null,
     };
 
     if (isEdit.value && props.initialForm) {

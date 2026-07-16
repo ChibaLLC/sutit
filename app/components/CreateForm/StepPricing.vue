@@ -1,5 +1,13 @@
 <script setup lang="ts">
-  import { Banknote, Gift, Phone, Store, Building2, Smartphone, ChevronRight } from "lucide-vue-next";
+  import {
+    Banknote,
+    Gift,
+    Phone,
+    Store,
+    Building2,
+    Smartphone,
+    ChevronRight,
+  } from "lucide-vue-next";
   import { ref, watch, computed } from "vue";
   import type { FormPayoutMethod } from "~~/shared/types";
 
@@ -92,7 +100,9 @@
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center px-4 sm:px-6">
+  <div
+    class="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center px-4 sm:px-6"
+  >
     <div class="w-full space-y-6 sm:space-y-8">
       <!-- Header -->
       <div class="space-y-2 text-center">
@@ -146,10 +156,12 @@
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 -translate-y-3"
       >
-        <div v-if="isPaid" class="space-y-2 rounded-xl border bg-card p-4 sm:p-5">
+        <div v-if="isPaid" class="bg-card space-y-2 rounded-xl border p-4 sm:p-5">
           <Label for="price" class="text-sm font-medium">Amount (KES)</Label>
           <div class="relative">
-            <span class="text-muted-foreground absolute top-1/2 left-4 -translate-y-1/2 text-sm font-medium sm:text-base">
+            <span
+              class="text-muted-foreground absolute top-1/2 left-4 -translate-y-1/2 text-sm font-medium sm:text-base"
+            >
               KES
             </span>
             <Input
@@ -204,13 +216,12 @@
                   : 'border-border hover:border-primary/40 text-muted-foreground hover:text-foreground',
               ]"
             >
-              <component
-                :is="m.icon"
-                class="h-5 w-5 shrink-0 sm:h-6 sm:w-6"
-              />
+              <component :is="m.icon" class="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
               <div class="min-w-0">
-                <div class="text-sm font-medium leading-tight sm:text-base">{{ m.label }}</div>
-                <div class="hidden text-[10px] opacity-60 sm:block sm:text-xs">{{ m.subtitle }}</div>
+                <div class="text-sm leading-tight font-medium sm:text-base">{{ m.label }}</div>
+                <div class="hidden text-[10px] opacity-60 sm:block sm:text-xs">
+                  {{ m.subtitle }}
+                </div>
               </div>
             </button>
           </div>
@@ -224,10 +235,7 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div
-              v-if="payoutMethod"
-              class="rounded-xl border bg-card p-4 sm:p-5"
-            >
+            <div v-if="payoutMethod" class="bg-card rounded-xl border p-4 sm:p-5">
               <!-- Phone -->
               <div v-if="payoutMethod === 'phone'" class="space-y-3">
                 <Label for="payoutPhone">M-Pesa phone number</Label>
@@ -237,11 +245,14 @@
                   @update:model-value="emit('update:payoutPhone', String($event))"
                   :placeholder="phoneHint"
                   type="tel"
-                  class="h-11 focus-visible:ring-primary"
+                  class="focus-visible:ring-primary h-11"
                 />
-                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Smartphone class="h-3.5 w-3.5" />
-                  <span>We'll send payouts here via <span class="font-medium text-foreground/70">B2C</span></span>
+                  <span
+                    >We'll send payouts here via
+                    <span class="text-foreground/70 font-medium">B2C</span></span
+                  >
                 </div>
               </div>
 
@@ -253,11 +264,14 @@
                   :model-value="payoutTill || ''"
                   @update:model-value="emit('update:payoutTill', String($event))"
                   placeholder="e.g. 123456"
-                  class="h-11 focus-visible:ring-primary"
+                  class="focus-visible:ring-primary h-11"
                 />
-                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Store class="h-3.5 w-3.5" />
-                  <span>Buy Goods till — payouts via <span class="font-medium text-foreground/70">B2B</span></span>
+                  <span
+                    >Buy Goods till — payouts via
+                    <span class="text-foreground/70 font-medium">B2B</span></span
+                  >
                 </div>
               </div>
 
@@ -271,7 +285,7 @@
                       :model-value="payoutPaybill || ''"
                       @update:model-value="emit('update:payoutPaybill', String($event))"
                       placeholder="e.g. 400200"
-                      class="h-11 focus-visible:ring-primary"
+                      class="focus-visible:ring-primary h-11"
                     />
                   </div>
                   <div class="space-y-2">
@@ -281,13 +295,16 @@
                       :model-value="payoutAccountNumber || ''"
                       @update:model-value="emit('update:payoutAccountNumber', String($event))"
                       placeholder="e.g. INV-001"
-                      class="h-11 focus-visible:ring-primary"
+                      class="focus-visible:ring-primary h-11"
                     />
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
                   <Building2 class="h-3.5 w-3.5" />
-                  <span>Business paybill — payouts via <span class="font-medium text-foreground/70">B2B</span></span>
+                  <span
+                    >Business paybill — payouts via
+                    <span class="text-foreground/70 font-medium">B2B</span></span
+                  >
                 </div>
               </div>
             </div>

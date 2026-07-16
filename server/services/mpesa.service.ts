@@ -1,4 +1,5 @@
 import { constants, publicEncrypt } from "crypto";
+
 import { getProductionCert, getSandboxCert } from "daraja.js/dist/utils";
 
 import { cache } from "../utils/redis";
@@ -45,8 +46,7 @@ const fetchToken = async () => {
 
 /** RSA-encrypt initiator password with Safaricom cert → SecurityCredential */
 const getSecurityCredential = () => {
-  const certificate =
-    process.env.MPESA_ENV === "sandbox" ? getSandboxCert() : getProductionCert();
+  const certificate = process.env.MPESA_ENV === "sandbox" ? getSandboxCert() : getProductionCert();
   return publicEncrypt(
     { key: certificate, padding: constants.RSA_PKCS1_PADDING },
     Buffer.from(config.initiatorPassword),

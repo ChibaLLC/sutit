@@ -37,11 +37,7 @@ export const disbursementStatusEnum = pgEnum("disbursement_status", [
   "failed",
 ]);
 
-export const disbursementMethodEnum = pgEnum("disbursement_method", [
-  "phone",
-  "till",
-  "paybill",
-]);
+export const disbursementMethodEnum = pgEnum("disbursement_method", ["phone", "till", "paybill"]);
 
 export const payments = pgTable(
   "payments",

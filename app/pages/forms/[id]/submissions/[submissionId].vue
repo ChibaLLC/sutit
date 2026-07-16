@@ -25,6 +25,8 @@
     CheckCircle,
     Truck,
     PackageCheck,
+    Banknote,
+    RefreshCw,
   } from "lucide-vue-next";
   import { toast } from "vue-sonner";
 
@@ -39,6 +41,7 @@
     AlertDialogTitle,
   } from "@/components/ui/alert-dialog";
   import { Button, buttonVariants } from "@/components/ui/button";
+  import { authHeaders } from "~/lib/auth-client";
   import { formatSecondsToDetailedTime, formatCountdown } from "~/lib/utils";
 
   const route = useRoute();
@@ -49,6 +52,7 @@
     data: submissionData,
     error: fetchError,
     pending,
+    refresh: refreshSubmission,
   } = useFetch(`/api/forms/${formId}/submissions/${submissionId}`);
 
   const submission = computed(() => submissionData.value?.data);
@@ -517,6 +521,80 @@
     return payments.value.find((p: any) => p.payment?.status === "completed")?.payment || null;
   });
 
+  /** Latest disbursement across all payments (prefer most recent by createdAt) */
+  const allDisbursements = computed(() => {
+    const list: any[] = [];
+    for (const fp of payments.value) {
+      const rows = fp.payment?.disbursements || [];
+      for (const d of rows) {
+        list.push({ ...d, paymentId: fp.payment?.id });
+      }
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
+
+  const latestDisbursement = computed(() => allDisbursements.value[0] || null);
+
+  const canRetryDisbursement = computed(() => {
+    if (!isFormOwner.value || !completedPayment.value) return false;
+    const d = latestDisbursement.value;
+    // Retry when never attempted, or last attempt failed
+    if (!d) return true;
+    return d.status === "failed";
+  });
+
+  const retryDisbursementLoading = ref(false);
+  const retryDisbursementDialogOpen = ref(false);
+
+  const disbursementStatusClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "border-green-300 bg-green-100 text-green-800";
+      case "failed":
+        return "border-red-300 bg-red-100 text-red-800";
+      case "processing":
+        return "border-blue-300 bg-blue-100 text-blue-800";
+      case "pending":
+        return "border-yellow-300 bg-yellow-100 text-yellow-800";
+      default:
+        return "";
+    }
+  };
+
+  const formatPayoutMethod = (method?: string | null) => {
+    if (!method) return "N/A";
+    if (method === "phone") return "M-Pesa Phone (B2C)";
+    if (method === "till") return "Till / Buy Goods (B2B)";
+    if (method === "paybill") return "Paybill (B2B)";
+    return method;
+  };
+
+  const confirmRetryDisbursement = () => {
+    retryDisbursementDialogOpen.value = true;
+  };
+
+  const submitRetryDisbursement = async () => {
+    retryDisbursementLoading.value = true;
+    try {
+      const res = await $fetch(
+        `/api/forms/${formId}/submissions/${submissionId}/retry-disbursement`,
+        {
+          method: "POST",
+          headers: {
+            ...(await authHeaders()),
+          },
+        },
+      );
+      toast.success((res as any)?.message || "Disbursement retry initiated");
+      retryDisbursementDialogOpen.value = false;
+      await refreshSubmission();
+    } catch (e: any) {
+      toast.error(e.data?.message || e.message || "Failed to retry disbursement");
+    } finally {
+      retryDisbursementLoading.value = false;
+    }
+  };
+
   onUnmounted(() => {
     if (countdownInterval) clearInterval(countdownInterval);
   });
@@ -917,6 +995,144 @@
               </div>
             </CardContent>
           </Card>
+
+          <!-- Disbursement Details Card -->
+          <Card v-if="completedPayment || allDisbursements.length > 0">
+            <CardHeader>
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <CardTitle class="flex items-center gap-3">
+                  <Banknote class="h-6 w-6" />
+                  Disbursement Details
+                </CardTitle>
+                <Button
+                  v-if="canRetryDisbursement"
+                  size="sm"
+                  variant="outline"
+                  class="gap-2"
+                  :disabled="retryDisbursementLoading"
+                  @click="confirmRetryDisbursement"
+                >
+                  <RefreshCw
+                    class="h-4 w-4"
+                    :class="{ 'animate-spin': retryDisbursementLoading }"
+                  />
+                  Retry Disbursement
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div v-if="latestDisbursement" class="space-y-4">
+                <div class="bg-secondary/20 border-border rounded-lg border p-4">
+                  <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <Badge
+                      variant="outline"
+                      :class="disbursementStatusClass(latestDisbursement.status)"
+                      class="capitalize"
+                    >
+                      {{ latestDisbursement.status }}
+                    </Badge>
+                    <span class="text-muted-foreground text-xs">
+                      {{ new Date(latestDisbursement.createdAt).toLocaleString() }}
+                    </span>
+                  </div>
+                  <div class="grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p class="text-muted-foreground mb-0.5">Amount</p>
+                      <p class="text-primary font-semibold">
+                        Kes
+                        {{
+                          latestDisbursement.amount?.toLocaleString?.() ?? latestDisbursement.amount
+                        }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-muted-foreground mb-0.5">Method</p>
+                      <p class="font-medium">
+                        {{ formatPayoutMethod(latestDisbursement.method) }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-muted-foreground mb-0.5">Destination</p>
+                      <p class="font-mono font-medium">{{ latestDisbursement.destination }}</p>
+                    </div>
+                    <div v-if="latestDisbursement.accountNumber">
+                      <p class="text-muted-foreground mb-0.5">Account Number</p>
+                      <p class="font-mono font-medium">{{ latestDisbursement.accountNumber }}</p>
+                    </div>
+                    <div v-if="latestDisbursement.transactionId">
+                      <p class="text-muted-foreground mb-0.5">Transaction ID</p>
+                      <p class="font-mono font-medium">{{ latestDisbursement.transactionId }}</p>
+                    </div>
+                    <div v-if="latestDisbursement.conversationId">
+                      <p class="text-muted-foreground mb-0.5">Conversation ID</p>
+                      <p class="font-mono text-xs font-medium break-all">
+                        {{ latestDisbursement.conversationId }}
+                      </p>
+                    </div>
+                    <div v-if="latestDisbursement.resultDesc" class="sm:col-span-2">
+                      <p class="text-muted-foreground mb-0.5">Result</p>
+                      <p
+                        class="font-medium"
+                        :class="
+                          latestDisbursement.status === 'failed'
+                            ? 'text-red-600'
+                            : 'text-foreground'
+                        "
+                      >
+                        <span v-if="latestDisbursement.resultCode != null">
+                          [{{ latestDisbursement.resultCode }}]
+                        </span>
+                        {{ latestDisbursement.resultDesc }}
+                      </p>
+                    </div>
+                    <div v-if="latestDisbursement.completedAt">
+                      <p class="text-muted-foreground mb-0.5">Completed At</p>
+                      <p class="font-medium">
+                        {{ new Date(latestDisbursement.completedAt).toLocaleString() }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Previous attempts -->
+                <div v-if="allDisbursements.length > 1" class="space-y-2">
+                  <p class="text-muted-foreground text-sm font-medium">Previous attempts</p>
+                  <div
+                    v-for="d in allDisbursements.slice(1)"
+                    :key="d.id"
+                    class="border-border flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <Badge
+                      variant="outline"
+                      :class="disbursementStatusClass(d.status)"
+                      class="capitalize"
+                    >
+                      {{ d.status }}
+                    </Badge>
+                    <span class="text-muted-foreground">
+                      Kes {{ d.amount }} · {{ formatPayoutMethod(d.method) }} ·
+                      {{ d.destination }}
+                    </span>
+                    <span class="text-muted-foreground text-xs">
+                      {{ new Date(d.createdAt).toLocaleString() }}
+                    </span>
+                    <span v-if="d.resultDesc" class="text-muted-foreground w-full text-xs">
+                      {{ d.resultDesc }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="py-4 text-center">
+                <Banknote class="text-muted-foreground mx-auto mb-2 h-10 w-10" />
+                <p class="text-muted-foreground text-sm">
+                  No disbursement yet for the completed payment.
+                </p>
+                <p v-if="isFormOwner" class="text-muted-foreground mt-1 text-xs">
+                  Use Retry Disbursement to send funds to your configured payout destination.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <!-- Right Column - Submission Info & Actions -->
@@ -968,6 +1184,39 @@
                 <div v-else>
                   <p class="text-muted-foreground text-sm">No completed payment</p>
                 </div>
+
+                <template v-if="completedPayment || latestDisbursement">
+                  <Separator />
+                  <div class="flex items-center justify-between">
+                    <span class="text-foreground text-sm">Disbursement</span>
+                    <Badge
+                      v-if="latestDisbursement"
+                      variant="outline"
+                      :class="disbursementStatusClass(latestDisbursement.status)"
+                      class="capitalize"
+                    >
+                      {{ latestDisbursement.status }}
+                    </Badge>
+                    <Badge v-else variant="outline" class="border-amber-300 text-amber-800">
+                      Not disbursed
+                    </Badge>
+                  </div>
+                  <div v-if="latestDisbursement">
+                    <p class="text-foreground mb-1 text-sm">Payout to</p>
+                    <p class="font-mono text-sm font-medium">
+                      {{ latestDisbursement.destination }}
+                      <span class="text-muted-foreground">
+                        ({{ formatPayoutMethod(latestDisbursement.method) }})
+                      </span>
+                    </p>
+                  </div>
+                  <div v-if="latestDisbursement?.transactionId">
+                    <p class="text-foreground mb-1 text-sm">Payout Txn</p>
+                    <p class="font-mono text-sm font-medium">
+                      {{ latestDisbursement.transactionId }}
+                    </p>
+                  </div>
+                </template>
               </div>
             </CardContent>
           </Card>
@@ -1048,6 +1297,20 @@
                 >
                   <PackageCheck class="h-5 w-5" />
                   <span>Mark Delivered</span>
+                </Button>
+
+                <Button
+                  v-if="canRetryDisbursement"
+                  variant="outline"
+                  class="w-full gap-2 border-amber-200 text-amber-700 hover:bg-amber-50"
+                  :disabled="retryDisbursementLoading"
+                  @click="confirmRetryDisbursement"
+                >
+                  <RefreshCw
+                    class="h-5 w-5"
+                    :class="{ 'animate-spin': retryDisbursementLoading }"
+                  />
+                  <span>Retry Disbursement</span>
                 </Button>
 
                 <Button variant="outline" class="w-full gap-2" @click="downloadReceipt">
@@ -1174,6 +1437,46 @@
             <AlertDialogAction @click="submitDeliver" :disabled="deliverLoading">
               <Loader v-if="deliverLoading" class="mr-2 h-4 w-4 animate-spin" />
               Mark Delivered
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Retry Disbursement Dialog -->
+      <AlertDialog v-model:open="retryDisbursementDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Banknote class="h-5 w-5" />
+              Retry Disbursement
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send the completed payment amount to your form payout destination (phone,
+              till, or paybill). Make sure payout details are configured correctly in form settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div v-if="completedPayment" class="space-y-2 rounded-md border p-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-muted-foreground">Payment amount</span>
+              <span class="font-semibold">Kes {{ completedPayment.amount }}</span>
+            </div>
+            <div v-if="completedPayment.receiptNumber" class="flex justify-between">
+              <span class="text-muted-foreground">Receipt</span>
+              <span class="font-mono">{{ completedPayment.receiptNumber }}</span>
+            </div>
+            <div v-if="latestDisbursement?.resultDesc" class="flex justify-between gap-2">
+              <span class="text-muted-foreground shrink-0">Last error</span>
+              <span class="text-right text-red-600">{{ latestDisbursement.resultDesc }}</span>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              @click="submitRetryDisbursement"
+              :disabled="retryDisbursementLoading"
+            >
+              <Loader v-if="retryDisbursementLoading" class="mr-2 h-4 w-4 animate-spin" />
+              Confirm Retry
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

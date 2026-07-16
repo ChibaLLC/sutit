@@ -22,6 +22,7 @@
     Truck,
     Package,
     PackageCheck,
+    Banknote,
   } from "lucide-vue-next";
   import { ref, computed, watch } from "vue";
   import { toast } from "vue-sonner";
@@ -41,6 +42,7 @@
     refreshing: false,
     dispatching: false,
     delivering: false,
+    retryingDisbursement: null as string | null,
   });
 
   const error = ref<string | null>(null);
@@ -444,6 +446,66 @@
     if (status === "delivered")
       return { label: "Delivered", variant: "outline", class: "text-green-700 border-green-300" };
     return null;
+  };
+
+  const getLatestDisbursement = (submission: any) => {
+    const rows: any[] = [];
+    for (const fp of submission.payments || []) {
+      for (const d of fp.payment?.disbursements || []) {
+        rows.push(d);
+      }
+    }
+    if (!rows.length) return null;
+    return rows.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+  };
+
+  const hasCompletedPayment = (submission: any) => {
+    return (submission.payments || []).some((fp: any) => fp.payment?.status === "completed");
+  };
+
+  const getDisbursementBadge = (submission: any) => {
+    if (!hasCompletedPayment(submission)) return null;
+    const d = getLatestDisbursement(submission);
+    if (!d) {
+      return {
+        label: "Not disbursed",
+        class: "text-amber-700 border-amber-300",
+      };
+    }
+    const map: Record<string, { label: string; class: string }> = {
+      completed: { label: "Disbursed", class: "text-green-700 border-green-300" },
+      failed: { label: "Disburse failed", class: "text-red-700 border-red-300" },
+      processing: { label: "Disbursing", class: "text-blue-700 border-blue-300" },
+      pending: { label: "Disburse pending", class: "text-yellow-700 border-yellow-300" },
+    };
+    return map[d.status] || { label: d.status, class: "" };
+  };
+
+  const canRetryDisbursement = (submission: any) => {
+    if (!hasCompletedPayment(submission)) return false;
+    const d = getLatestDisbursement(submission);
+    return !d || d.status === "failed";
+  };
+
+  const retryDisbursement = async (submission: any) => {
+    loading.value.retryingDisbursement = submission.id;
+    try {
+      const res = await $fetch(
+        `/api/forms/${route.params.id}/submissions/${submission.id}/retry-disbursement`,
+        {
+          method: "POST",
+          headers: { ...(await authHeaders()) },
+        },
+      );
+      toast.success((res as any)?.message || "Disbursement retry initiated");
+      await refresh();
+    } catch (e: any) {
+      toast.error(e.data?.message || e.message || "Failed to retry disbursement");
+    } finally {
+      loading.value.retryingDisbursement = null;
+    }
   };
 
   // Synced scroll for top and bottom scrollbars
@@ -1062,6 +1124,9 @@
                         <th class="min-w-[120px] px-4 py-3 text-left text-sm font-medium">
                           Dispatch Status
                         </th>
+                        <th class="min-w-[130px] px-4 py-3 text-left text-sm font-medium">
+                          Disbursement
+                        </th>
                         <th class="min-w-[100px] px-4 py-3 text-left text-sm font-medium">Batch</th>
                         <th class="min-w-[140px] px-4 py-3 text-left text-sm font-medium">
                           Submitted At
@@ -1192,6 +1257,24 @@
                           </template>
                           <span v-else class="text-muted-foreground text-sm">-</span>
                         </td>
+                        <td class="px-4 py-4">
+                          <template v-if="getDisbursementBadge(submission)">
+                            <Badge
+                              variant="outline"
+                              :class="getDisbursementBadge(submission).class"
+                            >
+                              {{ getDisbursementBadge(submission).label }}
+                            </Badge>
+                            <span
+                              v-if="getLatestDisbursement(submission)?.destination"
+                              class="text-muted-foreground mt-1 block font-mono text-xs"
+                              :title="getLatestDisbursement(submission)?.resultDesc || ''"
+                            >
+                              {{ getLatestDisbursement(submission)?.destination }}
+                            </span>
+                          </template>
+                          <span v-else class="text-muted-foreground text-sm">-</span>
+                        </td>
                         <td class="px-4 py-4 text-sm">
                           <template v-if="submission.dispatch?.batchId">
                             <Badge variant="secondary" class="text-xs">
@@ -1241,6 +1324,22 @@
                               @click="openDeliverDialog(submission)"
                             >
                               <PackageCheck class="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                              v-if="canRetryDisbursement(submission)"
+                              size="sm"
+                              variant="ghost"
+                              class="h-8 px-2 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                              title="Retry Disbursement"
+                              :disabled="loading.retryingDisbursement === submission.id"
+                              @click="retryDisbursement(submission)"
+                            >
+                              <Loader
+                                v-if="loading.retryingDisbursement === submission.id"
+                                class="h-4 w-4 animate-spin"
+                              />
+                              <Banknote v-else class="h-4 w-4" />
                             </Button>
 
                             <NuxtLink :to="`/submission/${submission.id}/stop-tat`" as-child>

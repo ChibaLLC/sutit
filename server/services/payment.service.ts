@@ -231,8 +231,7 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
 
     // Disburse collected funds to form owner (B2C phone / B2B till|paybill)
     try {
-      const formForPayout =
-        formPayment?.form ?? group?.form ?? memberPayment?.group?.form;
+      const formForPayout = formPayment?.form ?? group?.form ?? memberPayment?.group?.form;
       if (formForPayout) {
         await disburseToFormOwner(updatedPayment, formForPayout);
       } else {

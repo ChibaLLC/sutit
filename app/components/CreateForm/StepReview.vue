@@ -179,13 +179,16 @@
               <p class="text-sm font-semibold">
                 {{ isPaid ? `KES ${price.toLocaleString()}` : "Free" }}
               </p>
-              <div v-if="payoutSummary" class="mt-2 flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-                <div class="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-                  <component :is="payoutSummary.icon" class="h-3.5 w-3.5 text-primary" />
+              <div
+                v-if="payoutSummary"
+                class="bg-muted/50 mt-2 flex items-center gap-2 rounded-lg px-3 py-2"
+              >
+                <div class="bg-primary/10 flex h-6 w-6 items-center justify-center rounded-md">
+                  <component :is="payoutSummary.icon" class="text-primary h-3.5 w-3.5" />
                 </div>
                 <span class="text-muted-foreground text-xs">
                   {{ payoutSummary.label }}
-                  <span class="font-medium text-foreground/80">{{ payoutSummary.detail }}</span>
+                  <span class="text-foreground/80 font-medium">{{ payoutSummary.detail }}</span>
                 </span>
                 <Badge variant="secondary" class="ml-auto text-[10px] font-medium">
                   {{ payoutSummary.badge }}
