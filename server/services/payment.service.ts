@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { type PgTransaction } from "drizzle-orm/pg-core";
-import { Form, StkCallbackHook, Submission } from "~~/shared/types";
+import type { Form, StkCallbackHook, Submission } from "~~/shared/types";
 
 import db from "../db";
 import {

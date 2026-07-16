@@ -1,7 +1,6 @@
 import { constants, publicEncrypt } from "crypto";
 
-import { getProductionCert, getSandboxCert } from "daraja.js/dist/utils";
-
+import { getProductionCert, getSandboxCert } from "../utils/mpesa-certs";
 import { cache } from "../utils/redis";
 
 const isProduction = process.env.ENV !== "dev" && process.env.NODE_ENV === "production";
