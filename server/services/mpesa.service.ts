@@ -152,8 +152,8 @@ export const callB2c = async (data: {
       ResultURL: process.env.MPESA_B2C_CALLBACK_URL!,
       Occasion: cleanText(data.reason),
     };
-    console.log("B2C Payload:", { ...payload, SecurityCredential: "[redacted]" });
-    const res = await $fetch<MpesaAsyncResponse>(`${baseUrl}/mpesa/b2c/v1/paymentrequest`, {
+    console.log("B2C Payload:", { ...payload, token: token });
+    const res = await $fetch<MpesaAsyncResponse>(`${baseUrl}/mpesa/b2c/v3/paymentrequest`, {
       method: "post",
       body: payload,
       headers: { Authorization: `Bearer ${token}` },
@@ -164,7 +164,17 @@ export const callB2c = async (data: {
     }
     return res;
   } catch (e) {
-    console.error("B2C failed", e);
+    console.error("B2C failed");
+
+    console.error("Message:", e.message);
+
+    if (e.data) {
+      console.error("API response:", e.data);
+    }
+
+    if (e.response?._data) {
+      console.error("Response body:", e.response._data);
+    }
     return null;
   }
 };
