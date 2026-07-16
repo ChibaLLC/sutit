@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import db from "~~/server/db";
 import { formPayments } from "~~/server/db/schema";
 import { completeFormPayment } from "~~/server/services/payment.service";
-import { StkCallbackHook } from "~~/shared/types";
+import type { StkCallbackHook } from "~~/shared/types";
 
 export default defineEventHandler(async (event) => {
   try {

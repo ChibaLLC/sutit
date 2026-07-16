@@ -1,4 +1,3 @@
-import { Mpesa } from "daraja.js";
 import { eq } from "drizzle-orm";
 import { type PgTransaction } from "drizzle-orm/pg-core";
 import { Form, StkCallbackHook, Submission } from "~~/shared/types";
@@ -12,6 +11,7 @@ import {
   payments,
 } from "../db/schema";
 import { sendTextSmsTiara } from "../utils/sms/tiara";
+import { disburseToFormOwner } from "./disbursement.service";
 import { sendMail } from "./email.service";
 import { callStkPush } from "./mpesa.service";
 const createPayment = async (
@@ -218,6 +218,28 @@ export const completeFormPayment = async (data: StkCallbackHook) => {
         form: true,
       },
     });
+
+    // Member-level group payments (leader_pays / member_pays)
+    const memberPayment = !formPayment?.form
+      ? await db.query.formGroupMemberPayments.findFirst({
+          where: eq(formGroupMemberPayments.paymentId, updatedPayment.id),
+          with: {
+            group: { with: { form: true } },
+          },
+        })
+      : null;
+
+    // Disburse collected funds to form owner (B2C phone / B2B till|paybill)
+    try {
+      const formForPayout = formPayment?.form ?? group?.form ?? memberPayment?.group?.form;
+      if (formForPayout) {
+        await disburseToFormOwner(updatedPayment, formForPayout);
+      } else {
+        console.warn("No form linked to payment — cannot disburse", updatedPayment.id);
+      }
+    } catch (e) {
+      console.error("Failed to disburse payment to form owner", e);
+    }
 
     // Send Invites if group exists
     if (group && group.members && group.members.length > 0) {

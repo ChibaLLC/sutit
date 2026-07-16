@@ -22,9 +22,14 @@
   // Step 2: Form Type
   const formType = ref<"regular" | "product">("regular");
 
-  // Step 3: Pricing
+  // Step 3: Pricing + payout destination
   const isPaid = ref(false);
   const price = ref(0);
+  const payoutMethod = ref<"phone" | "till" | "paybill" | null>(null);
+  const payoutPhone = ref("");
+  const payoutTill = ref("");
+  const payoutPaybill = ref("");
+  const payoutAccountNumber = ref("");
 
   // Step 4: Fields
   const pages = ref<PageSchema[]>([
@@ -57,6 +62,11 @@
       formType.value = f.requireMerch ? "product" : "regular";
       isPaid.value = Number(f.price) > 0;
       price.value = Number(f.price) || 0;
+      payoutMethod.value = f.payoutMethod ?? null;
+      payoutPhone.value = f.payoutPhone ?? "";
+      payoutTill.value = f.payoutTill ?? "";
+      payoutPaybill.value = f.payoutPaybill ?? "";
+      payoutAccountNumber.value = f.payoutAccountNumber ?? "";
       if (f.pages?.length) {
         pages.value = f.pages.map((p: any) => ({
           ...p,
@@ -105,10 +115,31 @@
   const reviewStep = computed(() => (formType.value === "product" ? 7 : 6));
   const productsStep = 5;
 
+  const payoutValid = computed(() => {
+    const needsPayout = isPaid.value || formType.value === "product";
+    if (!needsPayout) return true;
+    if (!payoutMethod.value) return false;
+    if (payoutMethod.value === "phone") {
+      return /^(?:254|\+254|0)?[17]\d{8}$/.test(payoutPhone.value.trim());
+    }
+    if (payoutMethod.value === "till") {
+      return /^\d{5,10}$/.test(payoutTill.value.trim());
+    }
+    if (payoutMethod.value === "paybill") {
+      return (
+        /^\d{5,10}$/.test(payoutPaybill.value.trim()) && payoutAccountNumber.value.trim().length > 0
+      );
+    }
+    return false;
+  });
+
   const canProceed = computed(() => {
     const step = currentStep.value;
     if (step === 1) return formName.value.trim().length > 0 && formSlug.value.trim().length > 0;
-    if (step === 3) return !isPaid.value || price.value > 0;
+    if (step === 3) {
+      if (isPaid.value && !(price.value > 0)) return false;
+      return payoutValid.value;
+    }
     return true;
   });
 
@@ -121,6 +152,7 @@
   };
 
   const buildFormSchema = (): FormSchema => {
+    const needsPayout = isPaid.value || formType.value === "product";
     const base: any = {
       title: formName.value,
       description: formDescription.value,
@@ -140,6 +172,13 @@
       stores: formType.value === "product" ? stores.value : [],
       afterSubmissionMessage: settings.value.afterSubmissionMessage,
       infoPromptMessage: "",
+      payoutMethod: needsPayout ? payoutMethod.value : null,
+      payoutPhone: needsPayout && payoutMethod.value === "phone" ? payoutPhone.value.trim() : null,
+      payoutTill: needsPayout && payoutMethod.value === "till" ? payoutTill.value.trim() : null,
+      payoutPaybill:
+        needsPayout && payoutMethod.value === "paybill" ? payoutPaybill.value.trim() : null,
+      payoutAccountNumber:
+        needsPayout && payoutMethod.value === "paybill" ? payoutAccountNumber.value.trim() : null,
     };
 
     if (isEdit.value && props.initialForm) {
@@ -260,8 +299,18 @@
           :is-paid="isPaid"
           :price="price"
           :form-type="formType"
+          :payout-method="payoutMethod"
+          :payout-phone="payoutPhone"
+          :payout-till="payoutTill"
+          :payout-paybill="payoutPaybill"
+          :payout-account-number="payoutAccountNumber"
           @update:is-paid="isPaid = $event"
           @update:price="price = $event"
+          @update:payout-method="payoutMethod = $event"
+          @update:payout-phone="payoutPhone = $event"
+          @update:payout-till="payoutTill = $event"
+          @update:payout-paybill="payoutPaybill = $event"
+          @update:payout-account-number="payoutAccountNumber = $event"
         />
         <CreateFormStepFields
           v-else-if="currentStep === 4"
@@ -297,6 +346,11 @@
           :form-type="formType"
           :is-paid="isPaid"
           :price="price"
+          :payout-method="payoutMethod"
+          :payout-phone="payoutPhone"
+          :payout-till="payoutTill"
+          :payout-paybill="payoutPaybill"
+          :payout-account-number="payoutAccountNumber"
           :pages="pages"
           :stores="stores"
           :is-public="settings.isPublic"

@@ -66,37 +66,107 @@ export const storeSchema = z.object({
   items: z.array(storeItemSchema).min(1, "At least on store item should be set"),
 });
 
-export const formSchemaSchema = z.object({
-  id: z.string().optional(),
-  createdBy: z.string().optional(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  pages: z.array(pageSchemaSchema).min(1, "At least one page is required"),
-  stores: z.array(storeSchema).optional().nullable(),
-  price: z.union([z.number(), z.string()]),
-  status: z.string().min(1, "Status is required"),
-  requireMerch: z.boolean(),
-  allowGroups: z.boolean(),
-  calculateTat: z.boolean(),
-  groupAmountPayable: z.union([z.number(), z.string()]).optional(),
-  groupMemberLimit: z.number().optional(),
-  infoPromptMessage: z.string().optional(),
-  allowMultipleSubmissions: z.boolean(),
-  allowRegistrationReuse: z.boolean(),
-  submissionLimit: z.number().optional().nullable(),
-  publishedAt: z.string().optional().nullable(),
-  tags: z.array(z.string()),
-  isPublic: z.boolean(),
-  requiresLogin: z.boolean(),
-  requirePassword: z.boolean().optional(),
-  password: z.string().optional().nullable(),
-  acceptResponses: z.boolean().default(true),
-  expiresAt: z.string().optional().nullable(),
-  slug: z.string().min(1, "Slug is required"),
-  afterSubmissionMessage: z.string().optional().nullable(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-});
+const kenyaPhone = z
+  .string()
+  .regex(/^(?:254|\+254|0)?[17]\d{8}$/, "Enter a valid Kenyan phone number (e.g. 0712345678)");
+
+export const formSchemaSchema = z
+  .object({
+    id: z.string().optional(),
+    createdBy: z.string().optional(),
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional(),
+    pages: z.array(pageSchemaSchema).min(1, "At least one page is required"),
+    stores: z.array(storeSchema).optional().nullable(),
+    price: z.union([z.number(), z.string()]),
+    status: z.string().min(1, "Status is required"),
+    requireMerch: z.boolean(),
+    allowGroups: z.boolean(),
+    calculateTat: z.boolean(),
+    groupAmountPayable: z.union([z.number(), z.string()]).optional(),
+    groupMemberLimit: z.number().optional(),
+    infoPromptMessage: z.string().optional(),
+    allowMultipleSubmissions: z.boolean(),
+    allowRegistrationReuse: z.boolean(),
+    submissionLimit: z.number().optional().nullable(),
+    publishedAt: z.string().optional().nullable(),
+    tags: z.array(z.string()),
+    isPublic: z.boolean(),
+    requiresLogin: z.boolean(),
+    requirePassword: z.boolean().optional(),
+    password: z.string().optional().nullable(),
+    acceptResponses: z.boolean().default(true),
+    expiresAt: z.string().optional().nullable(),
+    slug: z.string().min(1, "Slug is required"),
+    afterSubmissionMessage: z.string().optional().nullable(),
+    payoutMethod: z.enum(["phone", "till", "paybill"]).optional().nullable(),
+    payoutPhone: z.string().optional().nullable(),
+    payoutTill: z.string().optional().nullable(),
+    payoutPaybill: z.string().optional().nullable(),
+    payoutAccountNumber: z.string().optional().nullable(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const price = Number(data.price) || 0;
+    const needsPayout = price > 0 || data.requireMerch;
+    if (!needsPayout) return;
+
+    if (!data.payoutMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select where earnings should be sent (phone, till, or paybill)",
+        path: ["payoutMethod"],
+      });
+      return;
+    }
+
+    if (data.payoutMethod === "phone") {
+      if (!data.payoutPhone) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "M-Pesa phone number is required",
+          path: ["payoutPhone"],
+        });
+      } else {
+        const r = kenyaPhone.safeParse(data.payoutPhone);
+        if (!r.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: r.error.issues[0]?.message || "Invalid phone number",
+            path: ["payoutPhone"],
+          });
+        }
+      }
+    }
+
+    if (data.payoutMethod === "till") {
+      if (!data.payoutTill || !/^\d{5,10}$/.test(data.payoutTill)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid till number",
+          path: ["payoutTill"],
+        });
+      }
+    }
+
+    if (data.payoutMethod === "paybill") {
+      if (!data.payoutPaybill || !/^\d{5,10}$/.test(data.payoutPaybill)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter a valid paybill number",
+          path: ["payoutPaybill"],
+        });
+      }
+      if (!data.payoutAccountNumber?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Account number is required for paybill",
+          path: ["payoutAccountNumber"],
+        });
+      }
+    }
+  });
 export const slugify = (str: string) => {
   return str
     .toString()

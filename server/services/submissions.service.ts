@@ -278,7 +278,13 @@ export const getFormSubmissions = async (formId: string) => {
       },
       payments: {
         with: {
-          payment: true,
+          payment: {
+            with: {
+              disbursements: {
+                orderBy: (d, { desc }) => [desc(d.createdAt)],
+              },
+            },
+          },
         },
       },
       submitter: true,
@@ -321,7 +327,13 @@ export const getSubmissionById = async (submissionId: string) => {
       payments: {
         orderBy: [desc(formPayments.createdAt)],
         with: {
-          payment: true,
+          payment: {
+            with: {
+              disbursements: {
+                orderBy: (d, { desc }) => [desc(d.createdAt)],
+              },
+            },
+          },
         },
       },
       dispatch: true,

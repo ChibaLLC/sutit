@@ -40,6 +40,8 @@ export interface PageSchema {
   fields: FormField[];
   orderIndex: number;
 }
+export type FormPayoutMethod = "phone" | "till" | "paybill";
+
 export interface FormSchema {
   id?: string;
   title: string;
@@ -68,6 +70,12 @@ export interface FormSchema {
   expiresAt?: string;
   slug: string;
   afterSubmissionMessage?: string;
+  /** Where form earnings are sent after payment (B2C / B2B) */
+  payoutMethod?: FormPayoutMethod | null;
+  payoutPhone?: string | null;
+  payoutTill?: string | null;
+  payoutPaybill?: string | null;
+  payoutAccountNumber?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
