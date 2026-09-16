@@ -21,6 +21,7 @@
   } from "lucide-vue-next";
   import { ref, computed, nextTick } from "vue";
   import type { FormField, PageSchema } from "~~/shared/types";
+  import { descriptionText } from "~~/shared/utils/description";
 
   const props = defineProps<{
     pages: PageSchema[];
@@ -93,6 +94,7 @@
     type,
     label,
     name: `${type}_${Date.now()}`,
+    description: "",
     placeholder: `Enter ${label.toLowerCase()}`,
     required: false,
     orderIndex: order,
@@ -214,6 +216,12 @@
   const updatePageTitle = (index: number, title: string) => {
     const pages = [...props.pages];
     pages[index] = { ...pages[index], title } as PageSchema;
+    emitPages(pages);
+  };
+
+  const updatePageDescription = (index: number, description: string) => {
+    const pages = [...props.pages];
+    pages[index] = { ...pages[index], description } as PageSchema;
     emitPages(pages);
   };
 
@@ -463,6 +471,27 @@
           </Button>
         </div>
 
+        <!-- Page intro (title lives in the tab above, description is rich text) -->
+        <Card v-if="currentPage" class="mb-3">
+          <CardContent class="space-y-1.5 p-4">
+            <Label class="text-xs">
+              {{ currentPage.title || `Page ${currentPageIndex + 1}` }} intro
+              <span class="text-muted-foreground font-normal">
+                (optional — shown at the top of this page, supports formatting)
+              </span>
+            </Label>
+            <FormsDescriptionEditor
+              :id="`page-description-${currentPageIndex}`"
+              :key="`page-description-${currentPage?.id ?? currentPageIndex}`"
+              :model-value="currentPage.description || ''"
+              compact
+              placeholder="Introduce this page… e.g. what this section is about."
+              hint="Shown under the page title when someone fills the form."
+              @update:model-value="updatePageDescription(currentPageIndex, $event)"
+            />
+          </CardContent>
+        </Card>
+
         <!-- Fields List (Unified Drag Container) -->
         <div
           ref="fieldsContainerRef"
@@ -522,8 +551,14 @@
                         </Badge>
                       </div>
                       <p
-                        v-if="field.placeholder"
-                        class="text-muted-foreground mt-0.5 truncate text-xs"
+                        v-if="field.description"
+                        class="text-muted-foreground mt-0.5 line-clamp-2 text-xs"
+                      >
+                        {{ descriptionText(field.description) }}
+                      </p>
+                      <p
+                        v-else-if="field.placeholder"
+                        class="text-muted-foreground/70 mt-0.5 truncate text-xs"
                       >
                         {{ field.placeholder }}
                       </p>
@@ -581,6 +616,23 @@
                             @blur="flushFieldEdit(field.id)"
                           />
                         </div>
+                      </div>
+
+                      <div class="space-y-1.5">
+                        <Label class="text-xs">
+                          Help text
+                          <span class="text-muted-foreground font-normal">
+                            (optional — shown under the field, supports formatting)
+                          </span>
+                        </Label>
+                        <FormsDescriptionEditor
+                          :id="`field-description-${field.id}`"
+                          :model-value="field.description || ''"
+                          compact
+                          placeholder="Add help text, instructions, or links for this field…"
+                          hint="Shown under the field when someone fills the form. Links open in a new tab."
+                          @update:model-value="updateField(field.id, { description: $event })"
+                        />
                       </div>
 
                       <div class="flex items-center gap-2">

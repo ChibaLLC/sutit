@@ -1,6 +1,6 @@
-// composables/useFormSEO.ts
-
 import type { FormSchema } from "~~/shared/types";
+// composables/useFormSEO.ts
+import { descriptionText } from "~~/shared/utils/description";
 
 interface SEOOptions {
   siteName?: string;
@@ -28,7 +28,7 @@ export const useFormSEO = (form: FormSchema | null, options: SEOOptions = {}) =>
     // Generate dynamic title and description
     const title = form.title ? `${form.title} - ${siteName}` : siteName;
     const description =
-      form.description ||
+      descriptionText(form.description || "") ||
       `Register for ${form.title}. ${form.price > 0 ? `Starting at Kes ${form.price.toLocaleString()}` : "Free registration"}. ${form.allowGroups ? "Individual and group options available." : ""}`;
 
     // Generate keywords from form data
@@ -94,7 +94,7 @@ export const useFormSEO = (form: FormSchema | null, options: SEOOptions = {}) =>
           "@context": "https://schema.org",
           "@type": form.price > 0 ? "Event" : "WebPage",
           name: form.title,
-          description: form.description,
+          description: descriptionText(form.description || ""),
           url: canonicalUrl,
           image: ogImage,
           ...(form.price > 0 && {
@@ -195,7 +195,7 @@ export const useFormSEO = (form: FormSchema | null, options: SEOOptions = {}) =>
 
     const title = form.title ? `${form.title} - ${siteName}` : siteName;
     const description =
-      form.description ||
+      descriptionText(form.description || "") ||
       `Register for ${form.title}. ${form.price > 0 ? `Starting at Kes ${form.price.toLocaleString()}` : "Free registration"}.`;
 
     const canonicalUrl = `${baseUrl}/forms/${form.slug || form.id}`;

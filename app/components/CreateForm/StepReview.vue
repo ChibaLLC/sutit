@@ -90,9 +90,7 @@
                 <Link2 class="text-muted-foreground h-3 w-3" />
                 <span class="text-muted-foreground font-mono text-xs">/forms/{{ slug }}</span>
               </div>
-              <p v-if="description" class="text-muted-foreground mt-2 line-clamp-2 text-sm">
-                {{ description }}
-              </p>
+              <FormsDescription v-if="description" :content="description" class="mt-3 text-sm" />
             </div>
             <Badge variant="outline">
               {{ formType === "product" ? "Product" : "Regular" }}

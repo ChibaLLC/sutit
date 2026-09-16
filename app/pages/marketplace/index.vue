@@ -23,6 +23,7 @@
     Star,
   } from "lucide-vue-next";
   import type { Form, User } from "~~/shared/types";
+  import { descriptionText } from "~~/shared/utils/description";
 
   import { buttonVariants } from "~/components/ui/button";
 
@@ -933,7 +934,7 @@
                       {{ form.title }}
                     </CardTitle>
                     <CardDescription class="mt-1 line-clamp-2 text-sm">
-                      {{ form.description || "No description provided" }}
+                      {{ descriptionText(form.description || "") || "No description provided" }}
                     </CardDescription>
                   </div>
                 </div>
@@ -1042,7 +1043,7 @@
                         }}</Badge>
                       </div>
                       <p class="text-muted-foreground line-clamp-2 text-sm">
-                        {{ form.description || "No description provided" }}
+                        {{ descriptionText(form.description || "") || "No description provided" }}
                       </p>
                     </div>
 

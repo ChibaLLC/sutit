@@ -1,4 +1,3 @@
-import { th } from "zod/v4/locales";
 import { handleFileUpload } from "~~/server/services/upload.service";
 
 export default defineEventHandler(async (event) => {

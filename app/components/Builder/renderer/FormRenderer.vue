@@ -34,7 +34,11 @@
   const phoneNumber = ref("");
 
   const hasProducts = computed(() => (props.form.stores?.length ?? 0) > 0);
-  const hasPrice = computed(() => Number(props.form.price) > 0);
+  const { grandTotal } = useFormTotal(
+    () => props.form,
+    () => selectedProducts,
+  );
+  const hasPrice = computed(() => grandTotal.value > 0);
 
   const steps = computed(() => {
     const s: { id: number; label: string; icon: any }[] = [];
@@ -75,7 +79,7 @@
 
   const nextLabel = computed(() => {
     if (isReviewStep.value) {
-      if (hasPrice.value) return `Pay KES ${Number(props.form.price).toLocaleString()}`;
+      if (hasPrice.value) return `Pay KES ${grandTotal.value.toLocaleString()}`;
       return "Submit";
     }
     if (isProductStep.value) return "Review";
@@ -85,6 +89,11 @@
   });
 
   const handleSubmit = () => {
+    if (props.loading) return;
+    if (hasPrice.value && !/^(?:254|\+254|0)?[17]\d{8}$/.test(phoneNumber.value.trim())) {
+      toast.error("Enter a valid M-Pesa phone number");
+      return;
+    }
     emit("submit", {
       schema: props.form,
       formData: { ...formData },
@@ -110,7 +119,7 @@
 </script>
 
 <template>
-  <div class="bg-background min-h-screen">
+  <div class="bg-background flex min-h-screen flex-col">
     <!-- Top bar with progress -->
     <header
       class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur"
@@ -172,7 +181,15 @@
     </div>
 
     <!-- Content -->
-    <main class="mx-auto max-w-4xl px-6 py-8">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
+      <section v-if="currentStep === 1" class="mb-8 border-b pb-8">
+        <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">{{ form.title }}</h2>
+        <FormsDescription
+          v-if="form.description"
+          :content="form.description"
+          class="mt-4 max-w-prose"
+        />
+      </section>
       <Transition
         mode="out-in"
         enter-active-class="transition-all duration-300 ease-out"
@@ -187,9 +204,11 @@
           <div class="space-y-1 text-center">
             <Badge variant="outline" class="text-[10px]">Page {{ currentStep }}</Badge>
             <h2 class="text-xl font-bold">{{ currentPage.title }}</h2>
-            <p v-if="currentPage.description" class="text-muted-foreground text-sm">
-              {{ currentPage.description }}
-            </p>
+            <FormsDescription
+              v-if="currentPage.description"
+              :content="currentPage.description"
+              class="mx-auto max-w-prose text-center [&_div]:text-center"
+            />
           </div>
           <div class="space-y-5">
             <BuilderRendererField
@@ -252,11 +271,7 @@
           Back
         </Button>
 
-        <Button
-          @click="handleAction"
-          :disabled="loading"
-          class="from-primary to-primary/90 bg-linear-to-r"
-        >
+        <Button @click="handleAction" :disabled="loading">
           <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
           {{ nextLabel }}
           <ArrowRight v-if="!loading && !isReviewStep" class="ml-2 h-4 w-4" />

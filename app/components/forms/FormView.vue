@@ -280,9 +280,11 @@
             <h1 class="text-foreground mb-4 text-4xl font-bold">
               {{ form.title }}
             </h1>
-            <p v-if="form.description" class="text-muted-foreground mx-auto max-w-2xl text-lg">
-              {{ form.description }}
-            </p>
+            <FormsDescription
+              v-if="form.description"
+              :content="form.description"
+              class="mx-auto max-w-2xl text-left"
+            />
           </div>
 
           <!-- Selection Cards -->

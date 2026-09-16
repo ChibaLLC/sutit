@@ -39,6 +39,7 @@ export const formFieldSchema = z.record(z.any()).and(
     type: z.string(),
     label: z.string(),
     name: z.string(),
+    description: z.string().optional(),
     placeholder: z.string().optional(),
     required: z.boolean().optional(),
     validation: z.array(validationRuleSchema).optional(),

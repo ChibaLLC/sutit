@@ -9,6 +9,7 @@
 
   const emit = defineEmits<{
     "update:stores": [stores: Store[]];
+    busy: [busy: boolean];
   }>();
 
   const currentStoreIndex = ref(0);
@@ -28,6 +29,7 @@
   };
 
   const startEditing = (item: StoreItem) => {
+    if (editingItemId.value === item.id) return;
     // flush previous before switching
     if (editingItemId.value && editingItemId.value !== item.id) {
       flushItemEdit(editingItemId.value);
@@ -53,6 +55,14 @@
       updateItem(itemId, updates);
     }
   };
+
+  watch(
+    [editName, editPrice, editQuantity, editDescription],
+    () => {
+      if (editingItemId.value) flushItemEdit(editingItemId.value);
+    },
+    { flush: "post" },
+  );
 
   const stopEditing = () => {
     if (editingItemId.value) {
@@ -173,7 +183,10 @@
           class="group relative flex items-center"
         >
           <button
-            @click="currentStoreIndex = index"
+            @click="
+              stopEditing();
+              currentStoreIndex = index;
+            "
             class="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all"
             :class="[
               currentStoreIndex === index
@@ -246,7 +259,13 @@
             <!-- Item Header -->
             <div class="flex items-center gap-3">
               <div class="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-                <Package class="text-muted-foreground h-5 w-5" />
+                <img
+                  v-if="item.images?.length"
+                  :src="item.images[0]"
+                  :alt="item.name"
+                  class="size-10 rounded-lg object-cover"
+                />
+                <Package v-else class="text-muted-foreground h-5 w-5" />
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
@@ -263,7 +282,8 @@
               <Button
                 variant="ghost"
                 size="sm"
-                class="hover:text-destructive h-7 w-7 p-0 opacity-0 group-hover:opacity-100"
+                class="hover:text-destructive h-8 w-8 p-0"
+                aria-label="Remove product"
                 @click.stop="removeItem(item.id)"
               >
                 <Trash2 class="h-3.5 w-3.5" />
@@ -315,9 +335,18 @@
                   />
                 </div>
 
-                <div class="flex items-center gap-4">
+                <CreateFormProductImages
+                  :images="item.images || []"
+                  :name="item.name"
+                  @update:images="updateItem(item.id, { images: $event })"
+                  @busy="emit('busy', $event)"
+                />
+                <div class="flex flex-wrap items-center gap-4">
                   <div class="flex items-center gap-2">
-                    <Switch v-model="item.infinite" />
+                    <Switch
+                      :model-value="item.infinite"
+                      @update:model-value="toggleInfinite(item.id, $event)"
+                    />
                     <Label class="text-xs">Unlimited stock</Label>
                   </div>
                   <div v-if="!item.infinite" class="flex items-center gap-2">

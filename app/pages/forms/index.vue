@@ -27,6 +27,7 @@
   } from "lucide-vue-next";
   import { toast } from "vue-sonner";
   import type { FormSchema } from "~~/shared/types";
+  import { descriptionText } from "~~/shared/utils/description";
 
   import { buttonVariants } from "~/components/ui/button";
   import { authHeaders } from "~/lib/auth-client";
@@ -561,7 +562,7 @@
             {{ form.title }}
           </CardTitle>
           <CardDescription class="text-muted-foreground mt-1 line-clamp-2 text-sm text-pretty">
-            {{ form.description || "No description provided" }}
+            {{ descriptionText(form.description || "") || "No description provided" }}
           </CardDescription>
         </CardHeader>
 

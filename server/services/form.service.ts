@@ -12,6 +12,7 @@ import {
   sql,
 } from "drizzle-orm";
 import type { Filters, FormSchema } from "~~/shared/types";
+import { descriptionHtml } from "~~/shared/utils/description";
 import { slugify } from "~~/shared/utils/form.schema";
 
 import db from "../db";
@@ -70,6 +71,12 @@ export const createForm = async (payload: FormSchema) => {
         .insert(forms)
         .values({
           ...formPayload,
+          // Defense in depth: sanitize rich-text description before storing.
+          // Rendering also sanitizes via descriptionHtml(), so stored XSS
+          // can't execute even if a client bypasses validation.
+          description: formPayload.description
+            ? descriptionHtml(formPayload.description)
+            : formPayload.description,
           slug: uniqueSlug,
           createdBy: payload.createdBy,
           status: formPayload.status || "draft",
@@ -92,7 +99,7 @@ export const createForm = async (payload: FormSchema) => {
           .values({
             formId: newForm.id,
             title: page.title,
-            description: page.description,
+            description: page.description ? descriptionHtml(page.description) : page.description,
             orderIndex: page.orderIndex,
             createdAt: new Date(),
           })
@@ -105,6 +112,9 @@ export const createForm = async (payload: FormSchema) => {
 
         for (const fieldPayload of page.fields) {
           const { id, ...fieldData } = fieldPayload;
+          if (fieldData.description) {
+            fieldData.description = descriptionHtml(fieldData.description);
+          }
           await tx.insert(formFields).values({
             ...fieldData,
             pageId: newPage.id,
@@ -117,7 +127,7 @@ export const createForm = async (payload: FormSchema) => {
       }
 
       if (stores && stores.length > 0) {
-        stores?.forEach(async (store) => {
+        for (const store of stores) {
           const [newStore] = await tx
             .insert(formStores)
             .values({
@@ -126,7 +136,7 @@ export const createForm = async (payload: FormSchema) => {
               description: store.description,
             })
             .returning();
-          store.items.forEach(async (it) => {
+          for (const it of store.items) {
             await tx.insert(storeItems).values({
               isInfinite: it.infinite,
               storeId: newStore.id,
@@ -136,8 +146,8 @@ export const createForm = async (payload: FormSchema) => {
               name: it.name,
               description: it.description,
             });
-          });
-        });
+          }
+        }
       }
 
       // 3. Log Activity
@@ -162,8 +172,12 @@ export const createForm = async (payload: FormSchema) => {
 
       return newForm;
     } catch (e: any) {
-      await tx.rollback();
-      throw e;
+      // Throwing rolls back the transaction and preserves the original cause.
+      console.error("Form creation failed:", e.cause?.code, e.cause?.message || e.message);
+      throw createError({
+        statusCode: 500,
+        message: "Failed to create form. Please try again or contact support.",
+      });
     }
   });
 };
@@ -266,6 +280,10 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         .update(forms)
         .set({
           ...formPayload,
+          // Defense in depth: sanitize rich-text description before storing.
+          description: formPayload.description
+            ? descriptionHtml(formPayload.description)
+            : formPayload.description,
           publishedAt: formPayload.publishedAt ? new Date(formPayload.publishedAt) : undefined,
           updatedAt: new Date(), // Enable this to track updates
         })
@@ -285,7 +303,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
             .update(formPages)
             .set({
               title: page.title,
-              description: page.description,
+              description: page.description ? descriptionHtml(page.description) : page.description,
               orderIndex: page.orderIndex,
               updatedAt: new Date(),
             })
@@ -305,7 +323,7 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
             .values({
               formId: updatedForm.id,
               title: page.title,
-              description: page.description,
+              description: page.description ? descriptionHtml(page.description) : page.description,
               orderIndex: page.orderIndex,
             })
             .returning();
@@ -321,6 +339,9 @@ export const updateForm = async (formId: string, payload: FormSchema) => {
         // 3. Handle Fields for this page
         for (const fieldPayload of page.fields) {
           const { id, createdAt, updatedAt, ...fieldData } = fieldPayload;
+          if (fieldData.description) {
+            fieldData.description = descriptionHtml(fieldData.description);
+          }
 
           if (id && isValidUUID(id)) {
             // Update existing field

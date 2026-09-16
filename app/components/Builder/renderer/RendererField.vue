@@ -52,7 +52,11 @@
       <Label :for="field.id" class="text-sm font-medium">{{ field.label }}</Label>
       <span v-if="field.required" class="text-destructive text-[10px] font-semibold">Required</span>
     </div>
-    <p v-if="field.description" class="text-muted-foreground text-xs">{{ field.description }}</p>
+    <FormsDescription
+      v-if="field.description"
+      :content="field.description"
+      class="[&_div]:text-muted-foreground [&_div]:text-xs"
+    />
 
     <!-- Text / Email / Phone / URL / Number -->
     <Input

@@ -19,8 +19,6 @@
 
   const localName = ref(props.name);
   const localSlug = ref(props.slug);
-  const localDescription = ref(props.description);
-
   watch(
     () => props.name,
     (v) => {
@@ -33,13 +31,6 @@
       localSlug.value = v;
     },
   );
-  watch(
-    () => props.description,
-    (v) => {
-      localDescription.value = v;
-    },
-  );
-
   const slugify = (str: string): string => {
     return str
       .normalize("NFD")
@@ -66,12 +57,6 @@
     localSlug.value = slug;
     emit("update:slug", slug);
     isSlugManuallyEdited.value = true;
-  };
-
-  const flushDescription = () => {
-    if (localDescription.value !== props.description) {
-      emit("update:description", localDescription.value);
-    }
   };
 
   const resetSlug = () => {
@@ -103,7 +88,7 @@
         <Input
           id="form-name"
           v-model="localName"
-          @blur="flushName"
+          @update:model-value="flushName"
           placeholder="e.g. Event Registration, Customer Survey"
           class="h-12 px-4 text-lg"
           autofocus
@@ -142,6 +127,7 @@
           </div>
           <Button
             v-if="!isEditingSlug"
+            aria-label="Edit form URL"
             variant="ghost"
             size="sm"
             @click="isEditingSlug = true"
@@ -169,13 +155,10 @@
         <Label for="form-description" class="text-sm font-medium">
           Description <span class="text-muted-foreground font-normal">(optional)</span>
         </Label>
-        <Textarea
+        <FormsDescriptionEditor
           id="form-description"
-          v-model="localDescription"
-          @blur="flushDescription"
-          placeholder="Brief description of what this form is for..."
-          rows="3"
-          class="resize-none"
+          :model-value="description"
+          @update:model-value="emit('update:description', $event)"
         />
       </div>
     </div>

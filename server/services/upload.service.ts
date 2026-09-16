@@ -23,7 +23,7 @@ const clientCred = {
   s3ForcePathStyle: true,
 };
 const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "uploads";
-const UPLOAD_DIR = process.env.UPLOAD_DIR!;
+const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
 const STORAGE_TYPE = process.env.STORAGE_TYPE!;
 
 const minioClient = new S3Client({
@@ -42,7 +42,7 @@ export const handleFileUpload = async (event: H3Event, options?: UploadOptions) 
     maxFiles = 10,
     maxSize = 10 * 1024 * 1024, // 10MB
     allowedTypes = [],
-  } = options;
+  } = options || {};
   try {
     const formData = await readMultipartFormData(event);
     if (!formData || formData.length == 0) {
@@ -81,14 +81,14 @@ export const handleFileUpload = async (event: H3Event, options?: UploadOptions) 
           `File "${file.filename}" has invalid type. Allowed types: ${allowedTypes.join(", ")}`,
         );
       }
-      // Upload all files
-      const uploadPromises = filesToProcess.map((file) => handleSingleFileUpload(file));
-      const uploadResults = await Promise.all(uploadPromises);
-
-      // Return single object for single file mode, array for multiple
-      return uploadResults;
     }
-  } catch (e: any) {}
+    return await Promise.all(filesToProcess.map((file) => handleSingleFileUpload(file)));
+  } catch (error: any) {
+    throw createError({
+      statusCode: error.statusCode || 400,
+      message: error.message || "Upload failed",
+    });
+  }
 };
 
 export const handleSingleFileUpload = async (file: MultiPartData) => {

@@ -97,6 +97,7 @@
   );
 
   const currentStep = ref(1);
+  const uploadingImages = ref(false);
 
   const steps = computed(() => {
     const base = [
@@ -134,6 +135,7 @@
   });
 
   const canProceed = computed(() => {
+    if (uploadingImages.value) return false;
     const step = currentStep.value;
     if (step === 1) return formName.value.trim().length > 0 && formSlug.value.trim().length > 0;
     if (step === 3) {
@@ -210,7 +212,13 @@
     >
       <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <div class="flex items-center gap-3">
-          <Button variant="ghost" size="sm" class="h-9 w-9 p-0" @click="navigateTo('/forms')">
+          <Button
+            aria-label="Back to forms"
+            variant="ghost"
+            size="sm"
+            class="h-9 w-9 p-0"
+            @click="navigateTo('/forms')"
+          >
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div>
@@ -236,6 +244,8 @@
         <template v-for="(step, index) in steps" :key="step.id">
           <button
             @click="step.id < currentStep ? (currentStep = step.id) : null"
+            :disabled="uploadingImages || isSubmitting"
+            :aria-current="step.id === currentStep ? 'step' : undefined"
             class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors"
             :class="[
               step.id === currentStep
@@ -320,6 +330,7 @@
         <CreateFormStepProducts
           v-else-if="formType === 'product' && currentStep === productsStep"
           :stores="stores"
+          @busy="uploadingImages = $event"
           @update:stores="stores = $event"
         />
         <CreateFormStepSettings
@@ -366,7 +377,11 @@
       class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky bottom-0 border-t backdrop-blur"
     >
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Button variant="ghost" @click="prevStep" :disabled="currentStep === 1">
+        <Button
+          variant="ghost"
+          @click="prevStep"
+          :disabled="currentStep === 1 || uploadingImages || isSubmitting"
+        >
           <ArrowLeft class="mr-2 h-4 w-4" /> Back
         </Button>
 

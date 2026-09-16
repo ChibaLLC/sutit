@@ -22,28 +22,10 @@
     return String(value);
   };
 
-  const productDetails = computed(() => {
-    const details: { name: string; price: number; quantity: number }[] = [];
-    for (const [id, data] of Object.entries(props.selectedProducts)) {
-      for (const store of props.form.stores ?? []) {
-        const product = store.items.find((p) => p.id === id);
-        if (product) {
-          details.push({
-            name: product.name,
-            price: Number(product.price),
-            quantity: data.quantity,
-          });
-        }
-      }
-    }
-    return details;
-  });
-
-  const productsTotal = computed(() =>
-    productDetails.value.reduce((sum, p) => sum + p.price * p.quantity, 0),
+  const { productDetails, productsTotal, grandTotal } = useFormTotal(
+    () => props.form,
+    () => props.selectedProducts,
   );
-
-  const grandTotal = computed(() => Number(props.form.price) + productsTotal.value);
 </script>
 
 <template>
@@ -86,19 +68,28 @@
     <!-- Payment section -->
     <div v-if="grandTotal > 0" class="space-y-4">
       <Separator />
+      <div class="text-muted-foreground flex justify-between text-sm">
+        <span>Form fee</span><span>KES {{ Number(form.price).toLocaleString() }}</span>
+      </div>
+      <div v-if="productDetails.length" class="text-muted-foreground flex justify-between text-sm">
+        <span>Products</span><span>KES {{ productsTotal.toLocaleString() }}</span>
+      </div>
       <div class="flex items-center justify-between py-2">
         <span class="font-semibold">Total</span>
         <span class="text-primary text-lg font-bold">KES {{ grandTotal.toLocaleString() }}</span>
       </div>
 
       <div class="space-y-2">
-        <Label class="flex items-center gap-2 text-sm font-medium">
+        <Label for="payment-phone" class="flex items-center gap-2 text-sm font-medium">
           <div class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600">
             <span class="text-[10px] font-bold text-white">M</span>
           </div>
           M-Pesa Phone Number
         </Label>
         <Input
+          id="payment-phone"
+          type="tel"
+          autocomplete="tel"
           :model-value="phoneNumber"
           @update:model-value="emit('update:phoneNumber', $event)"
           placeholder="254712345678"

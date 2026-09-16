@@ -15,6 +15,7 @@ export interface FormField {
   type: string;
   label: string;
   name: string;
+  description?: string;
   placeholder?: string;
   required?: boolean;
   validation?: ValidationRule[];
