@@ -142,7 +142,8 @@ export const submitForm = async (
         .where(eq(formGroupMembers.inviteToken, inviteToken));
     }
 
-    let email = null;
+    let email: string | null = null;
+    let subPhoneNumber: string | null = null;
     // 3. Insert field responses
     for (const [fieldId, value] of Object.entries(data.formData)) {
       const stringValue = typeof value === "string" ? value : String(value);
@@ -150,6 +151,18 @@ export const submitForm = async (
       // Check if it looks like an email address
       if (!email && /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(stringValue)) {
         email = stringValue;
+      }
+
+      // Check if it looks like a Kenyan phone number, normalize to 254...
+      if (!subPhoneNumber) {
+        const digits = stringValue.replace(/\D/g, "");
+        if (/^254[17]\d{8}$/.test(digits)) {
+          subPhoneNumber = digits;
+        } else if (/^0[17]\d{8}$/.test(digits)) {
+          subPhoneNumber = `254${digits.slice(1)}`;
+        } else if (/^[17]\d{8}$/.test(digits)) {
+          subPhoneNumber = `254${digits}`;
+        }
       }
       await tx.insert(fieldResponses).values({
         submissionId: submission.id,
@@ -232,6 +245,10 @@ export const submitForm = async (
         throw new Error(e);
       }
     } else {
+      if (subPhoneNumber && form.afterSubmissionMessage) {
+        await sendTextSmsTiara({ phone: subPhoneNumber, message: form.afterSubmissionMessage });
+      }
+
       if (form.calculateTat) {
         const baseUrl = process.env.BETTER_AUTH_URL;
         const stopTatUrl =
