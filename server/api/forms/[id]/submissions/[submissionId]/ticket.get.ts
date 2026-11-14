@@ -1,7 +1,7 @@
 import { getSubmissionById } from "~~/server/services/submissions.service";
 
 export default defineEventHandler(async (event) => {
-  const { id: formId, id: submissionId } = getRouterParams(event);
+  const { id: formId, submissionId } = getRouterParams(event);
 
   if (!submissionId) {
     throw createError({

@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes, timingSafeEqual } from "crypto";
 
 import { eq, isNull, isNotNull, and, inArray, sql, desc } from "drizzle-orm";
 import { SubmissionData } from "~~/shared/types";
@@ -507,4 +507,249 @@ export const sendStopTatNotification = async (
     subject: `Stop TAT - ${formTitle}`,
     html,
   });
+};
+
+// ============================================
+// EVENT CHECK-IN (stored in form_submissions.metadata.checkin)
+// ============================================
+
+export type SubmissionCheckin = {
+  /** Short secret used in the participant link / QR code */
+  code?: string;
+  checkedInAt?: string | null;
+  checkedInBy?: string | null;
+  distanceKm?: number | null;
+  distanceRecordedAt?: string | null;
+  distanceRecordedBy?: string | null;
+  distanceSource?: "organizer" | "participant" | null;
+  passSmsSentAt?: string | null;
+  distanceSmsSentAt?: string | null;
+};
+
+/** Merges `patch` into metadata.checkin with a single atomic jsonb update. */
+const mergeCheckinSql = (patch: Record<string, unknown>) =>
+  sql`jsonb_set(coalesce(${formSubmissions.metadata}, '{}'::jsonb), '{checkin}',
+    coalesce(${formSubmissions.metadata}->'checkin', '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb)`;
+
+/** Parses a distance from user input. Returns null for empty input; throws on invalid input. */
+export const parseDistanceKm = (raw: unknown): number | null => {
+  if (raw === null || raw === undefined || raw === "") return null;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1000) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Distance must be a number between 0 and 1000 km",
+    });
+  }
+  return Math.round(value * 100) / 100;
+};
+
+/** Normalizes Kenyan phone numbers to 2547XXXXXXXX / 2541XXXXXXXX, or null. */
+export const normalizeKenyanPhone = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const digits = String(value).replace(/\D/g, "");
+  if (/^254[17]\d{8}$/.test(digits)) return digits;
+  if (/^0[17]\d{8}$/.test(digits)) return `254${digits.slice(1)}`;
+  if (/^[17]\d{8}$/.test(digits)) return `254${digits}`;
+  return null;
+};
+
+/**
+ * Phone to contact a participant on: the number that completed the M-Pesa payment,
+ * falling back to a phone number entered in the form. Expects `payments.payment` and `responses.field`.
+ */
+export const getSubmissionPhone = (submission: any): string | null => {
+  const paid = (submission.payments || []).find((fp: any) => fp.payment?.status === "completed");
+  const fromPayment = normalizeKenyanPhone(paid?.payment?.phoneNumber);
+  if (fromPayment) return fromPayment;
+
+  const responses = submission.responses || [];
+  const phoneField = responses.find((r: any) => r.field?.type === "phone");
+  const fromField = normalizeKenyanPhone(phoneField?.value);
+  if (fromField) return fromField;
+
+  for (const r of responses) {
+    const phone = normalizeKenyanPhone(r.value);
+    if (phone) return phone;
+  }
+  return null;
+};
+
+/** Best-effort display name: account name, else a form field labelled like "name". */
+export const getSubmissionDisplayName = (submission: any): string => {
+  if (submission.submitter?.name) return submission.submitter.name;
+  const responses = submission.responses || [];
+  const nameField =
+    responses.find((r: any) => /full\s*name/i.test(r.field?.label || "")) ||
+    responses.find((r: any) => /name/i.test(r.field?.label || "") && !/email/i.test(r.field?.label || ""));
+  return nameField?.value?.toString().trim() || "Participant";
+};
+
+/** Returns the participant's check-in code, creating and saving one if it doesn't exist yet. */
+export const ensureCheckinCode = async (submissionId: string, metadata: any): Promise<string> => {
+  if (metadata?.checkin?.code) return metadata.checkin.code;
+
+  const code = randomBytes(9).toString("base64url"); // 12 URL-safe chars
+  const [updated] = await db
+    .update(formSubmissions)
+    .set({ metadata: mergeCheckinSql({ code }) })
+    .where(
+      and(
+        eq(formSubmissions.id, submissionId),
+        sql`(${formSubmissions.metadata}->'checkin'->>'code') is null`,
+      ),
+    )
+    .returning();
+
+  if (updated) return code;
+
+  // Someone else generated one concurrently - use theirs.
+  const current = await db.query.formSubmissions.findFirst({
+    where: eq(formSubmissions.id, submissionId),
+  });
+  return (current?.metadata as any)?.checkin?.code;
+};
+
+export const getParticipantUrl = (submissionId: string, code: string) =>
+  `${process.env.BETTER_AUTH_URL}/p/${submissionId}?c=${code}`;
+
+const codesMatch = (expected: string | undefined, given: string | undefined) => {
+  if (!expected || !given) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(given);
+  return a.length === b.length && timingSafeEqual(a, b);
+};
+
+/**
+ * Loads a submission for the public participant page, verifying the check-in code.
+ * Wrong IDs and wrong codes give the same 404, so codes can't be probed.
+ */
+export const getSubmissionByCheckinCode = async (submissionId: string, code: string | undefined) => {
+  const notFound = createError({ statusCode: 404, statusMessage: "Invalid or expired link" });
+  if (!/^[0-9a-f-]{36}$/i.test(submissionId)) throw notFound;
+
+  const submission = await db.query.formSubmissions.findFirst({
+    where: and(eq(formSubmissions.id, submissionId), isNull(formSubmissions.deletedAt)),
+    with: {
+      form: true,
+      submitter: true,
+      responses: { with: { field: true } },
+    },
+  });
+
+  if (!submission || !codesMatch((submission.metadata as any)?.checkin?.code, code)) throw notFound;
+  return submission;
+};
+
+/** Marks that an SMS of the given kind was sent to this participant. */
+export const markCheckinSmsSent = async (submissionId: string, kind: "pass" | "distance") => {
+  const key = kind === "pass" ? "passSmsSentAt" : "distanceSmsSentAt";
+  await db
+    .update(formSubmissions)
+    .set({ metadata: mergeCheckinSql({ [key]: new Date().toISOString() }) })
+    .where(eq(formSubmissions.id, submissionId));
+};
+
+const findFormSubmission = (formId: string, submissionId: string) =>
+  db.query.formSubmissions.findFirst({
+    where: and(
+      eq(formSubmissions.id, submissionId),
+      eq(formSubmissions.formId, formId),
+      isNull(formSubmissions.deletedAt),
+    ),
+  });
+
+/**
+ * Atomically checks in a submission. Only succeeds once: a second call returns
+ * `{ alreadyCheckedIn: true }` with the original check-in details.
+ */
+export const checkInSubmission = async (formId: string, submissionId: string, userId: string) => {
+  const existing = await findFormSubmission(formId, submissionId);
+  if (!existing) throw createError({ statusCode: 404, statusMessage: "Submission not found" });
+
+  if (existing.status !== "completed") {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Cannot check in a submission with status "${existing.status}" (payment not completed)`,
+    });
+  }
+
+  const checkin: SubmissionCheckin = {
+    ...(existing.metadata as any)?.checkin,
+    checkedInAt: new Date().toISOString(),
+    checkedInBy: userId,
+  };
+
+  // The WHERE clause guards against two staff checking in the same person at once.
+  const [updated] = await db
+    .update(formSubmissions)
+    .set({
+      metadata: sql`jsonb_set(coalesce(${formSubmissions.metadata}, '{}'::jsonb), '{checkin}', ${JSON.stringify(checkin)}::jsonb)`,
+    })
+    .where(
+      and(
+        eq(formSubmissions.id, submissionId),
+        eq(formSubmissions.formId, formId),
+        sql`(${formSubmissions.metadata}->'checkin'->>'checkedInAt') is null`,
+      ),
+    )
+    .returning();
+
+  if (!updated) {
+    const current = await findFormSubmission(formId, submissionId);
+    return {
+      alreadyCheckedIn: true,
+      checkin: ((current?.metadata as any)?.checkin || null) as SubmissionCheckin | null,
+    };
+  }
+
+  return { alreadyCheckedIn: false, checkin: (updated.metadata as any).checkin as SubmissionCheckin };
+};
+
+/** Clears the check-in time (for mistakes). Leaves any recorded distance intact. */
+export const undoCheckInSubmission = async (formId: string, submissionId: string) => {
+  const existing = await findFormSubmission(formId, submissionId);
+  if (!existing) throw createError({ statusCode: 404, statusMessage: "Submission not found" });
+
+  const [updated] = await db
+    .update(formSubmissions)
+    .set({ metadata: mergeCheckinSql({ checkedInAt: null, checkedInBy: null }) })
+    .where(eq(formSubmissions.id, submissionId))
+    .returning();
+
+  return (updated.metadata as any).checkin as SubmissionCheckin;
+};
+
+/** Sets (or clears, with null) the distance covered. The submission must be checked in first. */
+export const recordSubmissionDistance = async (
+  formId: string,
+  submissionId: string,
+  distanceKm: number | null,
+  recordedBy: { source: "organizer"; userId: string } | { source: "participant" },
+) => {
+  const existing = await findFormSubmission(formId, submissionId);
+  if (!existing) throw createError({ statusCode: 404, statusMessage: "Submission not found" });
+
+  if (!(existing.metadata as any)?.checkin?.checkedInAt) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Check in this submission before recording a distance",
+    });
+  }
+
+  const cleared = distanceKm === null;
+  const patch = {
+    distanceKm,
+    distanceRecordedAt: cleared ? null : new Date().toISOString(),
+    distanceRecordedBy: cleared || recordedBy.source !== "organizer" ? null : recordedBy.userId,
+    distanceSource: cleared ? null : recordedBy.source,
+  };
+
+  const [updated] = await db
+    .update(formSubmissions)
+    .set({ metadata: mergeCheckinSql(patch) })
+    .where(eq(formSubmissions.id, submissionId))
+    .returning();
+
+  return (updated.metadata as any).checkin as SubmissionCheckin;
 };
