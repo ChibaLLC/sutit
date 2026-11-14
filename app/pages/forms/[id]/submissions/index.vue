@@ -23,6 +23,11 @@
     Package,
     PackageCheck,
     Banknote,
+    UserCheck,
+    Footprints,
+    Undo2,
+    ScanLine,
+    MessageSquare,
   } from "lucide-vue-next";
   import { ref, computed, watch } from "vue";
   import { toast } from "vue-sonner";
@@ -43,6 +48,9 @@
     dispatching: false,
     delivering: false,
     retryingDisbursement: null as string | null,
+    checkingIn: null as string | null,
+    savingDistance: false,
+    sendingSms: false,
   });
 
   const error = ref<string | null>(null);
@@ -54,6 +62,7 @@
     search: "",
     status: "all",
     dispatchStatus: "all",
+    checkin: "all",
     batchId: "all",
     dateRange: {
       start: "",
@@ -149,6 +158,13 @@
       filtered = filtered.filter((s) => {
         const dStatus = s.dispatch?.status || "none";
         return dStatus === filters.value.dispatchStatus;
+      });
+    }
+
+    if (filters.value.checkin !== "all") {
+      filtered = filtered.filter((s) => {
+        const checkedIn = !!s.metadata?.checkin?.checkedInAt;
+        return filters.value.checkin === "checked_in" ? checkedIn : !checkedIn;
       });
     }
 
@@ -279,6 +295,7 @@
       search: "",
       status: "all",
       dispatchStatus: "all",
+      checkin: "all",
       batchId: "all",
       dateRange: { start: "", end: "" },
       priceRange: { min: "", max: "" },
@@ -429,6 +446,129 @@
       toast.error(e.data?.message || "Failed to mark as delivered");
     } finally {
       loading.value.delivering = false;
+    }
+  };
+
+  // Event check-in (stored on submission.metadata.checkin)
+  const getCheckin = (submission) => submission.metadata?.checkin || null;
+
+  const updateLocalCheckin = (submission, checkin) => {
+    submission.metadata = { ...submission.metadata, checkin };
+  };
+
+  const checkIn = async (submission) => {
+    loading.value.checkingIn = submission.id;
+    try {
+      const res: any = await $fetch(
+        `/api/forms/${route.params.id}/submissions/${submission.id}/checkin`,
+        { method: "POST" },
+      );
+      updateLocalCheckin(submission, res.checkin);
+      const name = submission.submitter?.name || "Participant";
+      if (res.alreadyCheckedIn) {
+        toast.warning(
+          `${name} was already checked in at ${new Date(res.checkin.checkedInAt).toLocaleTimeString()}`,
+        );
+      } else {
+        toast.success(`${name} checked in`);
+      }
+    } catch (e: any) {
+      toast.error(e.data?.statusMessage || e.data?.message || "Failed to check in");
+    } finally {
+      loading.value.checkingIn = null;
+    }
+  };
+
+  const undoCheckIn = async (submission) => {
+    if (!confirm("Undo check-in for this participant?")) return;
+    loading.value.checkingIn = submission.id;
+    try {
+      const res: any = await $fetch(
+        `/api/forms/${route.params.id}/submissions/${submission.id}/checkin`,
+        { method: "DELETE" },
+      );
+      updateLocalCheckin(submission, res.checkin);
+      toast.success("Check-in undone");
+    } catch (e: any) {
+      toast.error(e.data?.statusMessage || e.data?.message || "Failed to undo check-in");
+    } finally {
+      loading.value.checkingIn = null;
+    }
+  };
+
+  // QR scanner
+  const scanDialogOpen = ref(false);
+  const onScanCheckedIn = (res: any) => {
+    const submission = submissions.value?.data?.find((s) => s.id === res.submissionId);
+    if (submission && res.checkin) updateLocalCheckin(submission, res.checkin);
+  };
+
+  // SMS participants their personal link (QR pass / submit distance)
+  const smsDialogOpen = ref(false);
+  const smsForm = ref({ kind: "distance" as "pass" | "distance", resend: false });
+  const smsResult = ref<any>(null);
+
+  const smsRecipientCount = computed(() => {
+    const { kind, resend } = smsForm.value;
+    const sentKey = kind === "pass" ? "passSmsSentAt" : "distanceSmsSentAt";
+    return (submissions.value?.data || []).filter((s) => {
+      if (s.status !== "completed") return false;
+      if (kind === "distance" && !s.metadata?.checkin?.checkedInAt) return false;
+      if (!resend && s.metadata?.checkin?.[sentKey]) return false;
+      return true;
+    }).length;
+  });
+
+  const openSmsDialog = (kind: "pass" | "distance") => {
+    smsForm.value = { kind, resend: false };
+    smsResult.value = null;
+    smsDialogOpen.value = true;
+  };
+
+  const sendSms = async () => {
+    loading.value.sendingSms = true;
+    try {
+      smsResult.value = await $fetch(`/api/forms/${route.params.id}/checkin/sms`, {
+        method: "POST",
+        body: smsForm.value,
+      });
+      toast.success(smsResult.value.message);
+      await refresh();
+    } catch (e: any) {
+      toast.error(e.data?.statusMessage || e.data?.message || "Failed to send SMS");
+    } finally {
+      loading.value.sendingSms = false;
+    }
+  };
+
+  const distanceDialogOpen = ref(false);
+  const distanceForm = ref({ submission: null as any, distanceKm: "" as string | number });
+
+  const openDistanceDialog = (submission) => {
+    const current = getCheckin(submission)?.distanceKm;
+    distanceForm.value = { submission, distanceKm: current ?? "" };
+    distanceDialogOpen.value = true;
+  };
+
+  const submitDistance = async () => {
+    const submission = distanceForm.value.submission;
+    if (!submission) return;
+    loading.value.savingDistance = true;
+    try {
+      const res: any = await $fetch(
+        `/api/forms/${route.params.id}/submissions/${submission.id}/distance`,
+        {
+          method: "PATCH",
+          body: { distanceKm: distanceForm.value.distanceKm === "" ? null : distanceForm.value.distanceKm },
+        },
+      );
+      updateLocalCheckin(submission, res.checkin);
+      toast.success("Distance saved");
+      distanceDialogOpen.value = false;
+    } catch (e: any) {
+      toast.error(e.data?.statusMessage || e.data?.message || "Failed to save distance");
+    } finally {
+      loading.value.savingDistance = false;
     }
   };
 
@@ -709,6 +849,29 @@
               <Switch @click="toggleReponse()" v-model="acceptingResponses" />
             </div>
 
+            <!-- Event check-in -->
+            <Button size="sm" class="gap-2" @click="scanDialogOpen = true">
+              <ScanLine class="h-4 w-4" />
+              <span>Scan QR</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button size="sm" variant="outline" class="gap-2">
+                  <MessageSquare class="h-4 w-4" />
+                  <span class="hidden sm:inline">SMS</span>
+                  <ChevronDown class="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="openSmsDialog('pass')">
+                  Send check-in QR passes
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="openSmsDialog('distance')">
+                  Ask checked-in people for distance
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <!-- Refresh button -->
             <Button
               @click.prevent="refresh()"
@@ -971,6 +1134,21 @@
                       </Select>
                     </div>
 
+                    <!-- Check-in Filter -->
+                    <div class="space-y-2">
+                      <Label class="text-sm font-medium">Check-in</Label>
+                      <Select v-model="filters.checkin">
+                        <SelectTrigger>
+                          <SelectValue placeholder="All" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="checked_in">Checked In</SelectItem>
+                          <SelectItem value="not_checked_in">Not Checked In</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <!-- Batch Filter -->
                     <div class="space-y-2">
                       <Label class="text-sm font-medium">Batch</Label>
@@ -1103,6 +1281,9 @@
                           Submitter
                         </th>
                         <th class="min-w-[80px] px-4 py-3 text-left text-sm font-medium">Status</th>
+                        <th class="min-w-[130px] px-4 py-3 text-left text-sm font-medium">
+                          Check-in
+                        </th>
                         <!-- Dynamic form field headers -->
                         <th
                           v-for="field in formFields"
@@ -1192,6 +1373,40 @@
                                 : submission.status
                             }}
                           </Badge>
+                        </td>
+                        <td class="px-4 py-4">
+                          <template v-if="getCheckin(submission)?.checkedInAt">
+                            <Badge
+                              variant="outline"
+                              class="border-green-300 text-green-700"
+                              :title="new Date(getCheckin(submission).checkedInAt).toLocaleString()"
+                            >
+                              <UserCheck class="mr-1 h-3 w-3" />
+                              {{ new Date(getCheckin(submission).checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }}
+                            </Badge>
+                            <span
+                              v-if="getCheckin(submission).distanceKm != null"
+                              class="text-muted-foreground mt-1 block text-xs"
+                            >
+                              {{ getCheckin(submission).distanceKm }} km
+                              <span v-if="getCheckin(submission).distanceSource === 'participant'">
+                                (self-reported)
+                              </span>
+                            </span>
+                            <span
+                              v-else-if="getCheckin(submission).distanceSmsSentAt"
+                              class="text-muted-foreground mt-1 block text-xs"
+                            >
+                              Distance SMS sent
+                            </span>
+                          </template>
+                          <span
+                            v-else-if="getCheckin(submission)?.passSmsSentAt"
+                            class="text-muted-foreground text-xs"
+                          >
+                            Pass SMS sent
+                          </span>
+                          <span v-else class="text-muted-foreground text-sm">-</span>
                         </td>
                         <!-- Dynamic form field values -->
                         <td
@@ -1325,6 +1540,44 @@
                             >
                               <PackageCheck class="h-4 w-4" />
                             </Button>
+
+                            <Button
+                              v-if="submission.status === 'completed' && !getCheckin(submission)?.checkedInAt"
+                              size="sm"
+                              variant="ghost"
+                              class="h-8 px-2 text-green-600 hover:bg-green-50 hover:text-green-700"
+                              title="Check In"
+                              :disabled="loading.checkingIn === submission.id"
+                              @click="checkIn(submission)"
+                            >
+                              <Loader
+                                v-if="loading.checkingIn === submission.id"
+                                class="h-4 w-4 animate-spin"
+                              />
+                              <UserCheck v-else class="h-4 w-4" />
+                            </Button>
+
+                            <template v-if="getCheckin(submission)?.checkedInAt">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                class="h-8 px-2 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                                title="Record Distance"
+                                @click="openDistanceDialog(submission)"
+                              >
+                                <Footprints class="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                class="text-muted-foreground h-8 px-2"
+                                title="Undo Check-in"
+                                :disabled="loading.checkingIn === submission.id"
+                                @click="undoCheckIn(submission)"
+                              >
+                                <Undo2 class="h-4 w-4" />
+                              </Button>
+                            </template>
 
                             <Button
                               v-if="canRetryDisbursement(submission)"
@@ -1559,6 +1812,115 @@
             <AlertDialogAction @click="submitDispatch" :disabled="loading.dispatching">
               <Loader v-if="loading.dispatching" class="mr-2 h-4 w-4 animate-spin" />
               Dispatch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- QR Scanner -->
+      <CheckinQrScanDialog
+        v-model:open="scanDialogOpen"
+        :form-id="String(route.params.id)"
+        @checked-in="onScanCheckedIn"
+      />
+
+      <!-- SMS Dialog -->
+      <AlertDialog v-model:open="smsDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <MessageSquare class="h-5 w-5" />
+              {{ smsForm.kind === "pass" ? "Send check-in QR passes" : "Ask for distance covered" }}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <template v-if="smsForm.kind === 'pass'">
+                Each paid participant gets an SMS with a link to their personal QR pass, sent to
+                the number they paid with.
+              </template>
+              <template v-else>
+                Each checked-in participant gets an SMS with a link to submit the distance they
+                covered, sent to the number they paid with.
+              </template>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div v-if="!smsResult" class="space-y-4 py-2">
+            <label class="flex items-center justify-between gap-4 text-sm">
+              <span>Also resend to people who already got this SMS</span>
+              <Switch v-model="smsForm.resend" />
+            </label>
+            <p class="text-sm">
+              This will send <strong>{{ smsRecipientCount }}</strong> SMS.
+            </p>
+          </div>
+
+          <div v-else class="space-y-3 py-2 text-sm">
+            <p>
+              Sent <strong>{{ smsResult.sent }}</strong> of {{ smsResult.total }}.
+            </p>
+            <div v-if="smsResult.noPhone.length">
+              <p class="font-medium text-amber-700">
+                No phone number found ({{ smsResult.noPhone.length }}):
+              </p>
+              <p class="text-muted-foreground">
+                {{ smsResult.noPhone.map((r) => r.name).join(", ") }}
+              </p>
+            </div>
+            <div v-if="smsResult.failed.length">
+              <p class="font-medium text-red-700">Failed ({{ smsResult.failed.length }}):</p>
+              <p class="text-muted-foreground">
+                {{ smsResult.failed.map((r) => `${r.name} (${r.error})`).join(", ") }}
+              </p>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>{{ smsResult ? "Close" : "Cancel" }}</AlertDialogCancel>
+            <AlertDialogAction
+              v-if="!smsResult"
+              @click.prevent="sendSms"
+              :disabled="loading.sendingSms || smsRecipientCount === 0"
+            >
+              <Loader v-if="loading.sendingSms" class="mr-2 h-4 w-4 animate-spin" />
+              Send {{ smsRecipientCount }} SMS
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <!-- Distance Dialog -->
+      <AlertDialog v-model:open="distanceDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle class="flex items-center gap-2">
+              <Footprints class="h-5 w-5" />
+              Record Distance
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Distance covered by
+              {{ distanceForm.submission?.submitter?.name || "this participant" }}. Leave empty to
+              clear it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label>Distance (km)</Label>
+              <Input
+                v-model="distanceForm.distanceKm"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 21.1"
+                @keyup.enter="submitDistance"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click.prevent="submitDistance" :disabled="loading.savingDistance">
+              <Loader v-if="loading.savingDistance" class="mr-2 h-4 w-4 animate-spin" />
+              Save
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

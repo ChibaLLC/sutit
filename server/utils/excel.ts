@@ -343,6 +343,8 @@ const formatFormData = (submissions: FormSubmission[]) => {
       "Price Paid": sub.pricePaid || 0,
       "Payment Status": paymentRecord?.status || "",
       "Receipt Number": paymentRecord?.receiptNumber || "",
+      "Checked In At": sub.metadata?.checkin?.checkedInAt || "",
+      "Distance (km)": sub.metadata?.checkin?.distanceKm ?? "",
     };
 
     const fieldRow = { ...baseRow };

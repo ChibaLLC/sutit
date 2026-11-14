@@ -19,8 +19,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // This route is public: never expose the secrets that authorise access to the submission.
+  const { accessToken: _accessToken, tokenData: _tokenData, checkin, ...metadata } =
+    (submission.metadata as any) || {};
+  const { code: _code, ...safeCheckin } = checkin || {};
+
   return {
     success: true,
-    data: submission,
+    data: {
+      ...submission,
+      metadata: checkin ? { ...metadata, checkin: safeCheckin } : metadata,
+    },
   };
 });

@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     if (!formId) {
       throw createError({ statusCode: 404, message: "Not Found" });
     }
-    const session = auth.api.getSession({ headers: event.headers });
+    const session = await auth.api.getSession({ headers: event.headers });
     if (!session) {
       throw createError({ statusCode: 401, message: "Unauthenticated" });
     }
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
     return buffer;
   } catch (e: any) {
     throw createError({
-      statusCode: 500,
+      statusCode: e.statusCode || 500,
       message: e.message || "An error occurred",
     });
   }

@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
         message: "Not Found",
       });
     }
-    const session = auth.api.getSession({
+    const session = await auth.api.getSession({
       headers: event.headers,
     });
     if (!session) {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   } catch (e) {
     throw createError({
       message: e.message || "An error occurred",
-      statusCode: 500,
+      statusCode: e.statusCode || 500,
     });
   }
 });
